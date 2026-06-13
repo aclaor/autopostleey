@@ -190,7 +190,15 @@
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
   </div>
-  <a href="#" class="nav-cta" onclick="openModal(); return false;">Start Free</a>
+  <div id="auth-btns" style="display:flex;align-items:center;gap:8px;">
+    <a href="#" onclick="showAuth('login');return false;" style="color:var(--text2);font-size:14px;text-decoration:none;padding:8px 12px;">Sign In</a>
+    <a href="#" class="nav-cta" onclick="showAuth('signup');return false;">Start Free</a>
+  </div>
+  <div id="user-menu" style="display:none;align-items:center;gap:10px;">
+    <span id="user-email-display" style="font-size:13px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <a href="dashboard.html" class="nav-cta" style="text-decoration:none;">Dashboard →</a>
+    <button onclick="doSignOut()" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:13px;cursor:pointer;">Out</button>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -199,7 +207,7 @@
   <h1>Stop writing posts.<br><span class="highlight">Start growing.</span></h1>
   <p class="hero-sub">Autopostleey writes and publishes social media content for your business automatically — every day, across all platforms, while you sleep.</p>
   <div class="hero-cta">
-    <a href="#" class="btn-primary" onclick="openModal(); return false;">Start for free →</a>
+    <a href="#" class="btn-primary" onclick="showAuth('signup');return false;">Start for free →</a>
     <a href="#how" class="btn-secondary">See how it works</a>
   </div>
   <p class="hero-note">✓ Free plan available &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Setup in 5 minutes</p>
@@ -380,7 +388,7 @@
           <li class="no">AI Assist mode</li>
           <li class="no">Analytics</li>
         </ul>
-        <button class="plan-btn free" onclick="openModal()">Start Free</button>
+        <button class="plan-btn free" onclick="showAuth('signup','free')">Start Free</button>
       </div>
 
       <!-- STARTER -->
@@ -396,7 +404,7 @@
           <li>Basic analytics</li>
           <li class="no">Agency accounts</li>
         </ul>
-        <button class="plan-btn paid" onclick="openModal()">Get Started →</button>
+        <button class="plan-btn paid" onclick="showAuth('signup','starter')">Get Started →</button>
       </div>
 
       <!-- GROWTH -->
@@ -413,7 +421,7 @@
           <li>Full analytics</li>
           <li>Priority support</li>
         </ul>
-        <button class="plan-btn paid" onclick="openModal()">Get Growth →</button>
+        <button class="plan-btn paid" onclick="showAuth('signup','growth')">Get Growth →</button>
       </div>
 
       <!-- AGENCY -->
@@ -429,7 +437,7 @@
           <li>Full analytics</li>
           <li>Dedicated support</li>
         </ul>
-        <button class="plan-btn paid" onclick="openModal()">Get Agency →</button>
+        <button class="plan-btn paid" onclick="showAuth('signup','agency')">Get Agency →</button>
       </div>
 
     </div>
@@ -474,7 +482,7 @@
 <section class="cta-section">
   <h2>Ready to automate your<br>social media?</h2>
   <p>Join businesses that never miss a post again.</p>
-  <a href="#" class="btn-primary" onclick="openModal(); return false;" style="font-size:18px;padding:16px 36px;">Start for free — no credit card →</a>
+  <a href="#" class="btn-primary" onclick="showAuth('signup');return false;" style="font-size:18px;padding:16px 36px;">Start for free — no credit card →</a>
   <p style="margin-top:16px;font-size:13px;color:var(--text3);">Setup takes 5 minutes. Cancel anytime.</p>
 </section>
 
@@ -504,42 +512,146 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ── SUPABASE ──────────────────────────────────────────────
-const _supa = window.supabase.createClient(
+// ── SUPABASE CLIENT ───────────────────────────────────────
+const _db = window.supabase.createClient(
   'https://gkxpwqryakgzgvvprbkl.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I'
 );
 
-function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
-function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
-function toggleFaq(el){ el.classList.toggle('open'); }
+// ── STATE ─────────────────────────────────────────────────
+var _mode = 'signup', _plan = 'free', _user = null;
 
-async function submitWaitlist(){
+// ── AUTH MODAL ────────────────────────────────────────────
+function showAuth(mode, plan) {
+  _mode = mode || 'signup';
+  _plan = plan || 'free';
+  var heading = document.getElementById('auth-heading');
+  var subhead = document.getElementById('auth-subhead');
+  var btn     = document.getElementById('auth-submit-btn');
+  var errbox  = document.getElementById('auth-err-box');
+  var footer  = document.getElementById('auth-footer-text');
+  if(heading) heading.textContent = _mode==='login' ? 'Welcome back' : 'Create Account';
+  if(subhead) subhead.textContent = _mode==='login' ? 'Sign in to your Autopostleey account' : '3-day full trial · No credit card · Cancel anytime';
+  if(btn) btn.textContent = _mode==='login' ? 'SIGN IN' : 'START FREE TRIAL';
+  if(errbox) errbox.style.display = 'none';
+  if(footer) footer.innerHTML = _mode==='login'
+    ? "Don't have an account? <span style='color:var(--accent3);cursor:pointer;' onclick='showAuth(\'signup\')'>Sign up free</span>"
+    : "Already have an account? <span style='color:var(--accent3);cursor:pointer;' onclick='showAuth(\'login\')'>Sign in</span>";
+  var overlay = document.getElementById('auth-overlay');
+  if(overlay) overlay.style.display = 'flex';
+  setTimeout(function(){ var el=document.getElementById('auth-email-inp');if(el)el.focus(); }, 100);
+}
+
+function hideAuth() {
+  var overlay = document.getElementById('auth-overlay');
+  if(overlay) overlay.style.display = 'none';
+}
+
+async function handleAuth() {
+  var email = document.getElementById('auth-email-inp').value.trim();
+  var pass  = document.getElementById('auth-pass-inp').value;
+  var btn   = document.getElementById('auth-submit-btn');
+  if(!email || !pass) { showAuthErr('Please enter your email and password.'); return; }
+  if(pass.length < 6) { showAuthErr('Password must be at least 6 characters.'); return; }
+  btn.textContent = 'Please wait...';
+  btn.disabled = true;
+  try {
+    var result;
+    if(_mode === 'signup') {
+      result = await _db.auth.signUp({
+        email: email, password: pass,
+        options: {
+          emailRedirectTo: window.location.origin + '/',
+          data: { plan: _plan, trial_end: new Date(Date.now()+3*24*60*60*1000).toISOString() }
+        }
+      });
+      if(result.error) throw result.error;
+      hideAuth();
+      showToast('✅ Account created! Check your email to confirm.', 'success');
+    } else {
+      result = await _db.auth.signInWithPassword({ email: email, password: pass });
+      if(result.error) throw result.error;
+      _user = result.data.user;
+      updateUserUI(_user);
+      hideAuth();
+      showToast('Welcome back! 👋', 'success');
+      setTimeout(function(){ window.location.href = 'dashboard.html'; }, 1000);
+    }
+  } catch(e) {
+    showAuthErr(e.message || 'Something went wrong. Please try again.');
+    btn.textContent = _mode==='login' ? 'SIGN IN' : 'START FREE TRIAL';
+    btn.disabled = false;
+  }
+}
+
+function showAuthErr(msg) {
+  var el = document.getElementById('auth-err-box');
+  if(el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+async function doSignOut() {
+  await _db.auth.signOut();
+  _user = null;
+  updateUserUI(null);
+  showToast('Signed out.', 'success');
+}
+
+function updateUserUI(user) {
+  var authBtns = document.getElementById('auth-btns');
+  var userMenu = document.getElementById('user-menu');
+  var emailEl  = document.getElementById('user-email-display');
+  if(user) {
+    if(authBtns) authBtns.style.display = 'none';
+    if(userMenu) userMenu.style.display = 'flex';
+    if(emailEl)  emailEl.textContent    = user.email;
+  } else {
+    if(authBtns) authBtns.style.display = 'flex';
+    if(userMenu) userMenu.style.display = 'none';
+  }
+}
+
+// Check session on load
+_db.auth.onAuthStateChange(function(event, session) {
+  _user = session ? session.user : null;
+  updateUserUI(_user);
+});
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg, type) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(type==='success'?'#22c55e':'#ef4444')+';color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;';
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();}, 3000);
+}
+
+// ── WAITLIST ──────────────────────────────────────────────
+function openModal() { showAuth('signup'); }
+function closeModal() { hideAuth(); }
+
+async function submitWaitlist() {
   var name  = document.getElementById('modal-name').value.trim();
   var email = document.getElementById('modal-email').value.trim();
   var biz   = document.getElementById('modal-business').value.trim();
-  if(!email){ alert('Please enter your email!'); return; }
-
+  if(!email) { alert('Please enter your email!'); return; }
   var btn = document.querySelector('.modal-submit');
   btn.textContent = 'Joining...';
   btn.disabled = true;
-
   try {
-    var { error } = await _supa.from('autopostleey_waitlist').insert([{
-      name:          name  || null,
-      email:         email,
-      business_name: biz   || null,
-      source:        'landing_page',
-      created_at:    new Date().toISOString()
+    await _db.from('autopostleey_waitlist').insert([{
+      name: name||null, email: email,
+      business_name: biz||null, source: 'landing_page',
+      created_at: new Date().toISOString()
     }]);
-    if(error && error.code !== '23505') console.error('Supabase error:', error);
   } catch(e) { console.error(e); }
-
   btn.textContent = '\u2713 You\'re on the list!';
   btn.style.background = '#22c55e';
   setTimeout(closeModal, 2000);
 }
+
+function toggleFaq(el) { el.classList.toggle('open'); }
 </script>
 </body>
 </html>
