@@ -1025,26 +1025,52 @@ function updateConnectionsUI() {
   });
 }
 
+function getConnectionForm(name) {
+  var s = {
+    facebook: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Enter your Facebook Page Access Token and Page ID from <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">Facebook Developers</a>.</div>' +
+        '<input id="conn-f1" placeholder="Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
+        '<input id="conn-f2" placeholder="Page ID (e.g. 103114287835428)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
+        '<input id="conn-f3" placeholder="Page Name (e.g. My Business)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'facebook\',{access_token:document.getElementById(\'conn-f1\').value,page_id:document.getElementById(\'conn-f2\').value,page_name:document.getElementById(\'conn-f3\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+    },
+    discord: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Go to your Discord server → Channel Settings → Integrations → Webhooks → Copy URL.</div>' +
+        '<input id="conn-d1" placeholder="Webhook URL (https://discord.com/api/webhooks/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'discord\',{webhook_url:document.getElementById(\'conn-d1\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+    },
+    telegram: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Create a bot via @BotFather on Telegram, then add it to your channel as admin.</div>' +
+        '<input id="conn-t1" placeholder="Bot Token (e.g. 123456:ABC-DEF...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
+        '<input id="conn-t2" placeholder="Channel ID (e.g. @mychannel)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-t1\').value,chat_id:document.getElementById(\'conn-t2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+    },
+    instagram: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Instagram requires a Facebook Business account. Use your Facebook Page Access Token.</div>' +
+        '<input id="conn-i1" placeholder="Facebook Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
+        '<input id="conn-i2" placeholder="Instagram User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'instagram\',{access_token:document.getElementById(\'conn-i1\').value,page_id:document.getElementById(\'conn-i2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+    },
+    linkedin: function() {
+      return '<div style="font-size:13px;color:#8888aa;">LinkedIn OAuth coming soon. Join the waitlist to be notified.</div>';
+    },
+    twitter: function() {
+      return '<div style="font-size:13px;color:#8888aa;">Twitter/X OAuth coming soon. Join the waitlist to be notified.</div>';
+    }
+  };
+  return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
+}
+
 function connectPlatform(name) {
   var modal = document.getElementById('conn-modal');
   var title = document.getElementById('conn-modal-title');
   var body  = document.getElementById('conn-modal-body');
   if(!modal || !title || !body) return;
-
   title.textContent = 'Connect ' + name.charAt(0).toUpperCase() + name.slice(1);
-
-  var forms = {
-    facebook: '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Enter your Facebook Page Access Token and Page ID. Get these from <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">Facebook Developers</a>.</div><input id="conn-fb-token" placeholder="Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;"><input id="conn-fb-pageid" placeholder="Page ID (e.g. 103114287835428)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;"><input id="conn-fb-pagename" placeholder="Page Name (e.g. My Business)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;"><button onclick="saveConnection('facebook',{access_token:document.getElementById('conn-fb-token').value,page_id:document.getElementById('conn-fb-pageid').value,page_name:document.getElementById('conn-fb-pagename').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>',
-    discord:  '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Enter your Discord Webhook URL. Go to your server → Channel Settings → Integrations → Webhooks.</div><input id="conn-dc-webhook" placeholder="Webhook URL (https://discord.com/api/webhooks/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;"><button onclick="saveConnection('discord',{webhook_url:document.getElementById('conn-dc-webhook').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>',
-    telegram: '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Enter your Telegram Bot Token and Channel ID. Create a bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a>.</div><input id="conn-tg-token" placeholder="Bot Token (e.g. 123456:ABC-DEF...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;"><input id="conn-tg-chatid" placeholder="Channel ID (e.g. @mychannel or -1001234567890)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;"><button onclick="saveConnection('telegram',{bot_token:document.getElementById('conn-tg-token').value,chat_id:document.getElementById('conn-tg-chatid').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>',
-    instagram:'<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Instagram publishing requires a Facebook Business account connected to your Instagram. Use the same Facebook Page Access Token.</div><input id="conn-ig-token" placeholder="Facebook Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;"><input id="conn-ig-userid" placeholder="Instagram User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;"><button onclick="saveConnection('instagram',{access_token:document.getElementById('conn-ig-token').value,page_id:document.getElementById('conn-ig-userid').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>',
-    linkedin: '<div style="font-size:13px;color:#8888aa;margin-bottom:12px;">LinkedIn OAuth coming soon. <a href="https://autopostleey.com#waitlist" style="color:#a855f7;">Join waitlist</a> to be notified.</div>',
-    twitter:  '<div style="font-size:13px;color:#8888aa;margin-bottom:12px;">Twitter/X OAuth coming soon. <a href="https://autopostleey.com#waitlist" style="color:#a855f7;">Join waitlist</a> to be notified.</div>',
-  };
-
-  body.innerHTML = forms[name] || '<p style="color:#8888aa;">Coming soon!</p>';
+  body.innerHTML = getConnectionForm(name);
   modal.style.display = 'flex';
 }
+
 
 async function saveConnection(platform, data) {
   try {
