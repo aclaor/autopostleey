@@ -844,33 +844,30 @@ async function generateAIPost() {
   var btn   = document.getElementById('ai-generate-btn');
   var txt   = document.getElementById('ai-btn-text');
   var spin  = document.getElementById('ai-spinner');
-  if(txt)  txt.textContent  = 'Generating...';
+  if(txt)  txt.textContent    = 'Generating...';
   if(spin) spin.style.display = 'block';
-  if(btn)  btn.disabled = true;
+  if(btn)  btn.disabled       = true;
 
   try {
-    var prompt = 'Write a social media post for a business called "'+_bizProfile.name+'". '+
-      'What they do: '+(_bizProfile.description||'a small business')+'. '+
-      'Tone: '+(_bizProfile.tone||'friendly')+'. '+
-      'Target audience: '+(_bizProfile.audience||'general public')+'. '+
-      (topic ? 'Topic for this post: '+topic+'. ' : '')+
-      'Requirements: Keep it under 280 characters. Sound natural and human. No hashtag spam. Use 1-2 relevant emojis. No dashes or bullet points. Just the post text, nothing else.';
-
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
+    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
+        business_name: _bizProfile.name        || '',
+        description:   _bizProfile.description || '',
+        tone:          _bizProfile.tone        || 'friendly',
+        audience:      _bizProfile.audience    || '',
+        location:      _bizProfile.location    || '',
+        topic:         topic                   || ''
       })
     });
     var data = await res.json();
-    var text = data.content && data.content[0] ? data.content[0].text.trim() : '';
-    if(text) {
+    if(data.success && data.post) {
       var ta = document.getElementById('post-content');
-      if(ta) { ta.value = text; ta.dispatchEvent(new Event('input')); }
+      if(ta) { ta.value = data.post; ta.dispatchEvent(new Event('input')); }
       showToast('✨ AI post generated!', 'success');
+    } else {
+      showToast('AI generation failed. Please try again.', 'error');
     }
   } catch(e) {
     showToast('AI generation failed. Please try again.', 'error');
