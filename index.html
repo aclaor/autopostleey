@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Autopostleey — AI Social Media Autoposter for Small Businesses</title>
 <meta name="description" content="Stop writing social media posts. Autopostleey uses AI to write and post for your business automatically — Facebook, Instagram, LinkedIn, Discord, Telegram and Twitter/X.">
@@ -655,5 +655,19 @@ async function submitWaitlist() {
 
 function toggleFaq(el) { el.classList.toggle('open'); }
 </script>
+
+<!-- AUTH MODAL -->
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)hideAuth()">
+  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:36px;width:100%;max-width:420px;position:relative;">
+    <button onclick="hideAuth()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
+    <h3 id="auth-heading" style="font-size:22px;font-weight:800;margin-bottom:6px;color:#e8e8f0;">Create Account</h3>
+    <p id="auth-subhead" style="font-size:14px;color:#8888aa;margin-bottom:20px;">3-day full trial · No credit card · Cancel anytime</p>
+    <div id="auth-err-box" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:10px 14px;font-size:13px;color:#f87171;margin-bottom:12px;"></div>
+    <input id="auth-email-inp" type="email" placeholder="Email address" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px 14px;color:#e8e8f0;font-family:Inter,sans-serif;font-size:14px;margin-bottom:10px;outline:none;display:block;">
+    <input id="auth-pass-inp" type="password" placeholder="Password (min 6 characters)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px 14px;color:#e8e8f0;font-family:Inter,sans-serif;font-size:14px;margin-bottom:16px;outline:none;display:block;">
+    <button id="auth-submit-btn" onclick="handleAuth()" style="width:100%;padding:13px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:Inter,sans-serif;font-size:15px;font-weight:700;border:none;cursor:pointer;">START FREE TRIAL</button>
+    <p id="auth-footer-text" style="text-align:center;font-size:13px;color:#444466;margin-top:12px;"></p>
+  </div>
+</div>
 </body>
 </html>
