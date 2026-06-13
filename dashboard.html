@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Autopostleey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0a0a0f;
+    --bg2:     #111118;
+    --bg3:     #1a1a24;
+    --border:  #1e1e2e;
+    --border2: #2a2a3e;
+    --text:    #e8e8f0;
+    --text2:   #8888aa;
+    --text3:   #444466;
+    --accent:  #7c3aed;
+    --accent2: #a855f7;
+    --accent3: #c084fc;
+    --green:   #22c55e;
+    --red:     #ef4444;
+    --blue:    #3b82f6;
+    --orange:  #f97316;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Inter', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ─────────────────────── */
+  .topbar { height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
+  .logo { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+  .logo span { color: var(--accent2); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .user-pill { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 13px; color: var(--text2); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn-sm { background: none; border: 1px solid var(--border2); border-radius: 6px; padding: 6px 12px; color: var(--text2); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all .15s; }
+  .btn-sm:hover { border-color: var(--accent2); color: var(--accent3); }
+  .btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* ── LAYOUT ─────────────────────── */
+  .app-body { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 56px); }
+
+  /* ── SIDEBAR ────────────────────── */
+  .sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 0; flex-shrink: 0; overflow-y: auto; }
+  .sidebar-section { padding: 0 12px; margin-bottom: 20px; }
+  .sidebar-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; font-family: var(--mono); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500; transition: all .15s; text-decoration: none; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(124,58,237,0.15); color: var(--accent3); border: 1px solid rgba(124,58,237,0.2); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+  .plan-badge { background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.25); border-radius: 8px; padding: 10px 12px; }
+  .plan-badge-name { font-size: 11px; font-weight: 700; color: var(--accent3); font-family: var(--mono); }
+  .plan-badge-desc { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .upgrade-btn { display: block; width: 100%; margin-top: 8px; padding: 7px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 6px; font-family: var(--sans); font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; }
+
+  /* ── MAIN CONTENT ───────────────── */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── PAGE SECTIONS ──────────────── */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-sub { font-size: 14px; color: var(--text2); margin-top: 4px; }
+
+  /* ── STATS ROW ──────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* ── CARDS ──────────────────────── */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── POST ITEMS ─────────────────── */
+  .post-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .post-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .post-platforms { display: flex; gap: 4px; }
+  .platform-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .post-status-pill { font-size: 11px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
+  .status-scheduled { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .status-posted    { background: rgba(34,197,94,0.15);  color: #4ade80; }
+  .status-draft     { background: rgba(249,115,22,0.15); color: #fb923c; }
+  .status-failed    { background: rgba(239,68,68,0.15);  color: #f87171; }
+  .post-text { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+  .post-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); display: flex; gap: 16px; }
+  .post-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .post-btn { background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 4px 10px; font-size: 11px; color: var(--text2); cursor: pointer; }
+  .post-btn:hover { border-color: var(--accent2); color: var(--accent3); }
+  .post-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── COMPOSE FORM ───────────────── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; font-family: var(--mono); letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-input, .form-textarea, .form-select { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .15s; }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+  .form-select option { background: var(--bg2); }
+
+  /* ── PLATFORM CHECKBOXES ────────── */
+  .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .platform-check { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all .15s; user-select: none; }
+  .platform-check.selected { border-color: var(--accent); background: rgba(124,58,237,0.1); }
+  .platform-check input { display: none; }
+  .platform-dot-lg { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .platform-name { font-size: 13px; font-weight: 500; }
+
+  /* ── AI GENERATE ────────────────── */
+  .ai-btn { display: flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3); border-radius: 8px; padding: 10px 16px; color: var(--accent3); font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+  .ai-btn:hover { background: rgba(124,58,237,0.2); }
+  .ai-spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(168,85,247,0.3); border-top-color: var(--accent2); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── ONBOARDING ─────────────────── */
+  .onboard-steps { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .onboard-step { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); }
+  .onboard-step.done { color: var(--green); }
+  .onboard-step.current { color: var(--accent3); font-weight: 600; }
+  .step-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .onboard-arrow { color: var(--text3); font-size: 12px; }
+
+  /* ── CONNECTIONS ────────────────── */
+  .connection-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .connection-info { display: flex; align-items: center; gap: 12px; }
+  .connection-dot { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .connection-name { font-size: 14px; font-weight: 600; }
+  .connection-status { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .connect-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .connect-btn:hover { border-color: var(--accent2); color: var(--accent3); }
+  .connect-btn.connected { border-color: rgba(34,197,94,0.4); color: var(--green); background: rgba(34,197,94,0.08); }
+
+  /* ── EMPTY STATE ────────────────── */
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .empty-desc { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+
+  /* ── TOAST ──────────────────────── */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 9999; display: none; pointer-events: none; }
+
+  /* ── MODAL ──────────────────────── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-box { background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; position: relative; }
+  .modal-close-btn { position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--text3); font-size: 22px; cursor: pointer; }
+
+  /* ── RESPONSIVE ─────────────────── */
+  @media(max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="index.html" style="text-decoration:none;"><div class="logo">auto<span>postleey</span></div></a>
+  </div>
+  <div class="topbar-right">
+    <span class="user-pill" id="topbar-email">Loading...</span>
+    <button class="btn-sm" onclick="doSignOut()">Sign Out</button>
+  </div>
+</div>
+
+<!-- APP BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Main</div>
+      <a class="nav-item active" onclick="showPage('overview')" href="#">
+        <span class="nav-icon">📊</span> Overview
+      </a>
+      <a class="nav-item" onclick="showPage('compose')" href="#">
+        <span class="nav-icon">✏️</span> Compose
+      </a>
+      <a class="nav-item" onclick="showPage('scheduled')" href="#">
+        <span class="nav-icon">📅</span> Scheduled
+      </a>
+      <a class="nav-item" onclick="showPage('history')" href="#">
+        <span class="nav-icon">📜</span> History
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Settings</div>
+      <a class="nav-item" onclick="showPage('business')" href="#">
+        <span class="nav-icon">🏢</span> Business Profile
+      </a>
+      <a class="nav-item" onclick="showPage('connections')" href="#">
+        <span class="nav-icon">🔗</span> Connections
+      </a>
+      <a class="nav-item" onclick="showPage('billing')" href="#">
+        <span class="nav-icon">💳</span> Billing
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="plan-badge">
+        <div class="plan-badge-name" id="sidebar-plan">FREE PLAN</div>
+        <div class="plan-badge-desc" id="sidebar-plan-desc">10 posts/month</div>
+      </div>
+      <a href="#" class="upgrade-btn" onclick="showPage('billing');return false;">Upgrade Plan ⚡</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── OVERVIEW ───────────────── -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Good morning! 👋</div>
+          <div class="page-sub" id="overview-sub">Here's what's happening with your social media today.</div>
+        </div>
+        <button class="btn-accent" onclick="showPage('compose')">+ Create Post</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Posts This Month</div>
+          <div class="stat-val" id="stat-posts">0</div>
+          <div class="stat-sub">of <span id="stat-limit">10</span> allowed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Scheduled</div>
+          <div class="stat-val" id="stat-scheduled">0</div>
+          <div class="stat-sub">upcoming posts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Platforms</div>
+          <div class="stat-val" id="stat-platforms">0</div>
+          <div class="stat-sub">connected</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Posted</div>
+          <div class="stat-val" id="stat-posted">0</div>
+          <div class="stat-sub">all time</div>
+        </div>
+      </div>
+
+      <!-- Onboarding checklist -->
+      <div class="card" id="onboarding-card">
+        <div class="card-title">🚀 Get started</div>
+        <div id="onboarding-list">
+          <div class="post-item" id="ob-step1">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span id="ob1-icon">⬜</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">Set up your business profile</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Tell us about your business so AI can write posts for you</div>
+                </div>
+              </div>
+              <button class="post-btn" onclick="showPage('business')">Set up →</button>
+            </div>
+          </div>
+          <div class="post-item" id="ob-step2">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span id="ob2-icon">⬜</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">Connect a platform</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Link your Facebook, Instagram or other accounts</div>
+                </div>
+              </div>
+              <button class="post-btn" onclick="showPage('connections')">Connect →</button>
+            </div>
+          </div>
+          <div class="post-item" id="ob-step3">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span id="ob3-icon">⬜</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">Create your first post</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Write manually or let AI generate it for you</div>
+                </div>
+              </div>
+              <button class="post-btn" onclick="showPage('compose')">Create →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent posts -->
+      <div class="card">
+        <div class="card-title">📋 Recent Posts</div>
+        <div id="recent-posts-list">
+          <div class="empty-state">
+            <div class="empty-icon">✏️</div>
+            <div class="empty-title">No posts yet</div>
+            <div class="empty-desc">Create your first post to get started</div>
+            <button class="btn-accent" onclick="showPage('compose')">Create your first post →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPOSE ────────────────── -->
+    <div class="page" id="page-compose">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Create Post</div>
+          <div class="page-sub">Write manually, use AI Assist, or let AI do it all.</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+        <div>
+          <!-- Mode selector -->
+          <div class="card">
+            <div class="card-title">✍️ Post Content</div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <button class="post-btn active" id="mode-manual-btn" onclick="setComposeMode('manual')" style="background:rgba(124,58,237,0.12);border-color:var(--accent);color:var(--accent3);">✏️ Manual</button>
+              <button class="post-btn" id="mode-assist-btn" onclick="setComposeMode('assist')">✨ AI Assist</button>
+              <button class="post-btn" id="mode-auto-btn" onclick="setComposeMode('auto')">🤖 Full Auto</button>
+            </div>
+
+            <!-- AI generate button -->
+            <button class="ai-btn" id="ai-generate-btn" onclick="generateAIPost()" style="display:none;">
+              <span>✨</span>
+              <span id="ai-btn-text">Generate with AI</span>
+              <div class="ai-spinner" id="ai-spinner"></div>
+            </button>
+
+            <div class="form-group">
+              <label class="form-label">Post Text</label>
+              <textarea class="form-textarea" id="post-content" placeholder="Write your post here... or click 'Generate with AI' above"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Topic / Prompt (for AI)</label>
+              <input class="form-input" id="post-topic" placeholder="e.g. Weekend sale, new product launch, customer tip...">
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div class="card">
+            <div class="card-title">📅 Schedule</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Date</label>
+                <input class="form-input" id="post-date" type="date">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Time</label>
+                <input class="form-input" id="post-time" type="time" value="09:00">
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="post-btn" onclick="setPostNow()">Post Now</button>
+              <button class="post-btn" onclick="setBestTime()">⚡ Best Time</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right panel -->
+        <div>
+          <!-- Platforms -->
+          <div class="card">
+            <div class="card-title">🌐 Platforms</div>
+            <div class="platform-grid" id="platform-checkboxes">
+              <label class="platform-check" onclick="togglePlatform(this,'facebook')">
+                <input type="checkbox" value="facebook">
+                <span class="platform-dot-lg" style="background:#1877f2;"></span>
+                <span class="platform-name">Facebook</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'instagram')">
+                <input type="checkbox" value="instagram">
+                <span class="platform-dot-lg" style="background:#e1306c;"></span>
+                <span class="platform-name">Instagram</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'linkedin')">
+                <input type="checkbox" value="linkedin">
+                <span class="platform-dot-lg" style="background:#0077b5;"></span>
+                <span class="platform-name">LinkedIn</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'twitter')">
+                <input type="checkbox" value="twitter">
+                <span class="platform-dot-lg" style="background:#1da1f2;"></span>
+                <span class="platform-name">Twitter/X</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'discord')">
+                <input type="checkbox" value="discord">
+                <span class="platform-dot-lg" style="background:#5865f2;"></span>
+                <span class="platform-name">Discord</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'telegram')">
+                <input type="checkbox" value="telegram">
+                <span class="platform-dot-lg" style="background:#26a5e4;"></span>
+                <span class="platform-name">Telegram</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="card">
+            <div class="card-title">👁️ Preview</div>
+            <div id="post-preview" style="background:var(--bg3);border-radius:8px;padding:12px;font-size:13px;color:var(--text2);min-height:80px;line-height:1.6;">
+              Your post will appear here as you type...
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="char-count">0 characters</div>
+          </div>
+
+          <!-- Submit -->
+          <button id="submit-post-btn" onclick="submitPost()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
+            Schedule Post →
+          </button>
+          <button onclick="submitPost('draft')" style="width:100%;margin-top:8px;padding:10px;background:none;border:1px solid var(--border2);border-radius:8px;font-family:var(--sans);font-size:13px;color:var(--text2);cursor:pointer;">
+            Save as Draft
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCHEDULED ──────────────── -->
+    <div class="page" id="page-scheduled">
+      <div class="page-header">
+        <div class="page-title">Scheduled Posts</div>
+        <button class="btn-accent" onclick="showPage('compose')">+ New Post</button>
+      </div>
+      <div id="scheduled-list">
+        <div class="empty-state">
+          <div class="empty-icon">📅</div>
+          <div class="empty-title">No scheduled posts</div>
+          <div class="empty-desc">Create a post and schedule it for later</div>
+          <button class="btn-accent" onclick="showPage('compose')">Schedule a post →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY ────────────────── -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <div class="page-title">Post History</div>
+      </div>
+      <div id="history-list">
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          <div class="empty-title">No posts yet</div>
+          <div class="empty-desc">Posts that have been published will appear here</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BUSINESS PROFILE ───────── -->
+    <div class="page" id="page-business">
+      <div class="page-header">
+        <div class="page-title">Business Profile</div>
+        <div class="page-sub">This is how AI learns to write posts for your business</div>
+      </div>
+      <div class="card" style="max-width:640px;">
+        <div class="form-group">
+          <label class="form-label">Business Name</label>
+          <input class="form-input" id="biz-name" placeholder="e.g. Maria's Bakery">
+        </div>
+        <div class="form-group">
+          <label class="form-label">What does your business do?</label>
+          <textarea class="form-textarea" id="biz-desc" placeholder="e.g. We sell homemade cakes, cupcakes and pastries in Manila. We specialize in custom birthday cakes and corporate orders." style="min-height:90px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <select class="form-select" id="biz-industry">
+            <option value="">Select industry...</option>
+            <option value="food">Food & Beverage</option>
+            <option value="retail">Retail / E-commerce</option>
+            <option value="beauty">Beauty & Wellness</option>
+            <option value="fitness">Fitness & Health</option>
+            <option value="tech">Technology</option>
+            <option value="real_estate">Real Estate</option>
+            <option value="finance">Finance & Insurance</option>
+            <option value="education">Education</option>
+            <option value="travel">Travel & Tourism</option>
+            <option value="events">Events & Entertainment</option>
+            <option value="professional">Professional Services</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tone of Voice</label>
+          <select class="form-select" id="biz-tone">
+            <option value="friendly">Friendly & Casual</option>
+            <option value="professional">Professional & Formal</option>
+            <option value="fun">Fun & Playful</option>
+            <option value="inspiring">Inspiring & Motivational</option>
+            <option value="informative">Informative & Educational</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Audience</label>
+          <input class="form-input" id="biz-audience" placeholder="e.g. Working moms in their 30s, small business owners, fitness enthusiasts">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location (optional)</label>
+          <input class="form-input" id="biz-location" placeholder="e.g. Manila, Philippines">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Website (optional)</label>
+          <input class="form-input" id="biz-website" placeholder="https://yourbusiness.com">
+        </div>
+        <button onclick="saveBusinessProfile()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px 24px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;">
+          Save Business Profile ✓
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CONNECTIONS ────────────── -->
+    <div class="page" id="page-connections">
+      <div class="page-header">
+        <div class="page-title">Platform Connections</div>
+        <div class="page-sub">Connect your social media accounts to start posting</div>
+      </div>
+      <div style="max-width:560px;">
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(24,119,242,0.15);">📘</div>
+            <div>
+              <div class="connection-name">Facebook</div>
+              <div class="connection-status" id="fb-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="fb-btn" onclick="connectPlatform('facebook')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(225,48,108,0.15);">📷</div>
+            <div>
+              <div class="connection-name">Instagram</div>
+              <div class="connection-status" id="ig-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="ig-btn" onclick="connectPlatform('instagram')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(0,119,181,0.15);">💼</div>
+            <div>
+              <div class="connection-name">LinkedIn</div>
+              <div class="connection-status" id="li-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="li-btn" onclick="connectPlatform('linkedin')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(29,161,242,0.15);">🐦</div>
+            <div>
+              <div class="connection-name">Twitter / X</div>
+              <div class="connection-status" id="tw-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="tw-btn" onclick="connectPlatform('twitter')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(88,101,242,0.15);">💬</div>
+            <div>
+              <div class="connection-name">Discord</div>
+              <div class="connection-status" id="dc-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="dc-btn" onclick="connectPlatform('discord')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(38,165,228,0.15);">✈️</div>
+            <div>
+              <div class="connection-name">Telegram</div>
+              <div class="connection-status" id="tg-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="tg-btn" onclick="connectPlatform('telegram')">Connect</button>
+        </div>
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:14px;margin-top:8px;">
+          <div style="font-size:13px;color:#60a5fa;font-weight:600;margin-bottom:4px;">ℹ️ Coming soon</div>
+          <div style="font-size:13px;color:var(--text2);">Platform OAuth connections are being set up. Join the waitlist to be notified when your platform is ready.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BILLING ────────────────── -->
+    <div class="page" id="page-billing">
+      <div class="page-header">
+        <div class="page-title">Billing & Plan</div>
+      </div>
+      <div style="max-width:640px;">
+        <div class="card" style="border-color:var(--accent);">
+          <div class="card-title">⚡ Current Plan</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:24px;font-weight:800;" id="billing-plan-name">Free Plan</div>
+              <div style="font-size:14px;color:var(--text2);margin-top:4px;" id="billing-plan-desc">10 posts/month · Facebook only</div>
+            </div>
+            <div style="font-size:32px;font-weight:900;" id="billing-plan-price">$0<small style="font-size:14px;font-weight:400;color:var(--text2);">/mo</small></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:4px;">
+          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('starter')">
+            <div style="font-weight:700;margin-bottom:4px;">Starter — $9/mo</div>
+            <div style="font-size:13px;color:var(--text2);">60 posts · 3 platforms</div>
+            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+          </div>
+          <div class="card" style="cursor:pointer;border-color:var(--accent);" onclick="selectBillingPlan('growth')">
+            <div style="font-weight:700;margin-bottom:4px;">Growth — $19/mo ⚡</div>
+            <div style="font-size:13px;color:var(--text2);">Unlimited · All platforms</div>
+            <button style="margin-top:12px;width:100%;padding:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:6px;color:#fff;font-size:12px;cursor:pointer;font-weight:700;">Select →</button>
+          </div>
+          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('agency')">
+            <div style="font-weight:700;margin-bottom:4px;">Agency — $49/mo</div>
+            <div style="font-size:13px;color:var(--text2);">Unlimited · 5 businesses</div>
+            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL  = 'https://gkxpwqryakgzgvvprbkl.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I';
+const _db = window.supabase.createClient(SUPA_URL, SUPA_ANON);
+
+var _user = null;
+var _bizProfile = null;
+var _posts = [];
+var _composeMode = 'manual';
+var _selectedPlatforms = [];
+
+// ── AUTH GUARD ─────────────────────────────────────────────
+_db.auth.onAuthStateChange(function(event, session) {
+  if(!session) {
+    window.location.href = 'index.html';
+    return;
+  }
+  _user = session.user;
+  initDashboard();
+});
+
+async function initDashboard() {
+  // Update topbar email
+  var emailEl = document.getElementById('topbar-email');
+  if(emailEl) emailEl.textContent = _user.email;
+
+  // Load business profile
+  await loadBizProfile();
+
+  // Load posts
+  await loadPosts();
+
+  // Update stats
+  updateStats();
+
+  // Set today as default date
+  var dateEl = document.getElementById('post-date');
+  if(dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+
+  // Update greeting
+  var hour = new Date().getHours();
+  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  var titleEl = document.querySelector('#page-overview .page-title');
+  if(titleEl) titleEl.textContent = greeting + '! 👋';
+}
+
+async function doSignOut() {
+  await _db.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var page = document.getElementById('page-'+name);
+  if(page) page.classList.add('active');
+  var nav = document.querySelector('[onclick="showPage(\''+name+'\')"]');
+  if(nav) nav.classList.add('active');
+}
+
+// ── BUSINESS PROFILE ───────────────────────────────────────
+async function loadBizProfile() {
+  try {
+    var { data } = await _db.from('autopostleey_businesses')
+      .select('*').eq('user_id', _user.id).single();
+    if(data) {
+      _bizProfile = data;
+      document.getElementById('biz-name').value      = data.name      || '';
+      document.getElementById('biz-desc').value      = data.description || '';
+      document.getElementById('biz-industry').value  = data.industry  || '';
+      document.getElementById('biz-tone').value      = data.tone      || 'friendly';
+      document.getElementById('biz-audience').value  = data.audience  || '';
+      document.getElementById('biz-location').value  = data.location  || '';
+      document.getElementById('biz-website').value   = data.website   || '';
+      document.getElementById('ob1-icon').textContent = '✅';
+    }
+  } catch(e) { console.log('No biz profile yet'); }
+}
+
+async function saveBusinessProfile() {
+  var profile = {
+    user_id:     _user.id,
+    name:        document.getElementById('biz-name').value.trim(),
+    description: document.getElementById('biz-desc').value.trim(),
+    industry:    document.getElementById('biz-industry').value,
+    tone:        document.getElementById('biz-tone').value,
+    audience:    document.getElementById('biz-audience').value.trim(),
+    location:    document.getElementById('biz-location').value.trim(),
+    website:     document.getElementById('biz-website').value.trim(),
+    updated_at:  new Date().toISOString()
+  };
+  try {
+    var { error } = await _db.from('autopostleey_businesses').upsert([profile], { onConflict: 'user_id' });
+    if(error) throw error;
+    _bizProfile = profile;
+    document.getElementById('ob1-icon').textContent = '✅';
+    showToast('✅ Business profile saved!', 'success');
+  } catch(e) {
+    showToast('Error saving: ' + e.message, 'error');
+  }
+}
+
+// ── POSTS ──────────────────────────────────────────────────
+async function loadPosts() {
+  try {
+    var { data } = await _db.from('autopostleey_posts')
+      .select('*').eq('user_id', _user.id)
+      .order('created_at', { ascending: false }).limit(50);
+    _posts = data || [];
+    renderRecentPosts();
+    renderScheduled();
+    renderHistory();
+  } catch(e) { console.log('Posts load error:', e); }
+}
+
+function renderRecentPosts() {
+  var el = document.getElementById('recent-posts-list');
+  var recent = _posts.slice(0, 5);
+  if(!recent.length) return;
+  el.innerHTML = recent.map(function(p){ return renderPostItem(p); }).join('');
+}
+
+function renderScheduled() {
+  var el = document.getElementById('scheduled-list');
+  var sched = _posts.filter(function(p){ return p.status === 'scheduled'; });
+  if(!sched.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No scheduled posts</div><div class="empty-desc">Create a post and schedule it for later</div><button class="btn-accent" onclick="showPage(\'compose\')">Schedule a post →</button></div>'; return; }
+  el.innerHTML = sched.map(function(p){ return renderPostItem(p); }).join('');
+}
+
+function renderHistory() {
+  var el = document.getElementById('history-list');
+  var hist = _posts.filter(function(p){ return p.status === 'posted' || p.status === 'failed'; });
+  if(!hist.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div class="empty-title">No posts yet</div><div class="empty-desc">Posts that have been published will appear here</div></div>'; return; }
+  el.innerHTML = hist.map(function(p){ return renderPostItem(p); }).join('');
+}
+
+function renderPostItem(p) {
+  var statusClass = { scheduled:'status-scheduled', posted:'status-posted', draft:'status-draft', failed:'status-failed' }[p.status] || 'status-draft';
+  var statusText  = { scheduled:'⏰ Scheduled', posted:'✓ Posted', draft:'✎ Draft', failed:'✗ Failed' }[p.status] || p.status;
+  var platforms = (p.platforms||[]).map(function(pl){
+    var colors = { facebook:'#1877f2', instagram:'#e1306c', linkedin:'#0077b5', twitter:'#1da1f2', discord:'#5865f2', telegram:'#26a5e4' };
+    return '<span class="platform-dot" style="background:'+( colors[pl]||'#888')+';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;"></span>';
+  }).join('');
+  var timeStr = p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : new Date(p.created_at).toLocaleDateString();
+  return '<div class="post-item"><div class="post-item-header"><div class="post-platforms">'+platforms+'</div><span class="post-status-pill '+statusClass+'">'+statusText+'</span></div><div class="post-text">'+escHtml(p.content||'')+'</div><div class="post-meta"><span>'+timeStr+'</span></div><div class="post-actions"><button class="post-btn" onclick="editPost(\''+p.id+'\')">Edit</button><button class="post-btn danger" onclick="deletePost(\''+p.id+'\')">Delete</button></div></div>';
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function updateStats() {
+  var now = new Date();
+  var thisMonth = _posts.filter(function(p){
+    return new Date(p.created_at).getMonth() === now.getMonth();
+  });
+  document.getElementById('stat-posts').textContent     = thisMonth.length;
+  document.getElementById('stat-scheduled').textContent = _posts.filter(function(p){return p.status==='scheduled';}).length;
+  document.getElementById('stat-posted').textContent    = _posts.filter(function(p){return p.status==='posted';}).length;
+}
+
+// ── COMPOSE ────────────────────────────────────────────────
+function setComposeMode(mode) {
+  _composeMode = mode;
+  ['manual','assist','auto'].forEach(function(m){
+    var btn = document.getElementById('mode-'+m+'-btn');
+    if(btn){ btn.style.background = m===mode ? 'rgba(124,58,237,0.12)' : ''; btn.style.borderColor = m===mode ? 'var(--accent)' : ''; btn.style.color = m===mode ? 'var(--accent3)' : ''; }
+  });
+  var aiBtn = document.getElementById('ai-generate-btn');
+  if(aiBtn) aiBtn.style.display = (mode==='assist'||mode==='auto') ? 'flex' : 'none';
+}
+
+function togglePlatform(el, name) {
+  el.classList.toggle('selected');
+  var inp = el.querySelector('input');
+  if(inp) inp.checked = el.classList.contains('selected');
+  _selectedPlatforms = Array.from(document.querySelectorAll('.platform-check.selected input')).map(function(i){return i.value;});
+}
+
+// ── POST PREVIEW ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  var ta = document.getElementById('post-content');
+  if(ta){
+    ta.addEventListener('input', function(){
+      var preview = document.getElementById('post-preview');
+      var count   = document.getElementById('char-count');
+      if(preview) preview.textContent = ta.value || 'Your post will appear here as you type...';
+      if(count)   count.textContent   = ta.value.length + ' characters';
+    });
+  }
+});
+
+function setPostNow() {
+  var d = document.getElementById('post-date');
+  var t = document.getElementById('post-time');
+  if(d) d.value = new Date().toISOString().split('T')[0];
+  if(t) t.value = new Date().toTimeString().slice(0,5);
+}
+
+function setBestTime() {
+  // Best times: 9am, 12pm, 6pm
+  var best = ['09:00','12:00','18:00'];
+  var t = document.getElementById('post-time');
+  if(t) t.value = best[Math.floor(Math.random()*best.length)];
+  showToast('⚡ Best posting time set!', 'success');
+}
+
+// ── AI POST GENERATOR ───────────────────────────────────────
+async function generateAIPost() {
+  if(!_bizProfile || !_bizProfile.name) {
+    showToast('Please set up your business profile first!', 'error');
+    showPage('business');
+    return;
+  }
+  var topic = document.getElementById('post-topic').value.trim();
+  var btn   = document.getElementById('ai-generate-btn');
+  var txt   = document.getElementById('ai-btn-text');
+  var spin  = document.getElementById('ai-spinner');
+  if(txt)  txt.textContent  = 'Generating...';
+  if(spin) spin.style.display = 'block';
+  if(btn)  btn.disabled = true;
+
+  try {
+    var prompt = 'Write a social media post for a business called "'+_bizProfile.name+'". '+
+      'What they do: '+(_bizProfile.description||'a small business')+'. '+
+      'Tone: '+(_bizProfile.tone||'friendly')+'. '+
+      'Target audience: '+(_bizProfile.audience||'general public')+'. '+
+      (topic ? 'Topic for this post: '+topic+'. ' : '')+
+      'Requirements: Keep it under 280 characters. Sound natural and human. No hashtag spam. Use 1-2 relevant emojis. No dashes or bullet points. Just the post text, nothing else.';
+
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await res.json();
+    var text = data.content && data.content[0] ? data.content[0].text.trim() : '';
+    if(text) {
+      var ta = document.getElementById('post-content');
+      if(ta) { ta.value = text; ta.dispatchEvent(new Event('input')); }
+      showToast('✨ AI post generated!', 'success');
+    }
+  } catch(e) {
+    showToast('AI generation failed. Please try again.', 'error');
+    console.error(e);
+  } finally {
+    if(txt)  txt.textContent    = 'Generate with AI';
+    if(spin) spin.style.display = 'none';
+    if(btn)  btn.disabled       = false;
+  }
+}
+
+// ── SUBMIT POST ─────────────────────────────────────────────
+async function submitPost(status) {
+  var content = document.getElementById('post-content').value.trim();
+  if(!content) { showToast('Please write your post content first!', 'error'); return; }
+  if(!_selectedPlatforms.length) { showToast('Please select at least one platform!', 'error'); return; }
+
+  status = status || 'scheduled';
+  var dateVal = document.getElementById('post-date').value;
+  var timeVal = document.getElementById('post-time').value;
+  var scheduledAt = dateVal && timeVal ? new Date(dateVal+'T'+timeVal).toISOString() : new Date().toISOString();
+
+  var btn = document.getElementById('submit-post-btn');
+  if(btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
+  try {
+    var { error } = await _db.from('autopostleey_posts').insert([{
+      user_id:      _user.id,
+      content:      content,
+      platforms:    _selectedPlatforms,
+      status:       status,
+      scheduled_at: scheduledAt,
+      mode:         _composeMode,
+      created_at:   new Date().toISOString()
+    }]);
+    if(error) throw error;
+
+    showToast(status==='draft' ? '✅ Draft saved!' : '✅ Post scheduled!', 'success');
+    document.getElementById('post-content').value = '';
+    document.getElementById('post-topic').value = '';
+    document.querySelectorAll('.platform-check').forEach(function(el){ el.classList.remove('selected'); el.querySelector('input').checked = false; });
+    _selectedPlatforms = [];
+    await loadPosts();
+    updateStats();
+    document.getElementById('ob3-icon').textContent = '✅';
+    if(status !== 'draft') showPage('scheduled');
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    if(btn) { btn.textContent = 'Schedule Post →'; btn.disabled = false; }
+  }
+}
+
+async function deletePost(id) {
+  if(!confirm('Delete this post?')) return;
+  await _db.from('autopostleey_posts').delete().eq('id', id);
+  _posts = _posts.filter(function(p){ return p.id !== id; });
+  renderRecentPosts(); renderScheduled(); renderHistory(); updateStats();
+  showToast('Post deleted.', 'success');
+}
+
+function editPost(id) {
+  var p = _posts.find(function(x){ return x.id === id; });
+  if(!p) return;
+  document.getElementById('post-content').value = p.content || '';
+  (p.platforms||[]).forEach(function(pl){
+    var label = document.querySelector('.platform-check input[value="'+pl+'"]');
+    if(label) { label.parentElement.classList.add('selected'); label.checked = true; }
+  });
+  _selectedPlatforms = p.platforms || [];
+  showPage('compose');
+}
+
+// ── CONNECTIONS ─────────────────────────────────────────────
+function connectPlatform(name) {
+  showToast('Platform connections coming soon! Join the waitlist for early access.', 'success');
+}
+
+// ── BILLING ─────────────────────────────────────────────────
+function selectBillingPlan(plan) {
+  var plans = {
+    starter: { name: 'Starter Plan', desc: '60 posts/month · 3 platforms', price: '$9' },
+    growth:  { name: 'Growth Plan',  desc: 'Unlimited posts · All platforms', price: '$19' },
+    agency:  { name: 'Agency Plan',  desc: 'Unlimited · 5 businesses', price: '$49' },
+  };
+  var p = plans[plan];
+  if(!p) return;
+  showToast('Redirecting to payment...', 'success');
+  // TODO: PayPal integration
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+  t.style.color = '#fff';
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display = 'none'; }, 3000);
+}
+</script>
+</body>
+</html>
