@@ -221,6 +221,9 @@
         <div>
           <div class="page-title">Good morning! 👋</div>
           <div class="page-sub" id="overview-sub">Here's what's happening with your social media today.</div>
+        <div id="trial-banner" style="display:none;margin-top:8px;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:8px 14px;font-size:13px;color:#c084fc;">
+          ⏰ <span id="trial-text">Free trial active</span> · <a href="#" onclick="showPage('billing');return false;" style="color:#a855f7;font-weight:700;">Upgrade now →</a>
+        </div>
         </div>
         <button class="btn-accent" onclick="showPage('compose')">+ Create Post</button>
       </div>
@@ -665,6 +668,21 @@ async function initDashboard() {
   // Update stats
   updateStats();
 
+  // Show trial countdown
+  var meta = _user.user_metadata || {};
+  var plan = meta.plan || 'free';
+  updatePlanUI(plan);
+  if(plan === 'free') {
+    var trialEnd = meta.trial_end ? new Date(meta.trial_end) : new Date(Date.now() + 3*24*60*60*1000);
+    var daysLeft = Math.max(0, Math.ceil((trialEnd - new Date()) / (24*60*60*1000)));
+    var banner = document.getElementById('trial-banner');
+    var trialText = document.getElementById('trial-text');
+    if(banner && daysLeft > 0) {
+      banner.style.display = 'block';
+      if(trialText) trialText.textContent = daysLeft + ' day' + (daysLeft===1?'':'s') + ' left in your free trial';
+    }
+  }
+
   // Set today as default date
   var dateEl = document.getElementById('post-date');
   if(dateEl) dateEl.value = new Date().toISOString().split('T')[0];
@@ -954,16 +972,85 @@ function connectPlatform(name) {
 }
 
 // ── BILLING ─────────────────────────────────────────────────
+var _selectedPlan = 'free';
+
 function selectBillingPlan(plan) {
+  _selectedPlan = plan;
   var plans = {
-    starter: { name: 'Starter Plan', desc: '60 posts/month · 3 platforms', price: '$9' },
-    growth:  { name: 'Growth Plan',  desc: 'Unlimited posts · All platforms', price: '$19' },
-    agency:  { name: 'Agency Plan',  desc: 'Unlimited · 5 businesses', price: '$49' },
+    starter: { name: 'Starter Plan', price: '9.00',  desc: 'Autopostleey Starter - Monthly' },
+    growth:  { name: 'Growth Plan',  price: '19.00', desc: 'Autopostleey Growth - Monthly'  },
+    agency:  { name: 'Agency Plan',  price: '49.00', desc: 'Autopostleey Agency - Monthly'  },
   };
   var p = plans[plan];
   if(!p) return;
-  showToast('Redirecting to payment...', 'success');
-  // TODO: PayPal integration
+
+  // Show PayPal button modal
+  var overlay = document.getElementById('paypal-modal');
+  var planName = document.getElementById('paypal-plan-name');
+  var planPrice = document.getElementById('paypal-plan-price');
+  if(planName)  planName.textContent  = p.name + ' — $' + p.price + '/mo';
+  if(planPrice) planPrice.textContent = '$' + p.price + '/month';
+  if(overlay)   overlay.style.display = 'flex';
+
+  // Render PayPal button
+  var container = document.getElementById('paypal-btn-container');
+  if(container) container.innerHTML = '';
+
+  // Use backend PayPal (same as Investleey/Zeus)
+  var container = document.getElementById('paypal-btn-container');
+  if(container) {
+    container.innerHTML = '<button onclick="startPayPalCheckout(\''+plan+'\',\''+p.price+'\',\''+p.desc+'\')" style="width:100%;padding:14px;background:#ffc439;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;color:#000;">💳 Pay with PayPal</button><div style=\"margin-top:8px;\"><button onclick="startPayPalCheckout(\''+plan+'\',\''+p.price+'\',\''+p.desc+'\')" style=\"width:100%;padding:12px;background:#0070ba;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:#fff;\">💳 Pay with Card (no PayPal account needed)</button></div>';
+  }
+}
+
+async function startPayPalCheckout(plan, amount, desc) {
+  try {
+    showToast('Connecting to PayPal...', 'success');
+    var session = await _db.auth.getSession();
+    var token = session.data.session ? session.data.session.access_token : '';
+    var r = await fetch('https://stockvision-production-ae61.up.railway.app/paypal/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+      body: JSON.stringify({ user_id: _user.id, email: _user.email, plan: plan, amount: amount, description: desc })
+    });
+    var d = await r.json();
+    if(d.approve_url) {
+      // Store plan so we can update after return
+      localStorage.setItem('ap_pending_plan', plan);
+      window.location.href = d.approve_url;
+    } else {
+      showToast('PayPal error. Please try again.', 'error');
+    }
+  } catch(e) {
+    showToast('Connection error. Please try again.', 'error');
+    console.error(e);
+  }
+}
+
+// Handle PayPal return
+window.addEventListener('DOMContentLoaded', function() {
+  var params = new URLSearchParams(window.location.search);
+  if(params.get('payment') === 'success') {
+    var pending = localStorage.getItem('ap_pending_plan');
+    if(pending) {
+      _db.auth.updateUser({ data: { plan: pending } }).then(function() {
+        localStorage.removeItem('ap_pending_plan');
+        showToast('🎉 Plan upgraded successfully!', 'success');
+        updatePlanUI(pending);
+      });
+    }
+  }
+});
+
+function updatePlanUI(plan) {
+  var limits = { free: '10 posts/month', starter: '60 posts/month', growth: 'Unlimited posts', agency: 'Unlimited posts' };
+  var names  = { free: 'FREE PLAN', starter: 'STARTER PLAN', growth: 'GROWTH PLAN', agency: 'AGENCY PLAN' };
+  var el1 = document.getElementById('sidebar-plan');
+  var el2 = document.getElementById('sidebar-plan-desc');
+  if(el1) el1.textContent = names[plan]  || 'FREE PLAN';
+  if(el2) el2.textContent = limits[plan] || '10 posts/month';
+  var limitEl = document.getElementById('stat-limit');
+  if(limitEl) limitEl.textContent = plan==='free' ? '10' : plan==='starter' ? '60' : '∞';
 }
 
 // ── TOAST ───────────────────────────────────────────────────
@@ -977,5 +1064,17 @@ function showToast(msg, type) {
   setTimeout(function(){ t.style.display = 'none'; }, 3000);
 }
 </script>
+
+<!-- PAYPAL MODAL -->
+<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:400px;position:relative;">
+    <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
+    <div style="font-size:18px;font-weight:800;color:#e8e8f0;margin-bottom:4px;" id="paypal-plan-name">Upgrade Plan</div>
+    <div style="font-size:14px;color:#8888aa;margin-bottom:20px;" id="paypal-plan-price"></div>
+    <div id="paypal-btn-container"></div>
+    <p style="text-align:center;font-size:12px;color:#444466;margin-top:12px;">🔒 Secured by PayPal · Cancel anytime</p>
+  </div>
+</div>
+
 </body>
 </html>
