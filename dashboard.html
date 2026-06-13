@@ -1074,10 +1074,12 @@ function connectPlatform(name) {
   var modal = document.getElementById('conn-modal');
   var title = document.getElementById('conn-modal-title');
   var body  = document.getElementById('conn-modal-body');
-  if(!modal || !title || !body) return;
+  if(!modal) { showToast('Modal not found', 'error'); return; }
+  if(!title || !body) { showToast('Modal elements missing', 'error'); return; }
   title.textContent = 'Connect ' + name.charAt(0).toUpperCase() + name.slice(1);
   body.innerHTML = getConnectionForm(name);
-  modal.style.display = 'flex';
+  modal.removeAttribute('style');
+  modal.style.cssText = 'display:flex!important;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:24px;';
 }
 
 
@@ -1203,7 +1205,7 @@ function showToast(msg, type) {
 </script>
 
 <!-- PAYPAL MODAL -->
-<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
+<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this){this.style.cssText='display:none';}">
   <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:400px;position:relative;">
     <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
     <div style="font-size:18px;font-weight:800;color:#e8e8f0;margin-bottom:4px;" id="paypal-plan-name">Upgrade Plan</div>
@@ -1217,7 +1219,7 @@ function showToast(msg, type) {
 <!-- CONNECTION MODAL -->
 <div id="conn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
   <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:460px;position:relative;">
-    <button onclick="document.getElementById('conn-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
+    <button onclick="var m=document.getElementById('conn-modal');m.style.cssText='display:none';" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
     <div id="conn-modal-title" style="font-size:20px;font-weight:800;color:#e8e8f0;margin-bottom:20px;"></div>
     <div id="conn-modal-body"></div>
   </div>
