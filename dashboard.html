@@ -659,17 +659,17 @@ async function initDashboard() {
   var emailEl = document.getElementById('topbar-email');
   if(emailEl) emailEl.textContent = _user.email;
 
-  // Load business profile
-  await loadBizProfile();
+  // Load business profile (non-blocking)
+  loadBizProfile().catch(function(e){ console.log('biz profile:', e); });
 
-  // Load posts
-  await loadPosts();
+  // Load posts (non-blocking)
+  loadPosts().catch(function(e){ console.log('posts:', e); });
 
   // Update stats
   updateStats();
 
-  // Load platform connections
-  await loadConnections();
+  // Load platform connections (non-blocking - don't block UI)
+  loadConnections().catch(function(e){ console.log('connections:', e); });
 
   // Show trial countdown
   var meta = _user.user_metadata || {};
@@ -1164,6 +1164,7 @@ async function startPayPalCheckout(plan, amount, desc) {
 
 // Handle PayPal return
 window.addEventListener('DOMContentLoaded', function() {
+  try {
   var params = new URLSearchParams(window.location.search);
   if(params.get('payment') === 'success') {
     var pending = localStorage.getItem('ap_pending_plan');
@@ -1175,6 +1176,7 @@ window.addEventListener('DOMContentLoaded', function() {
       });
     }
   }
+  } catch(e) { console.log('DOMContentLoaded error:', e); }
 });
 
 function updatePlanUI(plan) {
