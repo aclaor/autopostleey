@@ -6,6 +6,7 @@
 <title>Autopostleey — AI Social Media Autoposter for Small Businesses</title>
 <meta name="description" content="Stop writing social media posts. Autopostleey uses AI to write and post for your business automatically — Facebook, Instagram, LinkedIn, Discord, Telegram and Twitter/X.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -502,26 +503,42 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// ── SUPABASE ──────────────────────────────────────────────
+const _supa = window.supabase.createClient(
+  'https://gkxpwqryakgzgvvprbkl.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I'
+);
+
 function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+function toggleFaq(el){ el.classList.toggle('open'); }
 
-function toggleFaq(el){
-  el.classList.toggle('open');
-}
-
-function submitWaitlist(){
+async function submitWaitlist(){
   var name  = document.getElementById('modal-name').value.trim();
   var email = document.getElementById('modal-email').value.trim();
   var biz   = document.getElementById('modal-business').value.trim();
   if(!email){ alert('Please enter your email!'); return; }
-  // TODO: connect to Supabase email_leads table
+
   var btn = document.querySelector('.modal-submit');
-  btn.textContent = '✓ You\'re on the list!';
-  btn.style.background = 'var(--green)';
+  btn.textContent = 'Joining...';
   btn.disabled = true;
+
+  try {
+    var { error } = await _supa.from('autopostleey_waitlist').insert([{
+      name:          name  || null,
+      email:         email,
+      business_name: biz   || null,
+      source:        'landing_page',
+      created_at:    new Date().toISOString()
+    }]);
+    if(error && error.code !== '23505') console.error('Supabase error:', error);
+  } catch(e) { console.error(e); }
+
+  btn.textContent = '\u2713 You\'re on the list!';
+  btn.style.background = '#22c55e';
   setTimeout(closeModal, 2000);
-  console.log('Waitlist signup:', {name, email, biz});
 }
 </script>
 </body>
