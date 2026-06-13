@@ -1008,7 +1008,7 @@ async function startPayPalCheckout(plan, amount, desc) {
     showToast('Connecting to PayPal...', 'success');
     var session = await _db.auth.getSession();
     var token = session.data.session ? session.data.session.access_token : '';
-    var r = await fetch('https://stockvision-production-ae61.up.railway.app/paypal/create-order', {
+    var r = await fetch('https://autopostleey-api-production.up.railway.app/paypal/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
       body: JSON.stringify({ user_id: _user.id, email: _user.email, plan: plan, amount: amount, description: desc })
