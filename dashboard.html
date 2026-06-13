@@ -178,28 +178,28 @@
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-label">Main</div>
-      <a class="nav-item active" onclick="showPage('overview')" href="#">
+      <a class="nav-item active" onclick="showPage('overview');return false;" href="#">
         <span class="nav-icon">📊</span> Overview
       </a>
-      <a class="nav-item" onclick="showPage('compose')" href="#">
+      <a class="nav-item" onclick="showPage('compose');return false;" href="#">
         <span class="nav-icon">✏️</span> Compose
       </a>
-      <a class="nav-item" onclick="showPage('scheduled')" href="#">
+      <a class="nav-item" onclick="showPage('scheduled');return false;" href="#">
         <span class="nav-icon">📅</span> Scheduled
       </a>
-      <a class="nav-item" onclick="showPage('history')" href="#">
+      <a class="nav-item" onclick="showPage('history');return false;" href="#">
         <span class="nav-icon">📜</span> History
       </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Settings</div>
-      <a class="nav-item" onclick="showPage('business')" href="#">
+      <a class="nav-item" onclick="showPage('business');return false;" href="#">
         <span class="nav-icon">🏢</span> Business Profile
       </a>
-      <a class="nav-item" onclick="showPage('connections')" href="#">
+      <a class="nav-item" onclick="showPage('connections');return false;" href="#">
         <span class="nav-icon">🔗</span> Connections
       </a>
-      <a class="nav-item" onclick="showPage('billing')" href="#">
+      <a class="nav-item" onclick="showPage('billing');return false;" href="#">
         <span class="nav-icon">💳</span> Billing
       </a>
     </div>
@@ -208,7 +208,7 @@
         <div class="plan-badge-name" id="sidebar-plan">FREE PLAN</div>
         <div class="plan-badge-desc" id="sidebar-plan-desc">10 posts/month</div>
       </div>
-      <a href="#" class="upgrade-btn" onclick="showPage('billing');return false;">Upgrade Plan ⚡</a>
+      <a href="#" onclick="showPage('billing');return false;" class="upgrade-btn">Upgrade Plan ⚡</a>
     </div>
   </aside>
 
@@ -687,8 +687,12 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var page = document.getElementById('page-'+name);
   if(page) page.classList.add('active');
-  var nav = document.querySelector('[onclick="showPage(\''+name+'\')"]');
-  if(nav) nav.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    var oc = n.getAttribute('onclick')||'';
+    if(oc.indexOf("'"+name+"'") > -1) n.classList.add('active');
+  });
+  var main = document.querySelector('.main');
+  if(main) main.scrollTop = 0;
 }
 
 // ── BUSINESS PROFILE ───────────────────────────────────────
