@@ -1011,10 +1011,15 @@ async function loadConnections() {
 }
 
 function updateConnectionsUI() {
-  var platforms = ['facebook','instagram','linkedin','twitter','discord','telegram'];
-  platforms.forEach(function(p) {
-    var statusEl = document.getElementById(p+'-status');
-    var btnEl    = document.getElementById(p+'-btn');
+  // Map platform name to HTML element ID prefix
+  var idMap = {
+    facebook: 'fb', instagram: 'ig', linkedin: 'li',
+    twitter: 'tw', discord: 'dc', telegram: 'tg'
+  };
+  Object.keys(idMap).forEach(function(p) {
+    var prefix   = idMap[p];
+    var statusEl = document.getElementById(prefix+'-status');
+    var btnEl    = document.getElementById(prefix+'-btn');
     if(_connections[p]) {
       if(statusEl) statusEl.textContent = '✅ Connected' + (_connections[p].page_name ? ' — '+_connections[p].page_name : '');
       if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); }
@@ -1023,6 +1028,10 @@ function updateConnectionsUI() {
       if(btnEl)  { btnEl.textContent = 'Connect'; btnEl.classList.remove('connected'); }
     }
   });
+  // Update stats
+  var platformCount = Object.keys(_connections).length;
+  var statEl = document.getElementById('stat-platforms');
+  if(statEl) statEl.textContent = platformCount;
 }
 
 function getConnectionForm(name) {
