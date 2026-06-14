@@ -775,6 +775,12 @@ _db.auth.onAuthStateChange(function(event, session) {
     return;
   }
   _user = session.user;
+  // Redirect new users to onboarding
+  var meta = _user.user_metadata || {};
+  if(!meta.onboarding_done) {
+    window.location.href = 'onboarding.html';
+    return;
+  }
   initDashboard();
 });
 
