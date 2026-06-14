@@ -190,6 +190,9 @@
       <a class="nav-item" onclick="showPage('history');return false;" href="#">
         <span class="nav-icon">📜</span> History
       </a>
+      <a class="nav-item" onclick="showPage('calendar');return false;" href="#">
+        <span class="nav-icon">🗓️</span> Calendar
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Settings</div>
@@ -626,6 +629,32 @@
       </div>
     </div>
 
+
+    <!-- ── CALENDAR ───────────────── -->
+    <div class="page" id="page-calendar">
+      <div class="page-header">
+        <div class="page-title">Content Calendar</div>
+        <button class="btn-accent" onclick="showPage('compose')">+ New Post</button>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <button onclick="changeCalMonth(-1)" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);cursor:pointer;">← Prev</button>
+          <div id="cal-month-label" style="font-size:16px;font-weight:700;"></div>
+          <button onclick="changeCalMonth(1)" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);cursor:pointer;">Next →</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;">
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">SUN</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">MON</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">TUE</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">WED</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">THU</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">FRI</div>
+          <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">SAT</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -824,6 +853,23 @@ function setComposeMode(mode) {
   });
   var aiBtn = document.getElementById('ai-generate-btn');
   if(aiBtn) aiBtn.style.display = (mode==='assist'||mode==='auto') ? 'flex' : 'none';
+
+  // Full Auto — automatically generate post and select all connected platforms
+  if(mode === 'auto') {
+    // Select all connected platforms
+    document.querySelectorAll('.platform-check').forEach(function(el) {
+      var platform = el.querySelector('input') ? el.querySelector('input').value : '';
+      if(_connections[platform]) {
+        el.classList.add('selected');
+        var inp = el.querySelector('input');
+        if(inp) inp.checked = true;
+      }
+    });
+    _selectedPlatforms = Object.keys(_connections);
+    // Auto-generate post
+    setTimeout(function(){ generateAIPost(); }, 300);
+    showToast('🤖 Full Auto — generating post for all connected platforms!', 'success');
+  }
 }
 
 function togglePlatform(el, name) {
@@ -1239,6 +1285,58 @@ function showToast(msg, type) {
   t.style.display = 'block';
   setTimeout(function(){ t.style.display = 'none'; }, 3000);
 }
+
+// ── CONTENT CALENDAR ──────────────────────────────────────
+var _calDate = new Date();
+
+function renderCalendar() {
+  var year  = _calDate.getFullYear();
+  var month = _calDate.getMonth();
+  var label = document.getElementById('cal-month-label');
+  var grid  = document.getElementById('cal-grid');
+  if(!label || !grid) return;
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = months[month] + ' ' + year;
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month+1, 0).getDate();
+  var today = new Date();
+  var html = '';
+  for(var i=0; i<firstDay; i++) {
+    html += '<div style="min-height:70px;background:var(--bg3);border-radius:6px;opacity:0.3;"></div>';
+  }
+  for(var d=1; d<=daysInMonth; d++) {
+    var dateStr = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isToday = d===today.getDate() && month===today.getMonth() && year===today.getFullYear();
+    var dayPosts = _posts.filter(function(p) {
+      if(!p.scheduled_at) return false;
+      var pd = new Date(p.scheduled_at);
+      return pd.getFullYear()===year && pd.getMonth()===month && pd.getDate()===d;
+    });
+    var dots = dayPosts.map(function(p) {
+      var colors = {scheduled:'#3b82f6',posted:'#22c55e',draft:'#f97316',failed:'#ef4444'};
+      return '<div style="width:6px;height:6px;border-radius:50%;background:'+(colors[p.status]||'#888')+';margin:1px auto;"></div>';
+    }).join('');
+    html += '<div onclick="calDayClick(\'' + dateStr + '\')" style="min-height:70px;background:'+(isToday?'rgba(124,58,237,0.15)':'var(--bg3)')+';border:1px solid '+(isToday?'var(--accent)':'var(--border)')+';border-radius:6px;padding:6px;cursor:pointer;">'+
+      '<div style="font-size:12px;font-weight:'+(isToday?'700':'500')+';color:'+(isToday?'var(--accent3)':'var(--text2)')+';">'+d+'</div>'+
+      '<div style="margin-top:4px;">'+dots+'</div>'+
+      (dayPosts.length ? '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+dayPosts.length+' post'+(dayPosts.length>1?'s':'')+'</div>' : '')+
+    '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function changeCalMonth(dir) {
+  _calDate.setMonth(_calDate.getMonth() + dir);
+  renderCalendar();
+}
+
+function calDayClick(dateStr) {
+  var dateEl = document.getElementById('post-date');
+  if(dateEl) dateEl.value = dateStr;
+  showPage('compose');
+  showToast('Date set to ' + dateStr, 'success');
+}
+
 </script>
 
 <!-- PAYPAL MODAL -->
