@@ -414,16 +414,198 @@
             </div>
           </div>
 
-          <!-- Preview -->
+          <!-- Post type tabs -->
+          <div class="card">
+            <div class="card-title">📱 Post Type</div>
+            <div style="display:flex;gap:6px;margin-bottom:0;">
+              <button class="post-btn active" id="ptype-post" onclick="setPostType('post')" style="background:rgba(124,58,237,0.12);border-color:var(--accent);color:var(--accent3);flex:1;">📝 Post</button>
+              <button class="post-btn" id="ptype-reel" onclick="setPostType('reel')" style="flex:1;">🎬 Reel</button>
+              <button class="post-btn" id="ptype-story" onclick="setPostType('story')" style="flex:1;">📖 Story</button>
+            </div>
+          </div>
+
+          <!-- File upload -->
+          <div class="card">
+            <div class="card-title">🖼️ Media</div>
+            <div id="upload-zone" onclick="document.getElementById('file-input').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
+              <div style="font-size:24px;margin-bottom:8px;">📁</div>
+              <div style="font-size:13px;color:var(--text2);">Drag & drop or click to select</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">Images, videos supported</div>
+            </div>
+            <input id="file-input" type="file" accept="image/*,video/*" style="display:none;" onchange="handleFileUpload(this)">
+            <div id="file-preview" style="margin-top:10px;display:none;">
+              <img id="file-preview-img" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+                <span id="file-name" style="font-size:12px;color:var(--text2);"></span>
+                <button onclick="clearFile()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;">✕ Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Preview -->
           <div class="card">
             <div class="card-title">👁️ Preview</div>
-            <div id="post-preview" style="background:var(--bg3);border-radius:8px;padding:12px;font-size:13px;color:var(--text2);min-height:80px;line-height:1.6;">
-              Your post will appear here as you type...
+            <!-- Platform preview tabs -->
+            <div style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;" id="preview-tabs"></div>
+            <!-- Preview frame -->
+            <div id="post-preview-frame" style="background:#fff;border-radius:10px;padding:14px;min-height:100px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <div style="width:36px;height:36px;border-radius:50%;background:#e0e0e0;flex-shrink:0;"></div>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#000;" id="preview-name">Your Business</div>
+                  <div style="font-size:11px;color:#666;">Just now · 🌐</div>
+                </div>
+              </div>
+              <div id="post-preview" style="font-size:14px;color:#1c1e21;line-height:1.5;word-break:break-word;">
+                Your post will appear here as you type...
+              </div>
+              <div id="preview-img-container" style="display:none;margin-top:10px;">
+                <img id="preview-img" style="width:100%;border-radius:8px;max-height:300px;object-fit:cover;">
+              </div>
+              <div style="display:flex;gap:16px;margin-top:12px;padding-top:10px;border-top:1px solid #e4e6ea;">
+                <span style="font-size:13px;color:#65676b;">👍 Like</span>
+                <span style="font-size:13px;color:#65676b;">💬 Comment</span>
+                <span style="font-size:13px;color:#65676b;">↗️ Share</span>
+              </div>
             </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="char-count">0 characters</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px;display:flex;justify-content:space-between;">
+              <span id="char-count">0 characters</span>
+              <span id="char-limit"></span>
+            </div>
           </div>
 
           <!-- Submit -->
+          <!-- Facebook options (shown when Facebook selected) -->
+          <div id="fb-options" style="display:none;" class="card" style="margin-bottom:12px;">
+            <div class="card-title" style="font-size:13px;">📘 Facebook Options</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Feeling / Activity</label>
+                <select class="form-select" id="fb-feeling">
+                  <option value="">None</option>
+                  <option value="😊 feeling happy">😊 Feeling happy</option>
+                  <option value="🎉 feeling excited">🎉 Feeling excited</option>
+                  <option value="🙏 feeling grateful">🙏 Feeling grateful</option>
+                  <option value="💪 feeling motivated">💪 Feeling motivated</option>
+                  <option value="🎂 celebrating">🎂 Celebrating</option>
+                  <option value="📣 announcing">📣 Announcing</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Post Type</label>
+                <select class="form-select" id="fb-post-type">
+                  <option value="text">Text only</option>
+                  <option value="link">Link post</option>
+                  <option value="photo">Photo post</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+              <label class="form-label">Link URL (optional)</label>
+              <input class="form-input" id="fb-link" placeholder="https://yourwebsite.com">
+            </div>
+          </div>
+
+          <!-- YouTube options -->
+          <div id="yt-options" style="display:none;" class="card">
+            <div class="card-title" style="font-size:13px;">📺 YouTube Options</div>
+            <div class="form-group">
+              <label class="form-label">Video Title</label>
+              <input class="form-input" id="yt-title" placeholder="Enter video title...">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="yt-category">
+                  <option value="22">People & Blogs</option>
+                  <option value="28">Science & Technology</option>
+                  <option value="26">Howto & Style</option>
+                  <option value="24">Entertainment</option>
+                  <option value="27">Education</option>
+                  <option value="19">Travel & Events</option>
+                  <option value="17">Sports</option>
+                  <option value="1">Film & Animation</option>
+                  <option value="10">Music</option>
+                  <option value="25">News & Politics</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Visibility</label>
+                <select class="form-select" id="yt-visibility">
+                  <option value="public">Public</option>
+                  <option value="unlisted">Unlisted</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">License</label>
+                <select class="form-select" id="yt-license">
+                  <option value="youtube">Standard YouTube</option>
+                  <option value="creativeCommon">Creative Commons</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Type</label>
+                <select class="form-select" id="yt-type">
+                  <option value="video">Regular Video</option>
+                  <option value="short">YouTube Short</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="yt-notify" checked> Notify Subscribers
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="yt-embed" checked> Allow Embedding
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="yt-kids"> Made for Kids
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="yt-ai"> AI Generated
+              </label>
+            </div>
+          </div>
+
+          <!-- Instagram options -->
+          <div id="ig-post-options" style="display:none;" class="card">
+            <div class="card-title" style="font-size:13px;">📷 Instagram Options</div>
+            <div class="form-group">
+              <label class="form-label">Post Type</label>
+              <div style="display:flex;gap:8px;">
+                <button class="post-btn" id="ig-type-feed" onclick="setIgPostType('feed')" style="background:rgba(124,58,237,0.12);border-color:var(--accent);color:var(--accent3);">📸 Feed</button>
+                <button class="post-btn" id="ig-type-story" onclick="setIgPostType('story')">📖 Story</button>
+                <button class="post-btn" id="ig-type-reel" onclick="setIgPostType('reel')">🎬 Reel</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">First Comment (optional)</label>
+              <input class="form-input" id="ig-first-comment" placeholder="Add hashtags here to keep caption clean...">
+            </div>
+          </div>
+
+          <!-- LinkedIn options -->
+          <div id="li-post-options" style="display:none;" class="card">
+            <div class="card-title" style="font-size:13px;">💼 LinkedIn Options</div>
+            <div class="form-group">
+              <label class="form-label">Post As</label>
+              <select class="form-select" id="li-post-as">
+                <option value="personal">Personal Profile</option>
+                <option value="company">Company Page</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visibility</label>
+              <select class="form-select" id="li-visibility">
+                <option value="PUBLIC">Public</option>
+                <option value="CONNECTIONS">Connections only</option>
+              </select>
+            </div>
+          </div>
+
           <button id="submit-post-btn" onclick="submitPost()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
             Schedule Post →
           </button>
@@ -592,9 +774,26 @@
           </div>
           <button class="connect-btn" id="tg-btn" onclick="connectPlatform('telegram')">Connect</button>
         </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(255,0,0,0.15);">📺</div>
+            <div>
+              <div class="connection-name">YouTube</div>
+              <div class="connection-status" id="youtube-status">Not connected</div>
+            </div>
+          </div>
+          <button class="connect-btn" id="youtube-btn" onclick="connectPlatform('youtube')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(24,119,242,0.15);">👥</div>
+            <div><div class="connection-name">Facebook Group</div><div class="connection-status" id="fbgroup-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="fbgroup-btn" onclick="connectPlatform('fbgroup')">Connect</button>
+        </div>
         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:14px;margin-top:8px;">
-          <div style="font-size:13px;color:#60a5fa;font-weight:600;margin-bottom:4px;">ℹ️ Coming soon</div>
-          <div style="font-size:13px;color:var(--text2);">Platform OAuth connections are being set up. Join the waitlist to be notified when your platform is ready.</div>
+          <div style="font-size:13px;color:#60a5fa;font-weight:600;margin-bottom:4px;">ℹ️ More platforms coming soon</div>
+          <div style="font-size:13px;color:var(--text2);">TikTok, Pinterest, LinkedIn and Twitter/X OAuth are in development.</div>
         </div>
       </div>
     </div>
@@ -978,6 +1177,20 @@ function togglePlatform(el, name) {
   var inp = el.querySelector('input');
   if(inp) inp.checked = el.classList.contains('selected');
   _selectedPlatforms = Array.from(document.querySelectorAll('.platform-check.selected input')).map(function(i){return i.value;});
+  // Show/hide platform-specific options
+  var show = function(id, cond) { var e=document.getElementById(id); if(e) e.style.display=cond?'block':'none'; };
+  show('fb-options',      _selectedPlatforms.includes('facebook'));
+  show('yt-options',      _selectedPlatforms.includes('youtube'));
+  show('ig-post-options', _selectedPlatforms.includes('instagram'));
+  show('li-post-options', _selectedPlatforms.includes('linkedin'));
+  updatePreviewTabs();
+}
+
+function setIgPostType(type) {
+  ['feed','story','reel'].forEach(function(t){
+    var btn = document.getElementById('ig-type-'+t);
+    if(btn){ btn.style.background=t===type?'rgba(124,58,237,0.12)':''; btn.style.borderColor=t===type?'var(--accent)':''; btn.style.color=t===type?'var(--accent3)':''; }
+  });
 }
 
 // ── POST PREVIEW ───────────────────────────────────────────
@@ -990,6 +1203,11 @@ document.addEventListener('DOMContentLoaded', function(){
       if(preview) preview.textContent = ta.value || 'Your post will appear here as you type...';
       if(count)   count.textContent   = ta.value.length + ' characters';
     });
+  }
+  // Set biz name in preview
+  if(_bizProfile && _bizProfile.name) {
+    var pn = document.getElementById('preview-name');
+    if(pn) pn.textContent = _bizProfile.name;
   }
 });
 
@@ -1206,16 +1424,49 @@ function getConnectionForm(name) {
         '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-t1\').value,chat_id:document.getElementById(\'conn-t2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
     },
     instagram: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Instagram requires a Facebook Business account. Use your Facebook Page Access Token.</div>' +
-        '<input id="conn-i1" placeholder="Facebook Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
-        '<input id="conn-i2" placeholder="Instagram User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'instagram\',{access_token:document.getElementById(\'conn-i1\').value,page_id:document.getElementById(\'conn-i2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">How would you like to connect your Instagram?</div>' +
+        '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Features depend on your account type.</div>' +
+        '<div id="ig-type-pro" onclick="selectIgType(\'pro\')" style="background:#0a0a0f;border:2px solid #2a2a3e;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<span style="font-size:18px;">📷</span>' +
+            '<div style="font-size:14px;font-weight:700;color:#e8e8f0;">Professional (Business & Creator)</div>' +
+            '<div id="ig-check-pro" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid #2a2a3e;"></div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;line-height:1.7;padding-left:28px;">✓ Automatic posting — we post for you<br>✓ Reply to comments from dashboard<br>✓ View post performance metrics<br>✓ Best for businesses and creators</div>' +
+        '</div>' +
+        '<div id="ig-type-personal" onclick="selectIgType(\'personal\')" style="background:#0a0a0f;border:2px solid #2a2a3e;border-radius:10px;padding:14px;margin-bottom:16px;cursor:pointer;transition:all .15s;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<span style="font-size:18px;">👤</span>' +
+            '<div style="font-size:14px;font-weight:700;color:#e8e8f0;">Personal</div>' +
+            '<div id="ig-check-personal" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid #2a2a3e;"></div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;line-height:1.7;padding-left:28px;">✓ Notification posting — we remind you to post<br>✗ No automatic posting (Instagram limitation)</div>' +
+        '</div>' +
+        '<div id="ig-fields" style="display:none;">' +
+          '<input id="conn-i1" placeholder="Facebook Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+          '<input id="conn-i2" placeholder="Instagram User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+          '<button onclick="saveConnection(\'instagram\',{access_token:document.getElementById(\'conn-i1\').value,page_id:document.getElementById(\'conn-i2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Connect Instagram</button>' +
+        '</div>';
     },
     linkedin: function() {
       return '<div style="font-size:13px;color:#8888aa;">LinkedIn OAuth coming soon. Join the waitlist to be notified.</div>';
     },
     twitter: function() {
       return '<div style="font-size:13px;color:#8888aa;">Twitter/X OAuth coming soon. Join the waitlist to be notified.</div>';
+    },
+    youtube: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your YouTube channel to schedule video posts.</div>' +
+        '<input id="conn-yt1" placeholder="Channel ID (from YouTube Studio)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-yt2" placeholder="Channel Name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<div style="font-size:12px;color:#f87171;background:rgba(255,0,0,0.08);border:1px solid rgba(255,0,0,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">📺 Autopostleey will send you a notification with your content ready — you upload directly in YouTube Studio.</div>' +
+        '<button onclick="saveConnection(\'youtube\',{page_id:document.getElementById(\'conn-yt1\').value,page_name:document.getElementById(\'conn-yt2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#ff0000,#cc0000);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add YouTube Channel</button>';
+    },
+    fbgroup: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. Autopostleey sends you a notification with the content ready to paste.</div>' +
+        '<input id="conn-fg1" placeholder="Group Name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-fg2" placeholder="Group URL (https://facebook.com/groups/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We notify you when it is time to post with content ready to copy.</div>' +
+        '<button onclick="saveConnection(\'fbgroup\',{page_name:document.getElementById(\'conn-fg1\').value,webhook_url:document.getElementById(\'conn-fg2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Facebook Group</button>';
     }
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
@@ -1266,6 +1517,21 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
+
+function selectIgType(type) {
+  var proBorder   = type==='pro'      ? '#7c3aed' : '#2a2a3e';
+  var persBorder  = type==='personal' ? '#7c3aed' : '#2a2a3e';
+  var proCheck    = document.getElementById('ig-check-pro');
+  var persCheck   = document.getElementById('ig-check-personal');
+  var fields      = document.getElementById('ig-fields');
+  var proDom      = document.getElementById('ig-type-pro');
+  var persDom     = document.getElementById('ig-type-personal');
+  if(proDom)   proDom.style.borderColor   = proBorder;
+  if(persDom)  persDom.style.borderColor  = persBorder;
+  if(proCheck)  proCheck.style.background  = type==='pro'      ? '#7c3aed' : '';
+  if(persCheck) persCheck.style.background = type==='personal' ? '#7c3aed' : '';
+  if(fields)    fields.style.display       = 'block';
+}
 
 async function saveConnection(platform, data) {
   try {
@@ -1558,6 +1824,89 @@ showPage = function(name) {
     }
   }
 };
+
+
+// ── POST TYPE ──────────────────────────────────────────────
+var _postType = 'post';
+var _uploadedFile = null;
+var _uploadedFileURL = null;
+
+function setPostType(type) {
+  _postType = type;
+  ['post','reel','story'].forEach(function(t) {
+    var btn = document.getElementById('ptype-'+t);
+    if(btn) {
+      btn.style.background    = t===type ? 'rgba(124,58,237,0.12)' : '';
+      btn.style.borderColor   = t===type ? 'var(--accent)' : '';
+      btn.style.color         = t===type ? 'var(--accent3)' : '';
+    }
+  });
+  // Update char limit display
+  var limits = {post:'', reel:'2,200 chars max (Instagram)', story:'No text for Stories'};
+  var limitEl = document.getElementById('char-limit');
+  if(limitEl) limitEl.textContent = limits[type] || '';
+}
+
+function handleFileUpload(input) {
+  var file = input.files[0];
+  if(!file) return;
+  _uploadedFile = file;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _uploadedFileURL = e.target.result;
+    // Show file preview
+    var fp = document.getElementById('file-preview');
+    var img = document.getElementById('file-preview-img');
+    var fname = document.getElementById('file-name');
+    if(fp) fp.style.display = 'block';
+    if(img && file.type.startsWith('image/')) { img.src = _uploadedFileURL; img.style.display='block'; }
+    if(fname) fname.textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+    // Update preview
+    var prevImg = document.getElementById('preview-img');
+    var prevImgCon = document.getElementById('preview-img-container');
+    if(prevImg && file.type.startsWith('image/')) {
+      prevImg.src = _uploadedFileURL;
+      if(prevImgCon) prevImgCon.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFile() {
+  _uploadedFile = null;
+  _uploadedFileURL = null;
+  var fp = document.getElementById('file-preview');
+  var fi = document.getElementById('file-input');
+  var pic = document.getElementById('preview-img-container');
+  if(fp) fp.style.display = 'none';
+  if(fi) fi.value = '';
+  if(pic) pic.style.display = 'none';
+}
+
+// ── UPDATE PREVIEW TABS ────────────────────────────────────
+function updatePreviewTabs() {
+  var tabs = document.getElementById('preview-tabs');
+  if(!tabs) return;
+  var platColors = {facebook:'#1877f2',instagram:'#e1306c',discord:'#5865f2',telegram:'#26a5e4',youtube:'#ff0000',linkedin:'#0077b5',twitter:'#1da1f2'};
+  var platIcons  = {facebook:'📘',instagram:'📷',discord:'💬',telegram:'✈️',youtube:'📺',linkedin:'💼',twitter:'🐦'};
+  tabs.innerHTML = _selectedPlatforms.map(function(p,i) {
+    return '<button onclick="setPreviewPlatform(\''+p+'\')" style="background:'+(i===0?platColors[p]||'#888':'var(--bg3)')+';color:'+(i===0?'#fff':'var(--text2)')+';border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">'+
+      (platIcons[p]||'📱')+' '+p+'</button>';
+  }).join('');
+}
+
+function setPreviewPlatform(platform) {
+  var platColors = {facebook:'#1877f2',instagram:'#e1306c',discord:'#5865f2',telegram:'#26a5e4',youtube:'#ff0000',linkedin:'#0077b5',twitter:'#1da1f2'};
+  var tabs = document.querySelectorAll('#preview-tabs button');
+  tabs.forEach(function(btn) {
+    var p = btn.textContent.trim().toLowerCase().replace(/[^a-z]/g,'');
+    btn.style.background = platform===p ? (platColors[platform]||'#888') : 'var(--bg3)';
+    btn.style.color = platform===p ? '#fff' : 'var(--text2)';
+  });
+}
+
+// Update preview tabs when platforms change
+var _origToggle = togglePlatform;
 
 </script>
 
