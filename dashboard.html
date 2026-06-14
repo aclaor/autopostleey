@@ -411,6 +411,21 @@
                 <span class="platform-dot-lg" style="background:#26a5e4;"></span>
                 <span class="platform-name">Telegram</span>
               </label>
+              <label class="platform-check" onclick="togglePlatform(this,'threads')">
+                <input type="checkbox" value="threads">
+                <span class="platform-dot-lg" style="background:#000;"></span>
+                <span class="platform-name">Threads</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'bluesky')">
+                <input type="checkbox" value="bluesky">
+                <span class="platform-dot-lg" style="background:#0085ff;"></span>
+                <span class="platform-name">Bluesky</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'google_business')">
+                <input type="checkbox" value="google_business">
+                <span class="platform-dot-lg" style="background:#4285f4;"></span>
+                <span class="platform-name">Google Business</span>
+              </label>
             </div>
           </div>
 
@@ -791,9 +806,30 @@
           </div>
           <button class="connect-btn" id="fbgroup-btn" onclick="connectPlatform('fbgroup')">Connect</button>
         </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(0,0,0,0.3);font-size:18px;">🧵</div>
+            <div><div class="connection-name">Threads</div><div class="connection-status" id="threads-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="threads-btn" onclick="connectPlatform('threads')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(0,133,255,0.15);font-size:18px;">🦋</div>
+            <div><div class="connection-name">Bluesky</div><div class="connection-status" id="bluesky-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="bluesky-btn" onclick="connectPlatform('bluesky')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div class="connection-dot" style="background:rgba(66,133,244,0.15);font-size:18px;">📍</div>
+            <div><div class="connection-name">Google Business Profile</div><div class="connection-status" id="google_business-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="google_business-btn" onclick="connectPlatform('google_business')">Connect</button>
+        </div>
         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:14px;margin-top:8px;">
           <div style="font-size:13px;color:#60a5fa;font-weight:600;margin-bottom:4px;">ℹ️ More platforms coming soon</div>
-          <div style="font-size:13px;color:var(--text2);">TikTok, Pinterest, LinkedIn and Twitter/X OAuth are in development.</div>
+          <div style="font-size:13px;color:var(--text2);">TikTok, Pinterest, LinkedIn, Twitter/X, Reddit, WordPress, Medium, WhatsApp and more!</div>
         </div>
       </div>
     </div>
@@ -1469,6 +1505,25 @@ function getConnectionForm(name) {
         '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">📺 Connect YouTube Channel</button>' +
         '<div style="font-size:12px;color:#8888aa;margin-top:12px;text-align:center;">We will automatically detect your channel name — no ID needed!</div>';
     },
+    threads: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Threads account. You need a Facebook/Instagram access token with Threads permissions.</div>' +
+        '<input id="conn-th1" placeholder="Threads User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-th2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<div style="font-size:12px;color:#8888aa;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;">Get your Threads credentials from <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">Meta for Developers</a> → Threads API</div>' +
+        '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
+    },
+    bluesky: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and an App Password (not your main password).</div>' +
+        '<input id="conn-bs1" placeholder="Bluesky Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-bs2" type="password" placeholder="App Password (create at bsky.app → Settings → App Passwords)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">🔒 We use App Passwords — your main Bluesky password is never stored. Create one at bsky.app → Settings → Privacy and Security → App Passwords</div>' +
+        '<button onclick="saveConnection(\'bluesky\',{page_name:document.getElementById(\'conn-bs1\').value,access_token:document.getElementById(\'conn-bs2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
+    },
+    google_business: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Google Business Profile to post updates, offers and events directly to your listing.</div>' +
+        '<button onclick="connectGoogleBusiness()" style="width:100%;padding:14px;background:#fff;color:#1f1f1f;border:1px solid #dadce0;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\"><path fill=\"#4285F4\" d=\"M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z\"/><path fill=\"#34A853\" d=\"M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z\"/><path fill=\"#FBBC05\" d=\"M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z\"/><path fill=\"#EA4335\" d=\"M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z\"/></svg> Connect with Google</button>' +
+        '<div style="font-size:12px;color:#8888aa;text-align:center;">We will automatically detect your business location — no ID needed!</div>';
+    },
     fbgroup: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. Autopostleey sends you a notification with the content ready to paste.</div>' +
         '<input id="conn-fg1" placeholder="Group Name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
@@ -1526,6 +1581,23 @@ window.addEventListener('load', function() {
   }
 });
 
+async function connectGoogleBusiness() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  try {
+    var { error } = await _db.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        scopes: 'https://www.googleapis.com/auth/business.manage',
+        redirectTo: window.location.origin + '/dashboard.html?connect=google_business',
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
+    });
+    if(error) showToast('Google Business connection failed: ' + error.message, 'error');
+  } catch(e) {
+    showToast('Connection failed. Please try again.', 'error');
+  }
+}
+
 async function connectYouTubeOAuth() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
   try {
@@ -1547,6 +1619,36 @@ async function connectYouTubeOAuth() {
 // Handle YouTube connection return
 window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
+  if(params.get('connect') === 'google_business') {
+    showToast('Detecting your Google Business Profile...', 'success');
+    _db.auth.getSession().then(function(result) {
+      var session = result.data.session;
+      if(session && session.provider_token) {
+        fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
+          headers: { 'Authorization': 'Bearer ' + session.provider_token }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          var account = data.accounts && data.accounts[0];
+          if(account) {
+            saveConnection('google_business', {
+              access_token: session.provider_token,
+              page_id: account.name,
+              page_name: account.accountName
+            });
+            showToast('✅ Google Business connected — ' + account.accountName + '!', 'success');
+          } else {
+            showToast('No Google Business account found. Make sure you have a verified listing.', 'error');
+          }
+        })
+        .catch(function(e) {
+          showToast('Could not detect business profile. Please try again.', 'error');
+        });
+      }
+    });
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
   if(params.get('connect') === 'youtube') {
     showToast('Detecting your YouTube channel...', 'success');
     // Get the Google token from session and fetch channel info
