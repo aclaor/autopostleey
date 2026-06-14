@@ -1095,8 +1095,9 @@ function showPage(name) {
 async function loadBizProfile() {
   try {
     var { data } = await _db.from('autopostleey_businesses')
-      .select('*').eq('user_id', _user.id).single();
-    if(data) {
+      .select('*').eq('user_id', _user.id).limit(1);
+    if(data && data.length > 0) {
+      data = data[0];
       _bizProfile = data;
       document.getElementById('biz-name').value      = data.name      || '';
       document.getElementById('biz-desc').value      = data.description || '';
@@ -1333,7 +1334,7 @@ async function submitPost(status) {
   if(btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
 
   try {
-    var { data: postData, error } = await _db.from('autopostleey_posts').insert([{
+    var { data: postDataArr, error } = await _db.from('autopostleey_posts').insert([{
       user_id:      _user.id,
       content:      content,
       platforms:    _selectedPlatforms,
@@ -1341,8 +1342,9 @@ async function submitPost(status) {
       scheduled_at: scheduledAt,
       mode:         _composeMode,
       created_at:   new Date().toISOString()
-    }]).select().single();
+    }]).select();
     if(error) throw error;
+    var postData = postDataArr && postDataArr[0] ? postDataArr[0] : null;
 
     // If posting now, publish immediately
     var isNow = new Date(scheduledAt) <= new Date(Date.now() + 60000);
@@ -2071,7 +2073,6 @@ function setPreviewPlatform(platform) {
 }
 
 // Update preview tabs when platforms change
-var _origToggle = togglePlatform;
 
 </script>
 
