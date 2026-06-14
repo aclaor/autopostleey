@@ -193,6 +193,12 @@
       <a class="nav-item" onclick="showPage('calendar');return false;" href="#">
         <span class="nav-icon">🗓️</span> Calendar
       </a>
+      <a class="nav-item" onclick="showPage('analytics');return false;" href="#">
+        <span class="nav-icon">📈</span> Analytics
+      </a>
+      <a class="nav-item" onclick="showPage('bulk');return false;" href="#">
+        <span class="nav-icon">⚡</span> Bulk Schedule
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Settings</div>
@@ -652,6 +658,95 @@
           <div style="text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);padding:4px;">SAT</div>
         </div>
         <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+      </div>
+    </div>
+
+
+    <!-- ── ANALYTICS ─────────────────── -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <div class="page-title">Analytics</div>
+        <div class="page-sub">Track your post performance across platforms</div>
+      </div>
+      <div class="stats-row" id="analytics-stats">
+        <div class="stat-card">
+          <div class="stat-label">Total Posts</div>
+          <div class="stat-val" id="an-total">0</div>
+          <div class="stat-sub">all time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Posted</div>
+          <div class="stat-val" id="an-posted">0</div>
+          <div class="stat-sub">successfully published</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Scheduled</div>
+          <div class="stat-val" id="an-sched">0</div>
+          <div class="stat-sub">upcoming</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-val" id="an-rate">0%</div>
+          <div class="stat-sub">posts published</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="card">
+          <div class="card-title">📊 Posts by Platform</div>
+          <div id="an-platforms" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 Posts by Status</div>
+          <div id="an-status" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Recent Activity</div>
+        <div id="an-recent"></div>
+      </div>
+    </div>
+
+    <!-- ── BULK SCHEDULE ──────────────── -->
+    <div class="page" id="page-bulk">
+      <div class="page-header">
+        <div class="page-title">⚡ Bulk Schedule</div>
+        <div class="page-sub">Schedule multiple posts at once</div>
+      </div>
+      <div class="card">
+        <div class="card-title">How it works</div>
+        <div style="font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
+          Enter one post per line below. Each line will become a separate scheduled post, published one per day starting from tomorrow.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Posts (one per line)</label>
+          <textarea class="form-textarea" id="bulk-content" style="min-height:200px;" placeholder="Post 1 — e.g. Check out our weekend sale! 🎉&#10;Post 2 — e.g. New products just arrived! 🛍️&#10;Post 3 — e.g. Thank you for 500 followers! 🙏"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platforms</label>
+          <div class="platform-grid" id="bulk-platforms">
+            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+              <input type="checkbox" value="facebook"><span class="platform-dot-lg" style="background:#1877f2;"></span><span class="platform-name">Facebook</span>
+            </label>
+            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+              <input type="checkbox" value="discord"><span class="platform-dot-lg" style="background:#5865f2;"></span><span class="platform-name">Discord</span>
+            </label>
+            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+              <input type="checkbox" value="telegram"><span class="platform-dot-lg" style="background:#26a5e4;"></span><span class="platform-name">Telegram</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input class="form-input" id="bulk-start-date" type="date" style="max-width:200px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Post Time</label>
+          <input class="form-input" id="bulk-time" type="time" value="09:00" style="max-width:200px;">
+        </div>
+        <button onclick="scheduleBulkPosts()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:13px 24px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
+          ⚡ Schedule All Posts
+        </button>
+        <div id="bulk-result" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -1336,6 +1431,127 @@ function calDayClick(dateStr) {
   showPage('compose');
   showToast('Date set to ' + dateStr, 'success');
 }
+
+
+// ── ANALYTICS ─────────────────────────────────────────────
+function renderAnalytics() {
+  var total    = _posts.length;
+  var posted   = _posts.filter(function(p){return p.status==='posted';}).length;
+  var sched    = _posts.filter(function(p){return p.status==='scheduled';}).length;
+  var rate     = total > 0 ? Math.round((posted/total)*100) : 0;
+
+  var el = function(id){ return document.getElementById(id); };
+  if(el('an-total'))  el('an-total').textContent  = total;
+  if(el('an-posted')) el('an-posted').textContent = posted;
+  if(el('an-sched'))  el('an-sched').textContent  = sched;
+  if(el('an-rate'))   el('an-rate').textContent   = rate + '%';
+
+  // Platform breakdown
+  var platCounts = {};
+  _posts.forEach(function(p){
+    (p.platforms||[]).forEach(function(pl){
+      platCounts[pl] = (platCounts[pl]||0) + 1;
+    });
+  });
+  var platColors = {facebook:'#1877f2',instagram:'#e1306c',linkedin:'#0077b5',twitter:'#1da1f2',discord:'#5865f2',telegram:'#26a5e4'};
+  var platEl = el('an-platforms');
+  if(platEl) {
+    platEl.innerHTML = Object.keys(platCounts).length ? Object.keys(platCounts).map(function(p){
+      var pct = total > 0 ? Math.round((platCounts[p]/total)*100) : 0;
+      return '<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span style="color:var(--text2);">'+p+'</span><span>'+platCounts[p]+' posts</span></div>'+
+        '<div style="background:var(--bg3);border-radius:4px;height:6px;"><div style="background:'+(platColors[p]||'#888')+';height:6px;border-radius:4px;width:'+pct+'%;transition:width .3s;"></div></div></div>';
+    }).join('') : '<div style="color:var(--text3);font-size:13px;">No posts yet</div>';
+  }
+
+  // Status breakdown
+  var statCounts = {posted:0,scheduled:0,draft:0,failed:0};
+  _posts.forEach(function(p){ if(statCounts[p.status]!==undefined) statCounts[p.status]++; });
+  var statColors = {posted:'#22c55e',scheduled:'#3b82f6',draft:'#f97316',failed:'#ef4444'};
+  var statEl = el('an-status');
+  if(statEl) {
+    statEl.innerHTML = Object.keys(statCounts).map(function(s){
+      var pct = total > 0 ? Math.round((statCounts[s]/total)*100) : 0;
+      return '<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span style="color:var(--text2);">'+s+'</span><span>'+statCounts[s]+'</span></div>'+
+        '<div style="background:var(--bg3);border-radius:4px;height:6px;"><div style="background:'+statColors[s]+';height:6px;border-radius:4px;width:'+pct+'%;"></div></div></div>';
+    }).join('');
+  }
+
+  // Recent activity
+  var recEl = el('an-recent');
+  if(recEl) {
+    var recent = _posts.slice(0,10);
+    recEl.innerHTML = recent.length ? recent.map(function(p){
+      var d = p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : new Date(p.created_at).toLocaleDateString();
+      var statusColors = {posted:'#22c55e',scheduled:'#3b82f6',draft:'#f97316',failed:'#ef4444'};
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">'+
+        '<div style="font-size:13px;color:var(--text2);flex:1;margin-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(p.content||'').slice(0,60)+'...</div>'+
+        '<div style="font-size:11px;color:'+(statusColors[p.status]||'#888')+';margin-right:12px;">'+p.status+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);">'+d+'</div>'+
+      '</div>';
+    }).join('') : '<div style="color:var(--text3);font-size:13px;">No posts yet</div>';
+  }
+}
+
+// ── BULK SCHEDULING ────────────────────────────────────────
+async function scheduleBulkPosts() {
+  var raw  = document.getElementById('bulk-content').value.trim();
+  var date = document.getElementById('bulk-start-date').value;
+  var time = document.getElementById('bulk-time').value || '09:00';
+  var plats = Array.from(document.querySelectorAll('#bulk-platforms .platform-check.selected input')).map(function(i){return i.value;});
+  var result = document.getElementById('bulk-result');
+
+  if(!raw) { showToast('Please enter at least one post!', 'error'); return; }
+  if(!date) { showToast('Please select a start date!', 'error'); return; }
+  if(!plats.length) { showToast('Please select at least one platform!', 'error'); return; }
+
+  var lines = raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length > 0;});
+  if(!lines.length) { showToast('No valid posts found!', 'error'); return; }
+
+  if(result) result.innerHTML = '<div style="color:var(--text2);font-size:14px;">Scheduling ' + lines.length + ' posts...</div>';
+
+  var successCount = 0;
+  var startDate = new Date(date + 'T' + time);
+
+  for(var i=0; i<lines.length; i++) {
+    var scheduledAt = new Date(startDate);
+    scheduledAt.setDate(scheduledAt.getDate() + i);
+
+    try {
+      var { error } = await _db.from('autopostleey_posts').insert([{
+        user_id:      _user.id,
+        content:      lines[i],
+        platforms:    plats,
+        status:       'scheduled',
+        scheduled_at: scheduledAt.toISOString(),
+        mode:         'manual',
+        created_at:   new Date().toISOString()
+      }]);
+      if(!error) successCount++;
+    } catch(e) { console.error('Bulk post error:', e); }
+  }
+
+  await loadPosts();
+  updateStats();
+
+  if(result) result.innerHTML = '<div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:14px;color:#4ade80;font-size:14px;font-weight:600;">✅ Scheduled ' + successCount + ' of ' + lines.length + ' posts successfully!</div>';
+  showToast('✅ ' + successCount + ' posts scheduled!', 'success');
+  document.getElementById('bulk-content').value = '';
+}
+
+// Update showPage to render analytics when opened
+var _origShowPage2 = showPage;
+showPage = function(name) {
+  _origShowPage2(name);
+  if(name === 'analytics') renderAnalytics();
+  if(name === 'bulk') {
+    var d = document.getElementById('bulk-start-date');
+    if(d && !d.value) {
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      d.value = tomorrow.toISOString().split('T')[0];
+    }
+  }
+};
 
 </script>
 
