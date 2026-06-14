@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — Autopostleey</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg:#0a0a0f; --bg2:#111118; --bg3:#1a1a24;
+    --border:#1e1e2e; --border2:#2a2a3e;
+    --text:#e8e8f0; --text2:#8888aa; --text3:#444466;
+    --accent:#7c3aed; --accent2:#a855f7; --accent3:#c084fc;
+    --green:#22c55e; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+
+  /* TOPBAR */
+  .topbar { height:56px; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; }
+  .logo { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text); }
+  .logo span { color:var(--accent2); }
+  .step-indicator { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text3); font-family:var(--mono); }
+  .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border2); }
+  .step-dot.active { background:var(--accent2); }
+  .step-dot.done { background:var(--green); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; }
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:620px; }
+
+  /* STEP */
+  .step { display:none; }
+  .step.active { display:block; }
+  .step-label { font-family:var(--mono); font-size:11px; color:var(--accent3); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+  .step-title { font-size:24px; font-weight:800; letter-spacing:-0.5px; margin-bottom:8px; }
+  .step-sub { font-size:14px; color:var(--text2); margin-bottom:32px; line-height:1.6; }
+
+  /* OPTIONS */
+  .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+  .options-grid.single { grid-template-columns:1fr; }
+  .option-card { background:var(--bg3); border:1.5px solid var(--border); border-radius:10px; padding:16px; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:12px; }
+  .option-card:hover { border-color:var(--accent2); }
+  .option-card.selected { border-color:var(--accent); background:rgba(124,58,237,0.1); }
+  .option-card.selected .option-check { background:var(--accent); border-color:var(--accent); }
+  .option-icon { font-size:24px; flex-shrink:0; }
+  .option-text { flex:1; }
+  .option-title { font-size:14px; font-weight:600; }
+  .option-desc { font-size:12px; color:var(--text3); margin-top:2px; }
+  .option-check { width:18px; height:18px; border-radius:50%; border:2px solid var(--border2); flex-shrink:0; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+  .option-check::after { content:'✓'; color:#fff; font-size:10px; display:none; }
+  .option-card.selected .option-check::after { display:block; }
+
+  /* CHANNELS */
+  .channels-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; margin-bottom:28px; }
+  .channel-chip { background:var(--bg3); border:1.5px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; }
+  .channel-chip:hover { border-color:var(--accent2); }
+  .channel-chip.selected { border-color:var(--accent); background:rgba(124,58,237,0.1); color:var(--accent3); }
+  .channel-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* COUNTS */
+  .count-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:28px; }
+  .count-chip { background:var(--bg3); border:1.5px solid var(--border); border-radius:8px; padding:12px; cursor:pointer; transition:all .15s; text-align:center; font-size:14px; font-weight:600; }
+  .count-chip:hover { border-color:var(--accent2); }
+  .count-chip.selected { border-color:var(--accent); background:rgba(124,58,237,0.1); color:var(--accent3); }
+
+  /* BUTTONS */
+  .btn-row { display:flex; gap:10px; justify-content:flex-end; }
+  .btn-next { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:8px; padding:12px 28px; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; }
+  .btn-skip { background:none; border:1px solid var(--border2); border-radius:8px; padding:12px 20px; font-family:var(--sans); font-size:14px; color:var(--text2); cursor:pointer; }
+  .btn-next:hover { opacity:0.9; }
+
+  /* FINAL */
+  .feature-list { display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
+  .feature-item { display:flex; align-items:center; gap:12px; font-size:14px; color:var(--text2); }
+  .feature-item::before { content:'✓'; color:var(--green); font-weight:700; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="logo">auto<span>postleey</span></div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+    <div class="step-dot" id="dot-4"></div>
+    <span id="step-text">Step 1 of 4</span>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="card">
+
+    <!-- STEP 1: Current tools -->
+    <div class="step active" id="step-1">
+      <div class="step-label">Welcome</div>
+      <div class="step-title">What tools do you use to manage your social media?</div>
+      <div class="step-sub">Help us personalize your experience.</div>
+      <div class="options-grid single" id="tools-options">
+        <div class="option-card" onclick="selectOption(this,'tools','none')">
+          <div class="option-icon">💻</div>
+          <div class="option-text"><div class="option-title">None — I post directly to platforms</div></div>
+          <div class="option-check"></div>
+        </div>
+        <div class="option-card" onclick="selectOption(this,'tools','meta')">
+          <div class="option-icon">🔵</div>
+          <div class="option-text"><div class="option-title">Meta Business Suite</div></div>
+          <div class="option-check"></div>
+        </div>
+        <div class="option-card" onclick="selectOption(this,'tools','smm')">
+          <div class="option-icon">⚒️</div>
+          <div class="option-text"><div class="option-title">Social Media Management Tool</div><div class="option-desc">Hootsuite, Sprout Social, Later, etc.</div></div>
+          <div class="option-check"></div>
+        </div>
+        <div class="option-card" onclick="selectOption(this,'tools','ai')">
+          <div class="option-icon">🤖</div>
+          <div class="option-text"><div class="option-title">AI Platforms</div><div class="option-desc">ChatGPT, Claude, etc.</div></div>
+          <div class="option-check"></div>
+        </div>
+        <div class="option-card" onclick="selectOption(this,'tools','other')">
+          <div class="option-icon">🦄</div>
+          <div class="option-text"><div class="option-title">Other</div></div>
+          <div class="option-check"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-skip" onclick="nextStep()">Skip</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Account count -->
+    <div class="step" id="step-2">
+      <div class="step-label">Step 2 of 4</div>
+      <div class="step-title">How many social accounts do you manage?</div>
+      <div class="step-sub">This helps us recommend the right plan for you.</div>
+      <div class="count-grid">
+        <div class="count-chip" onclick="selectCount(this,'1-3')">1–3</div>
+        <div class="count-chip" onclick="selectCount(this,'4-6')">4–6</div>
+        <div class="count-chip" onclick="selectCount(this,'7-10')">7–10</div>
+        <div class="count-chip" onclick="selectCount(this,'11-20')">11–20</div>
+        <div class="count-chip" onclick="selectCount(this,'21-50')">21–50</div>
+        <div class="count-chip" onclick="selectCount(this,'50+')">50+</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-skip" onclick="nextStep()">Skip</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Channels -->
+    <div class="step" id="step-3">
+      <div class="step-label">Step 3 of 4</div>
+      <div class="step-title">What social channels are you focused on?</div>
+      <div class="step-sub">Select all that apply.</div>
+      <div class="channels-grid">
+        <div class="channel-chip" onclick="toggleChannel(this,'facebook')">
+          <span class="channel-dot" style="background:#1877f2;"></span>Facebook
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'instagram')">
+          <span class="channel-dot" style="background:#e1306c;"></span>Instagram
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'twitter')">
+          <span class="channel-dot" style="background:#1da1f2;"></span>Twitter/X
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'linkedin')">
+          <span class="channel-dot" style="background:#0077b5;"></span>LinkedIn
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'discord')">
+          <span class="channel-dot" style="background:#5865f2;"></span>Discord
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'telegram')">
+          <span class="channel-dot" style="background:#26a5e4;"></span>Telegram
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'tiktok')">
+          <span class="channel-dot" style="background:#000;"></span>TikTok
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'youtube')">
+          <span class="channel-dot" style="background:#ff0000;"></span>YouTube
+        </div>
+        <div class="channel-chip" onclick="toggleChannel(this,'pinterest')">
+          <span class="channel-dot" style="background:#e60023;"></span>Pinterest
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-skip" onclick="nextStep()">Skip</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Done -->
+    <div class="step" id="step-4">
+      <div class="step-label">You're all set! 🎉</div>
+      <div class="step-title">Here's what you can do with Autopostleey</div>
+      <div class="step-sub">Your account is ready. Start posting in minutes.</div>
+      <div class="feature-list">
+        <div class="feature-item">AI writes and publishes posts for you automatically</div>
+        <div class="feature-item">Schedule posts across all your platforms at once</div>
+        <div class="feature-item">Visual content calendar to plan your content</div>
+        <div class="feature-item">Bulk schedule up to 100 posts at once</div>
+        <div class="feature-item">Analytics to track your post performance</div>
+        <div class="feature-item">3-day full access trial — no credit card needed</div>
+      </div>
+      <button class="btn-next" style="width:100%;padding:14px;font-size:16px;" onclick="goToDashboard()">
+        Go to Dashboard →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const _db = window.supabase.createClient(
+  'https://gkxpwqryakgzgvvprbkl.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I'
+);
+
+var _step = 1;
+var _answers = { tools: null, accounts: null, channels: [] };
+var _user = null;
+
+// Auth guard
+_db.auth.onAuthStateChange(function(event, session) {
+  if(!session) { window.location.href = '/index.html'; return; }
+  _user = session.user;
+  // If already completed onboarding, skip to dashboard
+  var meta = _user.user_metadata || {};
+  if(meta.onboarding_done) { window.location.href = '/dashboard.html'; }
+});
+
+function selectOption(el, type, value) {
+  document.querySelectorAll('#tools-options .option-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+  _answers[type] = value;
+}
+
+function selectCount(el, value) {
+  document.querySelectorAll('.count-chip').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+  _answers.accounts = value;
+}
+
+function toggleChannel(el, value) {
+  el.classList.toggle('selected');
+  if(el.classList.contains('selected')) {
+    if(!_answers.channels.includes(value)) _answers.channels.push(value);
+  } else {
+    _answers.channels = _answers.channels.filter(function(c){ return c !== value; });
+  }
+}
+
+function nextStep() {
+  if(_step < 4) {
+    document.getElementById('step-'+_step).classList.remove('active');
+    document.getElementById('dot-'+_step).classList.remove('active');
+    document.getElementById('dot-'+_step).classList.add('done');
+    _step++;
+    document.getElementById('step-'+_step).classList.add('active');
+    var dot = document.getElementById('dot-'+_step);
+    if(dot) dot.classList.add('active');
+    var stepText = document.getElementById('step-text');
+    if(stepText) stepText.textContent = 'Step ' + _step + ' of 4';
+  }
+}
+
+async function goToDashboard() {
+  // Save onboarding answers to user metadata
+  if(_user) {
+    try {
+      await _db.auth.updateUser({
+        data: {
+          onboarding_done: true,
+          onboarding_tools: _answers.tools,
+          onboarding_accounts: _answers.accounts,
+          onboarding_channels: _answers.channels,
+        }
+      });
+    } catch(e) { console.log('Onboarding save error:', e); }
+  }
+  window.location.href = '/dashboard.html';
+}
+</script>
+</body>
+</html>
