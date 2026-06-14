@@ -1026,6 +1026,16 @@ async function initDashboard() {
   if(titleEl) titleEl.textContent = greeting + '! 👋';
 }
 
+async function socialLogin(provider) {
+  try {
+    var { error } = await _db.auth.signInWithOAuth({
+      provider: provider,
+      options: { redirectTo: window.location.origin + '/dashboard.html' }
+    });
+    if(error) showToast('Login failed: ' + error.message, 'error');
+  } catch(e) { console.error(e); }
+}
+
 async function doSignOut() {
   await _db.auth.signOut();
   window.location.href = 'index.html';
