@@ -1465,11 +1465,9 @@ function getConnectionForm(name) {
       return '<div style="font-size:13px;color:#8888aa;">Twitter/X OAuth coming soon. Join the waitlist to be notified.</div>';
     },
     youtube: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your YouTube channel to schedule video posts.</div>' +
-        '<input id="conn-yt1" placeholder="Channel ID (from YouTube Studio)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-yt2" placeholder="Channel Name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<div style="font-size:12px;color:#f87171;background:rgba(255,0,0,0.08);border:1px solid rgba(255,0,0,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">📺 Autopostleey will send you a notification with your content ready — you upload directly in YouTube Studio.</div>' +
-        '<button onclick="saveConnection(\'youtube\',{page_id:document.getElementById(\'conn-yt1\').value,page_name:document.getElementById(\'conn-yt2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#ff0000,#cc0000);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add YouTube Channel</button>';
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your YouTube channel with one click.</div>' +
+        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">📺 Connect YouTube Channel</button>' +
+        '<div style="font-size:12px;color:#8888aa;margin-top:12px;text-align:center;">We will automatically detect your channel name — no ID needed!</div>';
     },
     fbgroup: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. Autopostleey sends you a notification with the content ready to paste.</div>' +
@@ -1524,6 +1522,58 @@ window.addEventListener('load', function() {
       'server_error': 'Server error. Please try again.',
     };
     showToast(msgs[err] || 'Facebook connection failed.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+});
+
+async function connectYouTubeOAuth() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  try {
+    // Use Google OAuth with YouTube scope
+    var { error } = await _db.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        scopes: 'https://www.googleapis.com/auth/youtube.readonly',
+        redirectTo: window.location.origin + '/dashboard.html?connect=youtube',
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
+    });
+    if(error) showToast('YouTube connection failed: ' + error.message, 'error');
+  } catch(e) {
+    showToast('Connection failed. Please try again.', 'error');
+  }
+}
+
+// Handle YouTube connection return
+window.addEventListener('load', function() {
+  var params = new URLSearchParams(window.location.search);
+  if(params.get('connect') === 'youtube') {
+    showToast('Detecting your YouTube channel...', 'success');
+    // Get the Google token from session and fetch channel info
+    _db.auth.getSession().then(function(result) {
+      var session = result.data.session;
+      if(session && session.provider_token) {
+        fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&key=' + session.provider_token, {
+          headers: { 'Authorization': 'Bearer ' + session.provider_token }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          var channel = data.items && data.items[0];
+          if(channel) {
+            var channelId   = channel.id;
+            var channelName = channel.snippet.title;
+            saveConnection('youtube', { page_id: channelId, page_name: channelName });
+            showToast('✅ YouTube connected — ' + channelName + '!', 'success');
+          } else {
+            showToast('Could not detect channel. Please try again.', 'error');
+          }
+        })
+        .catch(function(e) {
+          showToast('Could not detect channel automatically.', 'error');
+          showPage('connections');
+        });
+      }
+    });
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
