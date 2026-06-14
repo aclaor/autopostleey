@@ -1425,7 +1425,10 @@ function updateConnectionsUI() {
   // Map platform name to HTML element ID prefix
   var idMap = {
     facebook: 'fb', instagram: 'ig', linkedin: 'li',
-    twitter: 'tw', discord: 'dc', telegram: 'tg'
+    twitter: 'tw', discord: 'dc', telegram: 'tg',
+    bluesky: 'bluesky', threads: 'threads',
+    google_business: 'google_business',
+    youtube: 'youtube', fbgroup: 'fbgroup'
   };
   Object.keys(idMap).forEach(function(p) {
     var prefix   = idMap[p];
