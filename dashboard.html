@@ -2206,7 +2206,9 @@ function renderTemplates() {
     div.innerHTML = '<div style="font-size:20px;margin-bottom:6px;">'+t.emoji+'</div><div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;">'+t.title+'</div><div style="font-size:11px;color:var(--text3);">Click to use</div>';
     div.addEventListener('mouseover', function(){ this.style.borderColor='var(--accent2)'; this.style.background='rgba(124,58,237,0.05)'; });
     div.addEventListener('mouseout',  function(){ this.style.borderColor='var(--border)';  this.style.background='var(--bg3)'; });
-    div.addEventListener('click', function(){ useTemplateByIndex(i, _tplFilter); });
+    (function(template) {
+      div.addEventListener('click', function(){ useTemplate(template.content); });
+    })(t);
     grid.appendChild(div);
   });
 }
