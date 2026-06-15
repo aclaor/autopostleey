@@ -963,44 +963,107 @@
     <!-- ── BULK SCHEDULE ──────────────── -->
     <div class="page" id="page-bulk">
       <div class="page-header">
-        <div class="page-title">⚡ Bulk Schedule</div>
-        <div class="page-sub">Schedule multiple posts at once</div>
+        <div>
+          <div class="page-title">⚡ Bulk Schedule</div>
+          <div class="page-sub">Schedule multiple posts across all platforms at once</div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">How it works</div>
-        <div style="font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
-          Enter one post per line below. Each line will become a separate scheduled post, published one per day starting from tomorrow.
-        </div>
-        <div class="form-group">
-          <label class="form-label">Posts (one per line)</label>
-          <textarea class="form-textarea" id="bulk-content" style="min-height:200px;" placeholder="Post 1 — e.g. Check out our weekend sale! 🎉&#10;Post 2 — e.g. New products just arrived! 🛍️&#10;Post 3 — e.g. Thank you for 500 followers! 🙏"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Platforms</label>
-          <div class="platform-grid" id="bulk-platforms">
-            <label class="platform-check" onclick="togglePlatform(this,'facebook')">
-              <input type="checkbox" value="facebook"><span class="platform-dot-lg" style="background:#1877f2;"></span><span class="platform-name">Facebook</span>
-            </label>
-            <label class="platform-check" onclick="togglePlatform(this,'discord')">
-              <input type="checkbox" value="discord"><span class="platform-dot-lg" style="background:#5865f2;"></span><span class="platform-name">Discord</span>
-            </label>
-            <label class="platform-check" onclick="togglePlatform(this,'telegram')">
-              <input type="checkbox" value="telegram"><span class="platform-dot-lg" style="background:#26a5e4;"></span><span class="platform-name">Telegram</span>
-            </label>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+        <!-- Left: Posts -->
+        <div>
+          <div class="card">
+            <div class="card-title">📝 Posts (one per line)</div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">Each line = one scheduled post. Use --- to separate posts across multiple lines.</div>
+            <textarea class="form-textarea" id="bulk-content" style="min-height:280px;font-family:var(--mono);font-size:13px;" placeholder="Post 1: Check out our weekend sale! 🎉
+Post 2: New products just arrived! 🛍️
+Post 3: Thank you for 500 followers! 🙏
+Post 4: Behind the scenes of our process 👀
+Post 5: Here is a tip that changed everything 💡"></textarea>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+              <span id="bulk-count" style="font-size:12px;color:var(--text3);">0 posts</span>
+              <button onclick="generateBulkAI()" style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:6px 12px;color:var(--accent3);font-size:12px;font-weight:600;cursor:pointer;">✨ Generate with AI</button>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Start Date</label>
-          <input class="form-input" id="bulk-start-date" type="date" style="max-width:200px;">
+
+        <!-- Right: Settings -->
+        <div>
+          <!-- Platforms -->
+          <div class="card">
+            <div class="card-title">🌐 Platforms</div>
+            <div class="platform-grid" id="bulk-platforms">
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'facebook')">
+                <input type="checkbox" value="facebook"><span class="platform-dot-lg" style="background:#1877f2;"></span><span class="platform-name">Facebook</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'instagram')">
+                <input type="checkbox" value="instagram"><span class="platform-dot-lg" style="background:#e1306c;"></span><span class="platform-name">Instagram</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'linkedin')">
+                <input type="checkbox" value="linkedin"><span class="platform-dot-lg" style="background:#0077b5;"></span><span class="platform-name">LinkedIn</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'twitter')">
+                <input type="checkbox" value="twitter"><span class="platform-dot-lg" style="background:#1da1f2;"></span><span class="platform-name">Twitter/X</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'discord')">
+                <input type="checkbox" value="discord"><span class="platform-dot-lg" style="background:#5865f2;"></span><span class="platform-name">Discord</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'telegram')">
+                <input type="checkbox" value="telegram"><span class="platform-dot-lg" style="background:#26a5e4;"></span><span class="platform-name">Telegram</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'bluesky')">
+                <input type="checkbox" value="bluesky"><span class="platform-dot-lg" style="background:#0085ff;"></span><span class="platform-name">Bluesky</span>
+              </label>
+              <label class="platform-check" onclick="toggleBulkPlatform(this,'threads')">
+                <input type="checkbox" value="threads"><span class="platform-dot-lg" style="background:#000;"></span><span class="platform-name">Threads</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Schedule settings -->
+          <div class="card">
+            <div class="card-title">📅 Schedule Settings</div>
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input class="form-input" id="bulk-start-date" type="date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date (optional)</label>
+              <input class="form-input" id="bulk-end-date" type="date">
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">If set, posts are spread evenly between start and end date</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Post Time</label>
+              <input class="form-input" id="bulk-time" type="time" value="09:00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select class="form-select" id="bulk-frequency">
+                <option value="daily">Every day</option>
+                <option value="weekdays">Weekdays only (Mon-Fri)</option>
+                <option value="every2">Every 2 days</option>
+                <option value="every3">Every 3 days</option>
+                <option value="weekly">Once a week</option>
+                <option value="custom">Custom interval</option>
+              </select>
+            </div>
+            <div class="form-group" id="bulk-custom-interval" style="display:none;">
+              <label class="form-label">Every how many days?</label>
+              <input class="form-input" id="bulk-interval-days" type="number" min="1" max="30" value="2" style="max-width:100px;">
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="card" id="bulk-preview-card" style="display:none;">
+            <div class="card-title">👁️ Schedule Preview</div>
+            <div id="bulk-preview-list" style="font-size:12px;color:var(--text2);max-height:150px;overflow-y:auto;"></div>
+          </div>
+
+          <button onclick="scheduleBulkPosts()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+            ⚡ Schedule All Posts
+          </button>
+          <div id="bulk-result" style="margin-top:8px;"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Post Time</label>
-          <input class="form-input" id="bulk-time" type="time" value="09:00" style="max-width:200px;">
-        </div>
-        <button onclick="scheduleBulkPosts()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:13px 24px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
-          ⚡ Schedule All Posts
-        </button>
-        <div id="bulk-result" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -1856,6 +1919,20 @@ async function startPayPalCheckout(plan, amount, desc) {
 window.addEventListener('DOMContentLoaded', function() {
   // Render templates on load
   setTimeout(function(){ renderTemplates(); }, 500);
+
+  // Bulk schedule live preview
+  var bulkTa = document.getElementById('bulk-content');
+  if(bulkTa) bulkTa.addEventListener('input', updateBulkPreview);
+  var bulkFreq = document.getElementById('bulk-frequency');
+  if(bulkFreq) bulkFreq.addEventListener('change', function() {
+    var customEl = document.getElementById('bulk-custom-interval');
+    if(customEl) customEl.style.display = this.value === 'custom' ? 'block' : 'none';
+    updateBulkPreview();
+  });
+  ['bulk-start-date','bulk-end-date','bulk-time','bulk-interval-days'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el) el.addEventListener('change', updateBulkPreview);
+  });
   try {
   var params = new URLSearchParams(window.location.search);
   if(params.get('payment') === 'success') {
@@ -2005,11 +2082,127 @@ function renderAnalytics() {
 }
 
 // ── BULK SCHEDULING ────────────────────────────────────────
+var _bulkPlatforms = [];
+
+function toggleBulkPlatform(el, name) {
+  event.preventDefault();
+  var isSelected = !el.classList.contains('selected');
+  if(isSelected) el.classList.add('selected');
+  else el.classList.remove('selected');
+  var inp = el.querySelector('input');
+  if(inp) inp.checked = isSelected;
+  _bulkPlatforms = Array.from(document.querySelectorAll('#bulk-platforms .platform-check.selected input')).map(function(i){return i.value;});
+}
+
+function getBulkScheduleDates(count, startDate, endDate, frequency, intervalDays, time) {
+  var dates = [];
+  var current = new Date(startDate + 'T' + time);
+  var end = endDate ? new Date(endDate + 'T' + time) : null;
+
+  if(end && count > 1) {
+    // Spread evenly between start and end
+    var totalMs = end - current;
+    var interval = totalMs / (count - 1);
+    for(var i = 0; i < count; i++) {
+      dates.push(new Date(current.getTime() + interval * i));
+    }
+    return dates;
+  }
+
+  // Otherwise use frequency
+  var added = 0;
+  var safety = 0;
+  while(added < count && safety < 365) {
+    safety++;
+    var day = current.getDay(); // 0=Sun, 6=Sat
+    var skip = false;
+    if(frequency === 'weekdays' && (day === 0 || day === 6)) skip = true;
+    if(!skip) { dates.push(new Date(current)); added++; }
+    // Advance
+    var days = 1;
+    if(frequency === 'every2')  days = 2;
+    if(frequency === 'every3')  days = 3;
+    if(frequency === 'weekly')  days = 7;
+    if(frequency === 'custom')  days = parseInt(intervalDays) || 1;
+    current.setDate(current.getDate() + days);
+  }
+  return dates;
+}
+
+function updateBulkPreview() {
+  var raw  = document.getElementById('bulk-content').value.trim();
+  var lines = raw ? raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;}) : [];
+  var countEl = document.getElementById('bulk-count');
+  if(countEl) countEl.textContent = lines.length + ' post' + (lines.length!==1?'s':'');
+
+  var startDate = document.getElementById('bulk-start-date').value;
+  var time      = document.getElementById('bulk-time').value || '09:00';
+  var endDate   = document.getElementById('bulk-end-date') ? document.getElementById('bulk-end-date').value : '';
+  var freq      = document.getElementById('bulk-frequency') ? document.getElementById('bulk-frequency').value : 'daily';
+  var interval  = document.getElementById('bulk-interval-days') ? document.getElementById('bulk-interval-days').value : 1;
+
+  if(!startDate || lines.length === 0) return;
+  var dates = getBulkScheduleDates(lines.length, startDate, endDate, freq, interval, time);
+  var previewCard = document.getElementById('bulk-preview-card');
+  var previewList = document.getElementById('bulk-preview-list');
+  if(previewCard) previewCard.style.display = 'block';
+  if(previewList) {
+    previewList.innerHTML = dates.slice(0,10).map(function(d, i) {
+      return '<div style="padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;">'+
+        '<span style="color:var(--accent3);font-family:var(--mono);min-width:120px;">'+d.toLocaleDateString()+'</span>'+
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+lines[i].slice(0,50)+(lines[i].length>50?'...':'')+'</span>'+
+      '</div>';
+    }).join('') + (dates.length > 10 ? '<div style="color:var(--text3);padding:4px 0;">...and '+(dates.length-10)+' more</div>' : '');
+  }
+}
+
+async function generateBulkAI() {
+  if(!_bizProfile || !_bizProfile.name) {
+    showToast('Set up your business profile first!', 'error');
+    showPage('business');
+    return;
+  }
+  showToast('Generating 5 posts with AI...', 'success');
+  var prompts = [
+    'Share a useful tip related to your business',
+    'Share a recent win or milestone',
+    'Ask your audience an engaging question',
+    'Share a behind the scenes moment',
+    'Post a promotional message about your product or service'
+  ];
+  var posts = [];
+  for(var i = 0; i < prompts.length; i++) {
+    try {
+      var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: _bizProfile.name,
+          description:   _bizProfile.description || '',
+          tone:          _bizProfile.tone || 'friendly',
+          audience:      _bizProfile.audience || '',
+          topic:         prompts[i]
+        })
+      });
+      var data = await res.json();
+      if(data.post) posts.push(data.post);
+    } catch(e) { console.error(e); }
+  }
+  if(posts.length > 0) {
+    var ta = document.getElementById('bulk-content');
+    if(ta) { ta.value = posts.join('\n'); updateBulkPreview(); }
+    showToast('✅ ' + posts.length + ' posts generated!', 'success');
+  }
+}
+
 async function scheduleBulkPosts() {
   var raw  = document.getElementById('bulk-content').value.trim();
   var date = document.getElementById('bulk-start-date').value;
   var time = document.getElementById('bulk-time').value || '09:00';
-  var plats = Array.from(document.querySelectorAll('#bulk-platforms .platform-check.selected input')).map(function(i){return i.value;});
+  var endDate  = document.getElementById('bulk-end-date') ? document.getElementById('bulk-end-date').value : '';
+  var freq     = document.getElementById('bulk-frequency') ? document.getElementById('bulk-frequency').value : 'daily';
+  var interval = document.getElementById('bulk-interval-days') ? document.getElementById('bulk-interval-days').value : 1;
+  var plats = _bulkPlatforms.length > 0 ? _bulkPlatforms : Array.from(document.querySelectorAll('#bulk-platforms .platform-check.selected input')).map(function(i){return i.value;});
   var result = document.getElementById('bulk-result');
 
   if(!raw) { showToast('Please enter at least one post!', 'error'); return; }
