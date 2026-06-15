@@ -1223,7 +1223,12 @@ function togglePlatform(el, name) {
   el.classList.toggle('selected');
   var inp = el.querySelector('input');
   if(inp) inp.checked = el.classList.contains('selected');
-  _selectedPlatforms = Array.from(document.querySelectorAll('.platform-check.selected input')).map(function(i){return i.value;});
+  // Update _selectedPlatforms immediately
+  _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes .platform-check.selected input')).map(function(i){return i.value;});
+  if(!_selectedPlatforms.length) {
+    _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes input:checked')).map(function(i){return i.value;});
+  }
+  console.log('Selected platforms:', _selectedPlatforms);
   // Show/hide platform-specific options
   var show = function(id, cond) { var e=document.getElementById(id); if(e) e.style.display=cond?'block':'none'; };
   show('fb-options',      _selectedPlatforms.includes('facebook'));
@@ -1324,7 +1329,12 @@ async function submitPost(status) {
   var content = document.getElementById('post-content').value.trim();
   if(!content) { showToast('Please write your post content first!', 'error'); return; }
   // Always re-read selected platforms fresh from DOM
+  // Try both .selected class AND checked inputs as fallback
   _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes .platform-check.selected input')).map(function(i){return i.value;});
+  if(!_selectedPlatforms.length) {
+    // Fallback: check input.checked directly
+    _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes input[type="checkbox"]:checked')).map(function(i){return i.value;});
+  }
   if(!_selectedPlatforms.length) { showToast('Please select at least one platform!', 'error'); return; }
 
   status = status || 'scheduled';
