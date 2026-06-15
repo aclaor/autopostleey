@@ -1374,6 +1374,7 @@ async function submitPost(status) {
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
+        console.log('Publishing with connections:', JSON.stringify(_connectionsFull));
         var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
@@ -1382,7 +1383,7 @@ async function submitPost(status) {
             content:     content,
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
-            connections: _connections
+            connections: _connectionsFull
           })
         });
         var pubData = await pubRes.json();
@@ -1443,15 +1444,33 @@ function editPost(id) {
 // ── CONNECTIONS ─────────────────────────────────────────────
 var _connections = {};
 
+var _connectionsFull = {}; // Stores full data including tokens
+
 async function loadConnections() {
   try {
-    var session = await _db.auth.getSession();
-    var token = session.data.session ? session.data.session.access_token : '';
-    var r = await fetch('https://autopostleey-api-production.up.railway.app/connections', {
-      headers: { 'Authorization': 'Bearer '+token }
-    });
-    _connections = await r.json();
-    updateConnectionsUI();
+    // Load full connection data directly from Supabase (includes tokens)
+    var { data, error } = await _db.from('autopostleey_connections')
+      .select('*').eq('user_id', _user.id);
+    console.log('Connections loaded:', data, 'Error:', error);
+    if(data && data.length > 0) {
+      _connectionsFull = {};
+      _connections = {};
+      data.forEach(function(conn) {
+        _connectionsFull[conn.platform] = conn;
+        _connections[conn.platform] = {
+          platform:  conn.platform,
+          page_name: conn.page_name,
+          connected: true
+        };
+        console.log('Stored connection:', conn.platform, 
+          'handle:', conn.page_name, 
+          'has_token:', !!conn.access_token,
+          'token_preview:', conn.access_token ? conn.access_token.slice(0,8)+'...' : 'NONE');
+      });
+      updateConnectionsUI();
+    } else {
+      console.log('No connections found in Supabase');
+    }
   } catch(e) { console.error('Load connections error:', e); }
 }
 
@@ -1743,7 +1762,8 @@ async function saveConnection(platform, data) {
     });
     var result = await r.json();
     if(result.success) {
-      _connections[platform] = { platform: platform, ...data, connected: true };
+      _connectionsFull[platform] = { platform: platform, ...data, connected: true };
+      _connections[platform] = { platform: platform, page_name: data.page_name, connected: true };
       updateConnectionsUI();
       document.getElementById('conn-modal').style.display = 'none';
       document.getElementById('ob2-icon').textContent = '✅';
