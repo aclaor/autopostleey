@@ -959,13 +959,13 @@
         <div class="form-group">
           <label class="form-label">Platforms</label>
           <div class="platform-grid" id="bulk-platforms">
-            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+            <label class="platform-check" onclick="togglePlatform(this,'facebook')">
               <input type="checkbox" value="facebook"><span class="platform-dot-lg" style="background:#1877f2;"></span><span class="platform-name">Facebook</span>
             </label>
-            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+            <label class="platform-check" onclick="togglePlatform(this,'discord')">
               <input type="checkbox" value="discord"><span class="platform-dot-lg" style="background:#5865f2;"></span><span class="platform-name">Discord</span>
             </label>
-            <label class="platform-check" onclick="this.classList.toggle('selected');this.querySelector('input').checked=!this.querySelector('input').checked">
+            <label class="platform-check" onclick="togglePlatform(this,'telegram')">
               <input type="checkbox" value="telegram"><span class="platform-dot-lg" style="background:#26a5e4;"></span><span class="platform-name">Telegram</span>
             </label>
           </div>
@@ -1323,6 +1323,8 @@ async function generateAIPost() {
 async function submitPost(status) {
   var content = document.getElementById('post-content').value.trim();
   if(!content) { showToast('Please write your post content first!', 'error'); return; }
+  // Always re-read selected platforms fresh from DOM
+  _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes .platform-check.selected input')).map(function(i){return i.value;});
   if(!_selectedPlatforms.length) { showToast('Please select at least one platform!', 'error'); return; }
 
   status = status || 'scheduled';
