@@ -2197,11 +2197,18 @@ var _tplFilter = 'all';
 
 function renderTemplates() {
   var grid = document.getElementById('templates-grid');
-  console.log('renderTemplates called, grid:', grid, 'templates:', _templates.length, 'filter:', _tplFilter);
-  if(!grid) { console.log('ERROR: templates-grid not found!'); return; }
+  if(!grid) return;
   var filtered = _tplFilter === 'all' ? _templates : _templates.filter(function(t){ return t.cat === _tplFilter; });
-  console.log('Filtered templates:', filtered.length);
-
+  grid.innerHTML = '';
+  filtered.forEach(function(t, i) {
+    var div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s;';
+    div.innerHTML = '<div style="font-size:20px;margin-bottom:6px;">'+t.emoji+'</div><div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;">'+t.title+'</div><div style="font-size:11px;color:var(--text3);">Click to use</div>';
+    div.addEventListener('mouseover', function(){ this.style.borderColor='var(--accent2)'; this.style.background='rgba(124,58,237,0.05)'; });
+    div.addEventListener('mouseout',  function(){ this.style.borderColor='var(--border)';  this.style.background='var(--bg3)'; });
+    div.addEventListener('click', function(){ useTemplateByIndex(i, _tplFilter); });
+    grid.appendChild(div);
+  });
 }
 
 function filterTemplates(cat) {
