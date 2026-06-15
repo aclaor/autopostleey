@@ -1374,14 +1374,15 @@ async function submitPost(status) {
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
-        var pubRes = await fetch('https://autopostleey-api-production.up.railway.app/publish', {
+        var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
           body: JSON.stringify({
-            post_id:   postData.id,
-            content:   content,
-            platforms: _selectedPlatforms,
-            user_id:   _user.id
+            post_id:     postData ? postData.id : null,
+            content:     content,
+            platforms:   _selectedPlatforms,
+            user_id:     _user.id,
+            connections: _connections
           })
         });
         var pubData = await pubRes.json();
