@@ -980,9 +980,24 @@ Post 2: New products just arrived! 🛍️
 Post 3: Thank you for 500 followers! 🙏
 Post 4: Behind the scenes of our process 👀
 Post 5: Here is a tip that changed everything 💡"></textarea>
-            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;margin-top:8px;margin-bottom:16px;">
               <span id="bulk-count" style="font-size:12px;color:var(--text3);">0 posts</span>
               <button onclick="generateBulkAI()" style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:6px 12px;color:var(--accent3);font-size:12px;font-weight:600;cursor:pointer;">✨ Generate with AI</button>
+            </div>
+
+            <!-- Templates for bulk -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;font-family:var(--mono);letter-spacing:0.5px;text-transform:uppercase;">📝 Templates — click to add to posts</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="post-btn" onclick="filterBulkTemplates('all')" id="btpl-cat-all" style="background:rgba(124,58,237,0.12);border-color:var(--accent);color:var(--accent3);">All</button>
+                <button class="post-btn" onclick="filterBulkTemplates('tip')" id="btpl-cat-tip">Tips</button>
+                <button class="post-btn" onclick="filterBulkTemplates('story')" id="btpl-cat-story">Story</button>
+                <button class="post-btn" onclick="filterBulkTemplates('question')" id="btpl-cat-question">Questions</button>
+                <button class="post-btn" onclick="filterBulkTemplates('opinion')" id="btpl-cat-opinion">Opinion</button>
+                <button class="post-btn" onclick="filterBulkTemplates('business')" id="btpl-cat-business">Business</button>
+                <button class="post-btn" onclick="filterBulkTemplates('promo')" id="btpl-cat-promo">Promo</button>
+              </div>
+              <div id="bulk-templates-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;max-height:200px;overflow-y:auto;"></div>
             </div>
           </div>
         </div>
@@ -2250,6 +2265,7 @@ showPage = function(name) {
   if(name === 'analytics') renderAnalytics();
   if(name === 'calendar')  renderCalendar();
   if(name === 'compose')   { renderTemplates(); }
+  if(name === 'bulk')      { renderBulkTemplates(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -2445,6 +2461,53 @@ function useTemplate(text) {
 }
 
 // renderTemplates is called inside the main showPage function below
+
+
+// ── BULK SCHEDULE TEMPLATES ────────────────────────────────
+var _bulkTplFilter = 'all';
+
+function filterBulkTemplates(cat) {
+  _bulkTplFilter = cat;
+  document.querySelectorAll('[id^="btpl-cat-"]').forEach(function(btn) {
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  });
+  var active = document.getElementById('btpl-cat-'+cat);
+  if(active) {
+    active.style.background = 'rgba(124,58,237,0.12)';
+    active.style.borderColor = 'var(--accent)';
+    active.style.color = 'var(--accent3)';
+  }
+  renderBulkTemplates();
+}
+
+function renderBulkTemplates() {
+  var grid = document.getElementById('bulk-templates-grid');
+  if(!grid) return;
+  var filtered = _bulkTplFilter === 'all' ? _templates : _templates.filter(function(t){ return t.cat === _bulkTplFilter; });
+  grid.innerHTML = '';
+  filtered.forEach(function(t) {
+    var div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;cursor:pointer;transition:all .15s;';
+    div.innerHTML = '<div style="font-size:16px;margin-bottom:4px;">'+t.emoji+'</div><div style="font-size:11px;font-weight:600;color:var(--text);line-height:1.3;">'+t.title+'</div>';
+    div.addEventListener('mouseover', function(){ this.style.borderColor='var(--accent2)'; this.style.background='rgba(124,58,237,0.05)'; });
+    div.addEventListener('mouseout',  function(){ this.style.borderColor='var(--border)';  this.style.background='var(--bg3)'; });
+    (function(template) {
+      div.addEventListener('click', function() {
+        // Add template to bulk textarea
+        var ta = document.getElementById('bulk-content');
+        if(ta) {
+          var current = ta.value.trim();
+          ta.value = current ? current + '\n' + template.content : template.content;
+          ta.dispatchEvent(new Event('input'));
+          showToast('✅ Template added to posts!', 'success');
+        }
+      });
+    })(t);
+    grid.appendChild(div);
+  });
+}
 
 </script>
 
