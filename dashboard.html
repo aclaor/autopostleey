@@ -353,6 +353,21 @@
               <label class="form-label">Topic / Prompt (for AI)</label>
               <input class="form-input" id="post-topic" placeholder="e.g. Weekend sale, new product launch, customer tip...">
             </div>
+
+            <!-- Templates -->
+            <div class="form-group">
+              <label class="form-label">📝 Templates <span style="font-size:11px;color:var(--text3);font-weight:400;">(click to use)</span></label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="post-btn" onclick="filterTemplates('all')" id="tpl-cat-all" style="background:rgba(124,58,237,0.12);border-color:var(--accent);color:var(--accent3);">All</button>
+                <button class="post-btn" onclick="filterTemplates('tip')" id="tpl-cat-tip">Tips</button>
+                <button class="post-btn" onclick="filterTemplates('story')" id="tpl-cat-story">Story</button>
+                <button class="post-btn" onclick="filterTemplates('question')" id="tpl-cat-question">Questions</button>
+                <button class="post-btn" onclick="filterTemplates('opinion')" id="tpl-cat-opinion">Opinion</button>
+                <button class="post-btn" onclick="filterTemplates('business')" id="tpl-cat-business">Business</button>
+                <button class="post-btn" onclick="filterTemplates('promo')" id="tpl-cat-promo">Promo</button>
+              </div>
+              <div id="templates-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:280px;overflow-y:auto;"></div>
+            </div>
           </div>
 
           <!-- Schedule -->
@@ -2125,6 +2140,112 @@ function setPreviewPlatform(platform) {
 }
 
 // Update preview tabs when platforms change
+
+
+// ── POST TEMPLATES ─────────────────────────────────────────
+var _templates = [
+  // Tips
+  { emoji:'💡', title:'Share a tip that makes work easier', prompt:'Share one practical tip or shortcut that others can use today to improve their work', cat:'tip' },
+  { emoji:'🛠️', title:'My go-to tools for getting things done', prompt:'Share the tools you rely on weekly and why you love them', cat:'tip' },
+  { emoji:'⚡', title:'How I stay productive without burning out', prompt:'Talk about how you stay focused without falling into hustle culture', cat:'tip' },
+  { emoji:'📋', title:'My step-by-step process that works', prompt:'Break down your personal method for achieving a goal step by step', cat:'tip' },
+  { emoji:'⏱️', title:'The system that saves me hours every week', prompt:'Share one repeatable system that made your work faster and more efficient', cat:'tip' },
+  { emoji:'✨', title:'One small change that shifted everything', prompt:'Talk about a small but powerful change in behavior or mindset that made things better', cat:'tip' },
+  // Story
+  { emoji:'🚀', title:"I didn't think I could — then I did", prompt:'Tell the story of trying something you thought was out of reach and what surprised you', cat:'story' },
+  { emoji:'😬', title:'The mistake I cannot forget', prompt:'Share a painful mistake and what it taught you — normalize learning out loud', cat:'story' },
+  { emoji:'💸', title:'The expensive lesson I am glad I learned', prompt:'Talk about a hard-earned insight that cost you something but gave you clarity', cat:'story' },
+  { emoji:'🔦', title:'When I realized I was holding myself back', prompt:'Describe a situation that made you realize you were playing it safe and what shifted', cat:'story' },
+  { emoji:'🎯', title:'How I landed a result without the expected method', prompt:'Break down a recent win and the unconventional way you achieved it', cat:'story' },
+  { emoji:'⏳', title:'I should have started sooner', prompt:'Talk about a time perfectionism got in the way and what finally helped you take action', cat:'story' },
+  // Questions
+  { emoji:'🔥', title:'What is your unpopular opinion about your industry?', prompt:'Ask your audience to share their bold unpopular opinion about your industry', cat:'question' },
+  { emoji:'❓', title:'What is the best advice you ever ignored?', prompt:'Share a personal I am glad I did not listen moment and invite your audience to do the same', cat:'question' },
+  { emoji:'✍️', title:'Fill in the blank: I wish more people knew ___', prompt:'Invite thoughtful replies about what people wish others knew in your niche', cat:'question' },
+  { emoji:'⚖️', title:'Which one are you? Option A vs Option B', prompt:'Use contrast to create quick decision-based interaction with your audience', cat:'question' },
+  { emoji:'💬', title:'Tell me your best tip for a common challenge', prompt:'Ask your audience to share their go-to strategy for something you are working on', cat:'question' },
+  { emoji:'🤔', title:'Ask your audience a strategic question', prompt:'Post a real question that invites real conversation and surfaces useful answers', cat:'question' },
+  // Opinion
+  { emoji:'📌', title:'Share a niche opinion you hold', prompt:'Share an opinion you are a little nervous to post — these often build authority', cat:'opinion' },
+  { emoji:'🧐', title:'The biggest misconception in my field', prompt:'Clear up something people consistently misunderstand in your industry', cat:'opinion' },
+  { emoji:'🔄', title:'Something I changed my mind about', prompt:'Share a belief or approach you see differently now and what shifted your perspective', cat:'opinion' },
+  { emoji:'💬', title:'My opinion about my industry', prompt:'Share a take on your industry that challenges conventional wisdom and invite others to weigh in', cat:'opinion' },
+  { emoji:'🙅', title:'One thing I stopped doing this year and why', prompt:'Share something you let go of this year and how it opened space for better results', cat:'opinion' },
+  { emoji:'⚠️', title:"When best practices did not work for me", prompt:'Push back on cookie-cutter advice and share what you did instead that actually worked', cat:'opinion' },
+  // Business
+  { emoji:'📈', title:'Why we raised our prices', prompt:'Share the thought process behind a price increase and what happened after', cat:'business' },
+  { emoji:'🏫', title:'One thing we learned from our clients', prompt:'Share one surprising valuable lesson from working with clients that shifted how you work', cat:'business' },
+  { emoji:'😵', title:'When everything went wrong in one week', prompt:'Share the chaos of a tough week what broke how you responded and what you learned', cat:'business' },
+  { emoji:'🛠️', title:'The strategy that flopped and what we learned', prompt:'Share what did not work why it failed and how you are adjusting moving forward', cat:'business' },
+  { emoji:'💲', title:'How I would launch my business with just $500', prompt:'Share the tools priorities and decisions you would make to get results with a small budget', cat:'business' },
+  { emoji:'🔂', title:'What I wish I knew before starting my business', prompt:'Looking back share the lessons that would have saved you time money or stress', cat:'business' },
+  // Promo
+  { emoji:'🎉', title:'Post your favorite win from this month', prompt:'Share a business win this month and turn it into something useful for your audience', cat:'promo' },
+  { emoji:'😴', title:'This feature is slept on', prompt:'Highlight an underrated feature of your product or offer that consistently delivers results', cat:'promo' },
+  { emoji:'⏳', title:"Why now is the time to try this", prompt:'Position your offer as timely and relevant tied to a current trend or seasonal need', cat:'promo' },
+  { emoji:'📄', title:'The offer no one talks about but always performs', prompt:'Shine a light on a service product or offer that quietly delivers great results', cat:'promo' },
+  { emoji:'✅', title:'Share a decision you are proud of making', prompt:'Reflect on a choice that felt right even if it was not easy and what it meant for your business', cat:'promo' },
+  { emoji:'🏆', title:'Share a small work win from the past week', prompt:'Celebrate a recent win and reflect on what made it happen', cat:'promo' },
+];
+
+var _tplFilter = 'all';
+
+function renderTemplates() {
+  var grid = document.getElementById('templates-grid');
+  if(!grid) return;
+  var filtered = _tplFilter === 'all' ? _templates : _templates.filter(function(t){ return t.cat === _tplFilter; });
+
+}
+
+function filterTemplates(cat) {
+  _tplFilter = cat;
+  // Update active button
+  document.querySelectorAll('[id^="tpl-cat-"]').forEach(function(btn) {
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  });
+  var active = document.getElementById('tpl-cat-'+cat);
+  if(active) {
+    active.style.background = 'rgba(124,58,237,0.12)';
+    active.style.borderColor = 'var(--accent)';
+    active.style.color = 'var(--accent3)';
+  }
+  renderTemplates();
+}
+
+function useTemplateByIndex(index, cat) {
+  var filtered = cat === 'all' ? _templates : _templates.filter(function(t){ return t.cat === cat; });
+  var t = filtered[index];
+  if(!t) return;
+  useTemplate(t.prompt);
+}
+
+function useTemplate(prompt) {
+  // Set the topic field
+  var topicEl = document.getElementById('post-topic');
+  if(topicEl) topicEl.value = prompt;
+  // Switch to AI Assist mode and generate
+  setComposeMode('assist');
+  var aiBtn = document.getElementById('ai-generate-btn');
+  if(aiBtn) aiBtn.style.display = 'flex';
+  // Auto-generate
+  setTimeout(function(){ generateAIPost(); }, 300);
+}
+
+// Render templates when compose page is shown
+var _origShowPage3 = showPage;
+showPage = function(name) {
+  _origShowPage3(name);
+  if(name === 'compose') renderTemplates();
+};
+
+// Render on load if compose is active
+document.addEventListener('DOMContentLoaded', function() {
+  if(document.getElementById('page-compose') && document.getElementById('page-compose').classList.contains('active')) {
+    renderTemplates();
+  }
+});
 
 </script>
 
