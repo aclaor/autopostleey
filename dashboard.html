@@ -1268,10 +1268,14 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 function setPostNow() {
+  var now = new Date();
   var d = document.getElementById('post-date');
   var t = document.getElementById('post-time');
-  if(d) d.value = new Date().toISOString().split('T')[0];
-  if(t) t.value = new Date().toTimeString().slice(0,5);
+  if(d) d.value = now.toISOString().split('T')[0];
+  if(t) t.value = now.toTimeString().slice(0,5);
+  // Change button text to indicate immediate posting
+  var btn = document.getElementById('submit-post-btn');
+  if(btn) btn.textContent = 'Post Now →';
 }
 
 function setBestTime() {
@@ -1380,10 +1384,19 @@ async function submitPost(status) {
           })
         });
         var pubData = await pubRes.json();
-        if(pubData.success > 0) {
+        if(pubData.status === 'posted' || pubData.success > 0) {
           showToast('✅ Published to '+pubData.success+' platform(s)!', 'success');
+        } else if(pubData.results) {
+          var succeeded = pubData.results.filter(function(r){return r.success;});
+          var failed    = pubData.results.filter(function(r){return !r.success;});
+          if(succeeded.length > 0) {
+            showToast('✅ Posted to '+succeeded.map(function(r){return r.platform;}).join(', ')+'!', 'success');
+          }
+          if(failed.length > 0) {
+            showToast('⚠️ Failed on: '+failed.map(function(r){return r.platform+' ('+r.error+')'}).join(', '), 'error');
+          }
         } else {
-          showToast('⚠️ Saved but publishing failed. Check connections.', 'error');
+          showToast('⚠️ Saved but publishing failed. Check your connections.', 'error');
         }
       } catch(pe) { console.error('Publish error:', pe); }
     } else {
