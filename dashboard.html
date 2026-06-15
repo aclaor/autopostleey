@@ -1220,15 +1220,19 @@ function setComposeMode(mode) {
 }
 
 function togglePlatform(el, name) {
-  el.classList.toggle('selected');
-  var inp = el.querySelector('input');
-  if(inp) inp.checked = el.classList.contains('selected');
-  // Update _selectedPlatforms immediately
-  _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes .platform-check.selected input')).map(function(i){return i.value;});
-  if(!_selectedPlatforms.length) {
-    _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes input:checked')).map(function(i){return i.value;});
+  // Prevent double-firing from label+input click
+  event.preventDefault();
+  var isSelected = !el.classList.contains('selected');
+  if(isSelected) {
+    el.classList.add('selected');
+  } else {
+    el.classList.remove('selected');
   }
-  console.log('Selected platforms:', _selectedPlatforms);
+  var inp = el.querySelector('input');
+  if(inp) inp.checked = isSelected;
+  // Update _selectedPlatforms
+  _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes .platform-check.selected input')).map(function(i){return i.value;});
+  console.log('Selected platforms:', _selectedPlatforms, 'isSelected:', isSelected);
   // Show/hide platform-specific options
   var show = function(id, cond) { var e=document.getElementById(id); if(e) e.style.display=cond?'block':'none'; };
   show('fb-options',      _selectedPlatforms.includes('facebook'));
