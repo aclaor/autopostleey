@@ -1267,13 +1267,14 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 
+var _postNow = false;
 function setPostNow() {
   var now = new Date();
   var d = document.getElementById('post-date');
   var t = document.getElementById('post-time');
   if(d) d.value = now.toISOString().split('T')[0];
   if(t) t.value = now.toTimeString().slice(0,5);
-  // Change button text to indicate immediate posting
+  _postNow = true;
   var btn = document.getElementById('submit-post-btn');
   if(btn) btn.textContent = 'Post Now →';
 }
@@ -1367,7 +1368,7 @@ async function submitPost(status) {
     var postData = postDataArr && postDataArr[0] ? postDataArr[0] : null;
 
     // If posting now, publish immediately
-    var isNow = new Date(scheduledAt) <= new Date(Date.now() + 60000);
+    var isNow = _postNow || new Date(scheduledAt) <= new Date(Date.now() + 2*60000);
     if(status === 'scheduled' && isNow && postData) {
       showToast('Publishing to platforms...', 'success');
       var session = await _db.auth.getSession();
@@ -1402,6 +1403,7 @@ async function submitPost(status) {
     } else {
       showToast(status==='draft' ? '✅ Draft saved!' : '✅ Post scheduled!', 'success');
     }
+    _postNow = false;
     document.getElementById('post-content').value = '';
     document.getElementById('post-topic').value = '';
     document.querySelectorAll('.platform-check').forEach(function(el){ el.classList.remove('selected'); el.querySelector('input').checked = false; });
@@ -1413,7 +1415,7 @@ async function submitPost(status) {
   } catch(e) {
     showToast('Error: ' + e.message, 'error');
   } finally {
-    if(btn) { btn.textContent = 'Schedule Post →'; btn.disabled = false; }
+    if(btn) { btn.textContent = _postNow ? 'Post Now →' : 'Schedule Post →'; btn.disabled = false; _postNow = false; }
   }
 }
 
