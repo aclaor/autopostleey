@@ -1850,6 +1850,8 @@ async function startPayPalCheckout(plan, amount, desc) {
 
 // Handle PayPal return
 window.addEventListener('DOMContentLoaded', function() {
+  // Render templates on load
+  setTimeout(function(){ renderTemplates(); }, 500);
   try {
   var params = new URLSearchParams(window.location.search);
   if(params.get('payment') === 'success') {
@@ -2044,11 +2046,13 @@ async function scheduleBulkPosts() {
   document.getElementById('bulk-content').value = '';
 }
 
-// Update showPage to render analytics when opened
+// Update showPage to render analytics/calendar/templates when opened
 var _origShowPage2 = showPage;
 showPage = function(name) {
   _origShowPage2(name);
   if(name === 'analytics') renderAnalytics();
+  if(name === 'calendar')  renderCalendar();
+  if(name === 'compose')   { renderTemplates(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -2232,19 +2236,7 @@ function useTemplate(text) {
   showToast('✏️ Template loaded — edit and make it yours!', 'success');
 }
 
-// Render templates when compose page is shown
-var _origShowPage3 = showPage;
-showPage = function(name) {
-  _origShowPage3(name);
-  if(name === 'compose') renderTemplates();
-};
-
-// Render on load if compose is active
-document.addEventListener('DOMContentLoaded', function() {
-  if(document.getElementById('page-compose') && document.getElementById('page-compose').classList.contains('active')) {
-    renderTemplates();
-  }
-});
+// renderTemplates is called inside the main showPage function below
 
 </script>
 
