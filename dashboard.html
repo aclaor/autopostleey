@@ -2197,8 +2197,10 @@ var _tplFilter = 'all';
 
 function renderTemplates() {
   var grid = document.getElementById('templates-grid');
-  if(!grid) return;
+  console.log('renderTemplates called, grid:', grid, 'templates:', _templates.length, 'filter:', _tplFilter);
+  if(!grid) { console.log('ERROR: templates-grid not found!'); return; }
   var filtered = _tplFilter === 'all' ? _templates : _templates.filter(function(t){ return t.cat === _tplFilter; });
+  console.log('Filtered templates:', filtered.length);
 
 }
 
