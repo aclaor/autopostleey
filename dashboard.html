@@ -1635,9 +1635,14 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile — no tokens needed!</div>';
     },
     twitter: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your Twitter/X account to post tweets automatically.</div>' +
-        '<button onclick="connectTwitter()" style="width:100%;padding:14px;background:#000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">𝕏 Connect Twitter/X</button>' +
-        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will detect your @handle automatically!</div>';
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect Twitter/X using your Access Token from the Developer Portal.</div>' +
+        '<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#60a5fa;">' +
+        '📖 Get your tokens at <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a> → Your App → Keys and Tokens' +
+        '</div>' +
+        '<input id="tw-handle" placeholder="Your @handle (e.g. @yourbusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<button onclick="saveTwitterManual()" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">𝕏 Connect Twitter/X</button>';
     },
     youtube: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your YouTube channel with one click.</div>' +
@@ -1784,6 +1789,19 @@ function connectFacebook() {
 function connectInstagram() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
   window.location.href = 'https://autopostleey-api-production.up.railway.app/instagram/auth?user_id=' + encodeURIComponent(_user.id);
+}
+
+async function saveTwitterManual() {
+  var handle = document.getElementById('tw-handle').value.trim();
+  var token  = document.getElementById('tw-token').value.trim();
+  var secret = document.getElementById('tw-secret').value.trim();
+  if(!handle || !token || !secret) { showToast('Please fill all fields!', 'error'); return; }
+  if(!handle.startsWith('@')) handle = '@' + handle;
+  await saveConnection('twitter', {
+    page_name:   handle,
+    access_token: token,
+    webhook_url:  secret  // store access_secret in webhook_url field
+  });
 }
 
 function connectTwitter() {
