@@ -753,20 +753,20 @@
             <div class="connection-dot" style="background:rgba(24,119,242,0.15);">📘</div>
             <div>
               <div class="connection-name">Facebook</div>
-              <div class="connection-status" id="fb-status">Not connected</div>
+              <div class="connection-status" id="facebook-status">Not connected</div>
             </div>
           </div>
-          <button class="connect-btn" id="fb-btn" onclick="connectPlatform('facebook')">Connect</button>
+          <button class="connect-btn" id="facebook-btn" onclick="connectPlatform('facebook')">Connect</button>
         </div>
         <div class="connection-item">
           <div class="connection-info">
             <div class="connection-dot" style="background:rgba(225,48,108,0.15);">📷</div>
             <div>
               <div class="connection-name">Instagram</div>
-              <div class="connection-status" id="ig-status">Not connected</div>
+              <div class="connection-status" id="instagram-status">Not connected</div>
             </div>
           </div>
-          <button class="connect-btn" id="ig-btn" onclick="connectPlatform('instagram')">Connect</button>
+          <button class="connect-btn" id="instagram-btn" onclick="connectPlatform('instagram')">Connect</button>
         </div>
         <div class="connection-item">
           <div class="connection-info">
@@ -1574,7 +1574,7 @@ async function loadConnections() {
 function updateConnectionsUI() {
   // Map platform name to HTML element ID prefix
   var idMap = {
-    facebook: 'fb', instagram: 'ig', linkedin: 'linkedin',
+    facebook: 'facebook', instagram: 'instagram', linkedin: 'linkedin',
     twitter: 'twitter', discord: 'dc', telegram: 'tg',
     bluesky: 'bluesky', threads: 'threads',
     google_business: 'google_business',
@@ -1623,30 +1623,12 @@ function getConnectionForm(name) {
         '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-t1\').value,chat_id:document.getElementById(\'conn-t2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
     },
     instagram: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">How would you like to connect your Instagram?</div>' +
-        '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Features depend on your account type.</div>' +
-        '<div id="ig-type-pro" onclick="selectIgType(\'pro\')" style="background:#0a0a0f;border:2px solid #2a2a3e;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;">' +
-          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
-            '<span style="font-size:18px;">📷</span>' +
-            '<div style="font-size:14px;font-weight:700;color:#e8e8f0;">Professional (Business & Creator)</div>' +
-            '<div id="ig-check-pro" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid #2a2a3e;"></div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;line-height:1.7;padding-left:28px;">✓ Automatic posting — we post for you<br>✓ Reply to comments from dashboard<br>✓ View post performance metrics<br>✓ Best for businesses and creators</div>' +
-        '</div>' +
-        '<div id="ig-type-personal" onclick="selectIgType(\'personal\')" style="background:#0a0a0f;border:2px solid #2a2a3e;border-radius:10px;padding:14px;margin-bottom:16px;cursor:pointer;transition:all .15s;">' +
-          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
-            '<span style="font-size:18px;">👤</span>' +
-            '<div style="font-size:14px;font-weight:700;color:#e8e8f0;">Personal</div>' +
-            '<div id="ig-check-personal" style="margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid #2a2a3e;"></div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;line-height:1.7;padding-left:28px;">✓ Notification posting — we remind you to post<br>✗ No automatic posting (Instagram limitation)</div>' +
-        '</div>' +
-        '<div id="ig-fields" style="display:none;">' +
-          '<input id="conn-i1" placeholder="Facebook Page Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-          '<input id="conn-i2" placeholder="Instagram User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-          '<button onclick="saveConnection(\'instagram\',{access_token:document.getElementById(\'conn-i1\').value,page_id:document.getElementById(\'conn-i2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Connect Instagram</button>' +
-        '</div>';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">Connect Instagram</div>' +
+        '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Requires an Instagram Business or Creator account linked to a Facebook Page.</div>' +
+        '<button onclick="connectInstagram()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">📷 Connect Instagram</button>' +
+        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will detect your Instagram Business account automatically!</div>';
     },
+
     linkedin: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account with one click to share posts directly.</div>' +
         '<button onclick="connectLinkedIn()" style="width:100%;padding:14px;background:#0077b5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">💼 Connect LinkedIn</button>' +
@@ -1715,6 +1697,34 @@ function connectFacebookOAuth() {
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
+  // Facebook OAuth return
+  if(params.get('fb_success')) {
+    var pageName = params.get('page_name') || 'your page';
+    showToast('✅ Facebook connected — ' + pageName + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+  }
+  if(params.get('fb_error')) {
+    var msgs = { 'cancelled':'Facebook connection cancelled.', 'token_failed':'Could not get token. Try again.', 'server_error':'Server error.' };
+    showToast(msgs[params.get('fb_error')] || 'Facebook connection failed.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
+  // Instagram OAuth return
+  if(params.get('ig_success')) {
+    var pageName = params.get('page_name') || 'your account';
+    showToast('✅ Instagram connected — ' + pageName + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+  }
+  if(params.get('ig_error')) {
+    var errs = { 'cancelled':'Instagram cancelled.', 'no_instagram':'No Instagram Business account found. Make sure your Instagram is linked to a Facebook Page.', 'token_failed':'Could not get token.', 'server_error':'Server error.' };
+    showToast(errs[params.get('ig_error')] || 'Instagram connection failed.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
   // Twitter OAuth return
   if(params.get('tw_success')) {
     var pageName = params.get('page_name') || 'your account';
@@ -1765,6 +1775,16 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
+
+function connectFacebook() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
+}
+
+function connectInstagram() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/instagram/auth?user_id=' + encodeURIComponent(_user.id);
+}
 
 function connectTwitter() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
