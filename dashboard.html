@@ -773,10 +773,10 @@
             <div class="connection-dot" style="background:rgba(0,119,181,0.15);">💼</div>
             <div>
               <div class="connection-name">LinkedIn</div>
-              <div class="connection-status" id="li-status">Not connected</div>
+              <div class="connection-status" id="linkedin-status">Not connected</div>
             </div>
           </div>
-          <button class="connect-btn" id="li-btn" onclick="connectPlatform('linkedin')">Connect</button>
+          <button class="connect-btn" id="linkedin-btn" onclick="connectPlatform('linkedin')">Connect</button>
         </div>
         <div class="connection-item">
           <div class="connection-info">
@@ -1574,7 +1574,7 @@ async function loadConnections() {
 function updateConnectionsUI() {
   // Map platform name to HTML element ID prefix
   var idMap = {
-    facebook: 'fb', instagram: 'ig', linkedin: 'li',
+    facebook: 'fb', instagram: 'ig', linkedin: 'linkedin',
     twitter: 'tw', discord: 'dc', telegram: 'tg',
     bluesky: 'bluesky', threads: 'threads',
     google_business: 'google_business',
@@ -1648,7 +1648,9 @@ function getConnectionForm(name) {
         '</div>';
     },
     linkedin: function() {
-      return '<div style="font-size:13px;color:#8888aa;">LinkedIn OAuth coming soon. Join the waitlist to be notified.</div>';
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account with one click to share posts directly.</div>' +
+        '<button onclick="connectLinkedIn()" style="width:100%;padding:14px;background:#0077b5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">💼 Connect LinkedIn</button>' +
+        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile — no tokens needed!</div>';
     },
     twitter: function() {
       return '<div style="font-size:13px;color:#8888aa;">Twitter/X OAuth coming soon. Join the waitlist to be notified.</div>';
@@ -1711,6 +1713,20 @@ function connectFacebookOAuth() {
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
+  // LinkedIn OAuth return
+  if(params.get('li_success')) {
+    var pageName = params.get('page_name') || 'your profile';
+    showToast('✅ LinkedIn connected — ' + pageName + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+  }
+  if(params.get('li_error')) {
+    var msgs = { 'cancelled':'LinkedIn connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
+    showToast(msgs[params.get('li_error')] || 'LinkedIn connection failed.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
   if(params.get('fb_success')) {
     var pageName = params.get('page_name') || 'your page';
     showToast('✅ Facebook connected — ' + pageName + '!', 'success');
@@ -1733,6 +1749,12 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
+
+function connectLinkedIn() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  var oauthUrl = 'https://autopostleey-api-production.up.railway.app/linkedin/auth?user_id=' + encodeURIComponent(_user.id);
+  window.location.href = oauthUrl;
+}
 
 async function connectGoogleBusiness() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
