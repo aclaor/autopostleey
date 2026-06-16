@@ -783,10 +783,10 @@
             <div class="connection-dot" style="background:rgba(29,161,242,0.15);">🐦</div>
             <div>
               <div class="connection-name">Twitter / X</div>
-              <div class="connection-status" id="tw-status">Not connected</div>
+              <div class="connection-status" id="twitter-status">Not connected</div>
             </div>
           </div>
-          <button class="connect-btn" id="tw-btn" onclick="connectPlatform('twitter')">Connect</button>
+          <button class="connect-btn" id="twitter-btn" onclick="connectPlatform('twitter')">Connect</button>
         </div>
         <div class="connection-item">
           <div class="connection-info">
@@ -1575,7 +1575,7 @@ function updateConnectionsUI() {
   // Map platform name to HTML element ID prefix
   var idMap = {
     facebook: 'fb', instagram: 'ig', linkedin: 'linkedin',
-    twitter: 'tw', discord: 'dc', telegram: 'tg',
+    twitter: 'twitter', discord: 'dc', telegram: 'tg',
     bluesky: 'bluesky', threads: 'threads',
     google_business: 'google_business',
     youtube: 'youtube', fbgroup: 'fbgroup'
@@ -1653,7 +1653,9 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile — no tokens needed!</div>';
     },
     twitter: function() {
-      return '<div style="font-size:13px;color:#8888aa;">Twitter/X OAuth coming soon. Join the waitlist to be notified.</div>';
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your Twitter/X account to post tweets automatically.</div>' +
+        '<button onclick="connectTwitter()" style="width:100%;padding:14px;background:#000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">𝕏 Connect Twitter/X</button>' +
+        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will detect your @handle automatically!</div>';
     },
     youtube: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your YouTube channel with one click.</div>' +
@@ -1713,6 +1715,20 @@ function connectFacebookOAuth() {
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
+  // Twitter OAuth return
+  if(params.get('tw_success')) {
+    var pageName = params.get('page_name') || 'your account';
+    showToast('✅ Twitter/X connected — ' + pageName + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+  }
+  if(params.get('tw_error')) {
+    var msgs = { 'cancelled':'Twitter connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
+    showToast(msgs[params.get('tw_error')] || 'Twitter connection failed.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
   // LinkedIn OAuth return
   if(params.get('li_success')) {
     var pageName = params.get('page_name') || 'your profile';
@@ -1749,6 +1765,12 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
+
+function connectTwitter() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  var oauthUrl = 'https://autopostleey-api-production.up.railway.app/twitter/auth?user_id=' + encodeURIComponent(_user.id);
+  window.location.href = oauthUrl;
+}
 
 function connectLinkedIn() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
