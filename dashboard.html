@@ -1677,6 +1677,26 @@ function connectFacebookOAuth() {
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
+  // Discord OAuth return
+  if(params.get('dc_success')) {
+    var pageName = params.get('page_name') || 'your server';
+    showToast('✅ Discord connected — ' + pageName + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+  }
+  if(params.get('dc_error')) {
+    showToast('Discord connection failed. Please try again.', 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
+  // Telegram auto-connect return
+  if(params.get('tg_success')) {
+    showToast('✅ Telegram connected!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    loadConnections();
+  }
+
   // Facebook OAuth return
   if(params.get('fb_success')) {
     var pageName = params.get('page_name') || 'your page';
@@ -1758,16 +1778,7 @@ window.addEventListener('load', function() {
 
 function connectDiscordOAuth() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  // Discord OAuth - user authorizes bot to create webhook
-  var clientId = '1234567890'; // Replace with Discord App Client ID
-  var redirectUri = encodeURIComponent('https://autopostleey.com/discord-callback.html');
-  var permissions = '536870912'; // Manage Webhooks permission
-  var url = 'https://discord.com/api/oauth2/authorize?client_id=' + clientId +
-    '&redirect_uri=' + redirectUri +
-    '&response_type=code' +
-    '&scope=webhook.incoming' +
-    '&state=' + encodeURIComponent(_user.id);
-  window.location.href = url;
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/discord/auth?user_id=' + encodeURIComponent(_user.id);
 }
 
 function connectFacebook() {
