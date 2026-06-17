@@ -560,6 +560,10 @@ function hideAuth() {
   if(overlay) overlay.style.display = 'none';
 }
 
+function trackEvent(name, params) {
+  if(typeof gtag !== 'undefined') gtag('event', name, params || {});
+}
+
 async function handleAuth() {
   var email = document.getElementById('auth-email-inp').value.trim();
   var pass  = document.getElementById('auth-pass-inp').value;
@@ -571,7 +575,8 @@ async function handleAuth() {
   try {
     var result;
     if(_mode === 'signup') {
-      result = await _db.auth.signUp({
+      result = trackEvent('sign_up', {method:'email'});
+      await _db.auth.signUp({
         email: email, password: pass,
         options: {
           emailRedirectTo: window.location.origin + '/',
@@ -603,6 +608,7 @@ function showAuthErr(msg) {
 }
 
 async function socialLogin(provider) {
+  trackEvent('login', { method: provider });
   try {
     var { error } = await _db.auth.signInWithOAuth({
       provider: provider,
