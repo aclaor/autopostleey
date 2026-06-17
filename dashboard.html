@@ -1612,60 +1612,24 @@ function getConnectionForm(name) {
         '</div>';
     },
     discord: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Go to your Discord server → Channel Settings → Integrations → Webhooks → Copy URL.</div>' +
-        '<input id="conn-d1" placeholder="Webhook URL (https://discord.com/api/webhooks/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'discord\',{webhook_url:document.getElementById(\'conn-d1\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Discord</div>' +
+        '<button onclick="connectDiscordOAuth()" style="width:100%;padding:13px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">💬 Auto Connect Discord</button>' +
+        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">Authorize Autopostleey → select your server → done!</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter webhook manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
+        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Server Settings → Integrations → Webhooks → New Webhook → Copy URL</div>' +
+        '<input id="conn-d1" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'discord\',{webhook_url:document.getElementById(\'conn-d1\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
     },
     telegram: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Create a bot via @BotFather on Telegram, then add it to your channel as admin.</div>' +
-        '<input id="conn-t1" placeholder="Bot Token (e.g. 123456:ABC-DEF...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:10px;outline:none;display:block;">' +
-        '<input id="conn-t2" placeholder="Channel ID (e.g. @mychannel)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:14px;margin-bottom:16px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-t1\').value,chat_id:document.getElementById(\'conn-t2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Save Connection</button>';
-    },
-    instagram: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">Connect Instagram</div>' +
-        '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Requires an Instagram Business or Creator account linked to a Facebook Page.</div>' +
-        '<button onclick="connectInstagram()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">📷 Connect Instagram</button>' +
-        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will detect your Instagram Business account automatically!</div>';
-    },
-
-    linkedin: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account with one click to share posts directly.</div>' +
-        '<button onclick="connectLinkedIn()" style="width:100%;padding:14px;background:#0077b5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">💼 Connect LinkedIn</button>' +
-        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile — no tokens needed!</div>';
-    },
-    twitter: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
-
-        // Option 1: Auto connect
-        '<button onclick="connectTwitter()" style="width:100%;padding:13px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">𝕏 Auto Connect (Recommended)</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:16px;">One click — we detect your account automatically</div>' +
-
-        // Divider
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">' +
-          '<div style="flex:1;height:1px;background:#1e1e2e;"></div>' +
-          '<span style="font-size:11px;color:#444466;">or connect manually</span>' +
-          '<div style="flex:1;height:1px;background:#1e1e2e;"></div>' +
-        '</div>' +
-
-        // Option 2: Manual
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;">Get tokens from <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a> → Your App → Keys and Tokens → Generate</div>' +
-        '<input id="tw-handle" placeholder="Your @handle" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;">' +
-        '<button onclick="saveTwitterManual()" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Manually</button>';
-    },
-    youtube: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your YouTube channel with one click.</div>' +
-        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">📺 Connect YouTube Channel</button>' +
-        '<div style="font-size:12px;color:#8888aa;margin-top:12px;text-align:center;">We will automatically detect your channel name — no ID needed!</div>';
-    },
-    threads: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Threads account. You need a Facebook/Instagram access token with Threads permissions.</div>' +
-        '<input id="conn-th1" placeholder="Threads User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-th2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<div style="font-size:12px;color:#8888aa;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;">Get your Threads credentials from <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">Meta for Developers</a> → Threads API</div>' +
-        '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
+      var uid = (_user && _user.id) ? _user.id : 'guest';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
+        '<a href="https://t.me/AutopostleeyBot?start=connect_' + uid + '" target="_blank" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:8px;box-sizing:border-box;">✈️ Auto Connect via Telegram Bot</a>' +
+        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">Opens Telegram → start bot → add to channel → connected!</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or connect manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
+        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Create bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a> → add to channel as admin</div>' +
+        '<input id="conn-tg1" placeholder="Bot Token (from @BotFather)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
+        '<input id="conn-tg2" placeholder="Channel @username or ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-tg1\').value,chat_id:document.getElementById(\'conn-tg2\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
     },
     bluesky: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and an App Password (not your main password).</div>' +
@@ -1791,6 +1755,20 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
   }
 });
+
+function connectDiscordOAuth() {
+  if(!_user) { showToast('Please sign in first', 'error'); return; }
+  // Discord OAuth - user authorizes bot to create webhook
+  var clientId = '1234567890'; // Replace with Discord App Client ID
+  var redirectUri = encodeURIComponent('https://autopostleey.com/discord-callback.html');
+  var permissions = '536870912'; // Manage Webhooks permission
+  var url = 'https://discord.com/api/oauth2/authorize?client_id=' + clientId +
+    '&redirect_uri=' + redirectUri +
+    '&response_type=code' +
+    '&scope=webhook.incoming' +
+    '&state=' + encodeURIComponent(_user.id);
+  window.location.href = url;
+}
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
