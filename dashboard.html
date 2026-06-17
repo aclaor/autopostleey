@@ -1559,12 +1559,18 @@ async function loadConnections() {
           page_name: conn.page_name,
           connected: true
         };
-        console.log('Stored connection:', conn.platform, 
-          'handle:', conn.page_name, 
-          'has_token:', !!conn.access_token,
-          'token_preview:', conn.access_token ? conn.access_token.slice(0,8)+'...' : 'NONE');
+        console.log('Stored:', conn.platform, conn.page_name);
+
+
+
       });
+      console.log('_connections after load:', Object.keys(_connections));
       updateConnectionsUI();
+      // Check if elements exist
+      ['discord','telegram','bluesky','facebook','instagram'].forEach(function(p) {
+        var el = document.getElementById(p+'-status');
+        console.log('Element', p+'-status:', el ? 'EXISTS' : 'NOT FOUND');
+      });
     } else {
       console.log('No connections found in Supabase');
     }
