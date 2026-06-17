@@ -1575,7 +1575,7 @@ function updateConnectionsUI() {
   // Map platform name to HTML element ID prefix
   var idMap = {
     facebook: 'facebook', instagram: 'instagram', linkedin: 'linkedin',
-    twitter: 'twitter', discord: 'dc', telegram: 'tg',
+    twitter: 'twitter', discord: 'discord', telegram: 'telegram',
     bluesky: 'bluesky', threads: 'threads',
     google_business: 'google_business',
     youtube: 'youtube', fbgroup: 'fbgroup'
@@ -1649,6 +1649,39 @@ function getConnectionForm(name) {
         '<input id="conn-fg2" placeholder="Group URL (https://facebook.com/groups/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
         '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We notify you when it is time to post with content ready to copy.</div>' +
         '<button onclick="saveConnection(\'fbgroup\',{page_name:document.getElementById(\'conn-fg1\').value,webhook_url:document.getElementById(\'conn-fg2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Facebook Group</button>';
+    },
+    instagram: function() {
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">Connect Instagram</div>' +
+        '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Requires an Instagram Business or Creator account linked to a Facebook Page.</div>' +
+        '<button onclick="connectInstagram()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">📷 Connect Instagram</button>' +
+        '<div style="font-size:12px;color:#444466;text-align:center;">We will detect your Instagram Business account automatically!</div>';
+    },
+    twitter: function() {
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
+        '<button onclick="connectTwitter()" style="width:100%;padding:13px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">𝕏 Auto Connect (Recommended)</button>' +
+        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">One click — we detect your account automatically</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter tokens manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
+        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Get tokens from <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a> → Your App → Keys and Tokens → Generate</div>' +
+        '<input id="tw-handle" placeholder="@handle" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
+        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
+        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<button onclick="saveTwitterManual()" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Manually</button>';
+    },
+    linkedin: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account to share posts directly.</div>' +
+        '<button onclick="connectLinkedIn()" style="width:100%;padding:14px;background:#0077b5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">💼 Connect LinkedIn</button>' +
+        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile!</div>';
+    },
+    youtube: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your YouTube channel to schedule video posts.</div>' +
+        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">📺 Connect YouTube Channel</button>' +
+        '<div style="font-size:12px;color:#8888aa;margin-top:0;text-align:center;">We will automatically detect your channel name!</div>';
+    },
+    threads: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Threads account.</div>' +
+        '<input id="conn-th1" placeholder="Threads User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-th2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
     }
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
