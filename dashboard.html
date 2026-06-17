@@ -1635,15 +1635,19 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile — no tokens needed!</div>';
     },
     twitter: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your Twitter/X account with one click to post automatically.</div>' +
-        '<button onclick="connectTwitter()" style="width:100%;padding:14px;background:#000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">𝕏 Continue with Twitter/X</button>' +
-        '<div style="border-top:1px solid #1e1e2e;padding-top:14px;margin-top:4px;">' +
-        '<div style="font-size:11px;color:#444466;margin-bottom:8px;">Or enter tokens manually:</div>' +
-        '<input id="tw-handle" placeholder="@handle" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:8px 12px;color:#e8e8f0;font-size:12px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:8px 12px;color:#e8e8f0;font-size:12px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:8px 12px;color:#e8e8f0;font-size:12px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveTwitterManual()" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:12px;cursor:pointer;">Save Manually</button>' +
-        '</div>';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
+        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:14px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;font-weight:600;color:#e8e8f0;margin-bottom:8px;">Quick setup (2 minutes):</div>' +
+          '<div style="font-size:12px;color:#8888aa;line-height:2;">1. Go to <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a><br>' +
+          '2. Click your App → <strong style="color:#e8e8f0;">Keys and Tokens</strong><br>' +
+          '3. Under <strong style="color:#e8e8f0;">Authentication Tokens</strong> → click <strong style="color:#e8e8f0;">Generate</strong><br>' +
+          '4. Copy <strong style="color:#e8e8f0;">Access Token</strong> and <strong style="color:#e8e8f0;">Access Token Secret</strong><br>' +
+          '5. Paste below and connect!</div>' +
+        '</div>' +
+        '<input id="tw-handle" placeholder="Your @handle (e.g. @mybusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<button onclick="saveTwitterManual()" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">𝕏 Connect Twitter/X</button>';
     },
     youtube: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your YouTube channel with one click.</div>' +
