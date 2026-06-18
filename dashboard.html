@@ -1493,7 +1493,6 @@ async function submitPost(status) {
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
-        console.log('Publishing with connections:', JSON.stringify(_connectionsFull));
         var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
