@@ -1561,7 +1561,7 @@ async function loadConnections() {
   try {
     // Load full connection data directly from Supabase (includes tokens)
     var { data, error } = await _db.from('autopostleey_connections')
-      .select('*').eq('user_id', _user.id);
+      .select('*').eq('user_id', _user.id).limit(100);
     console.log('Connections loaded:', data, 'Error:', error);
     if(data && data.length > 0) {
       _connectionsFull = {};
