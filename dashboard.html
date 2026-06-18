@@ -463,6 +463,16 @@
                 <span class="platform-dot-lg" style="background:#1877f2;"></span>
                 <span class="platform-name">FB Group</span>
               </label>
+              <label class="platform-check" onclick="togglePlatform(this,'tumblr')">
+                <input type="checkbox" value="tumblr">
+                <span class="platform-dot-lg" style="background:#35465c;"></span>
+                <span class="platform-name">Tumblr</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'pinterest')">
+                <input type="checkbox" value="pinterest">
+                <span class="platform-dot-lg" style="background:#e60023;"></span>
+                <span class="platform-name">Pinterest</span>
+              </label>
             </div>
           </div>
 
@@ -842,6 +852,20 @@
             <div><div class="connection-name">Facebook Group</div><div class="connection-status" id="fbgroup-status">Not connected</div></div>
           </div>
           <button class="connect-btn" id="fbgroup-btn" onclick="connectPlatform('fbgroup')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div style="width:32px;height:32px;border-radius:8px;background:#35465c;display:flex;align-items:center;justify-content:center;font-size:16px;">📝</div>
+            <div><div class="connection-name">Tumblr</div><div class="connection-status" id="tumblr-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="tumblr-btn" onclick="connectPlatform('tumblr')">Connect</button>
+        </div>
+        <div class="connection-item">
+          <div class="connection-info">
+            <div style="width:32px;height:32px;border-radius:8px;background:#e60023;display:flex;align-items:center;justify-content:center;font-size:16px;">📌</div>
+            <div><div class="connection-name">Pinterest</div><div class="connection-status" id="pinterest-status">Not connected</div></div>
+          </div>
+          <button class="connect-btn" id="pinterest-btn" onclick="connectPlatform('pinterest')">Connect</button>
         </div>
         <div class="connection-item">
           <div class="connection-info">
@@ -1607,7 +1631,7 @@ function updateConnectionsUI() {
     twitter: 'twitter', discord: 'discord', telegram: 'telegram',
     bluesky: 'bluesky', threads: 'threads',
     google_business: 'google_business',
-    youtube: 'youtube', fbgroup: 'fbgroup'
+    youtube: 'youtube', fbgroup: 'fbgroup', tumblr: 'tumblr', pinterest: 'pinterest'
   };
   Object.keys(idMap).forEach(function(p) {
     var prefix   = idMap[p];
@@ -1674,10 +1698,10 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#8888aa;text-align:center;">We will automatically detect your business location — no ID needed!</div>';
     },
     fbgroup: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. Autopostleey sends you a notification with the content ready to paste.</div>' +
-        '<input id="conn-fg1" placeholder="Group Name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-fg2" placeholder="Group URL (https://facebook.com/groups/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We notify you when it is time to post with content ready to copy.</div>' +
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. When you post, we open the group so you can paste the content.</div>' +
+        '<input id="conn-fg1" placeholder="Group Name (e.g. My Business Group)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-fg2" placeholder="Group URL (https://facebook.com/groups/...)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;" value="https://www.facebook.com/groups/362379374111368">' +
+        '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We will open your group in a new tab when it is time to post.</div>' +
         '<button onclick="saveConnection(\'fbgroup\',{page_name:document.getElementById(\'conn-fg1\').value,webhook_url:document.getElementById(\'conn-fg2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Facebook Group</button>';
     },
     instagram: function() {
@@ -1703,16 +1727,55 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile!</div>';
     },
     youtube: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your YouTube channel to schedule video posts.</div>' +
-        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">📺 Connect YouTube Channel</button>' +
-        '<div style="font-size:12px;color:#8888aa;margin-top:0;text-align:center;">We will automatically detect your channel name!</div>';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect YouTube</div>' +
+        '<div style="background:rgba(255,0,0,0.06);border:1px solid rgba(255,0,0,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
+          '📺 YouTube requires Google OAuth approval.<br>' +
+          'Your channel <strong style="color:#e8e8f0;">alex claor</strong> is already detected!<br>' +
+          'Click below to reconnect with posting permission.' +
+        '</div>' +
+        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">📺 Connect YouTube Channel</button>' +
+        '<div style="font-size:12px;color:#444466;text-align:center;">Requires Google account with YouTube channel</div>';
+    },
+    tumblr: function() {
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Tumblr</div>' +
+        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
+          '1. Go to <a href="https://www.tumblr.com/oauth/apps" target="_blank" style="color:#a855f7;">tumblr.com/oauth/apps</a><br>' +
+          '2. Click <strong style="color:#e8e8f0;">Register application</strong><br>' +
+          '3. Fill in app details → get <strong style="color:#e8e8f0;">OAuth Consumer Key</strong><br>' +
+          '4. Go to <a href="https://api.tumblr.com/console" target="_blank" style="color:#a855f7;">api.tumblr.com/console</a><br>' +
+          '5. Authenticate → copy your <strong style="color:#e8e8f0;">OAuth Token</strong>' +
+        '</div>' +
+        '<input id="conn-tb1" placeholder="Your Tumblr blog name (e.g. myblog)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-tb2" placeholder="OAuth Consumer Key" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-tb3" placeholder="OAuth Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'tumblr\',{page_name:document.getElementById(\'conn-tb1\').value,access_token:document.getElementById(\'conn-tb3\').value,page_id:document.getElementById(\'conn-tb2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#35465c,#4e6480);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📝 Connect Tumblr</button>';
+    },
+    pinterest: function() {
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Pinterest</div>' +
+        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
+          '1. Go to <a href="https://developers.pinterest.com/apps/" target="_blank" style="color:#a855f7;">developers.pinterest.com/apps</a><br>' +
+          '2. Create app → get <strong style="color:#e8e8f0;">App ID</strong> and <strong style="color:#e8e8f0;">App Secret</strong><br>' +
+          '3. Go to <strong style="color:#e8e8f0;">Generate Access Token</strong><br>' +
+          '4. Select scopes: <strong style="color:#e8e8f0;">boards:read, pins:write</strong><br>' +
+          '5. Copy your access token below' +
+        '</div>' +
+        '<input id="conn-pi1" placeholder="Pinterest username (e.g. @mybusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-pi2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'pinterest\',{page_name:document.getElementById(\'conn-pi1\').value,access_token:document.getElementById(\'conn-pi2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#e60023,#c0001e);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📌 Connect Pinterest</button>';
     },
     threads: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Threads account.</div>' +
-        '<input id="conn-th1" placeholder="Threads User ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-th2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Threads</div>' +
+        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
+          '1. Go to <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">developers.facebook.com</a><br>' +
+          '2. Create an app → Add <strong style="color:#e8e8f0;">Threads API</strong> product<br>' +
+          '3. Generate a long-lived access token<br>' +
+          '4. Get your Threads User ID from the API<br>' +
+          '5. Paste both below' +
+        '</div>' +
+        '<input id="conn-th1" placeholder="Threads User ID (numeric)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-th2" placeholder="Long-lived Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
         '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
-    }
+    },
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
 }
