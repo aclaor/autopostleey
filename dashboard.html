@@ -453,6 +453,16 @@
                 <span class="platform-dot-lg" style="background:#4285f4;"></span>
                 <span class="platform-name">Google Business</span>
               </label>
+              <label class="platform-check" onclick="togglePlatform(this,'youtube')">
+                <input type="checkbox" value="youtube">
+                <span class="platform-dot-lg" style="background:#ff0000;"></span>
+                <span class="platform-name">YouTube</span>
+              </label>
+              <label class="platform-check" onclick="togglePlatform(this,'fbgroup')">
+                <input type="checkbox" value="fbgroup">
+                <span class="platform-dot-lg" style="background:#1877f2;"></span>
+                <span class="platform-name">FB Group</span>
+              </label>
             </div>
           </div>
 
@@ -880,7 +890,7 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:4px;">
           <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('starter')">
             <div style="font-weight:700;margin-bottom:4px;">Starter — $9/mo</div>
-            <div style="font-size:13px;color:var(--text2);">60 posts · 3 platforms</div>
+            <div style="font-size:13px;color:var(--text2);">200 posts · 3 platforms</div>
             <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
           </div>
           <div class="card" style="cursor:pointer;border-color:var(--accent);" onclick="selectBillingPlan('growth')">
@@ -2102,7 +2112,7 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 function updatePlanUI(plan) {
-  var limits = { free: '10 posts/month', starter: '60 posts/month', growth: 'Unlimited posts', agency: 'Unlimited posts' };
+  var limits = { free: '10 posts/month', starter: '200 posts/month', growth: 'Unlimited posts', agency: 'Unlimited posts' };
   var names  = { free: 'FREE PLAN', starter: 'STARTER PLAN', growth: 'GROWTH PLAN', agency: 'AGENCY PLAN' };
   var el1 = document.getElementById('sidebar-plan');
   var el2 = document.getElementById('sidebar-plan-desc');
