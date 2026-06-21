@@ -221,7 +221,7 @@
       <a class="nav-item" onclick="showPage('connections');return false;" href="#">
         <span class="nav-icon">🔗</span> Connections
       </a>
-      <a class="nav-item" onclick="showPage('autoposter');loadAutoConfig();return false;" href="#" id="nav-autoposter">
+      <a class="nav-item" onclick="showPage('autoposter');return false;" href="#" id="nav-autoposter">
         <span class="nav-icon">🤖</span> AI AutoPoster
       </a>
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
@@ -1527,7 +1527,7 @@ function showPage(name) {
   });
   var main = document.querySelector('.main');
   if(main) main.scrollTop = 0;
-  if(name === 'autoposter' && typeof loadAutoConfig === 'function') loadAutoConfig();
+  if(name === 'autoposter' && typeof loadAutoConfig === 'function' && !_autoConfigLoaded) { loadAutoConfig(); _autoConfigLoaded = true; }
   if(name === 'compose' && typeof loadConnectedPlatformsForAP === 'function') loadConnectedPlatformsForAP();
 }
 
@@ -3050,6 +3050,7 @@ function renderBulkTemplates() {
 
 // ── AI AUTOPOSTER ─────────────────────────────────────────
 var _autoConfig = {};
+var _autoConfigLoaded = false;
 var _autoEnabled = false;
 var _previewPost = '';
 var _previewType = '';
@@ -3075,7 +3076,13 @@ async function loadAutoConfig() {
 function applyAutoConfig() {
   var fields = ['ap-website','ap-bizname','ap-description','ap-audience','ap-frequency','ap-time'];
   var keys   = ['website','bizname','description','audience','frequency','time'];
-  fields.forEach(function(f,i){ var el=document.getElementById(f); if(el&&_autoConfig[keys[i]]) el.value=_autoConfig[keys[i]]; });
+  fields.forEach(function(f,i) {
+    var el = document.getElementById(f);
+    // Only set value if field is currently empty (don't overwrite user input)
+    if (el && _autoConfig[keys[i]] && !el.value.trim()) {
+      el.value = _autoConfig[keys[i]];
+    }
+  });
   if (_autoConfig.enabled) { _autoEnabled=true; updateAutoToggleUI(true); }
 }
 
