@@ -1439,19 +1439,31 @@ async function doSignOut() {
 
 async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
-  if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
+  if (btn) { btn.innerHTML = '⏳ Generating...'; btn.disabled = true; }
 
-  // Get business info from saved config or business profile
   var bizname = '';
   var description = '';
   var website = '';
 
+  // 1. Try AI AutoPoster localStorage config
   try {
-    var _sc = localStorage.getItem('ap_cfg_' + _user.id);
-    if (_sc) { var _sc2 = JSON.parse(_sc); bizname = _sc2.bizname||''; description = _sc2.description||''; website = _sc2.website||''; }
+    var _sc = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
+    if (_sc) {
+      var _sc2 = JSON.parse(_sc);
+      bizname     = _sc2.bizname     || '';
+      description = _sc2.description || '';
+      website     = _sc2.website     || '';
+    }
   } catch(e) {}
 
-  // Fallback to business profile
+  // 2. Try _bizProfile
+  if (!bizname && typeof _bizProfile !== 'undefined' && _bizProfile && _bizProfile.name) {
+    bizname     = _bizProfile.name        || '';
+    description = _bizProfile.description || '';
+    website     = _bizProfile.website     || '';
+  }
+
+  // 3. Try Supabase
   if (!bizname) {
     try {
       var bres = await _db.from('autopostleey_businesses').select('*').eq('user_id', _user.id).limit(1);
@@ -1464,20 +1476,22 @@ async function generateComposePost() {
   }
 
   if (!bizname && !description) {
-    showToast('Set up your business in AI AutoPoster or Business Profile first', 'error');
-    if (btn) { btn.textContent = '✨ Generate Post'; btn.disabled = false; }
+    showToast('Please set up Business Profile or AI AutoPoster first!', 'error');
+    showPage('business');
+    if (btn) { btn.innerHTML = '<span>✨</span> Generate Post'; btn.disabled = false; }
     return;
   }
 
-  var typeEl = document.getElementById('compose-ai-type');
+  // Get selected content type
+  var typeEl  = document.getElementById('compose-ai-type');
   var typeVal = typeEl ? typeEl.value : 'random';
-  var TYPE_MAP = {
-    'ct-product':     'Create a product/service highlight post showcasing key benefits.',
-    'ct-educational': 'Create an educational tip related to the industry.',
-    'ct-engagement':  'Create an engaging question that encourages comments.',
-    'ct-promo':       'Create a promotional post with a clear call to action.',
-    'ct-website':     'Create a post driving traffic to the website.',
-    'random':         'Create the most engaging post type for this business right now.'
+  var TOPIC_MAP = {
+    'ct-product':     'highlight the key benefits and value of the product or service',
+    'ct-educational': 'share a useful educational tip related to the industry',
+    'ct-engagement':  'ask an engaging question to spark comments and interaction',
+    'ct-promo':       'promote with a clear call to action to sign up or try it',
+    'ct-website':     'drive people to visit the website and explain what they will find',
+    'random':         'create the most engaging post type for this business right now'
   };
 
   try {
@@ -1487,32 +1501,32 @@ async function generateComposePost() {
       body: JSON.stringify({
         business_name: bizname,
         description:   description,
-        audience:      audience || 'general public',
+        audience:      'general public',
         location:      'Philippines',
-        topic:         picked.emoji + ' ' + picked.label + ' — ' + TYPE_PROMPTS[picked.id],
+        topic:         TOPIC_MAP[typeVal] || TOPIC_MAP['random'],
         tone:          'friendly and engaging'
       })
     });
     var data = await resp.json();
-    console.log('Worker response:', data);
-    var text = (data.post || data.result || data.response || '').trim();
-    if (!text) throw new Error(data.error || 'Worker returned empty post');
+    console.log('Compose worker response:', data);
+    var text = (data.post || '').trim();
     if (!text) throw new Error(data.error || 'No post generated');
 
-    // Put into post textarea
-    var postText = document.getElementById('post-text');
+    var postText = document.getElementById('post-content') || document.getElementById('post-text');
     if (postText) {
       postText.value = text;
       postText.dispatchEvent(new Event('input'));
       postText.focus();
     }
-    showToast('✨ AI post generated! Review and post when ready.', 'success');
+    showToast('✨ AI post generated!', 'success');
   } catch(e) {
-    showToast('AI generation failed. Please try again.', 'error');
+    console.error('generateComposePost error:', e.message);
+    showToast('AI generation failed: ' + e.message, 'error');
   }
 
   if (btn) { btn.innerHTML = '<span>✨</span> Generate Post'; btn.disabled = false; }
 }
+
 
 function showPage(name) {
   document.querySelectorAll('.page').forEach(function(p){
