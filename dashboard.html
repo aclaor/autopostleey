@@ -77,7 +77,8 @@
   /* ── PAGE SECTIONS ──────────────── */
   .page { display: none; }
   .page.active { display: block; }
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-subtitle { font-size:13px; color:var(--text2); margin-top:4px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
   .page-sub { font-size: 14px; color: var(--text2); margin-top: 4px; }
 
@@ -220,7 +221,7 @@
       <a class="nav-item" onclick="showPage('connections');return false;" href="#">
         <span class="nav-icon">🔗</span> Connections
       </a>
-      <a class="nav-item" onclick="showPage('autoposter');return false;" href="#" id="nav-autoposter">
+      <a class="nav-item" onclick="showPage('autoposter');loadAutoConfig();return false;" href="#" id="nav-autoposter">
         <span class="nav-icon">🤖</span> AI AutoPoster
       </a>
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
@@ -949,7 +950,7 @@
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:24px;">
 
         <!-- SETUP CARD -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;">
@@ -3140,11 +3141,22 @@ async function generatePreview() {
   var description = document.getElementById('ap-description') ? document.getElementById('ap-description').value.trim() : '';
   var website     = document.getElementById('ap-website')     ? document.getElementById('ap-website').value.trim()     : '';
   var audience    = document.getElementById('ap-audience')    ? document.getElementById('ap-audience').value.trim()    : '';
-  if (!bizname || !description) { showToast('Please fill in your business name and description first', 'error'); return; }
 
-  var enabledTypes = AP_CONTENT_TYPES.filter(function(ct){ var el=document.getElementById(ct.id); return el&&el.checked; });
-  if (!enabledTypes.length) { showToast('Please enable at least one content type', 'error'); return; }
-  var picked = enabledTypes[Math.floor(Math.random()*enabledTypes.length)];
+  if (!bizname || !description) {
+    showToast('Please fill in your business name and description first', 'error');
+    return;
+  }
+
+  // Pick random enabled content type
+  var enabledTypes = AP_CONTENT_TYPES.filter(function(ct) {
+    var el = document.getElementById(ct.id);
+    return el && el.checked;
+  });
+  if (!enabledTypes.length) {
+    showToast('Please enable at least one content type', 'error');
+    return;
+  }
+  var picked = enabledTypes[Math.floor(Math.random() * enabledTypes.length)];
   _previewType = picked.label;
 
   var previewArea    = document.getElementById('preview-area');
@@ -3154,13 +3166,13 @@ async function generatePreview() {
   if (previewLoading) previewLoading.style.display = 'block';
   if (generateBtn)    generateBtn.disabled = true;
 
-  var TYPE_PROMPTS = {
-    'ct-product':     'Create a product/service highlight post showcasing key benefits.',
-    'ct-website':     'Create a post driving traffic to the website, highlighting what visitors will find.',
-    'ct-educational': 'Create an educational tip related to the industry that provides genuine value.',
-    'ct-engagement':  'Create an engaging question or poll that encourages comments.',
-    'ct-promo':       'Create a promotional post with a clear call to action to sign up or try.',
-    'ct-analytics':   'Create a social proof post sharing growth or success metrics.'
+  var AP_TYPE_TOPICS = {
+    'ct-product':     'highlight the key benefits and value of the product or service',
+    'ct-website':     'drive traffic to the website and highlight what visitors will find',
+    'ct-educational': 'share an educational tip related to the industry',
+    'ct-engagement':  'ask an engaging question to encourage comments and interaction',
+    'ct-promo':       'promote the service with a clear call to action to sign up or try it',
+    'ct-analytics':   'share a growth milestone or social proof metric'
   };
 
   try {
@@ -3170,15 +3182,19 @@ async function generatePreview() {
       body: JSON.stringify({
         business_name: bizname,
         description:   description,
-        audience:      'general public',
+        audience:      audience || 'general public',
         location:      'Philippines',
-        topic:         TYPE_MAP[typeVal] || 'general promotion',
+        topic:         picked.emoji + ' ' + picked.label + ' — ' + (AP_TYPE_TOPICS[picked.id] || 'general promotion'),
         tone:          'friendly and engaging'
       })
     });
+
     var data = await resp.json();
-    var text = (data.post || data.result || data.response || '').trim(); if (!data.success && !text) throw new Error(data.error || 'Worker returned no post');
+    console.log('Worker response:', data);
+    var text = (data.post || '').trim();
+
     if (!text) throw new Error(data.error || 'No post generated');
+
     _previewPost = text;
     var previewText  = document.getElementById('preview-text');
     var previewLabel = document.getElementById('preview-type-label');
@@ -3186,13 +3202,16 @@ async function generatePreview() {
     if (previewLabel) previewLabel.textContent = picked.emoji + ' ' + picked.label.toUpperCase();
     if (previewLoading) previewLoading.style.display = 'none';
     if (previewArea)    previewArea.style.display    = 'block';
+
   } catch(e) {
-    if (previewLoading) previewLoading.style.display = 'none';
     console.error('AI generation error:', e);
+    if (previewLoading) previewLoading.style.display = 'none';
     showToast('AI generation failed: ' + e.message, 'error');
   }
+
   if (generateBtn) generateBtn.disabled = false;
 }
+
 
 async function approveAndPost() {
   if (!_previewPost) return;
