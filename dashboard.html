@@ -1482,15 +1482,21 @@ async function generateComposePost() {
   };
 
   try {
-    var _prompt = [bizname, description, website, picked ? picked.label : '', picked ? TYPE_PROMPTS[picked.id] : TYPE_MAP[typeVal] || ''].filter(Boolean).join('. ') + '. Write ONE engaging social media post with 3-5 hashtags. Sound authentic.';
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: _prompt })
+      body: JSON.stringify({
+        business_name: bizname,
+        description:   description,
+        audience:      audience || 'general public',
+        location:      'Philippines',
+        topic:         picked.emoji + ' ' + picked.label + ' — ' + TYPE_PROMPTS[picked.id],
+        tone:          'friendly and engaging'
+      })
     });
     var data = await resp.json();
-    var text = data.result || data.response || '';
-    if (!text) throw new Error('No response');
+    var text = (data.post || data.result || data.response || '').trim(); if (!data.success && !text) throw new Error(data.error || 'Worker returned no post');
+    if (!text) throw new Error(data.error || 'No post generated');
 
     // Put into post textarea
     var postText = document.getElementById('post-text');
@@ -3156,15 +3162,21 @@ async function generatePreview() {
   };
 
   try {
-    var _prompt = [bizname, description, website, picked ? picked.label : '', picked ? TYPE_PROMPTS[picked.id] : TYPE_MAP[typeVal] || ''].filter(Boolean).join('. ') + '. Write ONE engaging social media post with 3-5 hashtags. Sound authentic.';
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: _prompt })
+      body: JSON.stringify({
+        business_name: bizname,
+        description:   description,
+        audience:      'general public',
+        location:      'Philippines',
+        topic:         TYPE_MAP[typeVal] || 'general promotion',
+        tone:          'friendly and engaging'
+      })
     });
     var data = await resp.json();
-    var text = data.result || data.response || '';
-    if (!text) throw new Error('No response');
+    var text = (data.post || data.result || data.response || '').trim(); if (!data.success && !text) throw new Error(data.error || 'Worker returned no post');
+    if (!text) throw new Error(data.error || 'No post generated');
     _previewPost = text;
     var previewText  = document.getElementById('preview-text');
     var previewLabel = document.getElementById('preview-type-label');
