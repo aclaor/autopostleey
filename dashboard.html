@@ -2316,7 +2316,7 @@ async function submitPost(status) {
             content:     content,
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
-            image_url:   window._composerImageUrl || '',
+            image_url:   (postData && postData.image_url) ? postData.image_url : (window._composerImageUrl || ''),
             connections: _connectionsFull
           })
         });
@@ -3360,6 +3360,9 @@ async function scheduleBulkPosts() {
     scheduledAt.setDate(scheduledAt.getDate() + i);
 
     try {
+      // Get image URL for this post from _bulkMediaMap
+      var postImageUrl = (window._bulkMediaMap && window._bulkMediaMap[i]) ? window._bulkMediaMap[i] : '';
+
       var { error } = await _db.from('autopostleey_posts').insert([{
         user_id:      _user.id,
         content:      lines[i],
@@ -3367,6 +3370,7 @@ async function scheduleBulkPosts() {
         status:       'scheduled',
         scheduled_at: scheduledAt.toISOString(),
         mode:         'manual',
+        image_url:    postImageUrl,
         created_at:   new Date().toISOString()
       }]);
       if(!error) successCount++;
