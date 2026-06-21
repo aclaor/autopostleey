@@ -2111,6 +2111,42 @@ function getConnectionForm(name) {
         '</div>';
     },
     
+    telegram: function() {
+      var uid = (_user && _user.id) ? _user.id : 'guest';
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
+        '<button onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-align:center;border:none;cursor:pointer;margin-bottom:8px;box-sizing:border-box;">✈️ Auto Connect via Telegram Bot</button>' +
+        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:6px;">Opens Telegram → click Start → come back here</div>' +
+        '<button onclick="loadConnections();showToast(\'Refreshing connections...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:6px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:14px;">✅ I started the bot — refresh status</button>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or connect manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
+        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Create bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a> → add to channel as admin</div>' +
+        '<input id="conn-tg1" placeholder="Bot Token (from @BotFather)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
+        '<input id="conn-tg2" placeholder="Channel @username or ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-tg1\').value,chat_id:document.getElementById(\'conn-tg2\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
+    },
+    bluesky: function() {
+      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
+        '<input id="conn-bs1" placeholder="Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<input id="conn-bs2" placeholder="App Password (from bsky.app Settings)" type="password" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
+        '<div style="font-size:11px;color:#8888aa;margin-bottom:12px;">Get app password: bsky.app → Settings → App Passwords → Add App Password</div>' +
+        '<button onclick="saveConnection(\'bluesky\',{handle:document.getElementById(\'conn-bs1\').value,access_token:document.getElementById(\'conn-bs2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
+    },
+    google_business: function() {
+      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Google Business Profile</div>' +
+        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:14px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:2;">' +
+          '<strong style="color:#e8e8f0;">Requirements:</strong><br>' +
+          '✓ A verified Google Business Profile<br>' +
+          '✓ You must be the owner or manager<br>' +
+          '✓ Sign in with the Google account linked to your business<br><br>' +
+          '<strong style="color:#e8e8f0;">No profile yet?</strong> Create one at <a href="https://business.google.com" target="_blank" style="color:#4a9eff;">business.google.com</a><br><br>' +
+          '<strong style="color:#e8e8f0;">Steps:</strong><br>' +
+          '1. Click Connect Google Business below<br>' +
+          '2. Sign in with your Google account<br>' +
+          '3. Allow Autopostleey to post on your behalf<br>' +
+          '4. Your business updates go live automatically!' +
+        '</div>' +
+        '<button onclick="connectGoogleBusiness()" style="width:100%;padding:14px;background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">🏢 Connect Google Business</button>' +
+        '<div style="font-size:11px;color:#444466;text-align:center;">Requires a verified Google Business Profile</div>';
+    },
     fbgroup: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. When you post, we open the group so you can paste the content.</div>' +
         '<input id="conn-fg1" placeholder="Group Name (e.g. My Business Group)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
@@ -2118,6 +2154,7 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We will open your group in a new tab when it is time to post.</div>' +
         '<button onclick="saveConnection(\'fbgroup\',{page_name:document.getElementById(\'conn-fg1\').value,webhook_url:document.getElementById(\'conn-fg2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Facebook Group</button>';
     }
+
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
 }
