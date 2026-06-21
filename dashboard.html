@@ -2067,50 +2067,50 @@ function getConnectionForm(name) {
         '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
     },
     discord: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Discord</div>' +
-        '<button onclick="connectDiscordOAuth()" style="width:100%;padding:13px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">💬 Auto Connect Discord</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">Authorize Autopostleey → select your server → done!</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter webhook manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Server Settings → Integrations → Webhooks → New Webhook → Copy URL</div>' +
-        '<input id="conn-d1" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'discord\',{webhook_url:document.getElementById(\'conn-d1\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
-    },
-    telegram: function() {
-      var uid = (_user && _user.id) ? _user.id : 'guest';
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
-        '<button onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-align:center;border:none;cursor:pointer;margin-bottom:8px;box-sizing:border-box;">✈️ Auto Connect via Telegram Bot</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:6px;">Opens Telegram → click Start → come back here</div>' +
-        '<button onclick="loadConnections();showToast(\'Refreshing connections...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:6px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:14px;">✅ I started the bot — refresh status</button>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or connect manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Create bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a> → add to channel as admin</div>' +
-        '<input id="conn-tg1" placeholder="Bot Token (from @BotFather)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="conn-tg2" placeholder="Channel @username or ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-tg1\').value,chat_id:document.getElementById(\'conn-tg2\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
-    },
-    bluesky: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
-        '<input id="conn-bs1" placeholder="Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-bs2" placeholder="App Password (from bsky.app Settings)" type="password" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:12px;">Get app password: bsky.app → Settings → App Passwords → Add App Password</div>' +
-        '<button onclick="saveConnection(\'bluesky\',{handle:document.getElementById(\'conn-bs1\').value,access_token:document.getElementById(\'conn-bs2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
-    },
-    google_business: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Google Business Profile</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:14px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:2;">' +
-          '<strong style="color:#e8e8f0;">Requirements:</strong><br>' +
-          '✓ A verified Google Business Profile<br>' +
-          '✓ You must be the owner or manager<br>' +
-          '✓ Sign in with the Google account linked to your business<br><br>' +
-          '<strong style="color:#e8e8f0;">No profile yet?</strong> Create one at <a href="https://business.google.com" target="_blank" style="color:#4a9eff;">business.google.com</a><br><br>' +
-          '<strong style="color:#e8e8f0;">Steps:</strong><br>' +
-          '1. Click Connect Google Business below<br>' +
-          '2. Sign in with your Google account<br>' +
-          '3. Allow Autopostleey to post on your behalf<br>' +
-          '4. Your business updates go live automatically!' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">Connect Discord</div>' +
+
+        '<!-- OPTION 1: WEBHOOK -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:14px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#5865f2;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Paste Webhook URL</div>' +
+            '<div style="font-size:10px;background:#22c55e22;color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">RECOMMENDED</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Open your Discord server<br>' +
+            '2️⃣ Right-click a channel → <strong style="color:#c8c8e8;">Edit Channel</strong><br>' +
+            '3️⃣ Click <strong style="color:#c8c8e8;">Integrations</strong> → <strong style="color:#c8c8e8;">Webhooks</strong> → <strong style="color:#c8c8e8;">New Webhook</strong><br>' +
+            '4️⃣ Name it <strong style="color:#c8c8e8;">Autopostleey</strong> → Click <strong style="color:#c8c8e8;">Copy Webhook URL</strong><br>' +
+            '5️⃣ Paste it below 👇' +
+          '</div>' +
+          '<input id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box;">' +
+          '<input id="discord-server-name" placeholder="Your server name (e.g. My Community)" style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box;">' +
+          '<button onclick="saveDiscordWebhook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Save Webhook & Connect</button>' +
         '</div>' +
-        '<button onclick="connectGoogleBusiness()" style="width:100%;padding:14px;background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">🏢 Connect Google Business</button>' +
-        '<div style="font-size:11px;color:#444466;text-align:center;">Requires a verified Google Business Profile</div>';
+
+        '<!-- DIVIDER -->' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+        '</div>' +
+
+        '<!-- OPTION 2: OAUTH -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#7983f5;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Connect via OAuth</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Click the button below<br>' +
+            '2️⃣ Log in to Discord and authorize Autopostleey<br>' +
+            '3️⃣ Select the server and channel<br>' +
+            '4️⃣ Click <strong style="color:#c8c8e8;">Authorize</strong> — done!' +
+          '</div>' +
+          '<button onclick="connectDiscordOAuth()" style="width:100%;padding:12px;background:#2d2d44;color:#e8e8f0;border:1px solid #5865f2;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💬 Auto Connect via Discord OAuth</button>' +
+        '</div>';
     },
+    
     fbgroup: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Add your Facebook Group. When you post, we open the group so you can paste the content.</div>' +
         '<input id="conn-fg1" placeholder="Group Name (e.g. My Business Group)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
@@ -2134,6 +2134,45 @@ function connectPlatform(name) {
   modal.style.cssText = 'display:flex!important;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:24px;';
 }
 
+
+async function saveDiscordWebhook() {
+  var webhookUrl  = document.getElementById('discord-webhook-input') ? document.getElementById('discord-webhook-input').value.trim() : '';
+  var serverName  = document.getElementById('discord-server-name')  ? document.getElementById('discord-server-name').value.trim()  : 'Discord Server';
+
+  if (!webhookUrl || !webhookUrl.includes('discord.com/api/webhooks')) {
+    showToast('Please enter a valid Discord webhook URL', 'error');
+    return;
+  }
+
+  try {
+    // Test webhook first
+    var testResp = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: '✅ Autopostleey connected successfully!' })
+    });
+
+    if (!testResp.ok && testResp.status !== 204) {
+      showToast('Invalid webhook URL — please check and try again', 'error');
+      return;
+    }
+
+    // Save to Supabase
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'discord',
+      access_token: webhookUrl,
+      page_name:    serverName || 'Discord Server',
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    showToast('✅ Discord connected — ' + (serverName || 'Discord Server') + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to save Discord webhook: ' + e.message, 'error');
+  }
+}
 
 async function disconnectPlatform(name) {
   if (!confirm('Disconnect ' + name + '? You can reconnect anytime.')) return;
