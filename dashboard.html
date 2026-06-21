@@ -1475,36 +1475,21 @@ async function analyzeImageAndGenerate() {
     var base64 = _uploadedFileURL.split(',')[1];
     var mediaType = _uploadedFile.type || 'image/jpeg';
 
-    // Call Anthropic API with vision
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call CF Worker /analyze-image route (avoids CORS)
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 500,
-        system: 'You are a social media expert. Analyze images and generate engaging social media posts. Be specific about what you see. Include 3-5 hashtags.',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 }
-            },
-            {
-              type: 'text',
-              text: 'Analyze this image and write ONE engaging social media post about it.'
-                + (bizname ? ' This is for a business called ' + bizname + (description ? ' which ' + description : '') + '.' : '')
-                + ' Make it authentic, engaging, and include relevant hashtags.'
-            }
-          ]
-        }]
+        image_base64:  base64,
+        media_type:    mediaType,
+        business_name: bizname     || '',
+        description:   description || ''
       })
     });
 
     var data = await resp.json();
-    var text = data.content && data.content[0] ? data.content[0].text.trim() : '';
-
-    if (!text) throw new Error('No response from AI');
+    var text = (data.post || '').trim();
+    if (!text || !data.success) throw new Error(data.error || 'Could not analyze image');
 
     var postContent = document.getElementById('post-content');
     if (postContent) {
