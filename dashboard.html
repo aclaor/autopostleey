@@ -1951,10 +1951,10 @@ function updateConnectionsUI() {
     var btnEl    = document.getElementById(prefix+'-btn');
     if(_connections[p]) {
       if(statusEl) statusEl.textContent = '✅ Connected' + (_connections[p].page_name ? ' — '+_connections[p].page_name : '');
-      if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); }
+      if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); btnEl.onclick = function(){ disconnectPlatform(p); }; }
     } else {
       if(statusEl) statusEl.textContent = 'Not connected';
-      if(btnEl)  { btnEl.textContent = 'Connect'; btnEl.classList.remove('connected'); }
+      if(btnEl)  { btnEl.textContent = 'Connect'; btnEl.classList.remove('connected'); btnEl.onclick = function(){ connectPlatform(p); }; }
     }
   });
   // Update stats
@@ -2134,6 +2134,21 @@ function connectPlatform(name) {
   modal.style.cssText = 'display:flex!important;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:24px;';
 }
 
+
+async function disconnectPlatform(name) {
+  if (!confirm('Disconnect ' + name + '? You can reconnect anytime.')) return;
+  try {
+    await _db.from('autopostleey_connections')
+      .delete()
+      .eq('user_id', _user.id)
+      .eq('platform', name);
+    delete _connections[name];
+    showToast('✅ ' + name + ' disconnected', 'success');
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to disconnect: ' + e.message, 'error');
+  }
+}
 
 function connectFacebookOAuth() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
