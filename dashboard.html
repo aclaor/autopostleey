@@ -2316,6 +2316,7 @@ async function submitPost(status) {
             content:     content,
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
+            image_url:   window._composerImageUrl || '',
             connections: _connectionsFull
           })
         });
@@ -3836,10 +3837,11 @@ async function approveAndPost() {
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
     await fetch('https://autopostleey-api-production.up.railway.app/publish', {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({ content: _previewPost, platforms: platforms, user_id: _user.id })
+      body: JSON.stringify({ content: _previewPost, platforms: platforms, user_id: _user.id, image_url: window._composerImageUrl || '' })
     });
   } catch(e) { console.error(e); }
   addToAPHistory(_previewPost, _previewType, 'posted');
+  window._composerImageUrl = '';
   showToast('AI post published to all platforms!', 'success');
 }
 
