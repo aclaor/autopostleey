@@ -517,16 +517,28 @@
             <div class="card-title">🖼️ Media</div>
             <div id="upload-zone" onclick="document.getElementById('file-input').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
               <div style="font-size:24px;margin-bottom:8px;">📁</div>
-              <div style="font-size:13px;color:var(--text2);">Drag & drop or click to select</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:4px;">Images, videos supported</div>
+              <div style="font-size:13px;color:var(--text2);">Drag & drop or click to upload</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">Images & videos supported</div>
+              <div style="margin-top:10px;padding:8px 12px;background:rgba(168,85,247,0.1);border:1px dashed rgba(168,85,247,0.4);border-radius:8px;text-align:left;">
+                <div style="font-size:11px;font-weight:700;color:#a855f7;margin-bottom:4px;">✨ Canva users:</div>
+                <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+                  1. Design in <a href="https://canva.com" target="_blank" style="color:#a855f7;">Canva</a><br>
+                  2. Download as PNG or JPG<br>
+                  3. Upload here → AI generates your post!
+                </div>
+              </div>
             </div>
             <input id="file-input" type="file" accept="image/*,video/*" style="display:none;" onchange="handleFileUpload(this)">
             <div id="file-preview" style="margin-top:10px;display:none;">
               <img id="file-preview-img" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
                 <span id="file-name" style="font-size:12px;color:var(--text2);"></span>
                 <button onclick="clearFile()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;">✕ Remove</button>
               </div>
+              <button onclick="analyzeImageAndGenerate()" id="analyze-img-btn" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <span>🔍</span> Analyze Image & Generate Post
+              </button>
+              <div id="analyze-status" style="font-size:12px;color:var(--text2);text-align:center;margin-top:6px;display:none;">Analyzing your image with AI...</div>
             </div>
           </div>
 
@@ -1436,6 +1448,73 @@ async function doSignOut() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────
+
+
+async function analyzeImageAndGenerate() {
+  if (!_uploadedFileURL || !_uploadedFile) {
+    showToast('Please upload an image first', 'error');
+    return;
+  }
+
+  var btn = document.getElementById('analyze-img-btn');
+  var status = document.getElementById('analyze-status');
+  if (btn) { btn.innerHTML = '⏳ Analyzing...'; btn.disabled = true; }
+  if (status) status.style.display = 'block';
+
+  // Get business info
+  var bizname = '';
+  var description = '';
+  try {
+    var saved = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
+    if (saved) {
+      var cfg = JSON.parse(saved);
+      bizname     = cfg.bizname     || '';
+      description = cfg.description || '';
+    }
+  } catch(e) {}
+
+  if (!bizname && typeof _bizProfile !== 'undefined' && _bizProfile) {
+    bizname     = _bizProfile.name        || '';
+    description = _bizProfile.description || '';
+  }
+
+  try {
+    // Convert image to base64 for Claude vision
+    var base64 = _uploadedFileURL.split(',')[1];
+    var mediaType = _uploadedFile.type || 'image/jpeg';
+
+    // Call CF Worker /analyze-image route (avoids CORS)
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64:  base64,
+        media_type:    mediaType,
+        business_name: bizname     || '',
+        description:   description || ''
+      })
+    });
+
+    var data = await resp.json();
+    var text = (data.post || '').trim();
+    if (!text || !data.success) throw new Error(data.error || 'Could not analyze image');
+
+    var postContent = document.getElementById('post-content');
+    if (postContent) {
+      postContent.value = text;
+      postContent.dispatchEvent(new Event('input'));
+      postContent.focus();
+    }
+    showToast('✨ Post generated from your image!', 'success');
+
+  } catch(e) {
+    console.error('Image analysis error:', e);
+    showToast('Analysis failed: ' + e.message, 'error');
+  }
+
+  if (btn) { btn.innerHTML = '<span>🔍</span> Analyze Image & Generate Post'; btn.disabled = false; }
+  if (status) status.style.display = 'none';
+}
 
 async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
