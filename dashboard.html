@@ -337,11 +337,33 @@
       <div class="page-header">
         <div>
           <div class="page-title">Create Post</div>
-          <div class="page-sub">Write manually, use AI Assist, or let AI do it all.</div>
+          <div class="page-sub">Write manually, use AI Assist, or let AI AutoPoster generate everything.</div>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+      
+      <!-- AI AUTOPOSTER QUICK GENERATE -->
+      <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">✨ AI AutoPoster — Generate post automatically</div>
+          <div style="font-size:12px;color:var(--text2);">Let AI analyze your business and write the perfect post — just approve and post</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <select id="compose-ai-type" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;">
+            <option value="random">Random type</option>
+            <option value="ct-product">🛍️ Product highlight</option>
+            <option value="ct-educational">📚 Educational tip</option>
+            <option value="ct-engagement">💬 Engagement post</option>
+            <option value="ct-promo">🎯 Promotional</option>
+            <option value="ct-website">🌐 Website showcase</option>
+          </select>
+          <button onclick="generateComposePost()" id="compose-ai-btn" style="background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <span>✨</span> Generate Post
+          </button>
+        </div>
+      </div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
         <div>
           <!-- Mode selector -->
           <div class="card">
@@ -901,7 +923,7 @@
     <!-- ── BILLING ────────────────── -->
     <div class="page" 
     <!-- AI AUTOPOSTER PAGE -->
-    <div class="page-content" id="page-autoposter" style="display:none;">
+    <div class="page" id="page-autoposter" style="display:none;">
       <div class="page-header">
         <div class="page-title">🤖 AI AutoPoster</div>
         <div class="page-subtitle">Autopostleey automatically generates and posts content about your business — no manual work needed</div>
@@ -957,11 +979,13 @@
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">POSTING FREQUENCY</label>
             <select id="ap-frequency" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
-              <option value="daily">Daily (1 post/day)</option>
+              <option value="every_4h">Every 4 hours (6 posts/day)</option>
+              <option value="every_6h">Every 6 hours (4 posts/day)</option>
+              <option value="every_8h">Every 8 hours (3 posts/day)</option>
               <option value="twice_daily">Twice daily (2 posts/day)</option>
+              <option value="daily">Daily (1 post/day)</option>
               <option value="3x_week">3x per week</option>
               <option value="weekly">Weekly</option>
-              <option value="custom">Custom schedule</option>
             </select>
           </div>
 
@@ -1413,6 +1437,83 @@ async function doSignOut() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────
+
+async function generateComposePost() {
+  var btn = document.getElementById('compose-ai-btn');
+  if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
+
+  // Get business info from saved config or business profile
+  var bizname = '';
+  var description = '';
+  var website = '';
+
+  try {
+    var res = await _db.from('user_settings').select('auto_poster_config').eq('user_id', _user.id).single();
+    if (res.data && res.data.auto_poster_config) {
+      bizname     = res.data.auto_poster_config.bizname     || '';
+      description = res.data.auto_poster_config.description || '';
+      website     = res.data.auto_poster_config.website     || '';
+    }
+  } catch(e) {}
+
+  // Fallback to business profile
+  if (!bizname) {
+    try {
+      var bres = await _db.from('autopostleey_businesses').select('*').eq('user_id', _user.id).limit(1);
+      if (bres.data && bres.data[0]) {
+        bizname     = bres.data[0].name        || '';
+        description = bres.data[0].description || '';
+        website     = bres.data[0].website     || '';
+      }
+    } catch(e) {}
+  }
+
+  if (!bizname && !description) {
+    showToast('Set up your business in AI AutoPoster or Business Profile first', 'error');
+    if (btn) { btn.textContent = '✨ Generate Post'; btn.disabled = false; }
+    return;
+  }
+
+  var typeEl = document.getElementById('compose-ai-type');
+  var typeVal = typeEl ? typeEl.value : 'random';
+  var TYPE_MAP = {
+    'ct-product':     'Create a product/service highlight post showcasing key benefits.',
+    'ct-educational': 'Create an educational tip related to the industry.',
+    'ct-engagement':  'Create an engaging question that encourages comments.',
+    'ct-promo':       'Create a promotional post with a clear call to action.',
+    'ct-website':     'Create a post driving traffic to the website.',
+    'random':         'Create the most engaging post type for this business right now.'
+  };
+
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 500,
+        system: 'You are a social media expert. Write short, engaging social media posts. Always include 3-5 hashtags. Keep under 280 characters for the main message (hashtags can be extra). Sound human and authentic.',
+        messages: [{ role: 'user', content: 'Business: ' + bizname + '. ' + (website ? 'Website: '+website+'. ' : '') + 'About: ' + description + '. Task: ' + TYPE_MAP[typeVal] + ' Write ONE post now.' }]
+      })
+    });
+    var data = await resp.json();
+    var text = data.content && data.content[0] ? data.content[0].text : '';
+    if (!text) throw new Error('No response');
+
+    // Put into post textarea
+    var postText = document.getElementById('post-text');
+    if (postText) {
+      postText.value = text;
+      postText.dispatchEvent(new Event('input'));
+      postText.focus();
+    }
+    showToast('✨ AI post generated! Review and post when ready.', 'success');
+  } catch(e) {
+    showToast('AI generation failed. Please try again.', 'error');
+  }
+
+  if (btn) { btn.innerHTML = '<span>✨</span> Generate Post'; btn.disabled = false; }
+}
+
 function showPage(name) {
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
@@ -1424,6 +1525,8 @@ function showPage(name) {
   });
   var main = document.querySelector('.main');
   if(main) main.scrollTop = 0;
+  if(name === 'autoposter' && typeof loadAutoConfig === 'function') loadAutoConfig();
+  if(name === 'compose' && typeof loadConnectedPlatformsForAP === 'function') loadConnectedPlatformsForAP();
 }
 
 // ── BUSINESS PROFILE ───────────────────────────────────────
