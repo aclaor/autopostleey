@@ -1448,12 +1448,8 @@ async function generateComposePost() {
   var website = '';
 
   try {
-    var res = await _db.from('user_settings').select('auto_poster_config').eq('user_id', _user.id).single();
-    if (res.data && res.data.auto_poster_config) {
-      bizname     = res.data.auto_poster_config.bizname     || '';
-      description = res.data.auto_poster_config.description || '';
-      website     = res.data.auto_poster_config.website     || '';
-    }
+    var _sc = localStorage.getItem('ap_cfg_' + _user.id);
+    if (_sc) { var _sc2 = JSON.parse(_sc); bizname = _sc2.bizname||''; description = _sc2.description||''; website = _sc2.website||''; }
   } catch(e) {}
 
   // Fallback to business profile
@@ -1486,17 +1482,14 @@ async function generateComposePost() {
   };
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    var _prompt = [bizname, description, website, picked ? picked.label : '', picked ? TYPE_PROMPTS[picked.id] : TYPE_MAP[typeVal] || ''].filter(Boolean).join('. ') + '. Write ONE engaging social media post with 3-5 hashtags. Sound authentic.';
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 500,
-        system: 'You are a social media expert. Write short, engaging social media posts. Always include 3-5 hashtags. Keep under 280 characters for the main message (hashtags can be extra). Sound human and authentic.',
-        messages: [{ role: 'user', content: 'Business: ' + bizname + '. ' + (website ? 'Website: '+website+'. ' : '') + 'About: ' + description + '. Task: ' + TYPE_MAP[typeVal] + ' Write ONE post now.' }]
-      })
+      body: JSON.stringify({ prompt: _prompt })
     });
     var data = await resp.json();
-    var text = data.content && data.content[0] ? data.content[0].text : '';
+    var text = data.result || data.response || '';
     if (!text) throw new Error('No response');
 
     // Put into post textarea
@@ -3064,11 +3057,8 @@ var AP_CONTENT_TYPES = [
 async function loadAutoConfig() {
   if (!_user) return;
   try {
-    var res = await _supabase.from('user_settings').select('auto_poster_config').eq('user_id', _user.id).single();
-    if (res.data && res.data.auto_poster_config) {
-      _autoConfig = res.data.auto_poster_config;
-      applyAutoConfig();
-    }
+    var _saved = localStorage.getItem('ap_cfg_' + _user.id);
+    if (_saved) { _autoConfig = JSON.parse(_saved); applyAutoConfig(); }
   } catch(e) {}
   loadConnectedPlatformsForAP();
 }
@@ -3096,7 +3086,7 @@ async function saveAutoConfig() {
     updated_at: new Date().toISOString()
   };
   try {
-    await _supabase.from('user_settings').upsert({ user_id: _user.id, auto_poster_config: _autoConfig }, { onConflict: 'user_id' });
+    localStorage.setItem('ap_cfg_' + _user.id, JSON.stringify(_autoConfig));
   } catch(e) {}
   showToast('AI AutoPoster configuration saved!', 'success');
   var st = document.getElementById('autoposter-status-text');
@@ -3130,7 +3120,7 @@ function loadConnectedPlatformsForAP() {
   var container = document.getElementById('ap-platforms-list');
   if (!container || !_user) return;
   var PNAMES = {bluesky:'🦋 Bluesky',discord:'💬 Discord',telegram:'✈️ Telegram',linkedin:'💼 LinkedIn',twitter:'🐦 Twitter',facebook:'📘 Facebook',instagram:'📸 Instagram',tumblr:'📝 Tumblr',pinterest:'📌 Pinterest',threads:'🧵 Threads',youtube:'▶️ YouTube',google_business:'🏢 Google Biz',fbgroup:'👥 FB Group'};
-  _supabase.from('connections').select('platform').eq('user_id', _user.id).then(function(res) {
+  _db.from('connections').select('platform').eq('user_id', _user.id).then(function(res) {
     var platforms = (res.data||[]).map(function(c){return c.platform;});
     if (!platforms.length) { container.innerHTML='<div style="font-size:12px;color:var(--text3);">No platforms connected. Go to Connections tab.</div>'; return; }
     container.innerHTML = platforms.map(function(p){ return '<div style="background:var(--bg3);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text2);">'+(PNAMES[p]||p)+'</div>'; }).join('');
@@ -3166,17 +3156,14 @@ async function generatePreview() {
   };
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    var _prompt = [bizname, description, website, picked ? picked.label : '', picked ? TYPE_PROMPTS[picked.id] : TYPE_MAP[typeVal] || ''].filter(Boolean).join('. ') + '. Write ONE engaging social media post with 3-5 hashtags. Sound authentic.';
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1000,
-        system: 'You are a social media expert. Generate engaging social media posts for businesses. Include relevant hashtags. Keep it authentic and human. End with a call to action.',
-        messages: [{ role: 'user', content: 'Business: '+bizname+'. Website: '+(website||'n/a')+'. Description: '+description+'. Audience: '+(audience||'general')+'. Type: '+picked.label+'. '+TYPE_PROMPTS[picked.id]+' Write ONE social media post with hashtags.' }]
-      })
+      body: JSON.stringify({ prompt: _prompt })
     });
     var data = await resp.json();
-    var text = data.content && data.content[0] ? data.content[0].text : '';
+    var text = data.result || data.response || '';
     if (!text) throw new Error('No response');
     _previewPost = text;
     var previewText  = document.getElementById('preview-text');
@@ -3194,12 +3181,12 @@ async function generatePreview() {
 
 async function approveAndPost() {
   if (!_previewPost) return;
-  var res = await _supabase.from('connections').select('platform').eq('user_id', _user.id);
+  var res = await _db.from('connections').select('platform').eq('user_id', _user.id);
   var platforms = (res.data||[]).map(function(c){return c.platform;});
   if (!platforms.length) { showToast('No platforms connected!', 'error'); showPage('connections'); return; }
   showToast('Posting to all platforms...', 'success');
   try {
-    var sess = await _supabase.auth.getSession();
+    var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
     await fetch('https://autopostleey-api-production.up.railway.app/api/post', {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
