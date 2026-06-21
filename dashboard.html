@@ -3120,7 +3120,7 @@ function loadConnectedPlatformsForAP() {
   var container = document.getElementById('ap-platforms-list');
   if (!container || !_user) return;
   var PNAMES = {bluesky:'🦋 Bluesky',discord:'💬 Discord',telegram:'✈️ Telegram',linkedin:'💼 LinkedIn',twitter:'🐦 Twitter',facebook:'📘 Facebook',instagram:'📸 Instagram',tumblr:'📝 Tumblr',pinterest:'📌 Pinterest',threads:'🧵 Threads',youtube:'▶️ YouTube',google_business:'🏢 Google Biz',fbgroup:'👥 FB Group'};
-  _db.from('connections').select('platform').eq('user_id', _user.id).then(function(res) {
+  _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id).then(function(res) {
     var platforms = (res.data||[]).map(function(c){return c.platform;});
     if (!platforms.length) { container.innerHTML='<div style="font-size:12px;color:var(--text3);">No platforms connected. Go to Connections tab.</div>'; return; }
     container.innerHTML = platforms.map(function(p){ return '<div style="background:var(--bg3);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text2);">'+(PNAMES[p]||p)+'</div>'; }).join('');
@@ -3181,7 +3181,7 @@ async function generatePreview() {
 
 async function approveAndPost() {
   if (!_previewPost) return;
-  var res = await _db.from('connections').select('platform').eq('user_id', _user.id);
+  var res = await _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id);
   var platforms = (res.data||[]).map(function(c){return c.platform;});
   if (!platforms.length) { showToast('No platforms connected!', 'error'); showPage('connections'); return; }
   showToast('Posting to all platforms...', 'success');
