@@ -924,7 +924,7 @@
     <!-- ── BILLING ────────────────── -->
     <div class="page" 
     <!-- AI AUTOPOSTER PAGE -->
-    <div class="page" id="page-autoposter" style="display:none;">
+    <div class="page" id="page-autoposter">
       <div class="page-header">
         <div class="page-title">🤖 AI AutoPoster</div>
         <div class="page-subtitle">Autopostleey automatically generates and posts content about your business — no manual work needed</div>
@@ -1517,7 +1517,10 @@ async function generateComposePost() {
 }
 
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.remove('active');
+    p.style.display = '';  // clear any inline display style
+  });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var page = document.getElementById('page-'+name);
   if(page) page.classList.add('active');
