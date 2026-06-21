@@ -3250,7 +3250,7 @@ async function approveAndPost() {
   try {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    await fetch('https://autopostleey-api-production.up.railway.app/api/post', {
+    await fetch('https://autopostleey-api-production.up.railway.app/publish', {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body: JSON.stringify({ content: _previewPost, platforms: platforms, user_id: _user.id })
     });
