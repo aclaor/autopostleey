@@ -3137,27 +3137,52 @@ function loadConnectedPlatformsForAP() {
 }
 
 async function generatePreview() {
-  var bizname     = document.getElementById('ap-bizname')     ? document.getElementById('ap-bizname').value.trim()     : '';
-  var description = document.getElementById('ap-description') ? document.getElementById('ap-description').value.trim() : '';
-  var website     = document.getElementById('ap-website')     ? document.getElementById('ap-website').value.trim()     : '';
-  var audience    = document.getElementById('ap-audience')    ? document.getElementById('ap-audience').value.trim()    : '';
+  var biznameEl = document.getElementById('ap-bizname');
+  var descEl    = document.getElementById('ap-description');
+  var websiteEl = document.getElementById('ap-website');
+  var audienceEl= document.getElementById('ap-audience');
 
-  if (!bizname || !description) {
-    showToast('Please fill in your business name and description first', 'error');
+  var bizname     = biznameEl     ? biznameEl.value.trim()     : '';
+  var description = descEl        ? descEl.value.trim()        : '';
+  var website     = websiteEl     ? websiteEl.value.trim()     : '';
+  var audience    = audienceEl    ? audienceEl.value.trim()    : '';
+
+  // Debug log
+  console.log('generatePreview called:', { bizname, description });
+
+  if (!bizname) {
+    showToast('Please enter your Business Name first', 'error');
+    if (biznameEl) biznameEl.focus();
+    return;
+  }
+  if (!description) {
+    showToast('Please enter what your business does', 'error');
+    if (descEl) descEl.focus();
     return;
   }
 
-  // Pick random enabled content type
-  var enabledTypes = AP_CONTENT_TYPES.filter(function(ct) {
-    var el = document.getElementById(ct.id);
-    return el && el.checked;
+  // Pick content type - try checkboxes first, fallback to random from list
+  var TOPICS = [
+    { emoji: '🛍️', label: 'Product Highlight',   topic: 'highlight the key benefits and value' },
+    { emoji: '📚', label: 'Educational Tip',      topic: 'share a useful tip related to the industry' },
+    { emoji: '💬', label: 'Engagement Post',      topic: 'ask an engaging question to spark comments' },
+    { emoji: '🎯', label: 'Promotional Post',     topic: 'promote the service with a call to action' },
+    { emoji: '🌐', label: 'Website Showcase',     topic: 'drive people to visit the website' },
+    { emoji: '📊', label: 'Social Proof',         topic: 'share a success metric or milestone' },
+  ];
+
+  var enabledTypes = [];
+  var typeIds = ['ct-product','ct-educational','ct-engagement','ct-promo','ct-website','ct-analytics'];
+  typeIds.forEach(function(id, i) {
+    var el = document.getElementById(id);
+    if (!el || el.checked) enabledTypes.push(TOPICS[i]); // if unchecked OR not found, include all
   });
-  if (!enabledTypes.length) {
-    showToast('Please enable at least one content type', 'error');
-    return;
-  }
+  if (!enabledTypes.length) enabledTypes = TOPICS;
+
   var picked = enabledTypes[Math.floor(Math.random() * enabledTypes.length)];
   _previewType = picked.label;
+
+  console.log('Picked type:', picked);
 
   var previewArea    = document.getElementById('preview-area');
   var previewLoading = document.getElementById('preview-loading');
@@ -3165,17 +3190,10 @@ async function generatePreview() {
   if (previewArea)    previewArea.style.display    = 'none';
   if (previewLoading) previewLoading.style.display = 'block';
   if (generateBtn)    generateBtn.disabled = true;
-
-  var AP_TYPE_TOPICS = {
-    'ct-product':     'highlight the key benefits and value of the product or service',
-    'ct-website':     'drive traffic to the website and highlight what visitors will find',
-    'ct-educational': 'share an educational tip related to the industry',
-    'ct-engagement':  'ask an engaging question to encourage comments and interaction',
-    'ct-promo':       'promote the service with a clear call to action to sign up or try it',
-    'ct-analytics':   'share a growth milestone or social proof metric'
-  };
+  if (generateBtn)    generateBtn.textContent = '⏳ Generating...';
 
   try {
+    console.log('Calling worker...');
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3184,16 +3202,17 @@ async function generatePreview() {
         description:   description,
         audience:      audience || 'general public',
         location:      'Philippines',
-        topic:         picked.emoji + ' ' + picked.label + ' — ' + (AP_TYPE_TOPICS[picked.id] || 'general promotion'),
+        topic:         picked.emoji + ' ' + picked.label + ' — ' + picked.topic,
         tone:          'friendly and engaging'
       })
     });
 
+    console.log('Worker status:', resp.status);
     var data = await resp.json();
     console.log('Worker response:', data);
-    var text = (data.post || '').trim();
 
-    if (!text) throw new Error(data.error || 'No post generated');
+    var text = (data.post || '').trim();
+    if (!text) throw new Error(data.error || 'Worker returned empty response');
 
     _previewPost = text;
     var previewText  = document.getElementById('preview-text');
@@ -3202,14 +3221,15 @@ async function generatePreview() {
     if (previewLabel) previewLabel.textContent = picked.emoji + ' ' + picked.label.toUpperCase();
     if (previewLoading) previewLoading.style.display = 'none';
     if (previewArea)    previewArea.style.display    = 'block';
+    showToast('✨ Post generated!', 'success');
 
   } catch(e) {
-    console.error('AI generation error:', e);
+    console.error('generatePreview error:', e.message, e);
     if (previewLoading) previewLoading.style.display = 'none';
-    showToast('AI generation failed: ' + e.message, 'error');
+    showToast('Generation failed: ' + e.message, 'error');
   }
 
-  if (generateBtn) generateBtn.disabled = false;
+  if (generateBtn) { generateBtn.disabled = false; generateBtn.innerHTML = '<span>✨</span> Generate Preview'; }
 }
 
 
