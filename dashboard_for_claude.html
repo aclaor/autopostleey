@@ -1254,6 +1254,39 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <button onclick="generateBulkAI()" style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:6px 12px;color:var(--accent3);font-size:12px;font-weight:600;cursor:pointer;">✨ Generate with AI</button>
             </div>
 
+            <!-- MEDIA UPLOAD FOR BULK -->
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                <span>📸 MEDIA LIBRARY — Upload images for your posts</span>
+                <span style="font-size:11px;color:var(--text3);">Each image can be assigned to a scheduled post</span>
+              </div>
+
+              <!-- Drop zone -->
+              <div id="bulk-media-dropzone" onclick="document.getElementById('bulk-media-input').click()"
+                style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color .2s;"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border)'"
+                ondrop="handleBulkMediaDrop(event)">
+                <div style="font-size:20px;margin-bottom:6px;">🖼️</div>
+                <div style="font-size:12px;color:var(--text2);font-weight:600;">Click or drag images/videos here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">Upload multiple at once — assign each to a post below</div>
+              </div>
+              <input id="bulk-media-input" type="file" accept="image/*,video/*" multiple style="display:none" onchange="handleBulkMediaUpload(this)">
+
+              <!-- Media grid -->
+              <div id="bulk-media-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:10px;min-height:0;"></div>
+            </div>
+
+            <!-- Post rows with media assignment -->
+            <div style="margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                <span>📋 POST SCHEDULE — One post per line</span>
+                <button onclick="addBulkPostRow()" style="font-size:11px;padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">+ Add row</button>
+              </div>
+              <div id="bulk-post-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+              <button onclick="syncBulkRowsToTextarea()" style="width:100%;padding:8px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">⚡ Apply to schedule textarea below</button>
+            </div>
+
             <!-- Templates for bulk -->
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;font-family:var(--mono);letter-spacing:0.5px;text-transform:uppercase;">📝 Templates — click to add to posts</div>
@@ -1515,6 +1548,237 @@ async function analyzeImageAndGenerate() {
   if (btn) { btn.innerHTML = '<span>🔍</span> Analyze Image & Generate Post'; btn.disabled = false; }
   if (status) status.style.display = 'none';
 }
+
+
+// ── BULK MEDIA LIBRARY ─────────────────────────────────────
+var _bulkMedia = [];    // array of {id, name, dataUrl, type}
+var _bulkRows  = [];    // array of {text, mediaId}
+
+function handleBulkMediaDrop(e) {
+  e.preventDefault();
+  document.getElementById('bulk-media-dropzone').style.borderColor = 'var(--border)';
+  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/') || f.type.startsWith('video/'); });
+  processBulkMediaFiles(files);
+}
+
+function handleBulkMediaUpload(input) {
+  var files = Array.from(input.files);
+  processBulkMediaFiles(files);
+  input.value = '';
+}
+
+function processBulkMediaFiles(files) {
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var id = 'media_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      _bulkMedia.push({ id: id, name: file.name, dataUrl: e.target.result, type: file.type });
+      renderBulkMediaGrid();
+      // Auto add a post row for each image
+      if (_bulkRows.length < _bulkMedia.length) {
+        _bulkRows.push({ text: '', mediaId: id });
+        renderBulkPostRows();
+      } else {
+        // Assign to first unassigned row
+        var unassigned = _bulkRows.find(function(r){ return !r.mediaId; });
+        if (unassigned) unassigned.mediaId = id;
+        renderBulkPostRows();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderBulkMediaGrid() {
+  var grid = document.getElementById('bulk-media-grid');
+  if (!grid) return;
+  if (_bulkMedia.length === 0) { grid.innerHTML = ''; return; }
+  grid.innerHTML = _bulkMedia.map(function(m, i) {
+    var isImg = m.type.startsWith('image/');
+    return '<div style="position:relative;border-radius:8px;overflow:hidden;background:var(--bg2);border:2px solid var(--border);" title="' + m.name + '">'
+      + (isImg
+          ? '<img src="' + m.dataUrl + '" style="width:100%;height:70px;object-fit:cover;display:block;">'
+          : '<div style="height:70px;display:flex;align-items:center;justify-content:center;font-size:24px;">🎥</div>')
+      + '<div style="font-size:9px;color:var(--text3);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + m.name.slice(0,12) + '</div>'
+      + '<button data-mid="' + m.id + '" onclick="removeBulkMedia(this.dataset.mid)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;line-height:16px;padding:0;">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function removeBulkMedia(id) {
+  _bulkMedia = _bulkMedia.filter(function(m){ return m.id !== id; });
+  _bulkRows.forEach(function(r){ if(r.mediaId === id) r.mediaId = null; });
+  renderBulkMediaGrid();
+  renderBulkPostRows();
+}
+
+function renderBulkPostRows() {
+  var container = document.getElementById('bulk-post-rows');
+  if (!container) return;
+  if (_bulkRows.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Upload images above to auto-create rows, or click + Add row</div>';
+    return;
+  }
+  container.innerHTML = _bulkRows.map(function(row, i) {
+    var assignedMedia = row.mediaId ? _bulkMedia.find(function(m){ return m.id === row.mediaId; }) : null;
+    var mediaThumb = assignedMedia && assignedMedia.type.startsWith('image/')
+      ? '<img src="' + assignedMedia.dataUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;">'
+      : assignedMedia
+        ? '<div style="width:48px;height:48px;background:var(--bg2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;">🎥</div>'
+        : '<div onclick="openMediaPicker(' + i + ')" style="width:48px;height:48px;background:var(--bg3);border:2px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" title="Assign image">📎</div>';
+
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:8px;">'
+      + '<div style="font-size:11px;color:var(--text3);font-weight:700;min-width:20px;text-align:center;">' + (i+1) + '</div>'
+      + '<div onclick="openMediaPicker(' + i + ')" style="cursor:pointer;" title="' + (assignedMedia ? 'Change image' : 'Assign image') + '">' + mediaThumb + '</div>'
+      + '<textarea rows="2" placeholder="Post text for this schedule (line ' + (i+1) + ')..." onchange="updateBulkRowText(' + i + ',this.value)" style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:12px;resize:none;outline:none;font-family:var(--body);">' + (row.text||'') + '</textarea>'
+      + '<div style="display:flex;flex-direction:column;gap:4px;">'
+      + '<button onclick="generateBulkRowAI(' + i + ')" title="Generate post with AI" style="padding:4px 8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:var(--accent);font-size:11px;cursor:pointer;font-weight:600;">✨ AI</button>'
+      + '<button onclick="removeBulkRow(' + i + ')" style="padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:11px;cursor:pointer;">✕</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function openMediaPicker(rowIndex) {
+  if (_bulkMedia.length === 0) {
+    showToast('Upload images first!', 'error');
+    return;
+  }
+  var existing = document.getElementById('media-picker-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'media-picker-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:24px;max-width:500px;width:100%;';
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;';
+  title.textContent = 'Select image for post ' + (rowIndex+1);
+  box.appendChild(title);
+
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;max-height:300px;overflow-y:auto;margin-bottom:16px;';
+
+  _bulkMedia.forEach(function(m) {
+    var cell = document.createElement('div');
+    cell.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid var(--border);';
+    cell.addEventListener('mouseover', function(){ cell.style.borderColor='var(--accent)'; });
+    cell.addEventListener('mouseout',  function(){ cell.style.borderColor='var(--border)'; });
+    cell.addEventListener('click', function(){ assignMediaToRow(rowIndex, m.id); });
+
+    if (m.type.startsWith('image/')) {
+      var img = document.createElement('img');
+      img.src = m.dataUrl;
+      img.style.cssText = 'width:100%;height:70px;object-fit:cover;display:block;';
+      cell.appendChild(img);
+    } else {
+      var icon = document.createElement('div');
+      icon.style.cssText = 'height:70px;display:flex;align-items:center;justify-content:center;font-size:28px;';
+      icon.textContent = '🎥';
+      cell.appendChild(icon);
+    }
+    var label = document.createElement('div');
+    label.style.cssText = 'font-size:9px;color:var(--text3);padding:3px 5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+    label.textContent = m.name.slice(0,15);
+    cell.appendChild(label);
+    grid.appendChild(cell);
+  });
+  box.appendChild(grid);
+
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+
+  var noImgBtn = document.createElement('button');
+  noImgBtn.style.cssText = 'flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;';
+  noImgBtn.textContent = 'No image';
+  noImgBtn.addEventListener('click', function(){ assignMediaToRow(rowIndex, null); });
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', function(){ modal.remove(); });
+
+  btnRow.appendChild(noImgBtn);
+  btnRow.appendChild(cancelBtn);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+
+function assignMediaToRow(rowIndex, mediaId) {
+  if (_bulkRows[rowIndex]) _bulkRows[rowIndex].mediaId = mediaId;
+  var modal = document.getElementById('media-picker-modal');
+  if (modal) modal.remove();
+  renderBulkPostRows();
+}
+
+function updateBulkRowText(rowIndex, text) {
+  if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = text;
+}
+
+function addBulkPostRow() {
+  _bulkRows.push({ text: '', mediaId: null });
+  renderBulkPostRows();
+}
+
+function removeBulkRow(rowIndex) {
+  _bulkRows.splice(rowIndex, 1);
+  renderBulkPostRows();
+}
+
+async function generateBulkRowAI(rowIndex) {
+  var bizname = '';
+  var description = '';
+  try {
+    var saved = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
+    if (saved) { var cfg = JSON.parse(saved); bizname = cfg.bizname||''; description = cfg.description||''; }
+  } catch(e) {}
+
+  var row = _bulkRows[rowIndex];
+  var mediaItem = row && row.mediaId ? _bulkMedia.find(function(m){ return m.id === row.mediaId; }) : null;
+
+  showToast('Generating post with AI...', 'success');
+
+  try {
+    var endpoint = mediaItem ? '/analyze-image' : '/';
+    var payload = mediaItem
+      ? { image_base64: mediaItem.dataUrl.split(',')[1], media_type: mediaItem.type, business_name: bizname, description: description }
+      : { business_name: bizname, description: description, topic: 'general promotion', tone: 'friendly and engaging', audience: 'general public', location: 'Philippines' };
+
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var data = await resp.json();
+    var text = (data.post || '').trim();
+    if (!text) throw new Error('No post generated');
+    if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = text;
+    renderBulkPostRows();
+    showToast('✨ Post ' + (rowIndex+1) + ' generated!', 'success');
+  } catch(e) {
+    showToast('AI failed: ' + e.message, 'error');
+  }
+}
+
+function syncBulkRowsToTextarea() {
+  if (_bulkRows.length === 0) {
+    showToast('No posts to sync — add rows first', 'error');
+    return;
+  }
+  var lines = _bulkRows.map(function(r){ return r.text || '(empty post ' + (_bulkRows.indexOf(r)+1) + ')'; });
+  var textarea = document.getElementById('bulk-content');
+  if (textarea) {
+    textarea.value = lines.join('\n---\n');
+    showToast('✅ ' + lines.length + ' posts applied to schedule!', 'success');
+  }
+}
+
 
 async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
@@ -2988,7 +3252,7 @@ showPage = function(name) {
   if(name === 'analytics') renderAnalytics();
   if(name === 'calendar')  renderCalendar();
   if(name === 'compose')   { renderTemplates(); }
-  if(name === 'bulk')      { renderBulkTemplates(); }
+  if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
