@@ -1495,7 +1495,9 @@ async function generateComposePost() {
       })
     });
     var data = await resp.json();
-    var text = (data.post || data.result || data.response || '').trim(); if (!data.success && !text) throw new Error(data.error || 'Worker returned no post');
+    console.log('Worker response:', data);
+    var text = (data.post || data.result || data.response || '').trim();
+    if (!text) throw new Error(data.error || 'Worker returned empty post');
     if (!text) throw new Error(data.error || 'No post generated');
 
     // Put into post textarea
@@ -3128,7 +3130,7 @@ function loadConnectedPlatformsForAP() {
   var PNAMES = {bluesky:'🦋 Bluesky',discord:'💬 Discord',telegram:'✈️ Telegram',linkedin:'💼 LinkedIn',twitter:'🐦 Twitter',facebook:'📘 Facebook',instagram:'📸 Instagram',tumblr:'📝 Tumblr',pinterest:'📌 Pinterest',threads:'🧵 Threads',youtube:'▶️ YouTube',google_business:'🏢 Google Biz',fbgroup:'👥 FB Group'};
   _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id).then(function(res) {
     var platforms = (res.data||[]).map(function(c){return c.platform;});
-    if (!platforms.length) { container.innerHTML='<div style="font-size:12px;color:var(--text3);">No platforms connected. Go to Connections tab.</div>'; return; }
+    if (!platforms.length) { container.innerHTML='<div style="font-size:12px;color:var(--text3);">No platforms connected yet. Go to the Connections page to connect platforms.</div>'; return; }
     container.innerHTML = platforms.map(function(p){ return '<div style="background:var(--bg3);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text2);">'+(PNAMES[p]||p)+'</div>'; }).join('');
   });
 }
@@ -3186,7 +3188,8 @@ async function generatePreview() {
     if (previewArea)    previewArea.style.display    = 'block';
   } catch(e) {
     if (previewLoading) previewLoading.style.display = 'none';
-    showToast('AI generation failed. Please try again.', 'error');
+    console.error('AI generation error:', e);
+    showToast('AI generation failed: ' + e.message, 'error');
   }
   if (generateBtn) generateBtn.disabled = false;
 }
