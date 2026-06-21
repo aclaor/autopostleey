@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1952,10 +1951,10 @@ function updateConnectionsUI() {
     var btnEl    = document.getElementById(prefix+'-btn');
     if(_connections[p]) {
       if(statusEl) statusEl.textContent = '✅ Connected' + (_connections[p].page_name ? ' — '+_connections[p].page_name : '');
-      if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); }
+      if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); btnEl.onclick = function(){ disconnectPlatform(p); }; }
     } else {
       if(statusEl) statusEl.textContent = 'Not connected';
-      if(btnEl)  { btnEl.textContent = 'Connect'; btnEl.classList.remove('connected'); }
+      if(btnEl)  { btnEl.textContent = 'Connect'; btnEl.classList.remove('connected'); btnEl.onclick = function(){ connectPlatform(p); }; }
     }
   });
   // Update stats
@@ -2068,14 +2067,50 @@ function getConnectionForm(name) {
         '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
     },
     discord: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Discord</div>' +
-        '<button onclick="connectDiscordOAuth()" style="width:100%;padding:13px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">💬 Auto Connect Discord</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">Authorize Autopostleey → select your server → done!</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter webhook manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Server Settings → Integrations → Webhooks → New Webhook → Copy URL</div>' +
-        '<input id="conn-d1" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'discord\',{webhook_url:document.getElementById(\'conn-d1\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">Connect Discord</div>' +
+
+        '<!-- OPTION 1: WEBHOOK -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:14px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#5865f2;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Paste Webhook URL</div>' +
+            '<div style="font-size:10px;background:#22c55e22;color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">RECOMMENDED</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Open your Discord server<br>' +
+            '2️⃣ Right-click a channel → <strong style="color:#c8c8e8;">Edit Channel</strong><br>' +
+            '3️⃣ Click <strong style="color:#c8c8e8;">Integrations</strong> → <strong style="color:#c8c8e8;">Webhooks</strong> → <strong style="color:#c8c8e8;">New Webhook</strong><br>' +
+            '4️⃣ Name it <strong style="color:#c8c8e8;">Autopostleey</strong> → Click <strong style="color:#c8c8e8;">Copy Webhook URL</strong><br>' +
+            '5️⃣ Paste it below 👇' +
+          '</div>' +
+          '<input id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box;">' +
+          '<input id="discord-server-name" placeholder="Your server name (e.g. My Community)" style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box;">' +
+          '<button onclick="saveDiscordWebhook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Save Webhook & Connect</button>' +
+        '</div>' +
+
+        '<!-- DIVIDER -->' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+        '</div>' +
+
+        '<!-- OPTION 2: OAUTH -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#7983f5;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Connect via OAuth</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Click the button below<br>' +
+            '2️⃣ Log in to Discord and authorize Autopostleey<br>' +
+            '3️⃣ Select the server and channel<br>' +
+            '4️⃣ Click <strong style="color:#c8c8e8;">Authorize</strong> — done!' +
+          '</div>' +
+          '<button onclick="connectDiscordOAuth()" style="width:100%;padding:12px;background:#2d2d44;color:#e8e8f0;border:1px solid #5865f2;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💬 Auto Connect via Discord OAuth</button>' +
+        '</div>';
     },
+    
     telegram: function() {
       var uid = (_user && _user.id) ? _user.id : 'guest';
       return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
@@ -2119,6 +2154,7 @@ function getConnectionForm(name) {
         '<div style="font-size:12px;color:#60a5fa;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">ℹ️ Meta does not allow direct API posting to Groups. We will open your group in a new tab when it is time to post.</div>' +
         '<button onclick="saveConnection(\'fbgroup\',{page_name:document.getElementById(\'conn-fg1\').value,webhook_url:document.getElementById(\'conn-fg2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Facebook Group</button>';
     }
+
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
 }
@@ -2135,6 +2171,60 @@ function connectPlatform(name) {
   modal.style.cssText = 'display:flex!important;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:24px;';
 }
 
+
+async function saveDiscordWebhook() {
+  var webhookUrl  = document.getElementById('discord-webhook-input') ? document.getElementById('discord-webhook-input').value.trim() : '';
+  var serverName  = document.getElementById('discord-server-name')  ? document.getElementById('discord-server-name').value.trim()  : 'Discord Server';
+
+  if (!webhookUrl || !webhookUrl.includes('discord.com/api/webhooks')) {
+    showToast('Please enter a valid Discord webhook URL', 'error');
+    return;
+  }
+
+  try {
+    // Test webhook first
+    var testResp = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: '✅ Autopostleey connected successfully!' })
+    });
+
+    if (!testResp.ok && testResp.status !== 204) {
+      showToast('Invalid webhook URL — please check and try again', 'error');
+      return;
+    }
+
+    // Save to Supabase
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'discord',
+      access_token: webhookUrl,
+      page_name:    serverName || 'Discord Server',
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    showToast('✅ Discord connected — ' + (serverName || 'Discord Server') + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to save Discord webhook: ' + e.message, 'error');
+  }
+}
+
+async function disconnectPlatform(name) {
+  if (!confirm('Disconnect ' + name + '? You can reconnect anytime.')) return;
+  try {
+    await _db.from('autopostleey_connections')
+      .delete()
+      .eq('user_id', _user.id)
+      .eq('platform', name);
+    delete _connections[name];
+    showToast('✅ ' + name + ' disconnected', 'success');
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to disconnect: ' + e.message, 'error');
+  }
+}
 
 function connectFacebookOAuth() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
