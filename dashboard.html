@@ -3833,8 +3833,8 @@ async function generatePreview() {
   var previewArea    = document.getElementById('preview-area');
   var previewLoading = document.getElementById('preview-loading');
   var generateBtn    = document.getElementById('generate-btn');
-  if (previewArea)    previewArea.style.display    = 'none';
-  if (previewLoading) previewLoading.style.display = 'block';
+  if (previewArea)    { previewArea.style.display = 'none'; }
+  if (previewLoading) { previewLoading.style.display = 'block'; }
   if (generateBtn)    generateBtn.disabled = true;
   if (generateBtn)    generateBtn.textContent = '⏳ Generating...';
 
@@ -3903,8 +3903,8 @@ async function generatePreview() {
       previewImg.style.display = 'none';
     }
 
-    if (previewLoading) previewLoading.style.display = 'none';
-    if (previewArea)    previewArea.style.display    = 'block';
+    if (previewLoading) { previewLoading.style.display = 'none'; previewLoading.style.cssText = 'display:none;'; }
+    if (previewArea)    { previewArea.removeAttribute('style'); previewArea.style.display = 'block'; }
     showToast('✨ Post generated!', 'success');
 
   } catch(e) {
