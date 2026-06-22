@@ -1022,31 +1022,34 @@
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" checked id="ct-product" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">🛍️ Product/Service Highlights</div>
-                <div style="font-size:11px;color:var(--text3);">Showcase what you sell with key benefits</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Showcase what you sell with key benefits</div>
+                <input id="ct-product-url" placeholder="Product page URL (e.g. yoursite.com/products)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
               </div>
             </label>
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" checked id="ct-website" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">🌐 Website Screenshot Posts</div>
-                <div style="font-size:11px;color:var(--text3);">Auto-screenshot your site and generate post about it</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Auto-screenshot your site — uses your main website URL by default</div>
+                <input id="ct-website-url" placeholder="Custom page to screenshot (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
               </div>
             </label>
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" checked id="ct-educational" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">📚 Educational Content</div>
-                <div style="font-size:11px;color:var(--text3);">Tips and knowledge related to your industry</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tips and knowledge related to your industry</div>
+                <input id="ct-educational-url" placeholder="Blog/resources page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
               </div>
             </label>
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" checked id="ct-engagement" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">💬 Engagement Posts</div>
                 <div style="font-size:11px;color:var(--text3);">Questions, polls and conversation starters</div>
               </div>
@@ -1054,15 +1057,16 @@
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" checked id="ct-promo" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">🎯 Promotional Posts</div>
-                <div style="font-size:11px;color:var(--text3);">Special offers, free trials, call to action</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Special offers, free trials, call to action</div>
+                <input id="ct-promo-url" placeholder="Pricing/offers page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
               </div>
             </label>
 
             <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
               <input type="checkbox" id="ct-analytics" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div>
+              <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;">📊 Analytics Highlights</div>
                 <div style="font-size:11px;color:var(--text3);">Share social media growth milestones</div>
               </div>
@@ -1383,6 +1387,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <div class="form-group">
               <label class="form-label">Frequency</label>
               <select class="form-select" id="bulk-frequency">
+                <option value="every4h">Every 4 hours (6x/day)</option>
+                <option value="every6h">Every 6 hours (4x/day)</option>
+                <option value="every8h">Every 8 hours (3x/day)</option>
+                <option value="every12h">Every 12 hours (2x/day)</option>
                 <option value="daily">Every day</option>
                 <option value="weekdays">Weekdays only (Mon-Fri)</option>
                 <option value="every2">Every 2 days</option>
@@ -2316,7 +2324,7 @@ async function submitPost(status) {
             content:     content,
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
-            image_url:   window._composerImageUrl || '',
+            image_url:   (postData && postData.image_url) ? postData.image_url : (window._composerImageUrl || ''),
             connections: _connectionsFull
           })
         });
@@ -3357,9 +3365,36 @@ async function scheduleBulkPosts() {
 
   for(var i=0; i<lines.length; i++) {
     var scheduledAt = new Date(startDate);
-    scheduledAt.setDate(scheduledAt.getDate() + i);
+    // Handle hour-based frequencies
+    if (freq === 'every4h') {
+      scheduledAt.setTime(startDate.getTime() + i * 4 * 60 * 60 * 1000);
+    } else if (freq === 'every6h') {
+      scheduledAt.setTime(startDate.getTime() + i * 6 * 60 * 60 * 1000);
+    } else if (freq === 'every8h') {
+      scheduledAt.setTime(startDate.getTime() + i * 8 * 60 * 60 * 1000);
+    } else if (freq === 'every12h') {
+      scheduledAt.setTime(startDate.getTime() + i * 12 * 60 * 60 * 1000);
+    } else if (freq === 'weekdays') {
+      scheduledAt.setDate(scheduledAt.getDate() + i);
+      while (scheduledAt.getDay() === 0 || scheduledAt.getDay() === 6) {
+        scheduledAt.setDate(scheduledAt.getDate() + 1);
+      }
+    } else if (freq === 'every2') {
+      scheduledAt.setDate(scheduledAt.getDate() + i * 2);
+    } else if (freq === 'every3') {
+      scheduledAt.setDate(scheduledAt.getDate() + i * 3);
+    } else if (freq === 'weekly') {
+      scheduledAt.setDate(scheduledAt.getDate() + i * 7);
+    } else if (freq === 'custom') {
+      scheduledAt.setDate(scheduledAt.getDate() + i * parseInt(interval || 1));
+    } else {
+      scheduledAt.setDate(scheduledAt.getDate() + i);
+    }
 
     try {
+      // Get image URL for this post from _bulkMediaMap
+      var postImageUrl = (window._bulkMediaMap && window._bulkMediaMap[i]) ? window._bulkMediaMap[i] : '';
+
       var { error } = await _db.from('autopostleey_posts').insert([{
         user_id:      _user.id,
         content:      lines[i],
@@ -3367,6 +3402,7 @@ async function scheduleBulkPosts() {
         status:       'scheduled',
         scheduled_at: scheduledAt.toISOString(),
         mode:         'manual',
+        image_url:    postImageUrl,
         created_at:   new Date().toISOString()
       }]);
       if(!error) successCount++;
@@ -3640,6 +3676,7 @@ var _autoConfigLoaded = false;
 var _autoEnabled = false;
 var _previewPost = '';
 var _previewType = '';
+var _previewImageUrl = '';
 
 var AP_CONTENT_TYPES = [
   { id: 'ct-product',     label: 'Product/Service Highlight', emoji: '🛍️' },
@@ -3652,10 +3689,51 @@ var AP_CONTENT_TYPES = [
 
 async function loadAutoConfig() {
   if (!_user) return;
+
+  // Try Supabase first (has cron config + stats)
   try {
-    var _saved = localStorage.getItem('ap_cfg_' + _user.id);
-    if (_saved) { _autoConfig = JSON.parse(_saved); applyAutoConfig(); }
-  } catch(e) {}
+    var dbRes = await _db.from('autopostleey_autoposter').select('*').eq('user_id', _user.id).single();
+    if (dbRes.data) {
+      _autoConfig = {
+        bizname:       dbRes.data.bizname      || '',
+        description:   dbRes.data.description  || '',
+        website:       dbRes.data.website       || '',
+        audience:      dbRes.data.audience      || '',
+        frequency:     dbRes.data.frequency     || 'daily',
+        time:          dbRes.data.posting_time  || '09:00',
+        enabled:       dbRes.data.enabled       || false,
+        content_types: dbRes.data.content_types || ['ct-product','ct-educational','ct-engagement','ct-promo'],
+        content_urls:  dbRes.data.content_urls  || {}
+      };
+      applyAutoConfig();
+      if (_autoConfig.enabled) { _autoEnabled = true; updateAutoToggleUI(true); }
+      // Show last posted stats
+      var st = document.getElementById('autoposter-status-text');
+      if (st) {
+        if (dbRes.data.last_posted_at) {
+          var lp = new Date(dbRes.data.last_posted_at);
+          st.textContent = (_autoConfig.enabled ? 'Active · ' : 'Paused · ')
+            + 'Last post: ' + lp.toLocaleString()
+            + ' · Total: ' + (dbRes.data.post_count || 0) + ' posts';
+        } else {
+          st.textContent = _autoConfig.enabled ? 'Active — waiting for first post' : 'Configure and enable to start auto-posting';
+        }
+      }
+    } else {
+      // Fall back to localStorage
+      try {
+        var saved2 = localStorage.getItem('ap_cfg_' + _user.id);
+        if (saved2) { _autoConfig = JSON.parse(saved2); applyAutoConfig(); }
+      } catch(e) {}
+    }
+  } catch(e) {
+    // Fall back to localStorage on error
+    try {
+      var saved3 = localStorage.getItem('ap_cfg_' + _user.id);
+      if (saved3) { _autoConfig = JSON.parse(saved3); applyAutoConfig(); }
+    } catch(e2) {}
+  }
+
   loadConnectedPlatformsForAP();
 }
 
@@ -3664,11 +3742,21 @@ function applyAutoConfig() {
   var keys   = ['website','bizname','description','audience','frequency','time'];
   fields.forEach(function(f,i) {
     var el = document.getElementById(f);
-    // Only set value if field is currently empty (don't overwrite user input)
     if (el && _autoConfig[keys[i]] && !el.value.trim()) {
       el.value = _autoConfig[keys[i]];
     }
   });
+  // Restore content type URLs
+  if (_autoConfig.content_urls) {
+    var urlFields = ['ct-product-url','ct-website-url','ct-educational-url','ct-promo-url'];
+    var urlKeys   = ['ct-product','ct-website','ct-educational','ct-promo'];
+    urlFields.forEach(function(f,i) {
+      var el = document.getElementById(f);
+      if (el && _autoConfig.content_urls[urlKeys[i]] && !el.value.trim()) {
+        el.value = _autoConfig.content_urls[urlKeys[i]];
+      }
+    });
+  }
   if (_autoConfig.enabled) { _autoEnabled=true; updateAutoToggleUI(true); }
 }
 
@@ -3685,12 +3773,43 @@ async function saveAutoConfig() {
     time:        document.getElementById('ap-time')        ? document.getElementById('ap-time').value               : '09:00',
     enabled: _autoEnabled,
     content_types: AP_CONTENT_TYPES.filter(function(ct){ var el=document.getElementById(ct.id); return el&&el.checked; }).map(function(ct){return ct.id;}),
+    content_urls: {
+      'ct-product':     document.getElementById('ct-product-url')     ? document.getElementById('ct-product-url').value.trim()     : '',
+      'ct-website':     document.getElementById('ct-website-url')     ? document.getElementById('ct-website-url').value.trim()     : '',
+      'ct-educational': document.getElementById('ct-educational-url') ? document.getElementById('ct-educational-url').value.trim() : '',
+      'ct-promo':       document.getElementById('ct-promo-url')       ? document.getElementById('ct-promo-url').value.trim()       : ''
+    },
     updated_at: new Date().toISOString()
   };
+  // Save to localStorage for fast access
+  try { localStorage.setItem('ap_cfg_' + _user.id, JSON.stringify(_autoConfig)); } catch(e) {}
+
+  // Save to Supabase for cron scheduler (24/7 posting)
   try {
-    localStorage.setItem('ap_cfg_' + _user.id, JSON.stringify(_autoConfig));
-  } catch(e) {}
-  showToast('AI AutoPoster configuration saved!', 'success');
+    var platforms = [];
+    try {
+      var connRes = await _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id);
+      platforms = (connRes.data || []).map(function(c){ return c.platform; });
+    } catch(e) {}
+
+    await _db.from('autopostleey_autoposter').upsert({
+      user_id:       _user.id,
+      bizname:       _autoConfig.bizname       || '',
+      description:   _autoConfig.description   || '',
+      website:       _autoConfig.website        || '',
+      audience:      _autoConfig.audience       || '',
+      frequency:     _autoConfig.frequency      || 'daily',
+      posting_time:  _autoConfig.time           || '09:00',
+      enabled:       _autoEnabled,
+      content_types: _autoConfig.content_types  || ['ct-product','ct-educational','ct-engagement','ct-promo'],
+      content_urls:  _autoConfig.content_urls   || {},
+      platforms:     platforms,
+      updated_at:    new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    showToast('✅ AI AutoPoster saved! Cloudflare will post automatically 24/7.', 'success');
+  } catch(e) {
+    showToast('AI AutoPoster configuration saved locally.', 'success');
+  }
   var st = document.getElementById('autoposter-status-text');
   if (st) st.textContent = 'Configured — ' + (_autoEnabled ? 'Active' : 'Enable toggle to start');
 }
@@ -3698,8 +3817,15 @@ async function saveAutoConfig() {
 function toggleAutoPoster(enabled) {
   _autoEnabled = enabled;
   updateAutoToggleUI(enabled);
-  showToast(enabled ? '🤖 AI AutoPoster enabled!' : 'AI AutoPoster paused', enabled ? 'success' : 'info');
+  showToast(enabled ? '🤖 AI AutoPoster enabled! Cloudflare will post 24/7.' : '⏸️ AI AutoPoster paused', enabled ? 'success' : 'info');
   if (_autoConfig.bizname) { _autoConfig.enabled = enabled; saveAutoConfig(); }
+  // Update enabled state in Supabase immediately
+  if (_user) {
+    _db.from('autopostleey_autoposter')
+      .update({ enabled: enabled, updated_at: new Date().toISOString() })
+      .eq('user_id', _user.id)
+      .then(function(){});
+  }
 }
 
 function updateAutoToggleUI(enabled) {
@@ -3780,31 +3906,52 @@ async function generatePreview() {
   var previewArea    = document.getElementById('preview-area');
   var previewLoading = document.getElementById('preview-loading');
   var generateBtn    = document.getElementById('generate-btn');
-  if (previewArea)    previewArea.style.display    = 'none';
-  if (previewLoading) previewLoading.style.display = 'block';
+  if (previewArea)    { previewArea.style.display = 'none'; }
+  if (previewLoading) { previewLoading.style.display = 'block'; }
   if (generateBtn)    generateBtn.disabled = true;
   if (generateBtn)    generateBtn.textContent = '⏳ Generating...';
 
   try {
     console.log('Calling worker...');
-    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        business_name: bizname,
-        description:   description,
-        audience:      audience || 'general public',
-        location:      'Philippines',
-        topic:         picked.emoji + ' ' + picked.label + ' — ' + picked.topic,
-        tone:          'friendly and engaging'
-      })
-    });
+    var resp, data, text, _previewImageUrl = '';
 
-    console.log('Worker status:', resp.status);
-    var data = await resp.json();
+    // Website Screenshot Posts — take screenshot of content-type specific URL
+    var screenshotTypes = ['ct-website', 'ct-product', 'ct-educational', 'ct-promo'];
+    var shouldScreenshot = screenshotTypes.indexOf(picked.id) >= 0 && (website || _autoConfig.website);
+    if (shouldScreenshot) {
+      // Use content-type specific URL if set, otherwise fall back to main website
+      var urlFieldId = picked.id + '-url';
+      var urlEl = document.getElementById(urlFieldId);
+      var screenshotUrl = (urlEl && urlEl.value.trim()) ? urlEl.value.trim()
+        : (_autoConfig.content_urls && _autoConfig.content_urls[picked.id]) ? _autoConfig.content_urls[picked.id]
+        : website;
+      if (!screenshotUrl.startsWith('http')) screenshotUrl = 'https://' + screenshotUrl;
+      if (previewLoading) previewLoading.innerHTML = '📸 Taking screenshot of ' + screenshotUrl + '...';
+      resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ website_url: screenshotUrl, business_name: bizname, description: description })
+      });
+      data = await resp.json();
+      text = (data.post || '').trim();
+      if (data.image_url) window._composerImageUrl = data.image_url;
+    } else if (!shouldScreenshot) {
+      resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: bizname,
+          description:   description,
+          audience:      audience || 'general public',
+          location:      'Philippines',
+          topic:         picked.emoji + ' ' + picked.label + ' — ' + (picked.topic || 'general promotion'),
+          tone:          'friendly and engaging'
+        })
+      });
+      data = await resp.json();
+      text = (data.post || '').trim();
+    }
     console.log('Worker response:', data);
-
-    var text = (data.post || '').trim();
     if (!text) throw new Error(data.error || 'Worker returned empty response');
 
     _previewPost = text;
@@ -3812,8 +3959,25 @@ async function generatePreview() {
     var previewLabel = document.getElementById('preview-type-label');
     if (previewText)  previewText.textContent  = text;
     if (previewLabel) previewLabel.textContent = picked.emoji + ' ' + picked.label.toUpperCase();
-    if (previewLoading) previewLoading.style.display = 'none';
-    if (previewArea)    previewArea.style.display    = 'block';
+
+    // Show screenshot preview if available
+    var previewImg = document.getElementById('preview-screenshot');
+    if (!previewImg) {
+      previewImg = document.createElement('img');
+      previewImg.id = 'preview-screenshot';
+      previewImg.style.cssText = 'width:100%;border-radius:8px;margin-bottom:10px;max-height:180px;object-fit:cover;';
+      var previewTextEl = document.getElementById('preview-text');
+      if (previewTextEl) previewTextEl.parentNode.insertBefore(previewImg, previewTextEl);
+    }
+    if (_previewImageUrl) {
+      previewImg.src = _previewImageUrl;
+      previewImg.style.display = 'block';
+    } else {
+      previewImg.style.display = 'none';
+    }
+
+    if (previewLoading) { previewLoading.style.display = 'none'; previewLoading.style.cssText = 'display:none;'; }
+    if (previewArea)    { previewArea.removeAttribute('style'); previewArea.style.display = 'block'; }
     showToast('✨ Post generated!', 'success');
 
   } catch(e) {
