@@ -3871,7 +3871,7 @@ async function generatePreview() {
           description:   description,
           audience:      audience || 'general public',
           location:      'Philippines',
-          topic:         picked.emoji + ' ' + picked.label + ' — ' + (AP_TYPE_TOPICS[picked.id] || 'general promotion'),
+          topic:         picked.emoji + ' ' + picked.label + ' — ' + (picked.topic || 'general promotion'),
           tone:          'friendly and engaging'
         })
       });
