@@ -3689,10 +3689,51 @@ var AP_CONTENT_TYPES = [
 
 async function loadAutoConfig() {
   if (!_user) return;
+
+  // Try Supabase first (has cron config + stats)
   try {
-    var _saved = localStorage.getItem('ap_cfg_' + _user.id);
-    if (_saved) { _autoConfig = JSON.parse(_saved); applyAutoConfig(); }
-  } catch(e) {}
+    var dbRes = await _db.from('autopostleey_autoposter').select('*').eq('user_id', _user.id).single();
+    if (dbRes.data) {
+      _autoConfig = {
+        bizname:       dbRes.data.bizname      || '',
+        description:   dbRes.data.description  || '',
+        website:       dbRes.data.website       || '',
+        audience:      dbRes.data.audience      || '',
+        frequency:     dbRes.data.frequency     || 'daily',
+        time:          dbRes.data.posting_time  || '09:00',
+        enabled:       dbRes.data.enabled       || false,
+        content_types: dbRes.data.content_types || ['ct-product','ct-educational','ct-engagement','ct-promo'],
+        content_urls:  dbRes.data.content_urls  || {}
+      };
+      applyAutoConfig();
+      if (_autoConfig.enabled) { _autoEnabled = true; updateAutoToggleUI(true); }
+      // Show last posted stats
+      var st = document.getElementById('autoposter-status-text');
+      if (st) {
+        if (dbRes.data.last_posted_at) {
+          var lp = new Date(dbRes.data.last_posted_at);
+          st.textContent = (_autoConfig.enabled ? 'Active · ' : 'Paused · ')
+            + 'Last post: ' + lp.toLocaleString()
+            + ' · Total: ' + (dbRes.data.post_count || 0) + ' posts';
+        } else {
+          st.textContent = _autoConfig.enabled ? 'Active — waiting for first post' : 'Configure and enable to start auto-posting';
+        }
+      }
+    } else {
+      // Fall back to localStorage
+      try {
+        var saved2 = localStorage.getItem('ap_cfg_' + _user.id);
+        if (saved2) { _autoConfig = JSON.parse(saved2); applyAutoConfig(); }
+      } catch(e) {}
+    }
+  } catch(e) {
+    // Fall back to localStorage on error
+    try {
+      var saved3 = localStorage.getItem('ap_cfg_' + _user.id);
+      if (saved3) { _autoConfig = JSON.parse(saved3); applyAutoConfig(); }
+    } catch(e2) {}
+  }
+
   loadConnectedPlatformsForAP();
 }
 
@@ -3740,10 +3781,35 @@ async function saveAutoConfig() {
     },
     updated_at: new Date().toISOString()
   };
+  // Save to localStorage for fast access
+  try { localStorage.setItem('ap_cfg_' + _user.id, JSON.stringify(_autoConfig)); } catch(e) {}
+
+  // Save to Supabase for cron scheduler (24/7 posting)
   try {
-    localStorage.setItem('ap_cfg_' + _user.id, JSON.stringify(_autoConfig));
-  } catch(e) {}
-  showToast('AI AutoPoster configuration saved!', 'success');
+    var platforms = [];
+    try {
+      var connRes = await _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id);
+      platforms = (connRes.data || []).map(function(c){ return c.platform; });
+    } catch(e) {}
+
+    await _db.from('autopostleey_autoposter').upsert({
+      user_id:       _user.id,
+      bizname:       _autoConfig.bizname       || '',
+      description:   _autoConfig.description   || '',
+      website:       _autoConfig.website        || '',
+      audience:      _autoConfig.audience       || '',
+      frequency:     _autoConfig.frequency      || 'daily',
+      posting_time:  _autoConfig.time           || '09:00',
+      enabled:       _autoEnabled,
+      content_types: _autoConfig.content_types  || ['ct-product','ct-educational','ct-engagement','ct-promo'],
+      content_urls:  _autoConfig.content_urls   || {},
+      platforms:     platforms,
+      updated_at:    new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    showToast('✅ AI AutoPoster saved! Cloudflare will post automatically 24/7.', 'success');
+  } catch(e) {
+    showToast('AI AutoPoster configuration saved locally.', 'success');
+  }
   var st = document.getElementById('autoposter-status-text');
   if (st) st.textContent = 'Configured — ' + (_autoEnabled ? 'Active' : 'Enable toggle to start');
 }
@@ -3751,8 +3817,15 @@ async function saveAutoConfig() {
 function toggleAutoPoster(enabled) {
   _autoEnabled = enabled;
   updateAutoToggleUI(enabled);
-  showToast(enabled ? '🤖 AI AutoPoster enabled!' : 'AI AutoPoster paused', enabled ? 'success' : 'info');
+  showToast(enabled ? '🤖 AI AutoPoster enabled! Cloudflare will post 24/7.' : '⏸️ AI AutoPoster paused', enabled ? 'success' : 'info');
   if (_autoConfig.bizname) { _autoConfig.enabled = enabled; saveAutoConfig(); }
+  // Update enabled state in Supabase immediately
+  if (_user) {
+    _db.from('autopostleey_autoposter')
+      .update({ enabled: enabled, updated_at: new Date().toISOString() })
+      .eq('user_id', _user.id)
+      .then(function(){});
+  }
 }
 
 function updateAutoToggleUI(enabled) {
