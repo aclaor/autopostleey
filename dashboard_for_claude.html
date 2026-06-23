@@ -227,6 +227,9 @@
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
         <span class="nav-icon">💳</span> Billing
       </a>
+      <a class="nav-item" onclick="showPage('support');return false;" href="#">
+        <span class="nav-icon">💬</span> Support
+      </a>
     </div>
     <div class="sidebar-footer">
       <div class="plan-badge">
@@ -706,7 +709,13 @@
             </div>
           </div>
 
-          <button id="submit-post-btn" onclick="submitPost()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
+          <!-- Manual post buttons for Instagram/Facebook personal -->
+          <div id="manual-post-btns" style="display:none;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">📋 MANUAL POSTING — Click to copy & open:</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="manual-btns-row"></div>
+          </div>
+
+                    <button id="submit-post-btn" onclick="submitPost()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;">
             Schedule Post →
           </button>
           <button onclick="submitPost('draft')" style="width:100%;margin-top:8px;padding:10px;background:none;border:1px solid var(--border2);border-radius:8px;font-family:var(--sans);font-size:13px;color:var(--text2);cursor:pointer;">
@@ -800,6 +809,14 @@
         <div class="form-group">
           <label class="form-label">Website (optional)</label>
           <input class="form-input" id="biz-website" placeholder="https://yourbusiness.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address <span style="color:var(--text3);font-weight:400;">(added to every post)</span></label>
+          <input class="form-input" id="biz-email" placeholder="hello@yourbusiness.com" type="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone / WhatsApp <span style="color:var(--text3);font-weight:400;">(added to every post)</span></label>
+          <input class="form-input" id="biz-phone" placeholder="+63 912 345 6789">
         </div>
         <button onclick="saveBusinessProfile()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px 24px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;">
           Save Business Profile ✓
@@ -1573,9 +1590,10 @@ async function analyzeImageAndGenerate() {
     var text = (data.post || '').trim();
     if (!text || !data.success) throw new Error(data.error || 'Could not analyze image');
 
+    var enrichedAnalyze = appendContactToPost(text);
     var postContent = document.getElementById('post-content');
     if (postContent) {
-      postContent.value = text;
+      postContent.value = enrichedAnalyze;
       postContent.dispatchEvent(new Event('input'));
       postContent.focus();
     }
@@ -1828,7 +1846,8 @@ async function generateBulkRowAI(rowIndex) {
     var data = await resp.json();
     var text = (data.post || '').trim();
     if (!text) throw new Error('No post generated');
-    if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = text;
+    var enrichedBulk = appendContactToPost(text);
+    if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = enrichedBulk;
 
     // Upload image to Supabase Storage if assigned
     if (mediaItem && !_bulkRows[rowIndex].imageUrl) {
@@ -1930,6 +1949,126 @@ async function getPublicImageUrl(dataUrl) {
   return await uploadToSupabaseStorage(dataUrl, 'post-image');
 }
 
+
+// ── CONTACT FOOTER HELPER ──────────────────────────────────
+function buildContactFooter() {
+  var profile = _bizProfile || {};
+  var parts = [];
+  if (profile.website) parts.push('🌐 ' + profile.website);
+  if (profile.email)   parts.push('📧 ' + profile.email);
+  if (profile.phone)   parts.push('📱 ' + profile.phone);
+  return parts.length > 0 ? ('\n\n' + parts.join(' | ')) : '';
+}
+
+function appendContactToPost(postText) {
+  if (!postText) return postText;
+  var footer = buildContactFooter();
+  if (!footer) return postText;
+  // Don't add if already contains website/email
+  var profile = _bizProfile || {};
+  if (profile.website && postText.includes(profile.website)) return postText;
+  if (profile.email   && postText.includes(profile.email))   return postText;
+  return postText + footer;
+}
+
+function updateManualPostButtons() {
+  var manualDiv = document.getElementById('manual-post-btns');
+  var btnsRow   = document.getElementById('manual-btns-row');
+  if (!manualDiv || !btnsRow) return;
+  var manualPlatforms = [];
+  ['instagram','facebook'].forEach(function(p) {
+    var conn = _connectionsFull[p];
+    if (conn && conn.access_token === 'manual') {
+      manualPlatforms.push({ platform: p, name: conn.page_name });
+    }
+  });
+  if (manualPlatforms.length === 0) { manualDiv.style.display = 'none'; return; }
+  manualDiv.style.display = 'block';
+  btnsRow.innerHTML = manualPlatforms.map(function(mp) {
+    var isIG  = mp.platform === 'instagram';
+    var color = isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2';
+    var url   = isIG ? 'https://www.instagram.com/create/style/' : 'https://www.facebook.com/';
+    return '<button onclick="copyAndOpenManual(\'' + url + '\')" style="padding:8px 14px;background:' + color + ';color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px;">'
+      + (isIG ? '📸 Copy & Open Instagram' : '📘 Copy & Open Facebook') + '</button>';
+  }).join('');
+}
+
+async function copyAndOpenManual(url) {
+  var postContent = document.getElementById('post-content');
+  var text = postContent ? postContent.value.trim() : '';
+  if (!text) { showToast('Write your post first!', 'error'); return; }
+
+  // Check if there's an image to include
+  var imageUrl = window._composerImageUrl || '';
+
+  // Show modal with image download + caption copy
+  var existing = document.getElementById('manual-post-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'manual-post-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:24px;max-width:420px;width:100%;';
+
+  var isIG = url.includes('instagram');
+  var platform = isIG ? 'Instagram' : 'Facebook';
+  var icon = isIG ? '📸' : '📘';
+
+  box.innerHTML =
+    '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">' + icon + ' Post to ' + platform + '</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Follow these steps to post in under 30 seconds</div>' +
+
+    // Step 1: Download image if exists
+    (imageUrl ? (
+      '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">STEP 1 — Download your image</div>' +
+        '<img src="' + imageUrl + '" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover;margin-bottom:10px;">' +
+        '<a href="' + imageUrl + '" download="post-image.jpg" style="display:block;text-align:center;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;">⬇️ Download Image</a>' +
+      '</div>'
+    ) : '') +
+
+    // Step 2: Copy caption
+    '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">' + (imageUrl ? 'STEP 2' : 'STEP 1') + ' — Copy your caption</div>' +
+      '<div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);max-height:80px;overflow-y:auto;margin-bottom:10px;line-height:1.5;">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+      '<button id="copy-caption-btn" onclick="copyCaption()" style="width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy Caption</button>' +
+    '</div>' +
+
+    // Step 3: Open platform
+    '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">' + (imageUrl ? 'STEP 3' : 'STEP 2') + ' — Open ' + platform + ' and paste</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Create a new post → ' + (imageUrl ? 'upload your image → ' : '') + 'paste your caption → Share!</div>' +
+      '<a href="' + url + '" target="_blank" style="display:block;text-align:center;padding:10px;background:' + (isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2') + ';color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">' + icon + ' Open ' + platform + ' Now</a>' +
+    '</div>' +
+
+    '<button onclick="var m=document.getElementById(\"manual-post-modal\");if(m)m.remove();" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Close</button>';
+
+  modal.appendChild(box);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+
+  // Auto-copy caption
+  try {
+    await navigator.clipboard.writeText(text);
+    var copyBtn = document.getElementById('copy-caption-btn');
+    if (copyBtn) { copyBtn.textContent = '✅ Caption Copied!'; copyBtn.style.background = '#22c55e'; }
+  } catch(e) {}
+}
+
+async function copyCaption() {
+  var postContent = document.getElementById('post-content');
+  var text = postContent ? postContent.value.trim() : '';
+  try {
+    await navigator.clipboard.writeText(text);
+    var btn = document.getElementById('copy-caption-btn');
+    if (btn) { btn.textContent = '✅ Copied!'; btn.style.background = '#22c55e'; }
+  } catch(e) {
+    showToast('Please select and copy the text manually', 'error');
+  }
+}
+
 async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
   if (btn) { btn.innerHTML = '⏳ Generating...'; btn.disabled = true; }
@@ -2005,9 +2144,10 @@ async function generateComposePost() {
     var text = (data.post || '').trim();
     if (!text) throw new Error(data.error || 'No post generated');
 
+    var enrichedText = appendContactToPost(text);
     var postText = document.getElementById('post-content') || document.getElementById('post-text');
     if (postText) {
-      postText.value = text;
+      postText.value = enrichedText;
       postText.dispatchEvent(new Event('input'));
       postText.focus();
     }
@@ -2054,6 +2194,12 @@ async function loadBizProfile() {
       document.getElementById('biz-audience').value  = data.audience  || '';
       document.getElementById('biz-location').value  = data.location  || '';
       document.getElementById('biz-website').value   = data.website   || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
       document.getElementById('ob1-icon').textContent = '✅';
     }
   } catch(e) { console.log('No biz profile yet'); }
@@ -2069,6 +2215,8 @@ async function saveBusinessProfile() {
     audience:    document.getElementById('biz-audience').value.trim(),
     location:    document.getElementById('biz-location').value.trim(),
     website:     document.getElementById('biz-website').value.trim(),
+    email:       document.getElementById('biz-email')  ? document.getElementById('biz-email').value.trim()  : '',
+    phone:       document.getElementById('biz-phone')  ? document.getElementById('biz-phone').value.trim()  : '',
     updated_at:  new Date().toISOString()
   };
   try {
@@ -2460,39 +2608,86 @@ function updateConnectionsUI() {
 function getConnectionForm(name) {
   var s = {
     facebook: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Facebook Page</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:14px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:2;">' +
-          '<strong style="color:#e8e8f0;">Requirements:</strong><br>' +
-          '✓ You need a <strong style="color:#e8e8f0;">Facebook Page</strong> (not a personal profile)<br>' +
-          '✓ You must be the Page admin or editor<br><br>' +
-          '<strong style="color:#e8e8f0;">No page yet?</strong> Create one free at <a href="https://www.facebook.com/pages/create" target="_blank" style="color:#4a9eff;">facebook.com/pages/create</a><br><br>' +
-          '<strong style="color:#e8e8f0;">Steps:</strong><br>' +
-          '1. Click <strong style="color:#e8e8f0;">Continue with Facebook</strong> below<br>' +
-          '2. Log in with your Facebook account<br>' +
-          '3. Select your Page and allow permissions<br>' +
-          '4. Done — posts go live automatically!' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook</div>' +
+
+        '<!-- OPTION 1: Page API -->' +
+        '<div style="background:#1e1e2e;border:1px solid #1877f2;border-radius:12px;padding:16px;margin-bottom:10px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#1877f2;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Post to Facebook Page</div>' +
+            '<div style="font-size:10px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">FULLY AUTO</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
+            '✓ Requires a <strong style="color:#e8e8f0;">Facebook Page</strong> (not a personal profile)<br>' +
+            '✓ You must be the Page admin<br>' +
+            '<a href="https://www.facebook.com/pages/create" target="_blank" style="color:#4a9eff;font-size:11px;">Create a free Facebook Page →</a>' +
+          '</div>' +
+          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Continue with Facebook</button>' +
         '</div>' +
-        '<button onclick="connectFacebook()" style="width:100%;padding:14px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">📘 Continue with Facebook</button>' +
-        '<div style="font-size:11px;color:#444466;text-align:center;">You need a Facebook Page to post via Autopostleey</div>';
+
+        '<!-- DIVIDER -->' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+        '</div>' +
+
+        '<!-- OPTION 2: Manual personal profile -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#3d3d5c;color:#e8e8f0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Manual Post (Personal Profile)</div>' +
+            '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
+            'Works with your personal Facebook profile.<br>' +
+            'When you post, we copy your caption and open Facebook.<br>' +
+            'Just <strong style="color:#e8e8f0;">paste and share</strong> — takes 10 seconds!' +
+          '</div>' +
+          '<input id="conn-fb-profile" placeholder="Your Facebook profile URL or name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<button onclick="saveFacebookManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Set Up Manual Posting</button>' +
+        '</div>';
     },
     instagram: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Instagram</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:14px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:2;">' +
-          '<strong style="color:#e8e8f0;">Requirements:</strong><br>' +
-          '✓ Instagram <strong style="color:#e8e8f0;">Business</strong> or <strong style="color:#e8e8f0;">Creator</strong> account (not personal)<br>' +
-          '✓ Linked to a <strong style="color:#e8e8f0;">Facebook Page</strong><br><br>' +
-          '<strong style="color:#e8e8f0;">How to switch to Business account:</strong><br>' +
-          '→ Instagram app → Profile → ☰ → Settings → Account<br>' +
-          '→ <strong style="color:#e8e8f0;">Switch to Professional Account</strong> → Business<br><br>' +
-          '<strong style="color:#e8e8f0;">How to link to Facebook Page:</strong><br>' +
-          '→ Settings → Account → Linked Accounts → Facebook<br><br>' +
-          '<strong style="color:#e8e8f0;">Steps:</strong><br>' +
-          '1. Click <strong style="color:#e8e8f0;">Connect Instagram</strong> below<br>' +
-          '2. Log in with Facebook → allow permissions<br>' +
-          '3. We detect your Instagram Business account automatically!' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📸 Connect Instagram</div>' +
+
+        '<!-- OPTION 1: Business API -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:10px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Post (Business/Creator)</div>' +
+            '<div style="font-size:10px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">FULLY AUTO</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
+            '✓ Requires Instagram <strong style="color:#e8e8f0;">Business or Creator</strong> account<br>' +
+            '✓ Must be linked to a <strong style="color:#e8e8f0;">Facebook Page</strong><br>' +
+            '<span style="color:#555577;font-size:11px;">To switch: Instagram → Settings → Account → Switch to Professional Account</span>' +
+          '</div>' +
+          '<button onclick="connectInstagram()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📷 Connect Instagram Business Account</button>' +
         '</div>' +
-        '<button onclick="connectInstagram()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">📷 Connect Instagram</button>' +
-        '<div style="font-size:11px;color:#444466;text-align:center;">Must be a Business or Creator account linked to a Facebook Page</div>';
+
+        '<!-- DIVIDER -->' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+        '</div>' +
+
+        '<!-- OPTION 2: Manual -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#3d3d5c;color:#e8e8f0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Manual Post (Personal Account)</div>' +
+            '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
+            'Works with any Instagram account — personal or business.<br>' +
+            'When you post, we copy your caption and open Instagram.<br>' +
+            'Just <strong style="color:#e8e8f0;">paste and share</strong> — takes 10 seconds!' +
+          '</div>' +
+          '<input id="conn-ig-username" placeholder="Your Instagram @username (e.g. @mybusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<button onclick="saveInstagramManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Set Up Manual Posting</button>' +
+        '</div>';
     },
     twitter: function() {
       return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
@@ -2606,16 +2801,36 @@ function getConnectionForm(name) {
     },
     
     telegram: function() {
-      var uid = (_user && _user.id) ? _user.id : 'guest';
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
-        '<button onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-align:center;border:none;cursor:pointer;margin-bottom:8px;box-sizing:border-box;">✈️ Auto Connect via Telegram Bot</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:6px;">Opens Telegram → click Start → come back here</div>' +
-        '<button onclick="loadConnections();showToast(\'Refreshing connections...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:6px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:14px;">✅ I started the bot — refresh status</button>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or connect manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Create bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a> → add to channel as admin</div>' +
-        '<input id="conn-tg1" placeholder="Bot Token (from @BotFather)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="conn-tg2" placeholder="Channel @username or ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-tg1\').value,chat_id:document.getElementById(\'conn-tg2\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">✈️ Connect Telegram</div>' +
+        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Post automatically to your Telegram channel or personal chat</div>' +
+
+        '<!-- STEP 1 -->' +
+        '<div style="background:#1e1e2e;border:1px solid #26a5e4;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 1 — Add our bot to your channel</div>' +
+          '<div style="font-size:12px;color:#c8c8e8;line-height:1.8;margin-bottom:10px;">' +
+            '1. Open your Telegram channel<br>' +
+            '2. Tap <strong>Manage Channel</strong> → <strong>Administrators</strong><br>' +
+            '3. Tap <strong>Add Admin</strong> → search <strong style="color:#26a5e4;">@AutopostleeyBot</strong><br>' +
+            '4. Enable <strong>Post Messages</strong> → Save' +
+          '</div>' +
+          '<a href="https://t.me/AutopostleeyBot" target="_blank" style="display:block;text-align:center;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:8px;color:#26a5e4;font-size:12px;font-weight:700;text-decoration:none;">Open @AutopostleeyBot in Telegram</a>' +
+        '</div>' +
+
+        '<!-- STEP 2 -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 2 — Enter your channel username</div>' +
+          '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;">Your channel username starts with @ (e.g. @mybusiness)</div>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<div style="display:flex;align-items:center;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:0 12px;color:#8888aa;font-size:14px;font-weight:700;">@</div>' +
+            '<input id="conn-tg2" placeholder="mychannel" style="flex:1;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:14px;outline:none;">' +
+          '</div>' +
+        '</div>' +
+
+        '<!-- CONNECT -->' +
+        '<button onclick="saveTelegramChannel()" style="width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ Connect My Channel</button>' +
+
+        '<!-- PERSONAL CHAT -->' +
+        '<div style="text-align:center;font-size:12px;color:#8888aa;">No channel yet? <a onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="color:#26a5e4;cursor:pointer;font-weight:600;">Post to personal chat instead →</a></div>';
     },
     bluesky: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
@@ -2702,6 +2917,95 @@ async function saveDiscordWebhook() {
     loadConnections();
   } catch(e) {
     showToast('Failed to save Discord webhook: ' + e.message, 'error');
+  }
+}
+
+async function saveInstagramManual() {
+  var username = document.getElementById('conn-ig-username') ? document.getElementById('conn-ig-username').value.trim() : '';
+  if (!username) { showToast('Please enter your Instagram username', 'error'); return; }
+  if (!username.startsWith('@')) username = '@' + username;
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'instagram',
+      access_token: 'manual',
+      page_name:    username,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Instagram set up for manual posting — ' + username, 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+async function saveFacebookManual() {
+  var profile = document.getElementById('conn-fb-profile') ? document.getElementById('conn-fb-profile').value.trim() : '';
+  if (!profile) { showToast('Please enter your Facebook profile URL or name', 'error'); return; }
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'facebook',
+      access_token: 'manual',
+      page_name:    profile,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Facebook set up for manual posting — ' + profile, 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+async function saveTelegramChannel() {
+  var botToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
+  var chatId   = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
+
+  if (!chatId) {
+    showToast('Please enter your channel @username or ID', 'error');
+    return;
+  }
+
+  // Use the AutopostleeyBot token if no custom token provided
+  var AUTOPOSTLEEY_BOT_TOKEN = '8843727525:AAE_mCiD8bPEQqbelujyXrFOb6qGnBHBvXk';
+  var token = botToken || AUTOPOSTLEEY_BOT_TOKEN;
+
+  // Ensure @ prefix for usernames
+  if (!chatId.startsWith('@') && !chatId.startsWith('-') && isNaN(chatId)) {
+    chatId = '@' + chatId;
+  }
+
+  // Test the connection by sending a test message
+  try {
+    showToast('Testing connection...', 'success');
+    var testResp = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '✅ Autopostleey connected successfully! Your auto-posts will appear here.'
+      })
+    });
+    var testData = await testResp.json();
+
+    if (!testData.ok) {
+      showToast('❌ Failed: ' + (testData.description || 'Could not send message. Make sure @AutopostleeyBot is admin in your channel.'), 'error');
+      return;
+    }
+
+    // Save to Supabase
+    await _db.from('autopostleey_connections').upsert({
+      user_id:     _user.id,
+      platform:    'telegram',
+      bot_token:   token,
+      chat_id:     chatId,
+      page_name:   chatId,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    showToast('✅ Telegram channel connected — ' + chatId + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Connection failed: ' + e.message, 'error');
   }
 }
 
@@ -3432,6 +3736,7 @@ showPage = function(name) {
   if(name === 'calendar')  renderCalendar();
   if(name === 'compose')   { renderTemplates(); }
   if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
+  if(name === 'support')   { /* static page */ }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -3805,6 +4110,8 @@ async function saveAutoConfig() {
       description:   _autoConfig.description   || '',
       website:       _autoConfig.website        || '',
       og_image:      _autoConfig.og_image       || '',
+      email:         (_bizProfile && _bizProfile.email) ? _bizProfile.email : '',
+      phone:         (_bizProfile && _bizProfile.phone) ? _bizProfile.phone : '',
       audience:      _autoConfig.audience       || '',
       frequency:     _autoConfig.frequency      || 'daily',
       posting_time:  _autoConfig.time           || '09:00',
@@ -3962,10 +4269,10 @@ async function generatePreview() {
     console.log('Worker response:', data);
     if (!text) throw new Error(data.error || 'Worker returned empty response');
 
-    _previewPost = text;
+    _previewPost = appendContactToPost(text);
     var previewText  = document.getElementById('preview-text');
     var previewLabel = document.getElementById('preview-type-label');
-    if (previewText)  previewText.textContent  = text;
+    if (previewText)  previewText.textContent  = _previewPost;
     if (previewLabel) previewLabel.textContent = picked.emoji + ' ' + picked.label.toUpperCase();
 
     // Show screenshot preview if available
@@ -4071,3 +4378,107 @@ document.head.appendChild(apStyle);
 </div>
 </body>
 </html>
+
+    <div class="page" id="page-support">
+      <div class="page-header">
+        <div>
+          <div class="page-title">💬 Support & Community</div>
+          <div class="page-sub">Get help, connect with us, and join our community</div>
+        </div>
+      </div>
+
+      <!-- Contact Support -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">📬 Contact Support</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <a href="mailto:support@autopostleey.com" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
+            <div style="font-size:28px;">📧</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Email Support</div>
+              <div style="font-size:12px;color:var(--text3);">support@autopostleey.com</div>
+            </div>
+          </a>
+          <a href="https://t.me/autopostleey" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
+            <div style="font-size:28px;">✈️</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Telegram Support</div>
+              <div style="font-size:12px;color:var(--text3);">@autopostleey</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Follow Us -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🌐 Follow Autopostleey</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Stay updated with tips, new features and announcements</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+
+          <a href="https://www.facebook.com/profile.php?id=61590869057936" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#1877f2'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#1877f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📘</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Facebook</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://instagram.com/autopostleey" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#e1306c'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📸</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Instagram</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://www.youtube.com/channel/UCnWc_kOUx6Ck80LAM85TFRQ" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#ff0000'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#ff0000;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">▶️</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">YouTube</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://discord.com/channels/1517982825180041397/1517982825922691225" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#5865f2'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#5865f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💬</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Discord</div>
+            <div style="font-size:10px;color:var(--text3);">Join Community</div>
+          </a>
+
+          <a href="https://bsky.app/profile/autopostleey.com" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0085ff'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#0085ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">🦋</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Bluesky</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey.com</div>
+          </a>
+
+          <a href="https://www.linkedin.com/company/autopostleey/posts/?feedView=all&viewAsMember=true" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0077b5'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#0077b5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💼</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">LinkedIn</div>
+            <div style="font-size:10px;color:var(--text3);">Autopostleey</div>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">❓ Frequently Asked Questions</div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How does AI AutoPoster work?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Enable AI AutoPoster, set your frequency, and Autopostleey will automatically generate and post content to all your connected platforms — 24/7, even when you're asleep!</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Which platforms are supported?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Autopostleey supports 13 platforms: Facebook, Instagram, Twitter/X, LinkedIn, YouTube, Telegram, Discord, Bluesky, Threads, Pinterest, Tumblr, Google Business, and Facebook Groups.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Is Autopostleey free?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Yes! Autopostleey has a free plan that lets you post to all platforms. Premium plans unlock more features like higher posting frequency, priority support, and advanced analytics.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How do I connect my social media accounts?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Go to the Connections page in the dashboard. Click Connect next to each platform and follow the authorization steps. Most platforms connect in under 60 seconds.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Can I schedule posts in advance?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Absolutely! Use Bulk Schedule to queue up weeks or months of content at once. Set your dates, frequency, and let Autopostleey handle the rest.</div>
+          </details>
+        </div>
+      </div>
+
+    </div>
