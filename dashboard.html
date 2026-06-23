@@ -227,6 +227,9 @@
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
         <span class="nav-icon">💳</span> Billing
       </a>
+      <a class="nav-item" onclick="showPage('reels');return false;" href="#">
+        <span class="nav-icon">🎬</span> Reels & Shorts
+      </a>
       <a class="nav-item" onclick="showPage('support');return false;" href="#">
         <span class="nav-icon">💬</span> Support
       </a>
@@ -1970,6 +1973,633 @@ function appendContactToPost(postText) {
   if (profile.email   && postText.includes(profile.email))   return postText;
   return postText + footer;
 }
+
+
+// ── REELS & SHORTS ─────────────────────────────────────────
+var _reelPhotos   = [];   // {id, dataUrl, img}
+var _reelVideoUrl = null;
+var _reelVideoFile = null;
+var _reelBlobUrl  = null;
+
+function initReelsPage() {
+  renderReelPhotoGrid();
+}
+
+function switchReelsTab(n) {
+  document.getElementById('reels-panel-1').style.display = n===1 ? '' : 'none';
+  document.getElementById('reels-panel-2').style.display = n===2 ? '' : 'none';
+  document.getElementById('reels-tab-1').style.background = n===1 ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('reels-tab-1').style.color      = n===1 ? '#fff' : 'var(--text2)';
+  document.getElementById('reels-tab-1').style.border     = n===1 ? 'none' : '1px solid var(--border)';
+  document.getElementById('reels-tab-2').style.background = n===2 ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('reels-tab-2').style.color      = n===2 ? '#fff' : 'var(--text2)';
+  document.getElementById('reels-tab-2').style.border     = n===2 ? 'none' : '1px solid var(--border)';
+}
+
+// ── TAB 1: PHOTO SLIDESHOW ─────────────────────────────────
+
+function handleReelPhotoDrop(e) {
+  e.preventDefault();
+  document.getElementById('reel-dropzone').style.borderColor = 'var(--border)';
+  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); });
+  loadReelPhotos(files);
+}
+
+function handleReelPhotoUpload(input) {
+  var files = Array.from(input.files);
+  loadReelPhotos(files);
+  input.value = '';
+}
+
+function loadReelPhotos(files) {
+  if (_reelPhotos.length + files.length > 10) {
+    showToast('Maximum 10 photos allowed', 'error');
+    files = files.slice(0, 10 - _reelPhotos.length);
+  }
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var id = 'rp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        _reelPhotos.push({ id: id, dataUrl: e.target.result, img: img, name: file.name });
+        renderReelPhotoGrid();
+        if (_reelPhotos.length === 1) previewReelFrame(0);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderReelPhotoGrid() {
+  var grid = document.getElementById('reel-photo-grid');
+  if (!grid) return;
+  if (_reelPhotos.length === 0) { grid.innerHTML = ''; return; }
+  grid.innerHTML = _reelPhotos.map(function(p, i) {
+    return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;">' +
+      '<img src="' + p.dataUrl + '" style="width:100%;height:100%;object-fit:cover;">' +
+      '<div style="position:absolute;top:2px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;">' + (i+1) + '</div>' +
+      '<button data-id="' + p.id + '" onclick="removeReelPhoto(this.dataset.id)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;padding:0;">✕</button>' +
+    '</div>';
+  }).join('');
+  document.getElementById('reel-preview-placeholder').style.display = _reelPhotos.length ? 'none' : 'flex';
+}
+
+function removeReelPhoto(id) {
+  _reelPhotos = _reelPhotos.filter(function(p){ return p.id !== id; });
+  renderReelPhotoGrid();
+}
+
+function previewReelFrame(index) {
+  var canvas = document.getElementById('reel-canvas');
+  if (!canvas || !_reelPhotos[index]) return;
+  var ctx = canvas.getContext('2d');
+  var photo = _reelPhotos[index];
+  canvas.width = 360; canvas.height = 640;
+
+  // Draw background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 360, 640);
+
+  // Draw image (cover fit)
+  var scale = Math.max(360 / photo.img.width, 640 / photo.img.height);
+  var w = photo.img.width * scale;
+  var h = photo.img.height * scale;
+  var x = (360 - w) / 2;
+  var y = (640 - h) / 2;
+  ctx.drawImage(photo.img, x, y, w, h);
+
+  // Draw caption overlay
+  var caption   = document.getElementById('reel-caption')  ? document.getElementById('reel-caption').value.trim()   : '';
+  var textPos   = document.getElementById('reel-text-pos') ? document.getElementById('reel-text-pos').value          : 'bottom';
+  if (caption && textPos !== 'none') {
+    var grad = ctx.createLinearGradient(0, textPos==='bottom'?480:0, 0, textPos==='bottom'?640:160);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, textPos==='bottom'?480:0, 360, 160);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    var words = caption.split(' ');
+    var lines = []; var line = '';
+    words.forEach(function(w) {
+      var test = line + w + ' ';
+      if (ctx.measureText(test).width > 320) { lines.push(line.trim()); line = w + ' '; }
+      else line = test;
+    });
+    lines.push(line.trim());
+    lines = lines.slice(0, 3);
+    var startY = textPos === 'bottom' ? 560 - (lines.length-1)*26 : 100;
+    lines.forEach(function(l, i) { ctx.fillText(l, 180, startY + i*26); });
+  }
+}
+
+async function generateReelCaption() {
+  if (_reelPhotos.length === 0) { showToast('Upload photos first!', 'error'); return; }
+  showToast('Generating caption with AI...', 'success');
+  try {
+    var bizname = _bizProfile ? _bizProfile.name : '';
+    var description = _bizProfile ? _bizProfile.description : '';
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64: _reelPhotos[0].dataUrl.split(',')[1],
+        media_type:   'image/jpeg',
+        business_name: bizname,
+        description:   description
+      })
+    });
+    var data = await resp.json();
+    var cap = document.getElementById('reel-caption');
+    if (cap && data.post) {
+      cap.value = appendContactToPost(data.post);
+      previewReelFrame(0);
+      showToast('✨ Caption generated!', 'success');
+    }
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+
+// ── REEL MUSIC GENERATOR (Web Audio API) ───────────────────
+var _audioCtx = null;
+var _musicNodes = [];
+
+function getAudioContext() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+function stopMusic() {
+  _musicNodes.forEach(function(n){ try{ n.stop(); }catch(e){} });
+  _musicNodes = [];
+}
+
+function createReelAudioTrack(durationSeconds, style) {
+  var ctx = getAudioContext();
+  var dest = ctx.createMediaStreamDestination();
+
+  if (style === 'none') return null;
+
+  // Master gain
+  var master = ctx.createGain();
+  master.gain.setValueAtTime(0.4, ctx.currentTime);
+  master.connect(dest);
+
+  if (style === 'upbeat') {
+    // Upbeat: punchy bass + bright chord stabs + hi-hats
+    createUpbeatTrack(ctx, master, durationSeconds);
+  } else if (style === 'chill') {
+    // Chill: smooth pad chords + soft bass + slow melody
+    createChillTrack(ctx, master, durationSeconds);
+  } else if (style === 'corporate') {
+    // Corporate: clean piano + light percussion + uplifting pad
+    createCorporateTrack(ctx, master, durationSeconds);
+  }
+
+  return dest.stream;
+}
+
+function createUpbeatTrack(ctx, out, dur) {
+  var bpm = 128;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Bass pattern
+  var bassNotes = [55, 55, 58, 62, 55, 55, 58, 65];
+  for (var i = 0; i < dur / beat; i++) {
+    var freq = 440 * Math.pow(2, (bassNotes[i % bassNotes.length] - 69) / 12);
+    var osc = ctx.createOscillator();
+    var env = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, now + i * beat);
+    env.gain.setValueAtTime(0, now + i * beat);
+    env.gain.linearRampToValueAtTime(0.3, now + i * beat + 0.01);
+    env.gain.linearRampToValueAtTime(0, now + i * beat + beat * 0.4);
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, now + i * beat);
+    osc.connect(filter); filter.connect(env); env.connect(out);
+    osc.start(now + i * beat);
+    osc.stop(now + i * beat + beat);
+    _musicNodes.push(osc);
+  }
+
+  // Hi-hat pattern (every half beat)
+  for (var j = 0; j < dur / (beat/2); j++) {
+    var bufSize = ctx.sampleRate * 0.05;
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var k = 0; k < bufSize; k++) data[k] = (Math.random()*2-1) * (1 - k/bufSize);
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    var hiEnv = ctx.createGain();
+    hiEnv.gain.setValueAtTime(j%2===0 ? 0.15 : 0.08, now + j*(beat/2));
+    var hiFilter = ctx.createBiquadFilter();
+    hiFilter.type = 'highpass';
+    hiFilter.frequency.setValueAtTime(8000, now);
+    src.connect(hiFilter); hiFilter.connect(hiEnv); hiEnv.connect(out);
+    src.start(now + j*(beat/2));
+    _musicNodes.push(src);
+  }
+
+  // Chord stabs on beats
+  var chords = [[262,330,392],[294,370,440],[247,311,370],[220,277,330]];
+  for (var m = 0; m < dur / (beat*2); m++) {
+    var chord = chords[m % chords.length];
+    chord.forEach(function(f) {
+      var co = ctx.createOscillator();
+      var ce = ctx.createGain();
+      co.type = 'square';
+      co.frequency.setValueAtTime(f, now + m*beat*2);
+      ce.gain.setValueAtTime(0, now + m*beat*2);
+      ce.gain.linearRampToValueAtTime(0.06, now + m*beat*2 + 0.02);
+      ce.gain.linearRampToValueAtTime(0, now + m*beat*2 + beat*0.3);
+      co.connect(ce); ce.connect(out);
+      co.start(now + m*beat*2);
+      co.stop(now + m*beat*2 + beat);
+      _musicNodes.push(co);
+    });
+  }
+}
+
+function createChillTrack(ctx, out, dur) {
+  var bpm = 80;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Smooth pad chords
+  var chords = [
+    [261.6, 329.6, 392.0, 523.2],
+    [293.7, 370.0, 440.0, 587.3],
+    [246.9, 311.1, 392.0, 493.9],
+    [220.0, 277.2, 329.6, 440.0]
+  ];
+  for (var i = 0; i < dur / (beat*4); i++) {
+    var chord = chords[i % chords.length];
+    chord.forEach(function(f) {
+      var o = ctx.createOscillator();
+      var e = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f, now + i*beat*4);
+      e.gain.setValueAtTime(0, now + i*beat*4);
+      e.gain.linearRampToValueAtTime(0.12, now + i*beat*4 + beat);
+      e.gain.linearRampToValueAtTime(0.12, now + i*beat*4 + beat*3);
+      e.gain.linearRampToValueAtTime(0, now + i*beat*4 + beat*4);
+      o.connect(e); e.connect(out);
+      o.start(now + i*beat*4);
+      o.stop(now + i*beat*4 + beat*4 + 0.1);
+      _musicNodes.push(o);
+    });
+  }
+
+  // Soft melody
+  var melody = [523.2, 587.3, 659.3, 587.3, 523.2, 493.9, 440.0, 523.2];
+  for (var j = 0; j < dur / beat; j++) {
+    if (j % 2 === 0) {
+      var mo = ctx.createOscillator();
+      var me = ctx.createGain();
+      mo.type = 'triangle';
+      mo.frequency.setValueAtTime(melody[j/2 % melody.length], now + j*beat);
+      me.gain.setValueAtTime(0, now + j*beat);
+      me.gain.linearRampToValueAtTime(0.15, now + j*beat + 0.05);
+      me.gain.linearRampToValueAtTime(0, now + j*beat + beat*0.8);
+      mo.connect(me); me.connect(out);
+      mo.start(now + j*beat);
+      mo.stop(now + j*beat + beat);
+      _musicNodes.push(mo);
+    }
+  }
+}
+
+function createCorporateTrack(ctx, out, dur) {
+  var bpm = 100;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Uplifting piano-like chords
+  var chords = [
+    [261.6, 329.6, 392.0],
+    [293.7, 349.2, 440.0],
+    [329.6, 415.3, 523.2],
+    [349.2, 440.0, 523.2]
+  ];
+  for (var i = 0; i < dur / (beat*2); i++) {
+    var chord = chords[i % chords.length];
+    chord.forEach(function(f, fi) {
+      var o = ctx.createOscillator();
+      var e = ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now + i*beat*2 + fi*0.02);
+      e.gain.setValueAtTime(0, now + i*beat*2 + fi*0.02);
+      e.gain.linearRampToValueAtTime(0.1, now + i*beat*2 + fi*0.02 + 0.05);
+      e.gain.exponentialRampToValueAtTime(0.001, now + i*beat*2 + beat*1.8);
+      o.connect(e); e.connect(out);
+      o.start(now + i*beat*2 + fi*0.02);
+      o.stop(now + i*beat*2 + beat*2);
+      _musicNodes.push(o);
+    });
+  }
+
+  // Light kick on beats 1 and 3
+  for (var j = 0; j < dur / (beat*2); j++) {
+    var buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var k = 0; k < data.length; k++) {
+      data[k] = Math.sin(2*Math.PI*60*k/ctx.sampleRate) * Math.exp(-k/(ctx.sampleRate*0.08));
+    }
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    var kg = ctx.createGain();
+    kg.gain.setValueAtTime(0.3, now + j*beat*2);
+    src.connect(kg); kg.connect(out);
+    src.start(now + j*beat*2);
+    _musicNodes.push(src);
+  }
+}
+
+async function createReel() {
+  if (_reelPhotos.length < 2) { showToast('Upload at least 2 photos!', 'error'); return; }
+
+  var btn       = document.getElementById('create-reel-btn');
+  var progWrap  = document.getElementById('reel-progress-wrap');
+  var progBar   = document.getElementById('reel-progress-bar');
+  var progLabel = document.getElementById('reel-progress-label');
+  var outBtns   = document.getElementById('reel-output-btns');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating...';
+  if (progWrap) progWrap.style.display = 'block';
+  if (outBtns)  outBtns.style.display  = 'none';
+
+  try {
+    var duration   = parseInt(document.getElementById('reel-duration').value)   || 3;
+    var transition = document.getElementById('reel-transition').value || 'fade';
+    var fps        = 30;
+    var totalFrames = _reelPhotos.length * duration * fps;
+
+    var canvas = document.getElementById('reel-canvas');
+    canvas.width = 360; canvas.height = 640;
+    var ctx = canvas.getContext('2d');
+
+    // Setup MediaRecorder
+    var musicStyle = document.getElementById('reel-music') ? document.getElementById('reel-music').value : 'upbeat';
+    var totalDuration = _reelPhotos.length * duration;
+
+    // Create audio track
+    var audioStream = createReelAudioTrack(totalDuration, musicStyle);
+
+    // Combine video + audio streams
+    var videoStream = canvas.captureStream(fps);
+    var combinedTracks = videoStream.getVideoTracks();
+    if (audioStream) {
+      audioStream.getAudioTracks().forEach(function(t){ combinedTracks.push ? null : null; });
+    }
+
+    // Use combined stream
+    var stream = audioStream
+      ? new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
+      : videoStream;
+
+    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
+                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
+                 : 'video/webm';
+    var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 2500000 });
+    var chunks   = [];
+    recorder.ondataavailable = function(e){ if(e.data.size>0) chunks.push(e.data); };
+
+    recorder.start(100);
+
+    var caption   = document.getElementById('reel-caption')  ? document.getElementById('reel-caption').value.trim()  : '';
+    var textPos   = document.getElementById('reel-text-pos') ? document.getElementById('reel-text-pos').value         : 'bottom';
+    var transType = transition;
+
+    var frame = 0;
+    var framesPerSlide = duration * fps;
+    var transFrames = Math.floor(fps * 0.5); // 0.5s transition
+
+    function drawFrame() {
+      var slideIndex  = Math.floor(frame / framesPerSlide);
+      var frameInSlide = frame % framesPerSlide;
+      if (slideIndex >= _reelPhotos.length) {
+        recorder.stop();
+        return;
+      }
+
+      var photo = _reelPhotos[slideIndex];
+      var nextPhoto = _reelPhotos[slideIndex + 1] || null;
+      var alpha = 1;
+
+      // Transition at end of slide
+      if (nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t = (frameInSlide - (framesPerSlide - transFrames)) / transFrames;
+        if (transType === 'fade') alpha = 1 - t;
+      }
+
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 360, 640);
+
+      // Draw current photo
+      ctx.globalAlpha = alpha;
+      var sc = Math.max(360/photo.img.width, 640/photo.img.height);
+      var pw = photo.img.width*sc, ph = photo.img.height*sc;
+      var px = (360-pw)/2, py = (640-ph)/2;
+
+      if (transType === 'zoom') {
+        var zoom = 1 + (frameInSlide / framesPerSlide) * 0.05;
+        ctx.save();
+        ctx.translate(180, 320);
+        ctx.scale(zoom, zoom);
+        ctx.drawImage(photo.img, -pw/2, -ph/2, pw, ph);
+        ctx.restore();
+      } else if (transType === 'slide' && nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t2 = (frameInSlide-(framesPerSlide-transFrames))/transFrames;
+        ctx.drawImage(photo.img, px - t2*360, py, pw, ph);
+        ctx.globalAlpha = 1;
+        var sc2=Math.max(360/nextPhoto.img.width,640/nextPhoto.img.height);
+        var pw2=nextPhoto.img.width*sc2,ph2=nextPhoto.img.height*sc2;
+        ctx.drawImage(nextPhoto.img, (360-pw2)/2+(1-t2)*360, (640-ph2)/2, pw2, ph2);
+      } else {
+        ctx.drawImage(photo.img, px, py, pw, ph);
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw next photo for fade
+      if (transType === 'fade' && nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t3 = (frameInSlide-(framesPerSlide-transFrames))/transFrames;
+        ctx.globalAlpha = t3;
+        var sc3=Math.max(360/nextPhoto.img.width,640/nextPhoto.img.height);
+        var pw3=nextPhoto.img.width*sc3,ph3=nextPhoto.img.height*sc3;
+        ctx.drawImage(nextPhoto.img,(360-pw3)/2,(640-ph3)/2,pw3,ph3);
+        ctx.globalAlpha = 1;
+      }
+
+      // Caption overlay
+      if (caption && textPos !== 'none') {
+        var grad = ctx.createLinearGradient(0, textPos==='bottom'?480:0, 0, textPos==='bottom'?640:160);
+        grad.addColorStop(0,'rgba(0,0,0,0)');
+        grad.addColorStop(1,'rgba(0,0,0,0.75)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, textPos==='bottom'?480:0, 360, 160);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 17px sans-serif';
+        ctx.textAlign = 'center';
+        var words = caption.split(' '), lines = [], line = '';
+        words.forEach(function(w){ var t=line+w+' '; if(ctx.measureText(t).width>320){lines.push(line.trim());line=w+' ';}else line=t; });
+        lines.push(line.trim());
+        lines = lines.slice(0,3);
+        var startY = textPos==='bottom' ? 558-(lines.length-1)*24 : 100;
+        lines.forEach(function(l,i){ ctx.fillText(l,180,startY+i*24); });
+      }
+
+      frame++;
+      if (progBar) progBar.style.width = Math.round((frame/totalFrames)*100) + '%';
+      if (progLabel) progLabel.textContent = 'Creating reel... ' + Math.round((frame/totalFrames)*100) + '%';
+
+      requestAnimationFrame(drawFrame);
+    }
+
+    recorder.onstop = function() {
+      stopMusic();
+      var blob = new Blob(chunks, { type: mimeType });
+      _reelBlobUrl = URL.createObjectURL(blob);
+      var dlBtn = document.getElementById('reel-download-btn');
+      if (dlBtn) { dlBtn.href = _reelBlobUrl; dlBtn.download = 'reel-' + Date.now() + '.webm'; }
+      if (outBtns)  outBtns.style.display  = 'block';
+      if (progWrap) progWrap.style.display  = 'none';
+      btn.disabled = false;
+      btn.textContent = '🎬 Create Reel';
+      showToast('✅ Reel created! Download or post it.', 'success');
+    };
+
+    drawFrame();
+
+  } catch(e) {
+    showToast('Failed to create reel: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '🎬 Create Reel';
+    if (progWrap) progWrap.style.display = 'none';
+  }
+}
+
+async function postReelToAll() {
+  if (!_reelBlobUrl) { showToast('Create a reel first!', 'error'); return; }
+  // Upload to Supabase Storage then post
+  try {
+    var resp = await fetch(_reelBlobUrl);
+    var blob  = await resp.blob();
+    var fname = 'reels/' + Date.now() + '.webm';
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (await _db.auth.getSession()).data.session.access_token, 'Content-Type': 'video/webm', 'x-upsert': 'true' },
+      body: blob
+    });
+    if (upResp.ok || upResp.status===200 || upResp.status===201) {
+      var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+      window._composerImageUrl = videoUrl;
+      showToast('✅ Reel uploaded! Go to Compose to post it.', 'success');
+      showPage('compose');
+      var pc = document.getElementById('post-content');
+      var cap = document.getElementById('reel-caption');
+      if (pc && cap) pc.value = cap.value;
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
+// ── TAB 2: VIDEO ANALYZER ──────────────────────────────────
+
+function handleVideoAnalyzerDrop(e) {
+  e.preventDefault();
+  document.getElementById('video-dropzone').style.borderColor = 'var(--border)';
+  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('video/'); });
+  if (files[0]) processVideoAnalyzer(files[0]);
+}
+
+function handleVideoAnalyzer(input) {
+  if (input.files[0]) processVideoAnalyzer(input.files[0]);
+  input.value = '';
+}
+
+function processVideoAnalyzer(file) {
+  _reelVideoFile = file;
+  var url = URL.createObjectURL(file);
+  _reelVideoUrl = url;
+  var vid = document.getElementById('video-preview-el');
+  if (vid) { vid.src = url; vid.style.display = 'block'; }
+  // Auto generate caption
+  generateVideoCaption();
+}
+
+async function generateVideoCaption() {
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  showToast('AI is analyzing your video...', 'success');
+  document.getElementById('video-analysis-result').style.display = 'block';
+  var cap = document.getElementById('video-caption');
+  if (cap) cap.value = 'Analyzing video...';
+
+  try {
+    // Extract first frame from video as image for AI analysis
+    var vid = document.getElementById('video-preview-el');
+    var canvas = document.createElement('canvas');
+    canvas.width = 640; canvas.height = 360;
+    var ctx = canvas.getContext('2d');
+    vid.currentTime = 1; // Go to 1 second
+    await new Promise(function(res){ vid.onseeked = res; });
+    ctx.drawImage(vid, 0, 0, 640, 360);
+    var frameBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+    var bizname     = _bizProfile ? _bizProfile.name        : '';
+    var description = _bizProfile ? _bizProfile.description : '';
+
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64: frameBase64,
+        media_type:   'image/jpeg',
+        business_name: bizname,
+        description:   description
+      })
+    });
+    var data = await resp.json();
+    if (cap && data.post) {
+      cap.value = appendContactToPost(data.post);
+      showToast('✨ Caption generated from your video!', 'success');
+    }
+  } catch(e) {
+    if (cap) cap.value = '';
+    showToast('Analysis failed: ' + e.message, 'error');
+  }
+}
+
+async function postVideoToAll() {
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  var cap = document.getElementById('video-caption');
+  var caption = cap ? cap.value.trim() : '';
+  if (!caption) { showToast('Generate a caption first!', 'error'); return; }
+
+  showToast('Uploading video...', 'success');
+  try {
+    var fname = 'videos/' + Date.now() + '_' + _reelVideoFile.name.replace(/[^a-z0-9.]/gi,'_');
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': _reelVideoFile.type, 'x-upsert': 'true' },
+      body: _reelVideoFile
+    });
+    if (upResp.ok || upResp.status===200 || upResp.status===201) {
+      var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+      window._composerImageUrl = videoUrl;
+      var pc = document.getElementById('post-content');
+      if (pc) pc.value = caption;
+      showToast('✅ Video uploaded! Go to Compose to post it.', 'success');
+      showPage('compose');
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
 
 function updateManualPostButtons() {
   var manualDiv = document.getElementById('manual-post-btns');
@@ -3737,6 +4367,7 @@ showPage = function(name) {
   if(name === 'compose')   { renderTemplates(); }
   if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
   if(name === 'support')   { /* static page */ }
+  if(name === 'reels')     { initReelsPage(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -4378,6 +5009,198 @@ document.head.appendChild(apStyle);
 </div>
 </body>
 </html>
+
+    <div class="page" id="page-reels">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎬 Reels & Shorts Creator</div>
+          <div class="page-sub">Turn product photos into Reels, or analyze your videos and post automatically</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <button id="reels-tab-1" onclick="switchReelsTab(1)" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🖼️ Photo → Reel</button>
+        <button id="reels-tab-2" onclick="switchReelsTab(2)" style="padding:10px 20px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🎥 Video Analyzer</button>
+      </div>
+
+      <!-- TAB 1: Photo Slideshow Reel -->
+      <div id="reels-panel-1">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+
+          <!-- Left: Upload + Settings -->
+          <div>
+            <!-- Upload Area -->
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">📸 Upload Product Photos</div>
+              <div id="reel-dropzone" onclick="document.getElementById('reel-photo-input').click()"
+                style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color .2s;"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border)'"
+                ondrop="handleReelPhotoDrop(event)">
+                <div style="font-size:36px;margin-bottom:8px;">🖼️</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag photos here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">Upload 2-10 product photos · JPG, PNG · Max 5MB each</div>
+              </div>
+              <input id="reel-photo-input" type="file" accept="image/*" multiple style="display:none" onchange="handleReelPhotoUpload(this)">
+
+              <!-- Photo grid -->
+              <div id="reel-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:12px;"></div>
+            </div>
+
+            <!-- Reel Settings -->
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">⚙️ Reel Settings</div>
+
+              <div class="form-group">
+                <label class="form-label">Caption / Text Overlay</label>
+                <textarea id="reel-caption" rows="3" class="form-textarea" placeholder="AI will generate this — or write your own..."></textarea>
+                <button onclick="generateReelCaption()" style="margin-top:6px;padding:7px 14px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">✨ Generate with AI</button>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Background Music</label>
+                <select id="reel-music" class="form-input">
+                  <option value="upbeat">🎵 Upbeat & Energetic</option>
+                  <option value="chill">🎶 Chill & Relaxed</option>
+                  <option value="corporate">💼 Corporate & Professional</option>
+                  <option value="none">🔇 No Music</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Slide Duration</label>
+                <select id="reel-duration" class="form-input">
+                  <option value="2">2 seconds per photo (fast)</option>
+                  <option value="3" selected>3 seconds per photo</option>
+                  <option value="4">4 seconds per photo</option>
+                  <option value="5">5 seconds per photo (slow)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Text Position</label>
+                <select id="reel-text-pos" class="form-input">
+                  <option value="bottom">Bottom (recommended)</option>
+                  <option value="top">Top</option>
+                  <option value="none">No text overlay</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Transition Effect</label>
+                <select id="reel-transition" class="form-input">
+                  <option value="fade">Fade</option>
+                  <option value="slide">Slide</option>
+                  <option value="zoom">Zoom In</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Create Button -->
+            <button onclick="createReel()" id="create-reel-btn"
+              style="width:100%;padding:16px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;">
+              🎬 Create Reel
+            </button>
+          </div>
+
+          <!-- Right: Preview + Post -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);position:sticky;top:20px;">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">👁️ Preview</div>
+
+              <!-- Canvas preview -->
+              <div style="background:#000;border-radius:10px;overflow:hidden;margin-bottom:12px;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;position:relative;">
+                <canvas id="reel-canvas" width="360" height="640" style="width:100%;height:100%;object-fit:contain;"></canvas>
+                <div id="reel-preview-placeholder" style="position:absolute;text-align:center;color:#555577;">
+                  <div style="font-size:40px;margin-bottom:8px;">🎬</div>
+                  <div style="font-size:13px;">Upload photos to preview</div>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div id="reel-progress-wrap" style="display:none;margin-bottom:12px;">
+                <div style="font-size:12px;color:var(--text3);margin-bottom:6px;" id="reel-progress-label">Creating reel...</div>
+                <div style="background:var(--bg3);border-radius:4px;height:6px;">
+                  <div id="reel-progress-bar" style="background:linear-gradient(90deg,#a855f7,#6366f1);height:6px;border-radius:4px;width:0%;transition:width .3s;"></div>
+                </div>
+              </div>
+
+              <!-- Download + Post buttons -->
+              <div id="reel-output-btns" style="display:none;">
+                <a id="reel-download-btn" download="my-reel.webm" style="display:block;text-align:center;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:8px;">⬇️ Download Reel</a>
+                <button onclick="postReelToAll()" style="width:100%;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Post to All Platforms</button>
+              </div>
+
+              <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;">Compatible with Instagram Reels, YouTube Shorts, TikTok, Facebook Reels</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Video Analyzer -->
+      <div id="reels-panel-2" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+
+          <!-- Left -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">🎥 Upload Your Video</div>
+              <div id="video-dropzone" onclick="document.getElementById('video-input').click()"
+                style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:var(--bg3);"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border)'"
+                ondrop="handleVideoAnalyzerDrop(event)">
+                <div style="font-size:36px;margin-bottom:8px;">🎥</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag your video here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI · Max 50MB</div>
+              </div>
+              <input id="video-input" type="file" accept="video/*" style="display:none" onchange="handleVideoAnalyzer(this)">
+
+              <!-- Video preview -->
+              <video id="video-preview-el" controls style="width:100%;border-radius:8px;margin-top:12px;display:none;max-height:300px;"></video>
+            </div>
+
+            <!-- AI Analysis result -->
+            <div id="video-analysis-result" style="display:none;background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">✨ AI Generated Caption</div>
+              <textarea id="video-caption" rows="5" class="form-textarea" placeholder="AI will analyze your video and generate a caption..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button onclick="generateVideoCaption()" style="flex:1;padding:10px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">✨ Regenerate</button>
+                <button onclick="postVideoToAll()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Post to All Platforms</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Platform tips -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📱 Platform Requirements</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:var(--text3);">
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📸 Instagram Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio · Under 4GB
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">▶️ YouTube Shorts</div>
+                  Max 60 sec · MP4 · Under 256MB
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📘 Facebook Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">💬 Telegram</div>
+                  Max 50MB · Any format supported
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
 
     <div class="page" id="page-support">
       <div class="page-header">
