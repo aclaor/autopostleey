@@ -227,6 +227,9 @@
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
         <span class="nav-icon">💳</span> Billing
       </a>
+      <a class="nav-item" onclick="showPage('support');return false;" href="#">
+        <span class="nav-icon">💬</span> Support
+      </a>
     </div>
     <div class="sidebar-footer">
       <div class="plan-badge">
@@ -3473,6 +3476,7 @@ showPage = function(name) {
   if(name === 'calendar')  renderCalendar();
   if(name === 'compose')   { renderTemplates(); }
   if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
+  if(name === 'support')   { /* static page */ }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -4114,3 +4118,107 @@ document.head.appendChild(apStyle);
 </div>
 </body>
 </html>
+
+    <div class="page" id="page-support">
+      <div class="page-header">
+        <div>
+          <div class="page-title">💬 Support & Community</div>
+          <div class="page-sub">Get help, connect with us, and join our community</div>
+        </div>
+      </div>
+
+      <!-- Contact Support -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">📬 Contact Support</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <a href="mailto:support@autopostleey.com" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
+            <div style="font-size:28px;">📧</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Email Support</div>
+              <div style="font-size:12px;color:var(--text3);">support@autopostleey.com</div>
+            </div>
+          </a>
+          <a href="https://t.me/AutopostleeyBot" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
+            <div style="font-size:28px;">✈️</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Telegram Support</div>
+              <div style="font-size:12px;color:var(--text3);">@autopostleey</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Follow Us -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🌐 Follow Autopostleey</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Stay updated with tips, new features and announcements</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+
+          <a href="https://www.facebook.com/profile.php?id=61590869057936" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#1877f2'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#1877f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📘</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Facebook</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://instagram.com/autopostleey" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#e1306c'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📸</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Instagram</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://www.youtube.com/channel/UCnWc_kOUx6Ck80LAM85TFRQ" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#ff0000'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#ff0000;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">▶️</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">YouTube</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
+          </a>
+
+          <a href="https://discord.com/channels/1517982825180041397/1517982825922691225" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#5865f2'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#5865f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💬</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Discord</div>
+            <div style="font-size:10px;color:var(--text3);">Join Community</div>
+          </a>
+
+          <a href="https://bsky.app/profile/autopostleey.com" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0085ff'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#0085ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">🦋</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Bluesky</div>
+            <div style="font-size:10px;color:var(--text3);">@autopostleey.com</div>
+          </a>
+
+          <a href="https://www.linkedin.com/company/autopostleey/posts/?feedView=all&viewAsMember=true" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0077b5'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:40px;height:40px;background:#0077b5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💼</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">LinkedIn</div>
+            <div style="font-size:10px;color:var(--text3);">Autopostleey</div>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">❓ Frequently Asked Questions</div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How does AI AutoPoster work?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Enable AI AutoPoster, set your frequency, and Autopostleey will automatically generate and post content to all your connected platforms — 24/7, even when you're asleep!</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Which platforms are supported?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Autopostleey supports 13 platforms: Facebook, Instagram, Twitter/X, LinkedIn, YouTube, Telegram, Discord, Bluesky, Threads, Pinterest, Tumblr, Google Business, and Facebook Groups.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Is Autopostleey free?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Yes! Autopostleey has a free plan that lets you post to all platforms. Premium plans unlock more features like higher posting frequency, priority support, and advanced analytics.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How do I connect my social media accounts?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Go to the Connections page in the dashboard. Click Connect next to each platform and follow the authorization steps. Most platforms connect in under 60 seconds.</div>
+          </details>
+          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
+            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Can I schedule posts in advance?</summary>
+            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Absolutely! Use Bulk Schedule to queue up weeks or months of content at once. Set your dates, frequency, and let Autopostleey handle the rest.</div>
+          </details>
+        </div>
+      </div>
+
+    </div>
