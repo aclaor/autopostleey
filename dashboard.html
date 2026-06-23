@@ -2710,9 +2710,13 @@ async function createReel() {
       ? new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
       : videoStream;
 
-    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
+    // Try MP4 first (better compatibility with Telegram/Instagram/YouTube)
+    var mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2') ? 'video/mp4;codecs=avc1,mp4a.40.2'
+                 : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
                  : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
                  : 'video/webm';
+    console.log('Reel format:', mimeType);
     var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 2500000 });
     var chunks   = [];
     recorder.ondataavailable = function(e){ if(e.data.size>0) chunks.push(e.data); };
@@ -2812,8 +2816,12 @@ async function createReel() {
       stopMusic();
       var blob = new Blob(chunks, { type: mimeType });
       _reelBlobUrl = URL.createObjectURL(blob);
+      var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
       var dlBtn = document.getElementById('reel-download-btn');
-      if (dlBtn) { dlBtn.href = _reelBlobUrl; dlBtn.download = 'reel-' + Date.now() + '.webm'; }
+      if (dlBtn) { dlBtn.href = _reelBlobUrl; dlBtn.download = 'reel-' + Date.now() + '.' + ext; }
+      window._reelMimeType = mimeType;
+      window._reelExt = ext;
+      console.log('Reel created as:', mimeType, ext);
       if (outBtns)  outBtns.style.display  = 'block';
       if (progWrap) progWrap.style.display  = 'none';
       btn.disabled = false;
@@ -2850,11 +2858,13 @@ async function postReelToPlatform(platform) {
     var blob  = await resp.blob();
     var sess  = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var fname = 'reels/' + (_user ? _user.id.slice(0,8) : 'user') + '_' + Date.now() + '.webm';
+    var ext = (window._reelExt || 'webm');
+    var mime = (window._reelMimeType || 'video/webm');
+    var fname = 'reels/' + (_user ? _user.id.slice(0,8) : 'user') + '_' + Date.now() + '.' + ext;
 
     var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': 'video/webm', 'x-upsert': 'true' },
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': mime, 'x-upsert': 'true' },
       body: blob
     });
 
