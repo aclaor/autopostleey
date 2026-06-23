@@ -2650,40 +2650,36 @@ function getConnectionForm(name) {
     },
     
     telegram: function() {
-      var uid = (_user && _user.id) ? _user.id : 'guest';
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">Connect Telegram</div>' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">✈️ Connect Telegram</div>' +
+        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Post automatically to your Telegram channel or personal chat</div>' +
 
-        '<!-- OPTION 1: Auto Connect -->' +
-        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:16px;margin-bottom:12px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#26a5e4;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Connect (Personal Chat)</div>' +
+        '<!-- STEP 1 -->' +
+        '<div style="background:#1e1e2e;border:1px solid #26a5e4;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 1 — Add our bot to your channel</div>' +
+          '<div style="font-size:12px;color:#c8c8e8;line-height:1.8;margin-bottom:10px;">' +
+            '1. Open your Telegram channel<br>' +
+            '2. Tap <strong>Manage Channel</strong> → <strong>Administrators</strong><br>' +
+            '3. Tap <strong>Add Admin</strong> → search <strong style="color:#26a5e4;">@AutopostleeyBot</strong><br>' +
+            '4. Enable <strong>Post Messages</strong> → Save' +
           '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
-            '1️⃣ Click the button below<br>' +
-            '2️⃣ Click <strong style="color:#c8c8e8;">Start</strong> in Telegram<br>' +
-            '3️⃣ Come back and click <strong style="color:#26a5e4;">Refresh status</strong>' +
-          '</div>' +
-          '<button onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-bottom:8px;">✈️ Open AutopostleeyBot</button>' +
-          '<button onclick="loadConnections();showToast(\'Checking connection...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:9px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:8px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;">✅ I started the bot — refresh status</button>' +
+          '<a href="https://t.me/AutopostleeyBot" target="_blank" style="display:block;text-align:center;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:8px;color:#26a5e4;font-size:12px;font-weight:700;text-decoration:none;">Open @AutopostleeyBot in Telegram</a>' +
         '</div>' +
 
-        '<!-- OPTION 2: Channel/Group -->' +
-        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:16px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#1a8bc4;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Post to Channel or Group</div>' +
+        '<!-- STEP 2 -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 2 — Enter your channel username</div>' +
+          '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;">Your channel username starts with @ (e.g. @mybusiness)</div>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<div style="display:flex;align-items:center;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:0 12px;color:#8888aa;font-size:14px;font-weight:700;">@</div>' +
+            '<input id="conn-tg2" placeholder="mychannel" style="flex:1;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:14px;outline:none;">' +
           '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
-            '1️⃣ Add <strong style="color:#c8c8e8;">@AutopostleeyBot</strong> as admin to your channel/group<br>' +
-            '2️⃣ In Telegram: Channel Settings → Administrators → Add Admin → search <strong style="color:#c8c8e8;">AutopostleeyBot</strong><br>' +
-            '3️⃣ Give it <strong style="color:#c8c8e8;">Post Messages</strong> permission<br>' +
-            '4️⃣ Enter your channel username below (e.g. @mychannel)' +
-          '</div>' +
-          '<input id="conn-tg1" placeholder="Bot Token — leave blank to use AutopostleeyBot" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;box-sizing:border-box;">' +
-          '<input id="conn-tg2" placeholder="Channel @username or ID (e.g. @autopostleey)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<button onclick="saveTelegramChannel()" style="width:100%;padding:11px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Connect Channel</button>' +
-        '</div>';
+        '</div>' +
+
+        '<!-- CONNECT -->' +
+        '<button onclick="saveTelegramChannel()" style="width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ Connect My Channel</button>' +
+
+        '<!-- PERSONAL CHAT -->' +
+        '<div style="text-align:center;font-size:12px;color:#8888aa;">No channel yet? <a onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="color:#26a5e4;cursor:pointer;font-weight:600;">Post to personal chat instead →</a></div>';
     },
     bluesky: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
