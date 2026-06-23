@@ -1930,6 +1930,28 @@ async function getPublicImageUrl(dataUrl) {
   return await uploadToSupabaseStorage(dataUrl, 'post-image');
 }
 
+
+// ── CONTACT FOOTER HELPER ──────────────────────────────────
+function buildContactFooter() {
+  var profile = _bizProfile || {};
+  var parts = [];
+  if (profile.website) parts.push('🌐 ' + profile.website);
+  if (profile.email)   parts.push('📧 ' + profile.email);
+  if (profile.phone)   parts.push('📱 ' + profile.phone);
+  return parts.length > 0 ? ('\n\n' + parts.join(' | ')) : '';
+}
+
+function appendContactToPost(postText) {
+  if (!postText) return postText;
+  var footer = buildContactFooter();
+  if (!footer) return postText;
+  // Don't add if already contains website/email
+  var profile = _bizProfile || {};
+  if (profile.website && postText.includes(profile.website)) return postText;
+  if (profile.email   && postText.includes(profile.email))   return postText;
+  return postText + footer;
+}
+
 async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
   if (btn) { btn.innerHTML = '⏳ Generating...'; btn.disabled = true; }
@@ -2005,9 +2027,10 @@ async function generateComposePost() {
     var text = (data.post || '').trim();
     if (!text) throw new Error(data.error || 'No post generated');
 
+    var enrichedText = appendContactToPost(text);
     var postText = document.getElementById('post-content') || document.getElementById('post-text');
     if (postText) {
-      postText.value = text;
+      postText.value = enrichedText;
       postText.dispatchEvent(new Event('input'));
       postText.focus();
     }
@@ -2054,6 +2077,8 @@ async function loadBizProfile() {
       document.getElementById('biz-audience').value  = data.audience  || '';
       document.getElementById('biz-location').value  = data.location  || '';
       document.getElementById('biz-website').value   = data.website   || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
       document.getElementById('ob1-icon').textContent = '✅';
     }
   } catch(e) { console.log('No biz profile yet'); }
@@ -2069,6 +2094,8 @@ async function saveBusinessProfile() {
     audience:    document.getElementById('biz-audience').value.trim(),
     location:    document.getElementById('biz-location').value.trim(),
     website:     document.getElementById('biz-website').value.trim(),
+    email:       document.getElementById('biz-email')  ? document.getElementById('biz-email').value.trim()  : '',
+    phone:       document.getElementById('biz-phone')  ? document.getElementById('biz-phone').value.trim()  : '',
     updated_at:  new Date().toISOString()
   };
   try {
@@ -3805,6 +3832,8 @@ async function saveAutoConfig() {
       description:   _autoConfig.description   || '',
       website:       _autoConfig.website        || '',
       og_image:      _autoConfig.og_image       || '',
+      email:         (_bizProfile && _bizProfile.email) ? _bizProfile.email : '',
+      phone:         (_bizProfile && _bizProfile.phone) ? _bizProfile.phone : '',
       audience:      _autoConfig.audience       || '',
       frequency:     _autoConfig.frequency      || 'daily',
       posting_time:  _autoConfig.time           || '09:00',
@@ -3962,10 +3991,10 @@ async function generatePreview() {
     console.log('Worker response:', data);
     if (!text) throw new Error(data.error || 'Worker returned empty response');
 
-    _previewPost = text;
+    _previewPost = appendContactToPost(text);
     var previewText  = document.getElementById('preview-text');
     var previewLabel = document.getElementById('preview-type-label');
-    if (previewText)  previewText.textContent  = text;
+    if (previewText)  previewText.textContent  = _previewPost;
     if (previewLabel) previewLabel.textContent = picked.emoji + ' ' + picked.label.toUpperCase();
 
     // Show screenshot preview if available
