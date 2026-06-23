@@ -2651,15 +2651,39 @@ function getConnectionForm(name) {
     
     telegram: function() {
       var uid = (_user && _user.id) ? _user.id : 'guest';
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Telegram</div>' +
-        '<button onclick="window.open(\'https://t.me/autopostleey?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-align:center;border:none;cursor:pointer;margin-bottom:8px;box-sizing:border-box;">✈️ Auto Connect via Telegram Bot</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:6px;">Opens Telegram → click Start → come back here</div>' +
-        '<button onclick="loadConnections();showToast(\'Refreshing connections...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:6px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:14px;">✅ I started the bot — refresh status</button>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or connect manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Create bot via <a href="https://t.me/BotFather" target="_blank" style="color:#a855f7;">@BotFather</a> → add to channel as admin</div>' +
-        '<input id="conn-tg1" placeholder="Bot Token (from @BotFather)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="conn-tg2" placeholder="Channel @username or ID" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'telegram\',{bot_token:document.getElementById(\'conn-tg1\').value,chat_id:document.getElementById(\'conn-tg2\').value})" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;cursor:pointer;">Save Manually</button>';
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">Connect Telegram</div>' +
+
+        '<!-- OPTION 1: Auto Connect -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#26a5e4;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Connect (Personal Chat)</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Click the button below<br>' +
+            '2️⃣ Click <strong style="color:#c8c8e8;">Start</strong> in Telegram<br>' +
+            '3️⃣ Come back and click <strong style="color:#26a5e4;">Refresh status</strong>' +
+          '</div>' +
+          '<button onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border-radius:8px;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-bottom:8px;">✈️ Open AutopostleeyBot</button>' +
+          '<button onclick="loadConnections();showToast(\'Checking connection...\',\'success\');document.getElementById(\'conn-modal\').style.cssText=\'display:none\';" style="width:100%;padding:9px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:8px;color:#26a5e4;font-size:12px;font-weight:600;cursor:pointer;">✅ I started the bot — refresh status</button>' +
+        '</div>' +
+
+        '<!-- OPTION 2: Channel/Group -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:16px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:#1a8bc4;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Post to Channel or Group</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
+            '1️⃣ Add <strong style="color:#c8c8e8;">@AutopostleeyBot</strong> as admin to your channel/group<br>' +
+            '2️⃣ In Telegram: Channel Settings → Administrators → Add Admin → search <strong style="color:#c8c8e8;">AutopostleeyBot</strong><br>' +
+            '3️⃣ Give it <strong style="color:#c8c8e8;">Post Messages</strong> permission<br>' +
+            '4️⃣ Enter your channel username below (e.g. @mychannel)' +
+          '</div>' +
+          '<input id="conn-tg1" placeholder="Bot Token — leave blank to use AutopostleeyBot" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;box-sizing:border-box;">' +
+          '<input id="conn-tg2" placeholder="Channel @username or ID (e.g. @autopostleey)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<button onclick="saveTelegramChannel()" style="width:100%;padding:11px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Connect Channel</button>' +
+        '</div>';
     },
     bluesky: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
@@ -2746,6 +2770,60 @@ async function saveDiscordWebhook() {
     loadConnections();
   } catch(e) {
     showToast('Failed to save Discord webhook: ' + e.message, 'error');
+  }
+}
+
+async function saveTelegramChannel() {
+  var botToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
+  var chatId   = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
+
+  if (!chatId) {
+    showToast('Please enter your channel @username or ID', 'error');
+    return;
+  }
+
+  // Use the AutopostleeyBot token if no custom token provided
+  var AUTOPOSTLEEY_BOT_TOKEN = '8843727525:AAE_mCiD8bPEQqbelujyXrFOb6qGnBHBvXk';
+  var token = botToken || AUTOPOSTLEEY_BOT_TOKEN;
+
+  // Ensure @ prefix for usernames
+  if (!chatId.startsWith('@') && !chatId.startsWith('-') && isNaN(chatId)) {
+    chatId = '@' + chatId;
+  }
+
+  // Test the connection by sending a test message
+  try {
+    showToast('Testing connection...', 'success');
+    var testResp = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '✅ Autopostleey connected successfully! Your auto-posts will appear here.'
+      })
+    });
+    var testData = await testResp.json();
+
+    if (!testData.ok) {
+      showToast('❌ Failed: ' + (testData.description || 'Could not send message. Make sure @AutopostleeyBot is admin in your channel.'), 'error');
+      return;
+    }
+
+    // Save to Supabase
+    await _db.from('autopostleey_connections').upsert({
+      user_id:     _user.id,
+      platform:    'telegram',
+      bot_token:   token,
+      chat_id:     chatId,
+      page_name:   chatId,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    showToast('✅ Telegram channel connected — ' + chatId + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Connection failed: ' + e.message, 'error');
   }
 }
 
