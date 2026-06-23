@@ -969,7 +969,13 @@
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">BUSINESS WEBSITE URL</label>
             <input id="ap-website" placeholder="https://yourwebsite.com" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">We'll screenshot and analyze your site to generate posts</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Used to generate posts about your website</div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">SOCIAL MEDIA IMAGE URL <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
+            <input id="ap-og-image" placeholder="https://yourwebsite.com/social-image.jpg" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">This image will be included in your auto-posts. Use your logo, banner, or product photo. <a href="https://ogp.me/" target="_blank" style="color:var(--accent);">What is this?</a></div>
           </div>
 
           <div style="margin-bottom:14px;">
@@ -3698,6 +3704,7 @@ async function loadAutoConfig() {
         bizname:       dbRes.data.bizname      || '',
         description:   dbRes.data.description  || '',
         website:       dbRes.data.website       || '',
+        og_image:      dbRes.data.og_image      || '',
         audience:      dbRes.data.audience      || '',
         frequency:     dbRes.data.frequency     || 'daily',
         time:          dbRes.data.posting_time  || '09:00',
@@ -3738,8 +3745,8 @@ async function loadAutoConfig() {
 }
 
 function applyAutoConfig() {
-  var fields = ['ap-website','ap-bizname','ap-description','ap-audience','ap-frequency','ap-time'];
-  var keys   = ['website','bizname','description','audience','frequency','time'];
+  var fields = ['ap-website','ap-og-image','ap-bizname','ap-description','ap-audience','ap-frequency','ap-time'];
+  var keys   = ['website','og_image','bizname','description','audience','frequency','time'];
   fields.forEach(function(f,i) {
     var el = document.getElementById(f);
     if (el && _autoConfig[keys[i]] && !el.value.trim()) {
@@ -3797,6 +3804,7 @@ async function saveAutoConfig() {
       bizname:       _autoConfig.bizname       || '',
       description:   _autoConfig.description   || '',
       website:       _autoConfig.website        || '',
+      og_image:      _autoConfig.og_image       || '',
       audience:      _autoConfig.audience       || '',
       frequency:     _autoConfig.frequency      || 'daily',
       posting_time:  _autoConfig.time           || '09:00',
