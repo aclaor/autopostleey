@@ -801,6 +801,14 @@
           <label class="form-label">Website (optional)</label>
           <input class="form-input" id="biz-website" placeholder="https://yourbusiness.com">
         </div>
+        <div class="form-group">
+          <label class="form-label">Email Address <span style="color:var(--text3);font-weight:400;">(added to every post)</span></label>
+          <input class="form-input" id="biz-email" placeholder="hello@yourbusiness.com" type="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone / WhatsApp <span style="color:var(--text3);font-weight:400;">(added to every post)</span></label>
+          <input class="form-input" id="biz-phone" placeholder="+63 912 345 6789">
+        </div>
         <button onclick="saveBusinessProfile()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px 24px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;">
           Save Business Profile ✓
         </button>
@@ -1573,9 +1581,10 @@ async function analyzeImageAndGenerate() {
     var text = (data.post || '').trim();
     if (!text || !data.success) throw new Error(data.error || 'Could not analyze image');
 
+    var enrichedAnalyze = appendContactToPost(text);
     var postContent = document.getElementById('post-content');
     if (postContent) {
-      postContent.value = text;
+      postContent.value = enrichedAnalyze;
       postContent.dispatchEvent(new Event('input'));
       postContent.focus();
     }
@@ -1828,7 +1837,8 @@ async function generateBulkRowAI(rowIndex) {
     var data = await resp.json();
     var text = (data.post || '').trim();
     if (!text) throw new Error('No post generated');
-    if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = text;
+    var enrichedBulk = appendContactToPost(text);
+    if (_bulkRows[rowIndex]) _bulkRows[rowIndex].text = enrichedBulk;
 
     // Upload image to Supabase Storage if assigned
     if (mediaItem && !_bulkRows[rowIndex].imageUrl) {
@@ -2077,6 +2087,10 @@ async function loadBizProfile() {
       document.getElementById('biz-audience').value  = data.audience  || '';
       document.getElementById('biz-location').value  = data.location  || '';
       document.getElementById('biz-website').value   = data.website   || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
+      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
+      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
       if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
       if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
       document.getElementById('ob1-icon').textContent = '✅';
