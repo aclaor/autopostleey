@@ -4341,7 +4341,8 @@ async function saveDiscordWebhook() {
     await _db.from('autopostleey_connections').upsert({
       user_id:      _user.id,
       platform:     'discord',
-      access_token: webhookUrl,
+      webhook_url:  webhookUrl,
+      access_token: webhookUrl,  // save in both for compatibility
       page_name:    serverName || 'Discord Server',
       connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' });
