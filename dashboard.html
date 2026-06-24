@@ -4254,52 +4254,56 @@ async function saveFacebookManual() {
 }
 
 async function saveTelegramChannel() {
-  var botToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
-  var chatId   = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
+  var customToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
+  var chatId      = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
 
   if (!chatId) {
     showToast('Please enter your channel @username or ID', 'error');
     return;
   }
 
-  // Use the AutopostleeyBot token if no custom token provided
-  var AUTOPOSTLEEY_BOT_TOKEN = '8843727525:AAE_mCiD8bPEQqbelujyXrFOb6qGnBHBvXk';
-  var token = botToken || AUTOPOSTLEEY_BOT_TOKEN;
-
   // Ensure @ prefix for usernames
   if (!chatId.startsWith('@') && !chatId.startsWith('-') && isNaN(chatId)) {
     chatId = '@' + chatId;
   }
 
-  // Test the connection by sending a test message
+  // Test via Cloudflare Worker (keeps bot token secure, not exposed in browser)
   try {
     showToast('Testing connection...', 'success');
-    var testResp = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+    var testResp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/telegram-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: chatId,
-        text: '✅ Autopostleey connected successfully! Your auto-posts will appear here.'
+        chat_id:    chatId,
+        bot_token:  customToken || '',  // empty = use AutopostleeyBot
+        user_id:    _user.id
       })
     });
     var testData = await testResp.json();
 
-    if (!testData.ok) {
-      showToast('❌ Failed: ' + (testData.description || 'Could not send message. Make sure @AutopostleeyBot is admin in your channel.'), 'error');
+    if (!testData.success) {
+      var errMsg = testData.error || 'Could not send message.';
+      if (errMsg.includes('403') || errMsg.includes('Forbidden')) {
+        showToast('❌ Bot is not admin yet! Please add @AutopostleeyBot as admin to your channel first.', 'error');
+      } else if (errMsg.includes('400') || errMsg.includes('chat not found')) {
+        showToast('❌ Channel not found. Make sure the @username is correct.', 'error');
+      } else {
+        showToast('❌ ' + errMsg, 'error');
+      }
       return;
     }
 
-    // Save to Supabase
+    // Save to Supabase — bot_token stored server-side via worker
     await _db.from('autopostleey_connections').upsert({
-      user_id:     _user.id,
-      platform:    'telegram',
-      bot_token:   token,
-      chat_id:     chatId,
-      page_name:   chatId,
+      user_id:      _user.id,
+      platform:     'telegram',
+      bot_token:    customToken || 'autopostleey', // marker = use our bot
+      chat_id:      chatId,
+      page_name:    chatId,
       connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' });
 
-    showToast('✅ Telegram channel connected — ' + chatId + '!', 'success');
+    showToast('✅ Telegram connected — ' + chatId + '!', 'success');
     closeConnModal();
     loadConnections();
   } catch(e) {
