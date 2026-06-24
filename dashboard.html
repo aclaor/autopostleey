@@ -5068,6 +5068,7 @@ showPage = function(name) {
   if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
   if(name === 'support')   { /* static page */ }
   if(name === 'reels')     { initReelsPage(); }
+  if(name === 'autoposter') { loadAPHistory(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -5378,6 +5379,7 @@ async function loadAutoConfig() {
   }
 
   loadConnectedPlatformsForAP();
+  loadAPHistory();
 }
 
 function applyAutoConfig() {
@@ -5665,52 +5667,101 @@ async function approveAndSchedule() {
   showToast('Post added to composer!', 'success');
 }
 
-function addToAPHistory(text, type, status) {
-  var history = document.getElementById('autoposter-history');
-  if (!history) return;
-  if (history.textContent.includes('No auto-generated')) history.innerHTML = '';
-  var item = document.createElement('div');
-  item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;';
-  item.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
-    +'<span style="font-size:11px;font-weight:700;color:#a855f7;">'+type+'</span>'
-    +'<span style="font-size:11px;color:var(--text3);">'+new Date().toLocaleString()+'</span>'
-    +'</div>'
-    +'<div style="font-size:13px;color:var(--text2);line-height:1.5;">'+text.slice(0,200)+(text.length>200?'...':'')+'</div>'
-    +'<div style="margin-top:8px;font-size:11px;font-weight:700;color:'+(status==='posted'?'#22c55e':'#f59e0b')+';">● '+status.toUpperCase()+'</div>';
-  history.insertBefore(item, history.firstChild);
+async function loadAPHistory() {
+  if (!_user) return;
+  var container = document.getElementById('autoposter-history');
+  if (!container) return;
+
+  try {
+    // Load last 4 autoposter posts from Supabase
+    var res = await _db.from('autopostleey_posts')
+      .select('id,content,created_at,platforms,status,image_url')
+      .eq('user_id', _user.id)
+      .eq('mode', 'autoposter')
+      .order('created_at', { ascending: false })
+      .limit(4);
+
+    var posts = res.data || [];
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px;">No auto-generated posts yet. Configure and enable AI AutoPoster above.</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+    posts.forEach(function(post) {
+      var date = new Date(post.created_at);
+      var timeStr = date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + ' · ' + date.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+      var platforms = Array.isArray(post.platforms) ? post.platforms.join(', ') : (post.platforms || '');
+      var preview = (post.content || '').slice(0, 120) + ((post.content || '').length > 120 ? '...' : '');
+
+      var item = document.createElement('div');
+      item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);';
+      item.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:' + (post.status === 'published' ? '#22c55e' : '#f59e0b') + ';"></div>' +
+            '<span style="font-size:11px;font-weight:700;color:var(--text3);">' + timeStr + '</span>' +
+          '</div>' +
+          '<span style="font-size:11px;color:var(--text3);">📤 ' + platforms + '</span>' +
+        '</div>' +
+        (post.image_url ? '<img src="' + post.image_url + '" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;margin-bottom:8px;">' : '') +
+        '<div style="font-size:13px;color:var(--text2);line-height:1.6;">' + preview + '</div>';
+
+      container.appendChild(item);
+    });
+
+    // Add "view all" note
+    var note = document.createElement('div');
+    note.style.cssText = 'font-size:11px;color:var(--text3);text-align:center;padding:8px;';
+    note.textContent = 'Showing last 4 posts · Go to Posts page for full history';
+    container.appendChild(note);
+
+  } catch(e) {
+    console.error('Failed to load AP history:', e);
+  }
 }
 
-// Spin animation
-var apStyle = document.createElement('style');
-apStyle.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
-document.head.appendChild(apStyle);
+function addToAPHistory(text, type, status) {
+  // Save to Supabase first
+  if (_user) {
+    _db.from('autopostleey_posts').insert([{
+      user_id:    _user.id,
+      content:    text,
+      platforms:  _selectedPlatforms || [],
+      image_url:  window._composerImageUrl || '',
+      status:     'published',
+      mode:       'autoposter',
+      created_at: new Date().toISOString()
+    }]).then(function() {
+      loadAPHistory(); // Reload history after saving
+    });
+  }
 
-</script>
+  // Also update DOM immediately for instant feedback
+  var container = document.getElementById('autoposter-history');
+  if (!container) return;
+  if (container.textContent.includes('No auto-generated')) container.innerHTML = '';
 
-<!-- PAYPAL MODAL -->
-<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this){this.style.cssText='display:none';}">
-  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:400px;position:relative;">
-    <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
-    <div style="font-size:18px;font-weight:800;color:#e8e8f0;margin-bottom:4px;" id="paypal-plan-name">Upgrade Plan</div>
-    <div style="font-size:14px;color:#8888aa;margin-bottom:20px;" id="paypal-plan-price"></div>
-    <div id="paypal-btn-container"></div>
-    <p style="text-align:center;font-size:12px;color:#444466;margin-top:12px;">🔒 Secured by PayPal · Cancel anytime</p>
-  </div>
-</div>
+  var item = document.createElement('div');
+  item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);animation:fadeIn .3s ease;';
+  var now = new Date();
+  var timeStr = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + ' · ' + now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  item.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>' +
+        '<span style="font-size:11px;font-weight:700;color:var(--text3);">' + timeStr + '</span>' +
+      '</div>' +
+      '<span style="font-size:11px;color:var(--text3);">✅ ' + (status || 'posted') + '</span>' +
+    '</div>' +
+    (window._composerImageUrl ? '<img src="' + window._composerImageUrl + '" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;margin-bottom:8px;">' : '') +
+    '<div style="font-size:13px;color:var(--text2);line-height:1.6;">' + text.slice(0,120) + (text.length > 120 ? '...' : '') + '</div>';
 
+  // Keep max 4 items
+  container.insertBefore(item, container.firstChild);
+  var items = container.querySelectorAll('div[style*="border-radius:10px"]');
+  if (items.length > 4) items[items.length-1].remove();
+}
 
-<!-- CONNECTION MODAL -->
-<div id="conn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:460px;position:relative;">
-    <button onclick="var m=document.getElementById('conn-modal');m.style.cssText='display:none';" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
-    <div id="conn-modal-title" style="font-size:20px;font-weight:800;color:#e8e8f0;margin-bottom:20px;"></div>
-    <div id="conn-modal-body"></div>
-  </div>
-</div>
-
-
-
-    </div>
-  </div>
-</body>
-</html>
+>
