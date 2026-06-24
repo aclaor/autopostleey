@@ -1762,31 +1762,152 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         </div>
       </div>
 
-      <!-- FAQ -->
-      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">❓ Frequently Asked Questions</div>
+      <!-- SETUP GUIDES -->
 
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How does AI AutoPoster work?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Enable AI AutoPoster, set your frequency, and Autopostleey will automatically generate and post content to all your connected platforms — 24/7, even when you're asleep!</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Which platforms are supported?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Autopostleey supports 13 platforms: Facebook, Instagram, Twitter/X, LinkedIn, YouTube, Telegram, Discord, Bluesky, Threads, Pinterest, Tumblr, Google Business, and Facebook Groups.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Is Autopostleey free?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Yes! Autopostleey has a free plan that lets you post to all platforms. Premium plans unlock more features like higher posting frequency, priority support, and advanced analytics.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How do I connect my social media accounts?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Go to the Connections page in the dashboard. Click Connect next to each platform and follow the authorization steps. Most platforms connect in under 60 seconds.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Can I schedule posts in advance?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Absolutely! Use Bulk Schedule to queue up weeks or months of content at once. Set your dates, frequency, and let Autopostleey handle the rest.</div>
-          </details>
+      <!-- TABLE 1: Facebook Page + Token -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:44px;height:44px;background:#1877f2;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">How to Create a Facebook Page & Get Access Token</div>
+            <div style="font-size:12px;color:var(--text3);">Required to auto-post to your Facebook Page</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:rgba(24,119,242,0.1);border-bottom:2px solid rgba(24,119,242,0.2);">
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;width:40px;">#</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">Step</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">What to do</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">1</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Create Facebook Page</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to facebook.com → click the <strong style="color:var(--text);">⊞ Menu</strong> → select <strong style="color:var(--text);">Page</strong> → click <strong style="color:var(--text);">Create new Page</strong> → enter your business name and category</td>
+                <td style="padding:12px 16px;"><a href="https://www.facebook.com/pages/create" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">facebook.com/pages/create →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">2</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Go to Developers</td>
+                <td style="padding:12px 16px;color:var(--text2);">Open Facebook for Developers → click <strong style="color:var(--text);">My Apps</strong> → click <strong style="color:var(--text);">Create App</strong> → choose <strong style="color:var(--text);">Business</strong> type</td>
+                <td style="padding:12px 16px;"><a href="https://developers.facebook.com" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">developers.facebook.com →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">3</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Add Facebook Login</td>
+                <td style="padding:12px 16px;color:var(--text2);">In your app dashboard → click <strong style="color:var(--text);">Add Product</strong> → find <strong style="color:var(--text);">Facebook Login</strong> → click <strong style="color:var(--text);">Set Up</strong> → choose <strong style="color:var(--text);">Web</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Inside your new app</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">4</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Get Page Access Token</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Graph API Explorer</strong> → select your app → click <strong style="color:var(--text);">Generate Access Token</strong> → select your Page → grant <strong style="color:var(--text);">pages_manage_posts</strong> and <strong style="color:var(--text);">pages_read_engagement</strong> permissions</td>
+                <td style="padding:12px 16px;"><a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">Graph API Explorer →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">5</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Get Long-Lived Token</td>
+                <td style="padding:12px 16px;color:var(--text2);">In the Explorer → run: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:12px;">GET /me/accounts</code> → copy the <strong style="color:var(--text);">access_token</strong> from your Page — this is your permanent Page token</td>
+                <td style="padding:12px 16px;color:var(--text3);">Graph API Explorer</td>
+              </tr>
+              <tr style="background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">6</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Connect in Autopostleey</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Connections</strong> → click <strong style="color:var(--text);">Connect Facebook</strong> → log in with your Facebook account → select your Page → done!</td>
+                <td style="padding:12px 16px;color:var(--text3);">Autopostleey Dashboard</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;padding:12px 16px;background:rgba(24,119,242,0.08);border-radius:10px;border-left:3px solid #1877f2;font-size:12px;color:var(--text2);line-height:1.7;">
+          💡 <strong style="color:var(--text);">Tip:</strong> The easiest way is to just click <strong style="color:var(--text);">Connect Facebook</strong> in Autopostleey Connections — it handles the OAuth automatically. You only need the manual steps above if the automatic connection doesn't work.
+        </div>
+      </div>
+
+      <!-- TABLE 2: Instagram Business -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/></svg>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">How to Create an Instagram Business Account</div>
+            <div style="font-size:12px;color:var(--text3);">Required to auto-post to Instagram — personal accounts cannot be automated</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:rgba(220,39,67,0.1);border-bottom:2px solid rgba(220,39,67,0.2);">
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;width:40px;">#</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">Step</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">What to do</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">1</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Open Instagram App</td>
+                <td style="padding:12px 16px;color:var(--text2);">Open the Instagram app on your phone → go to your <strong style="color:var(--text);">Profile</strong> (bottom right) → tap the <strong style="color:var(--text);">☰ Menu</strong> (top right)</td>
+                <td style="padding:12px 16px;color:var(--text3);">Instagram mobile app</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">2</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Go to Settings</td>
+                <td style="padding:12px 16px;color:var(--text2);">Tap <strong style="color:var(--text);">Settings and privacy</strong> → scroll down to find <strong style="color:var(--text);">Account type and tools</strong> → tap it</td>
+                <td style="padding:12px 16px;color:var(--text3);">Instagram Settings</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">3</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Switch to Professional</td>
+                <td style="padding:12px 16px;color:var(--text2);">Tap <strong style="color:var(--text);">Switch to professional account</strong> → tap <strong style="color:var(--text);">Continue</strong> → choose a category that best describes your business → tap <strong style="color:var(--text);">Done</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Account type and tools</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">4</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Choose Business</td>
+                <td style="padding:12px 16px;color:var(--text2);">Select <strong style="color:var(--text);">Business</strong> (not Creator) → tap <strong style="color:var(--text);">Next</strong> → add your contact info (email, phone) → tap <strong style="color:var(--text);">Next</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Professional setup</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">5</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Link to Facebook Page</td>
+                <td style="padding:12px 16px;color:var(--text2);">When prompted, tap <strong style="color:var(--text);">Connect a Facebook Page</strong> → select your Facebook Page → tap <strong style="color:var(--text);">Done</strong>. If you skip this, go back to Settings → <strong style="color:var(--text);">Linked accounts</strong> → <strong style="color:var(--text);">Facebook</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">During setup</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">6</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Verify Business Account</td>
+                <td style="padding:12px 16px;color:var(--text2);">Your profile will now show a <strong style="color:var(--text);">Contact</strong> button and <strong style="color:var(--text);">Category</strong> label. You should see <strong style="color:var(--text);">Professional dashboard</strong> in your profile menu — this confirms you have a Business account</td>
+                <td style="padding:12px 16px;color:var(--text3);">Your Instagram profile</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">7</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Connect in Autopostleey</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Connections</strong> → click <strong style="color:var(--text);">Connect Instagram</strong> → log in with Facebook → select your Instagram Business account → allow permissions → done!</td>
+                <td style="padding:12px 16px;color:var(--text3);">Autopostleey Dashboard</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="padding:12px 16px;background:rgba(220,39,67,0.08);border-radius:10px;border-left:3px solid #dc2743;font-size:12px;color:var(--text2);line-height:1.7;">
+            ⚠️ <strong style="color:var(--text);">Important:</strong> Instagram requires your account to be <strong style="color:var(--text);">Business or Creator</strong> type AND linked to a <strong style="color:var(--text);">Facebook Page</strong> before Autopostleey can post automatically.
+          </div>
+          <div style="padding:12px 16px;background:rgba(34,197,94,0.08);border-radius:10px;border-left:3px solid #22c55e;font-size:12px;color:var(--text2);line-height:1.7;">
+            ✅ <strong style="color:var(--text);">Personal accounts:</strong> Use <strong style="color:var(--text);">Manual Posting</strong> in Connections — AI writes your caption and copies it, then opens Instagram for you to paste.
+          </div>
         </div>
       </div>
 
