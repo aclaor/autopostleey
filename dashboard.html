@@ -4144,7 +4144,7 @@ function getConnectionForm(name) {
         '<input id="conn-bs1" placeholder="Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
         '<input id="conn-bs2" placeholder="App Password (from bsky.app Settings)" type="password" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
         '<div style="font-size:11px;color:#8888aa;margin-bottom:12px;">Get app password: bsky.app → Settings → App Passwords → Add App Password</div>' +
-        '<button onclick="saveConnection(\'bluesky\',{handle:document.getElementById(\'conn-bs1\').value,access_token:document.getElementById(\'conn-bs2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
+        '<button onclick="saveBlueskyConnection()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
     },
     google_business: function() {
       return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Google Business Profile</div>' +
@@ -4232,6 +4232,7 @@ async function selectInstagramAccount(igId, igUsername, igToken, pageName) {
     showToast('✅ Instagram connected — @' + igUsername + '!', 'success');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   } catch(e) {
     showToast('Failed to save: ' + e.message, 'error');
   }
@@ -4292,9 +4293,100 @@ async function selectFacebookPage(token, pageId, pageName) {
     showToast('✅ Facebook connected — ' + pageName + '!', 'success');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   } catch(e) {
     showToast('Failed to save: ' + e.message, 'error');
   }
+}
+
+
+async function saveBlueskyConnection() {
+  var handle   = document.getElementById('conn-bs1') ? document.getElementById('conn-bs1').value.trim() : '';
+  var appPass  = document.getElementById('conn-bs2') ? document.getElementById('conn-bs2').value.trim() : '';
+  if (!handle || !appPass) { showToast('Please enter your handle and app password', 'error'); return; }
+  if (!handle.includes('.')) handle = handle + '.bsky.social';
+  if (handle.startsWith('@')) handle = handle.slice(1);
+  try {
+    // Test login first
+    showToast('Testing connection...', 'success');
+    var authResp = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: handle, password: appPass })
+    });
+    var auth = await authResp.json();
+    if (auth.error) { showToast('❌ ' + auth.message, 'error'); return; }
+
+    // Save with correct columns
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'bluesky',
+      access_token: appPass,      // app password in access_token
+      bot_token:    appPass,      // also in bot_token as backup
+      page_name:    handle,       // handle in page_name
+      page_id:      auth.did,     // DID in page_id
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Bluesky connected — ' + handle + '!', 'success');
+    closeConnModal(); loadConnections();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+
+async function validateAllConnections() {
+  if (!_user) return;
+  var res = await _db.from('autopostleey_connections')
+    .select('*').eq('user_id', _user.id);
+  var conns = res.data || [];
+  var issues = [];
+
+  conns.forEach(function(c) {
+    var p = c.platform;
+    if (p === 'telegram') {
+      if (!c.chat_id && !c.page_name) issues.push('Telegram: missing channel username — please reconnect');
+    }
+    if (p === 'discord') {
+      if (!c.webhook_url && !c.access_token) issues.push('Discord: missing webhook URL — please reconnect');
+      if (c.access_token && !c.webhook_url) {
+        // Fix it silently
+        _db.from('autopostleey_connections').update({ webhook_url: c.access_token })
+          .eq('user_id', _user.id).eq('platform', 'discord');
+      }
+    }
+    if (p === 'facebook') {
+      if (!c.access_token) issues.push('Facebook: missing access token — please reconnect');
+      if (!c.page_id) issues.push('Facebook: missing page ID — please reconnect');
+    }
+    if (p === 'instagram') {
+      if (!c.access_token) issues.push('Instagram: missing token — please reconnect');
+      if (!c.page_id) issues.push('Instagram: missing account ID — please reconnect');
+    }
+    if (p === 'bluesky') {
+      if (!c.access_token && !c.bot_token) issues.push('Bluesky: missing app password — please reconnect');
+      if (!c.page_name && !c.handle) issues.push('Bluesky: missing handle — please reconnect');
+    }
+    if (p === 'twitter') {
+      if (!c.access_token) issues.push('Twitter: missing Access Token — please reconnect');
+      if (!c.page_id) issues.push('Twitter: missing API Key — please reconnect');
+    }
+    if (p === 'linkedin') {
+      if (!c.access_token) issues.push('LinkedIn: missing token — please reconnect');
+    }
+  });
+
+  if (issues.length > 0) {
+    console.warn('Connection issues found:', issues);
+    // Show warning badge on Connections nav
+    var navItem = document.querySelector('[onclick*="connections"]');
+    if (navItem && !navItem.querySelector('.conn-warning')) {
+      var badge = document.createElement('span');
+      badge.className = 'conn-warning';
+      badge.style.cssText = 'background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:6px;';
+      badge.textContent = issues.length;
+      badge.title = issues.join('\n');
+      navItem.appendChild(badge);
+    }
+  }
+  return issues;
 }
 
 function closeConnModal() {
@@ -4480,6 +4572,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('dc_error')) {
     showToast('Discord connection failed. Please try again.', 'error');
@@ -4500,6 +4593,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('fb_select')) {
     try {
@@ -4522,6 +4616,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('ig_error')) {
     var igErr = params.get('ig_error');
@@ -4542,6 +4637,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('ig_error')) {
     var errs = { 'cancelled':'Instagram cancelled.', 'no_instagram':'No Instagram Business account found. Make sure your Instagram is linked to a Facebook Page.', 'token_failed':'Could not get token.', 'server_error':'Server error.' };
@@ -4556,6 +4652,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('tw_error')) {
     var msgs = { 'cancelled':'Twitter connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
@@ -4570,6 +4667,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('li_error')) {
     var msgs = { 'cancelled':'LinkedIn connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
