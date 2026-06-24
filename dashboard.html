@@ -3951,15 +3951,52 @@ function getConnectionForm(name) {
         '</div>';
     },
     twitter: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
-        '<button onclick="connectTwitter()" style="width:100%;padding:13px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">𝕏 Auto Connect (Recommended)</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">One click — we detect your account automatically</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter tokens manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Get tokens from <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a> → Your App → Keys and Tokens → Generate</div>' +
-        '<input id="tw-handle" placeholder="@handle" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveTwitterManual()" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Manually</button>';
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">𝕏 Connect Twitter/X</div>' +
+        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Enter your Twitter API credentials to enable automatic posting</div>' +
+
+        '<!-- HOW TO GET TOKENS -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#e8e8f0;margin-bottom:10px;">📋 How to get your Twitter API keys (free)</div>' +
+          '<div style="font-size:12px;color:#8888aa;line-height:1.8;">' +
+            '1️⃣ Go to <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a78bfa;font-weight:600;">developer.twitter.com</a> → Sign in<br>' +
+            '2️⃣ Click <strong style="color:#e8e8f0;">+ Create Project</strong> → name it → choose <strong style="color:#e8e8f0;">Making a bot</strong><br>' +
+            '3️⃣ Create an App inside the project<br>' +
+            '4️⃣ Go to your App → <strong style="color:#e8e8f0;">Keys and Tokens</strong> tab<br>' +
+            '5️⃣ Copy <strong style="color:#e8e8f0;">API Key</strong> and <strong style="color:#e8e8f0;">API Key Secret</strong><br>' +
+            '6️⃣ Click <strong style="color:#e8e8f0;">Generate</strong> under Access Token → copy both tokens<br>' +
+            '7️⃣ In App Settings → set permissions to <strong style="color:#e8e8f0;">Read and Write</strong>' +
+          '</div>' +
+        '</div>' +
+
+        '<!-- TOKEN INPUTS -->' +
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">YOUR @HANDLE</label>' +
+            '<input id="tw-handle" placeholder="@yourusername" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY (Consumer Key)</label>' +
+            '<input id="tw-api-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY SECRET (Consumer Secret)</label>' +
+            '<input id="tw-api-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN</label>' +
+            '<input id="tw-token" placeholder="000000000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN SECRET</label>' +
+            '<input id="tw-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+        '</div>' +
+
+        '<button onclick="saveTwitterManual()" style="width:100%;padding:13px;background:#000;color:#fff;border:1px solid #333;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">𝕏 Connect Twitter/X</button>' +
+
+        '<div style="padding:10px 14px;background:rgba(168,85,247,0.08);border-radius:8px;font-size:11px;color:#8888aa;line-height:1.6;">' +
+          '🔒 <strong style="color:#e8e8f0;">Your keys are safe.</strong> They are stored encrypted in our database and only used to post on your behalf. We never share them.' +
+        '</div>';
     },
     linkedin: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account to share posts directly.</div>' +
@@ -4410,6 +4447,38 @@ function connectInstagram() {
 }
 
 async function saveTwitterManual() {
+  var handle    = document.getElementById('tw-handle')    ? document.getElementById('tw-handle').value.trim()    : '';
+  var apiKey    = document.getElementById('tw-api-key')   ? document.getElementById('tw-api-key').value.trim()   : '';
+  var apiSecret = document.getElementById('tw-api-secret')? document.getElementById('tw-api-secret').value.trim(): '';
+  var token     = document.getElementById('tw-token')     ? document.getElementById('tw-token').value.trim()     : '';
+  var secret    = document.getElementById('tw-secret')    ? document.getElementById('tw-secret').value.trim()    : '';
+
+  if (!handle || !token || !secret) {
+    showToast('Please fill in your @handle, Access Token and Access Token Secret', 'error');
+    return;
+  }
+  if (!handle.startsWith('@')) handle = '@' + handle;
+
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'twitter',
+      access_token: token,
+      page_id:      apiKey,
+      page_name:    handle,
+      webhook_url:  secret,
+      bot_token:    apiSecret,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Twitter/X connected — ' + handle + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+async function saveTwitterManual_OLD() {
   var handle = document.getElementById('tw-handle').value.trim();
   var token  = document.getElementById('tw-token').value.trim();
   var secret = document.getElementById('tw-secret').value.trim();
