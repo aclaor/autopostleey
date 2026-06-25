@@ -227,6 +227,9 @@
       <a class="nav-item" onclick="showPage('billing');return false;" href="#">
         <span class="nav-icon">💳</span> Billing
       </a>
+      <a class="nav-item" onclick="showPage('reels');return false;" href="#">
+        <span class="nav-icon">🎬</span> Reels & Shorts
+      </a>
       <a class="nav-item" onclick="showPage('support');return false;" href="#">
         <span class="nav-icon">💬</span> Support
       </a>
@@ -1442,7 +1445,483 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
       </div>
     </div>
 
+
+    <div class="page" id="page-reels">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎬 Reels & Shorts Creator</div>
+          <div class="page-sub">Turn product photos into Reels, or analyze your videos and post automatically</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <button id="reels-tab-1" onclick="switchReelsTab(1)" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🖼️ Photo → Reel</button>
+        <button id="reels-tab-2" onclick="switchReelsTab(2)" style="padding:10px 20px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🎥 Video Analyzer</button>
+      </div>
+
+      <!-- TAB 1: Photo Slideshow Reel -->
+      <div id="reels-panel-1">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+
+          <!-- Left: Upload + Settings -->
+          <div>
+            <!-- Upload Area -->
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">📸 Upload Product Photos</div>
+              <div id="reel-dropzone" onclick="document.getElementById('reel-photo-input').click()"
+                style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color .2s;"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border)'"
+                ondrop="handleReelPhotoDrop(event)">
+                <div style="font-size:36px;margin-bottom:8px;">🖼️</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag photos here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">Upload 2-10 product photos · JPG, PNG · Max 5MB each</div>
+              </div>
+              <input id="reel-photo-input" type="file" accept="image/*" multiple style="display:none" onchange="handleReelPhotoUpload(this)">
+
+              <!-- Photo grid -->
+              <div id="reel-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:12px;"></div>
+            </div>
+
+            <!-- Reel Settings -->
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">⚙️ Reel Settings</div>
+
+              <div class="form-group">
+                <label class="form-label">Caption / Text Overlay</label>
+                <textarea id="reel-caption" rows="3" class="form-textarea" placeholder="AI will generate this — or write your own..."></textarea>
+                <button onclick="generateReelCaption()" style="margin-top:6px;padding:7px 14px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">✨ Generate with AI</button>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Background Music</label>
+                <select id="reel-music" class="form-input">
+                  <option value="upbeat">🎵 Upbeat & Energetic</option>
+                  <option value="chill">🎶 Chill & Relaxed</option>
+                  <option value="corporate">💼 Corporate & Professional</option>
+                  <option value="none">🔇 No Music</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Slide Duration</label>
+                <select id="reel-duration" class="form-input">
+                  <option value="2">2 seconds per photo (fast)</option>
+                  <option value="3" selected>3 seconds per photo</option>
+                  <option value="4">4 seconds per photo</option>
+                  <option value="5">5 seconds per photo (slow)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Text Position</label>
+                <select id="reel-text-pos" class="form-input">
+                  <option value="bottom">Bottom (recommended)</option>
+                  <option value="top">Top</option>
+                  <option value="none">No text overlay</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Transition Effect</label>
+                <select id="reel-transition" class="form-input">
+                  <option value="fade">Fade</option>
+                  <option value="slide">Slide</option>
+                  <option value="zoom">Zoom In</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Create Button -->
+            <button onclick="createReel()" id="create-reel-btn"
+              style="width:100%;padding:16px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;">
+              🎬 Create Reel
+            </button>
+          </div>
+
+          <!-- Right: Preview + Post -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);position:sticky;top:20px;">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">👁️ Preview</div>
+
+              <!-- Canvas preview -->
+              <div style="background:#000;border-radius:10px;overflow:hidden;margin-bottom:12px;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;position:relative;">
+                <canvas id="reel-canvas" width="360" height="640" style="width:100%;height:100%;object-fit:contain;"></canvas>
+                <div id="reel-preview-placeholder" style="position:absolute;text-align:center;color:#555577;">
+                  <div style="font-size:40px;margin-bottom:8px;">🎬</div>
+                  <div style="font-size:13px;">Upload photos to preview</div>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div id="reel-progress-wrap" style="display:none;margin-bottom:12px;">
+                <div style="font-size:12px;color:var(--text3);margin-bottom:6px;" id="reel-progress-label">Creating reel...</div>
+                <div style="background:var(--bg3);border-radius:4px;height:6px;">
+                  <div id="reel-progress-bar" style="background:linear-gradient(90deg,#a855f7,#6366f1);height:6px;border-radius:4px;width:0%;transition:width .3s;"></div>
+                </div>
+              </div>
+
+              <!-- Download + Post buttons -->
+              <div id="reel-output-btns" style="display:none;">
+                <!-- Download -->
+                <a id="reel-download-btn" download="my-reel.webm" style="display:block;text-align:center;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:12px;">⬇️ Download Reel</a>
+
+                <!-- Platform selector with checkboxes -->
+                <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">SELECT PLATFORMS:</div>
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;" id="reel-platform-checks">
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="instagram" style="accent-color:#e1306c;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e1306c" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="#e1306c" stroke="none"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">Instagram Reels</span>
+                  </label>
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="youtube" style="accent-color:#ff0000;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#ff0000"/><path d="M9.545 15.568V8.432L15.818 12z" fill="white"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">YouTube Shorts</span>
+                  </label>
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="facebook" style="accent-color:#1877f2;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">Facebook Reels</span>
+                  </label>
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="telegram" checked style="accent-color:#26a5e4;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#26a5e4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">Telegram</span>
+                  </label>
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="discord" style="accent-color:#5865f2;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#5865f2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">Discord</span>
+                  </label>
+
+                  <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#1e1e2e;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="bluesky" style="accent-color:#0085ff;width:15px;height:15px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#0085ff"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.547 1.99 1.03 3.247.204 5.203.74 7.017 1.05 7.896c.69 1.99 2.975 3.43 5.58 3.043-2.45.405-5.028 1.727-5.028 4.108 0 2.63 2.77 4.296 7.018 4.296 4.245 0 7.018-1.666 7.018-4.296 0-2.381-2.578-3.703-5.028-4.108 2.605.386 4.89-1.053 5.58-3.043.31-.879.846-2.693.02-4.649-.516-1.256-1.535-2.303-4.172-.447-2.75 1.942-5.711 5.881-6.798 7.995z"/></svg>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">Bluesky</span>
+                  </label>
+
+                </div>
+
+                <!-- Single Post Button -->
+                <button onclick="postReelToSelected()" style="width:100%;padding:13px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">🚀 Post to Selected Platforms</button>
+              </div>
+
+              <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;">Compatible with Instagram Reels, YouTube Shorts, TikTok, Facebook Reels</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Video Analyzer -->
+      <div id="reels-panel-2" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+
+          <!-- Left -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">🎥 Upload Your Video</div>
+              <div id="video-dropzone" onclick="document.getElementById('video-input').click()"
+                style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:var(--bg3);"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border)'"
+                ondrop="handleVideoAnalyzerDrop(event)">
+                <div style="font-size:36px;margin-bottom:8px;">🎥</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag your video here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI · Max 50MB</div>
+              </div>
+              <input id="video-input" type="file" accept="video/*" style="display:none" onchange="handleVideoAnalyzer(this)">
+
+              <!-- Video preview -->
+              <video id="video-preview-el" controls style="width:100%;border-radius:8px;margin-top:12px;display:none;max-height:300px;"></video>
+            </div>
+
+            <!-- AI Analysis result -->
+            <div id="video-analysis-result" style="display:none;background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">✨ AI Generated Caption</div>
+              <textarea id="video-caption" rows="5" class="form-textarea" placeholder="AI will analyze your video and generate a caption..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button onclick="generateVideoCaption()" style="flex:1;padding:10px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">✨ Regenerate</button>
+                <button onclick="showVideoPlatformPicker()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Choose Platformlatforms</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Platform tips -->
+          <div>
+            <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);">
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📱 Platform Requirements</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:var(--text3);">
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📸 Instagram Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio · Under 4GB
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">▶️ YouTube Shorts</div>
+                  Max 60 sec · MP4 · Under 256MB
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📘 Facebook Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio
+                </div>
+                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">💬 Telegram</div>
+                  Max 50MB · Any format supported
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="page" id="page-support">
+      <div class="page-header">
+        <div>
+          <div class="page-title">💬 Support & Community</div>
+          <div class="page-sub">Get help, connect with us, and join our community</div>
+        </div>
+      </div>
+
+      <!-- Contact Support -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <a href="mailto:support@autopostleey.com" style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg2);border-radius:16px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#6366f1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📧</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Email Support</div>
+            <div style="font-size:12px;color:var(--text3);">support@autopostleey.com</div>
+            <div style="font-size:11px;color:var(--accent);margin-top:4px;">Click to send email →</div>
+          </div>
+        </a>
+        <a href="https://t.me/autopostleey" target="_blank" style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg2);border-radius:16px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#26a5e4'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="width:48px;height:48px;background:#26a5e4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">✈️</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Telegram Community</div>
+            <div style="font-size:12px;color:var(--text3);">@autopostleey</div>
+            <div style="font-size:11px;color:#26a5e4;margin-top:4px;">Join our channel →</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Follow Us -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">🌐 Follow Us</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:20px;">Stay updated with tips, new features and announcements</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+          <a href="https://www.facebook.com/profile.php?id=61590869057936" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#1877f2';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:#1877f2;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Facebook</div>
+          </a>
+
+          <a href="https://instagram.com/autopostleey" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#e1306c';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Instagram</div>
+          </a>
+
+          <a href="https://www.youtube.com/channel/UCnWc_kOUx6Ck80LAM85TFRQ" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#ff0000';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:#ff0000;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">YouTube</div>
+          </a>
+
+          <a href="https://discord.com/channels/1517982825180041397/1517982825922691225" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#5865f2';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Discord</div>
+          </a>
+
+          <a href="https://bsky.app/profile/autopostleey.com" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#0085ff';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:#0085ff;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.547 1.99 1.03 3.247.204 5.203.74 7.017 1.05 7.896c.69 1.99 2.975 3.43 5.58 3.043-2.45.405-5.028 1.727-5.028 4.108 0 2.63 2.77 4.296 7.018 4.296 4.245 0 7.018-1.666 7.018-4.296 0-2.381-2.578-3.703-5.028-4.108 2.605.386 4.89-1.053 5.58-3.043.31-.879.846-2.693.02-4.649-.516-1.256-1.535-2.303-4.172-.447-2.75 1.942-5.711 5.881-6.798 7.995z"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Bluesky</div>
+          </a>
+
+          <a href="https://www.linkedin.com/company/autopostleey/posts/?feedView=all&viewAsMember=true" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;background:var(--bg3);border-radius:14px;border:1px solid var(--border);text-decoration:none;transition:all .2s;" onmouseover="this.style.borderColor='#0077b5';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="width:48px;height:48px;background:#0077b5;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">LinkedIn</div>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- SETUP GUIDES -->
+
+      <!-- TABLE 1: Facebook Page + Token -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:44px;height:44px;background:#1877f2;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">How to Create a Facebook Page & Get Access Token</div>
+            <div style="font-size:12px;color:var(--text3);">Required to auto-post to your Facebook Page</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:rgba(24,119,242,0.1);border-bottom:2px solid rgba(24,119,242,0.2);">
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;width:40px;">#</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">Step</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">What to do</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#4a9eff;">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">1</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Create Facebook Page</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to facebook.com → click the <strong style="color:var(--text);">⊞ Menu</strong> → select <strong style="color:var(--text);">Page</strong> → click <strong style="color:var(--text);">Create new Page</strong> → enter your business name and category</td>
+                <td style="padding:12px 16px;"><a href="https://www.facebook.com/pages/create" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">facebook.com/pages/create →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">2</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Go to Developers</td>
+                <td style="padding:12px 16px;color:var(--text2);">Open Facebook for Developers → click <strong style="color:var(--text);">My Apps</strong> → click <strong style="color:var(--text);">Create App</strong> → choose <strong style="color:var(--text);">Business</strong> type</td>
+                <td style="padding:12px 16px;"><a href="https://developers.facebook.com" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">developers.facebook.com →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">3</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Add Facebook Login</td>
+                <td style="padding:12px 16px;color:var(--text2);">In your app dashboard → click <strong style="color:var(--text);">Add Product</strong> → find <strong style="color:var(--text);">Facebook Login</strong> → click <strong style="color:var(--text);">Set Up</strong> → choose <strong style="color:var(--text);">Web</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Inside your new app</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">4</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Get Page Access Token</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Graph API Explorer</strong> → select your app → click <strong style="color:var(--text);">Generate Access Token</strong> → select your Page → grant <strong style="color:var(--text);">pages_manage_posts</strong> and <strong style="color:var(--text);">pages_read_engagement</strong> permissions</td>
+                <td style="padding:12px 16px;"><a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#4a9eff;text-decoration:none;font-weight:600;">Graph API Explorer →</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">5</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Get Long-Lived Token</td>
+                <td style="padding:12px 16px;color:var(--text2);">In the Explorer → run: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:12px;">GET /me/accounts</code> → copy the <strong style="color:var(--text);">access_token</strong> from your Page — this is your permanent Page token</td>
+                <td style="padding:12px 16px;color:var(--text3);">Graph API Explorer</td>
+              </tr>
+              <tr style="background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#4a9eff;font-weight:700;">6</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Connect in Autopostleey</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Connections</strong> → click <strong style="color:var(--text);">Connect Facebook</strong> → log in with your Facebook account → select your Page → done!</td>
+                <td style="padding:12px 16px;color:var(--text3);">Autopostleey Dashboard</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;padding:12px 16px;background:rgba(24,119,242,0.08);border-radius:10px;border-left:3px solid #1877f2;font-size:12px;color:var(--text2);line-height:1.7;">
+          💡 <strong style="color:var(--text);">Tip:</strong> The easiest way is to just click <strong style="color:var(--text);">Connect Facebook</strong> in Autopostleey Connections — it handles the OAuth automatically. You only need the manual steps above if the automatic connection doesn't work.
+        </div>
+      </div>
+
+      <!-- TABLE 2: Instagram Business -->
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/></svg>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">How to Create an Instagram Business Account</div>
+            <div style="font-size:12px;color:var(--text3);">Required to auto-post to Instagram — personal accounts cannot be automated</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:rgba(220,39,67,0.1);border-bottom:2px solid rgba(220,39,67,0.2);">
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;width:40px;">#</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">Step</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">What to do</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:700;color:#f06292;">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">1</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Open Instagram App</td>
+                <td style="padding:12px 16px;color:var(--text2);">Open the Instagram app on your phone → go to your <strong style="color:var(--text);">Profile</strong> (bottom right) → tap the <strong style="color:var(--text);">☰ Menu</strong> (top right)</td>
+                <td style="padding:12px 16px;color:var(--text3);">Instagram mobile app</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">2</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Go to Settings</td>
+                <td style="padding:12px 16px;color:var(--text2);">Tap <strong style="color:var(--text);">Settings and privacy</strong> → scroll down to find <strong style="color:var(--text);">Account type and tools</strong> → tap it</td>
+                <td style="padding:12px 16px;color:var(--text3);">Instagram Settings</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">3</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Switch to Professional</td>
+                <td style="padding:12px 16px;color:var(--text2);">Tap <strong style="color:var(--text);">Switch to professional account</strong> → tap <strong style="color:var(--text);">Continue</strong> → choose a category that best describes your business → tap <strong style="color:var(--text);">Done</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Account type and tools</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">4</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Choose Business</td>
+                <td style="padding:12px 16px;color:var(--text2);">Select <strong style="color:var(--text);">Business</strong> (not Creator) → tap <strong style="color:var(--text);">Next</strong> → add your contact info (email, phone) → tap <strong style="color:var(--text);">Next</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">Professional setup</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">5</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Link to Facebook Page</td>
+                <td style="padding:12px 16px;color:var(--text2);">When prompted, tap <strong style="color:var(--text);">Connect a Facebook Page</strong> → select your Facebook Page → tap <strong style="color:var(--text);">Done</strong>. If you skip this, go back to Settings → <strong style="color:var(--text);">Linked accounts</strong> → <strong style="color:var(--text);">Facebook</strong></td>
+                <td style="padding:12px 16px;color:var(--text3);">During setup</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">6</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Verify Business Account</td>
+                <td style="padding:12px 16px;color:var(--text2);">Your profile will now show a <strong style="color:var(--text);">Contact</strong> button and <strong style="color:var(--text);">Category</strong> label. You should see <strong style="color:var(--text);">Professional dashboard</strong> in your profile menu — this confirms you have a Business account</td>
+                <td style="padding:12px 16px;color:var(--text3);">Your Instagram profile</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;color:#f06292;font-weight:700;">7</td>
+                <td style="padding:12px 16px;font-weight:600;color:var(--text);">Connect in Autopostleey</td>
+                <td style="padding:12px 16px;color:var(--text2);">Go to <strong style="color:var(--text);">Connections</strong> → click <strong style="color:var(--text);">Connect Instagram</strong> → log in with Facebook → select your Instagram Business account → allow permissions → done!</td>
+                <td style="padding:12px 16px;color:var(--text3);">Autopostleey Dashboard</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="padding:12px 16px;background:rgba(220,39,67,0.08);border-radius:10px;border-left:3px solid #dc2743;font-size:12px;color:var(--text2);line-height:1.7;">
+            ⚠️ <strong style="color:var(--text);">Important:</strong> Instagram requires your account to be <strong style="color:var(--text);">Business or Creator</strong> type AND linked to a <strong style="color:var(--text);">Facebook Page</strong> before Autopostleey can post automatically.
+          </div>
+          <div style="padding:12px 16px;background:rgba(34,197,94,0.08);border-radius:10px;border-left:3px solid #22c55e;font-size:12px;color:var(--text2);line-height:1.7;">
+            ✅ <strong style="color:var(--text);">Personal accounts:</strong> Use <strong style="color:var(--text);">Manual Posting</strong> in Connections — AI writes your caption and copies it, then opens Instagram for you to paste.
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
+</div>
+
+<!-- CONNECTION MODAL -->
+<div id="conn-modal" onclick="if(event.target===this)closeConnModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg1);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="closeConnModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    <div id="conn-modal-title" style="font-size:20px;font-weight:800;color:#e8e8f0;margin-bottom:20px;"></div>
+    <div id="conn-modal-body"></div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1970,6 +2449,797 @@ function appendContactToPost(postText) {
   if (profile.email   && postText.includes(profile.email))   return postText;
   return postText + footer;
 }
+
+
+// ── REELS & SHORTS ─────────────────────────────────────────
+var _reelPhotos   = [];   // {id, dataUrl, img}
+var _reelVideoUrl = null;
+var _reelVideoFile = null;
+var _reelBlobUrl  = null;
+
+function initReelsPage() {
+  renderReelPhotoGrid();
+}
+
+function switchReelsTab(n) {
+  document.getElementById('reels-panel-1').style.display = n===1 ? '' : 'none';
+  document.getElementById('reels-panel-2').style.display = n===2 ? '' : 'none';
+  document.getElementById('reels-tab-1').style.background = n===1 ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('reels-tab-1').style.color      = n===1 ? '#fff' : 'var(--text2)';
+  document.getElementById('reels-tab-1').style.border     = n===1 ? 'none' : '1px solid var(--border)';
+  document.getElementById('reels-tab-2').style.background = n===2 ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('reels-tab-2').style.color      = n===2 ? '#fff' : 'var(--text2)';
+  document.getElementById('reels-tab-2').style.border     = n===2 ? 'none' : '1px solid var(--border)';
+}
+
+// ── TAB 1: PHOTO SLIDESHOW ─────────────────────────────────
+
+function handleReelPhotoDrop(e) {
+  e.preventDefault();
+  document.getElementById('reel-dropzone').style.borderColor = 'var(--border)';
+  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); });
+  loadReelPhotos(files);
+}
+
+function handleReelPhotoUpload(input) {
+  var files = Array.from(input.files);
+  loadReelPhotos(files);
+  input.value = '';
+}
+
+function loadReelPhotos(files) {
+  if (_reelPhotos.length + files.length > 10) {
+    showToast('Maximum 10 photos allowed', 'error');
+    files = files.slice(0, 10 - _reelPhotos.length);
+  }
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var id = 'rp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        _reelPhotos.push({ id: id, dataUrl: e.target.result, img: img, name: file.name });
+        renderReelPhotoGrid();
+        if (_reelPhotos.length === 1) previewReelFrame(0);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderReelPhotoGrid() {
+  var grid = document.getElementById('reel-photo-grid');
+  if (!grid) return;
+  if (_reelPhotos.length === 0) { grid.innerHTML = ''; return; }
+  grid.innerHTML = _reelPhotos.map(function(p, i) {
+    return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;">' +
+      '<img src="' + p.dataUrl + '" style="width:100%;height:100%;object-fit:cover;">' +
+      '<div style="position:absolute;top:2px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;">' + (i+1) + '</div>' +
+      '<button data-id="' + p.id + '" onclick="removeReelPhoto(this.dataset.id)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;padding:0;">✕</button>' +
+    '</div>';
+  }).join('');
+  document.getElementById('reel-preview-placeholder').style.display = _reelPhotos.length ? 'none' : 'flex';
+}
+
+function removeReelPhoto(id) {
+  _reelPhotos = _reelPhotos.filter(function(p){ return p.id !== id; });
+  renderReelPhotoGrid();
+}
+
+function previewReelFrame(index) {
+  var canvas = document.getElementById('reel-canvas');
+  if (!canvas || !_reelPhotos[index]) return;
+  var ctx = canvas.getContext('2d');
+  var photo = _reelPhotos[index];
+  canvas.width = 360; canvas.height = 640;
+
+  // Draw background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 360, 640);
+
+  // Draw image (cover fit)
+  var scale = Math.max(360 / photo.img.width, 640 / photo.img.height);
+  var w = photo.img.width * scale;
+  var h = photo.img.height * scale;
+  var x = (360 - w) / 2;
+  var y = (640 - h) / 2;
+  ctx.drawImage(photo.img, x, y, w, h);
+
+  // Draw caption overlay
+  var caption   = document.getElementById('reel-caption')  ? document.getElementById('reel-caption').value.trim()   : '';
+  var textPos   = document.getElementById('reel-text-pos') ? document.getElementById('reel-text-pos').value          : 'bottom';
+  if (caption && textPos !== 'none') {
+    var grad = ctx.createLinearGradient(0, textPos==='bottom'?480:0, 0, textPos==='bottom'?640:160);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, textPos==='bottom'?480:0, 360, 160);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    var words = caption.split(' ');
+    var lines = []; var line = '';
+    words.forEach(function(w) {
+      var test = line + w + ' ';
+      if (ctx.measureText(test).width > 320) { lines.push(line.trim()); line = w + ' '; }
+      else line = test;
+    });
+    lines.push(line.trim());
+    lines = lines.slice(0, 3);
+    var startY = textPos === 'bottom' ? 560 - (lines.length-1)*26 : 100;
+    lines.forEach(function(l, i) { ctx.fillText(l, 180, startY + i*26); });
+  }
+}
+
+async function generateReelCaption() {
+  if (_reelPhotos.length === 0) { showToast('Upload photos first!', 'error'); return; }
+  showToast('Generating caption with AI...', 'success');
+  try {
+    var bizname = _bizProfile ? _bizProfile.name : '';
+    var description = _bizProfile ? _bizProfile.description : '';
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64: _reelPhotos[0].dataUrl.split(',')[1],
+        media_type:   'image/jpeg',
+        business_name: bizname,
+        description:   description
+      })
+    });
+    var data = await resp.json();
+    var cap = document.getElementById('reel-caption');
+    if (cap && data.post) {
+      cap.value = appendContactToPost(data.post);
+      previewReelFrame(0);
+      showToast('✨ Caption generated!', 'success');
+    }
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+
+// ── REEL MUSIC GENERATOR (Web Audio API) ───────────────────
+var _audioCtx = null;
+var _musicNodes = [];
+
+function getAudioContext() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+function stopMusic() {
+  _musicNodes.forEach(function(n){ try{ n.stop(); }catch(e){} });
+  _musicNodes = [];
+}
+
+function createReelAudioTrack(durationSeconds, style) {
+  var ctx = getAudioContext();
+  var dest = ctx.createMediaStreamDestination();
+
+  if (style === 'none') return null;
+
+  // Master gain
+  var master = ctx.createGain();
+  master.gain.setValueAtTime(0.4, ctx.currentTime);
+  master.connect(dest);
+
+  if (style === 'upbeat') {
+    // Upbeat: punchy bass + bright chord stabs + hi-hats
+    createUpbeatTrack(ctx, master, durationSeconds);
+  } else if (style === 'chill') {
+    // Chill: smooth pad chords + soft bass + slow melody
+    createChillTrack(ctx, master, durationSeconds);
+  } else if (style === 'corporate') {
+    // Corporate: clean piano + light percussion + uplifting pad
+    createCorporateTrack(ctx, master, durationSeconds);
+  }
+
+  return dest.stream;
+}
+
+function createUpbeatTrack(ctx, out, dur) {
+  var bpm = 128;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Bass pattern
+  var bassNotes = [55, 55, 58, 62, 55, 55, 58, 65];
+  for (var i = 0; i < dur / beat; i++) {
+    var freq = 440 * Math.pow(2, (bassNotes[i % bassNotes.length] - 69) / 12);
+    var osc = ctx.createOscillator();
+    var env = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, now + i * beat);
+    env.gain.setValueAtTime(0, now + i * beat);
+    env.gain.linearRampToValueAtTime(0.3, now + i * beat + 0.01);
+    env.gain.linearRampToValueAtTime(0, now + i * beat + beat * 0.4);
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, now + i * beat);
+    osc.connect(filter); filter.connect(env); env.connect(out);
+    osc.start(now + i * beat);
+    osc.stop(now + i * beat + beat);
+    _musicNodes.push(osc);
+  }
+
+  // Hi-hat pattern (every half beat)
+  for (var j = 0; j < dur / (beat/2); j++) {
+    var bufSize = ctx.sampleRate * 0.05;
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var k = 0; k < bufSize; k++) data[k] = (Math.random()*2-1) * (1 - k/bufSize);
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    var hiEnv = ctx.createGain();
+    hiEnv.gain.setValueAtTime(j%2===0 ? 0.15 : 0.08, now + j*(beat/2));
+    var hiFilter = ctx.createBiquadFilter();
+    hiFilter.type = 'highpass';
+    hiFilter.frequency.setValueAtTime(8000, now);
+    src.connect(hiFilter); hiFilter.connect(hiEnv); hiEnv.connect(out);
+    src.start(now + j*(beat/2));
+    _musicNodes.push(src);
+  }
+
+  // Chord stabs on beats
+  var chords = [[262,330,392],[294,370,440],[247,311,370],[220,277,330]];
+  for (var m = 0; m < dur / (beat*2); m++) {
+    var chord = chords[m % chords.length];
+    chord.forEach(function(f) {
+      var co = ctx.createOscillator();
+      var ce = ctx.createGain();
+      co.type = 'square';
+      co.frequency.setValueAtTime(f, now + m*beat*2);
+      ce.gain.setValueAtTime(0, now + m*beat*2);
+      ce.gain.linearRampToValueAtTime(0.06, now + m*beat*2 + 0.02);
+      ce.gain.linearRampToValueAtTime(0, now + m*beat*2 + beat*0.3);
+      co.connect(ce); ce.connect(out);
+      co.start(now + m*beat*2);
+      co.stop(now + m*beat*2 + beat);
+      _musicNodes.push(co);
+    });
+  }
+}
+
+function createChillTrack(ctx, out, dur) {
+  var bpm = 80;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Smooth pad chords
+  var chords = [
+    [261.6, 329.6, 392.0, 523.2],
+    [293.7, 370.0, 440.0, 587.3],
+    [246.9, 311.1, 392.0, 493.9],
+    [220.0, 277.2, 329.6, 440.0]
+  ];
+  for (var i = 0; i < dur / (beat*4); i++) {
+    var chord = chords[i % chords.length];
+    chord.forEach(function(f) {
+      var o = ctx.createOscillator();
+      var e = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f, now + i*beat*4);
+      e.gain.setValueAtTime(0, now + i*beat*4);
+      e.gain.linearRampToValueAtTime(0.12, now + i*beat*4 + beat);
+      e.gain.linearRampToValueAtTime(0.12, now + i*beat*4 + beat*3);
+      e.gain.linearRampToValueAtTime(0, now + i*beat*4 + beat*4);
+      o.connect(e); e.connect(out);
+      o.start(now + i*beat*4);
+      o.stop(now + i*beat*4 + beat*4 + 0.1);
+      _musicNodes.push(o);
+    });
+  }
+
+  // Soft melody
+  var melody = [523.2, 587.3, 659.3, 587.3, 523.2, 493.9, 440.0, 523.2];
+  for (var j = 0; j < dur / beat; j++) {
+    if (j % 2 === 0) {
+      var mo = ctx.createOscillator();
+      var me = ctx.createGain();
+      mo.type = 'triangle';
+      mo.frequency.setValueAtTime(melody[j/2 % melody.length], now + j*beat);
+      me.gain.setValueAtTime(0, now + j*beat);
+      me.gain.linearRampToValueAtTime(0.15, now + j*beat + 0.05);
+      me.gain.linearRampToValueAtTime(0, now + j*beat + beat*0.8);
+      mo.connect(me); me.connect(out);
+      mo.start(now + j*beat);
+      mo.stop(now + j*beat + beat);
+      _musicNodes.push(mo);
+    }
+  }
+}
+
+function createCorporateTrack(ctx, out, dur) {
+  var bpm = 100;
+  var beat = 60 / bpm;
+  var now = ctx.currentTime + 0.1;
+
+  // Uplifting piano-like chords
+  var chords = [
+    [261.6, 329.6, 392.0],
+    [293.7, 349.2, 440.0],
+    [329.6, 415.3, 523.2],
+    [349.2, 440.0, 523.2]
+  ];
+  for (var i = 0; i < dur / (beat*2); i++) {
+    var chord = chords[i % chords.length];
+    chord.forEach(function(f, fi) {
+      var o = ctx.createOscillator();
+      var e = ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now + i*beat*2 + fi*0.02);
+      e.gain.setValueAtTime(0, now + i*beat*2 + fi*0.02);
+      e.gain.linearRampToValueAtTime(0.1, now + i*beat*2 + fi*0.02 + 0.05);
+      e.gain.exponentialRampToValueAtTime(0.001, now + i*beat*2 + beat*1.8);
+      o.connect(e); e.connect(out);
+      o.start(now + i*beat*2 + fi*0.02);
+      o.stop(now + i*beat*2 + beat*2);
+      _musicNodes.push(o);
+    });
+  }
+
+  // Light kick on beats 1 and 3
+  for (var j = 0; j < dur / (beat*2); j++) {
+    var buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var k = 0; k < data.length; k++) {
+      data[k] = Math.sin(2*Math.PI*60*k/ctx.sampleRate) * Math.exp(-k/(ctx.sampleRate*0.08));
+    }
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    var kg = ctx.createGain();
+    kg.gain.setValueAtTime(0.3, now + j*beat*2);
+    src.connect(kg); kg.connect(out);
+    src.start(now + j*beat*2);
+    _musicNodes.push(src);
+  }
+}
+
+async function createReel() {
+  if (_reelPhotos.length < 2) { showToast('Upload at least 2 photos!', 'error'); return; }
+
+  var btn       = document.getElementById('create-reel-btn');
+  var progWrap  = document.getElementById('reel-progress-wrap');
+  var progBar   = document.getElementById('reel-progress-bar');
+  var progLabel = document.getElementById('reel-progress-label');
+  var outBtns   = document.getElementById('reel-output-btns');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating...';
+  if (progWrap) progWrap.style.display = 'block';
+  if (outBtns)  outBtns.style.display  = 'none';
+
+  try {
+    var duration   = parseInt(document.getElementById('reel-duration').value)   || 3;
+    var transition = document.getElementById('reel-transition').value || 'fade';
+    var fps        = 30;
+    var totalFrames = _reelPhotos.length * duration * fps;
+
+    var canvas = document.getElementById('reel-canvas');
+    canvas.width = 360; canvas.height = 640;
+    var ctx = canvas.getContext('2d');
+
+    // Setup MediaRecorder
+    var musicStyle = document.getElementById('reel-music') ? document.getElementById('reel-music').value : 'upbeat';
+    var totalDuration = _reelPhotos.length * duration;
+
+    // Create audio track
+    var audioStream = createReelAudioTrack(totalDuration, musicStyle);
+
+    // Combine video + audio streams
+    var videoStream = canvas.captureStream(fps);
+    var combinedTracks = videoStream.getVideoTracks();
+    if (audioStream) {
+      audioStream.getAudioTracks().forEach(function(t){ combinedTracks.push ? null : null; });
+    }
+
+    // Use combined stream
+    var stream = audioStream
+      ? new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
+      : videoStream;
+
+    // Try MP4 first (better compatibility with Telegram/Instagram/YouTube)
+    var mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2') ? 'video/mp4;codecs=avc1,mp4a.40.2'
+                 : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
+                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
+                 : 'video/webm';
+    console.log('Reel format:', mimeType);
+    var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 2500000 });
+    var chunks   = [];
+    recorder.ondataavailable = function(e){ if(e.data.size>0) chunks.push(e.data); };
+
+    recorder.start(100);
+
+    var caption   = document.getElementById('reel-caption')  ? document.getElementById('reel-caption').value.trim()  : '';
+    var textPos   = document.getElementById('reel-text-pos') ? document.getElementById('reel-text-pos').value         : 'bottom';
+    var transType = transition;
+
+    var frame = 0;
+    var framesPerSlide = duration * fps;
+    var transFrames = Math.floor(fps * 0.5); // 0.5s transition
+
+    function drawFrame() {
+      var slideIndex  = Math.floor(frame / framesPerSlide);
+      var frameInSlide = frame % framesPerSlide;
+      if (slideIndex >= _reelPhotos.length) {
+        recorder.stop();
+        return;
+      }
+
+      var photo = _reelPhotos[slideIndex];
+      var nextPhoto = _reelPhotos[slideIndex + 1] || null;
+      var alpha = 1;
+
+      // Transition at end of slide
+      if (nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t = (frameInSlide - (framesPerSlide - transFrames)) / transFrames;
+        if (transType === 'fade') alpha = 1 - t;
+      }
+
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 360, 640);
+
+      // Draw current photo
+      ctx.globalAlpha = alpha;
+      var sc = Math.max(360/photo.img.width, 640/photo.img.height);
+      var pw = photo.img.width*sc, ph = photo.img.height*sc;
+      var px = (360-pw)/2, py = (640-ph)/2;
+
+      if (transType === 'zoom') {
+        var zoom = 1 + (frameInSlide / framesPerSlide) * 0.05;
+        ctx.save();
+        ctx.translate(180, 320);
+        ctx.scale(zoom, zoom);
+        ctx.drawImage(photo.img, -pw/2, -ph/2, pw, ph);
+        ctx.restore();
+      } else if (transType === 'slide' && nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t2 = (frameInSlide-(framesPerSlide-transFrames))/transFrames;
+        ctx.drawImage(photo.img, px - t2*360, py, pw, ph);
+        ctx.globalAlpha = 1;
+        var sc2=Math.max(360/nextPhoto.img.width,640/nextPhoto.img.height);
+        var pw2=nextPhoto.img.width*sc2,ph2=nextPhoto.img.height*sc2;
+        ctx.drawImage(nextPhoto.img, (360-pw2)/2+(1-t2)*360, (640-ph2)/2, pw2, ph2);
+      } else {
+        ctx.drawImage(photo.img, px, py, pw, ph);
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw next photo for fade
+      if (transType === 'fade' && nextPhoto && frameInSlide >= framesPerSlide - transFrames) {
+        var t3 = (frameInSlide-(framesPerSlide-transFrames))/transFrames;
+        ctx.globalAlpha = t3;
+        var sc3=Math.max(360/nextPhoto.img.width,640/nextPhoto.img.height);
+        var pw3=nextPhoto.img.width*sc3,ph3=nextPhoto.img.height*sc3;
+        ctx.drawImage(nextPhoto.img,(360-pw3)/2,(640-ph3)/2,pw3,ph3);
+        ctx.globalAlpha = 1;
+      }
+
+      // Caption overlay
+      if (caption && textPos !== 'none') {
+        var grad = ctx.createLinearGradient(0, textPos==='bottom'?480:0, 0, textPos==='bottom'?640:160);
+        grad.addColorStop(0,'rgba(0,0,0,0)');
+        grad.addColorStop(1,'rgba(0,0,0,0.75)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, textPos==='bottom'?480:0, 360, 160);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 17px sans-serif';
+        ctx.textAlign = 'center';
+        var words = caption.split(' '), lines = [], line = '';
+        words.forEach(function(w){ var t=line+w+' '; if(ctx.measureText(t).width>320){lines.push(line.trim());line=w+' ';}else line=t; });
+        lines.push(line.trim());
+        lines = lines.slice(0,3);
+        var startY = textPos==='bottom' ? 558-(lines.length-1)*24 : 100;
+        lines.forEach(function(l,i){ ctx.fillText(l,180,startY+i*24); });
+      }
+
+      frame++;
+      if (progBar) progBar.style.width = Math.round((frame/totalFrames)*100) + '%';
+      if (progLabel) progLabel.textContent = 'Creating reel... ' + Math.round((frame/totalFrames)*100) + '%';
+
+      requestAnimationFrame(drawFrame);
+    }
+
+    recorder.onstop = function() {
+      stopMusic();
+      var blob = new Blob(chunks, { type: mimeType });
+      _reelBlobUrl = URL.createObjectURL(blob);
+      var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      var dlBtn = document.getElementById('reel-download-btn');
+      if (dlBtn) { dlBtn.href = _reelBlobUrl; dlBtn.download = 'reel-' + Date.now() + '.' + ext; }
+      window._reelMimeType = mimeType;
+      window._reelExt = ext;
+      console.log('Reel created as:', mimeType, ext);
+      if (outBtns)  outBtns.style.display  = 'block';
+      if (progWrap) progWrap.style.display  = 'none';
+      btn.disabled = false;
+      btn.textContent = '🎬 Create Reel';
+      showToast('✅ Reel created! Download or post it.', 'success');
+    };
+
+    drawFrame();
+
+  } catch(e) {
+    showToast('Failed to create reel: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '🎬 Create Reel';
+    if (progWrap) progWrap.style.display = 'none';
+  }
+}
+
+async function postReelToSelected() {
+  var checks = document.querySelectorAll('#reel-platform-checks input[type=checkbox]:checked');
+  var platforms = Array.from(checks).map(function(c){ return c.value; });
+  if (platforms.length === 0) { showToast('Select at least one platform!', 'error'); return; }
+  for (var i = 0; i < platforms.length; i++) {
+    await postReelToPlatform(platforms[i]);
+  }
+}
+
+async function postReelToPlatform(platform) {
+  if (!_reelBlobUrl) { showToast('Create a reel first!', 'error'); return; }
+  var caption = document.getElementById('reel-caption') ? document.getElementById('reel-caption').value.trim() : '';
+
+  showToast('Uploading reel...', 'success');
+  try {
+    var resp = await fetch(_reelBlobUrl);
+    var blob  = await resp.blob();
+    var sess  = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var ext = (window._reelExt || 'webm');
+    var mime = (window._reelMimeType || 'video/webm');
+    var fname = 'reels/' + (_user ? _user.id.slice(0,8) : 'user') + '_' + Date.now() + '.' + ext;
+
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': mime, 'x-upsert': 'true' },
+      body: blob
+    });
+
+    if (!upResp.ok && upResp.status !== 200 && upResp.status !== 201) {
+      showToast('Upload failed: ' + upResp.status, 'error'); return;
+    }
+
+    var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+
+    // Post to selected platform via worker
+    var conn = _connectionsFull[platform];
+    if (!conn) {
+      showToast('Connect ' + platform + ' first in Connections!', 'error'); return;
+    }
+
+    var pubResp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        content:     caption,
+        platforms:   [platform],
+        user_id:     _user.id,
+        image_url:   videoUrl,
+        connections: _connectionsFull
+      })
+    });
+    var pubData = await pubResp.json();
+    var success = pubData.results && pubData.results[0] && pubData.results[0].success;
+    if (success) {
+      showToast('✅ Reel posted to ' + platform + '!', 'success');
+    } else {
+      var err = pubData.results && pubData.results[0] ? pubData.results[0].error : 'Unknown error';
+      // For Instagram/Facebook/YouTube - show copy & open flow
+      if (['instagram','facebook','youtube'].includes(platform)) {
+        showToast('Opening ' + platform + ' — paste your caption there!', 'success');
+        await navigator.clipboard.writeText(caption).catch(function(){});
+        var urls = { instagram:'https://www.instagram.com/create/style/', facebook:'https://www.facebook.com/', youtube:'https://studio.youtube.com/' };
+        window.open(urls[platform], '_blank');
+      } else {
+        showToast('Failed: ' + err, 'error');
+      }
+    }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+function showVideoPlatformPicker() {
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  var existing = document.getElementById('video-platform-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'video-platform-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var platforms = [
+    { id:'instagram', label:'Instagram Reels',  color:'#e1306c', bg:'rgba(225,48,108,0.15)' },
+    { id:'youtube',   label:'YouTube Shorts',   color:'#ff0000', bg:'rgba(255,0,0,0.15)' },
+    { id:'facebook',  label:'Facebook Reels',   color:'#1877f2', bg:'rgba(24,119,242,0.15)' },
+    { id:'telegram',  label:'Telegram',         color:'#26a5e4', bg:'rgba(38,165,228,0.15)' },
+    { id:'discord',   label:'Discord',          color:'#5865f2', bg:'rgba(88,101,242,0.15)' },
+    { id:'bluesky',   label:'Bluesky',          color:'#0085ff', bg:'rgba(0,133,255,0.15)' },
+  ];
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:24px;max-width:400px;width:100%;';
+  box.innerHTML = '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">🎥 Post Video To</div>'
+    + '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Select where to post your video</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    + platforms.map(function(p) {
+        return '<button data-pid="' + p.id + '" onclick="postVideoToPlatform(this.dataset.pid)" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:' + p.bg + ';border:1px solid ' + p.color + '33;border-radius:10px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:left;">'
+          + '<div style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0;"></div>'
+          + p.label + '</button>';
+      }).join('')
+    + '</div>'
+    + '<button onclick="var m=document.getElementById(\"video-platform-modal\");if(m)m.remove();" style="width:100%;margin-top:14px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Cancel</button>';
+
+  modal.appendChild(box);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function postVideoToPlatform(platform) {
+  var modal = document.getElementById('video-platform-modal');
+  if (modal) modal.remove();
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  var cap = document.getElementById('video-caption');
+  var caption = cap ? cap.value.trim() : '';
+
+  showToast('Uploading video...', 'success');
+  try {
+    var fname = 'videos/' + Date.now() + '_' + _reelVideoFile.name.replace(/[^a-z0-9.]/gi,'_');
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': _reelVideoFile.type, 'x-upsert': 'true' },
+      body: _reelVideoFile
+    });
+
+    if (!upResp.ok && upResp.status !== 200 && upResp.status !== 201) {
+      showToast('Upload failed: ' + upResp.status, 'error'); return;
+    }
+
+    var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+
+    var pubResp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        content: caption, platforms: [platform], user_id: _user.id,
+        image_url: videoUrl, connections: _connectionsFull
+      })
+    });
+    var pubData = await pubResp.json();
+    var success = pubData.results && pubData.results[0] && pubData.results[0].success;
+    if (success) {
+      showToast('✅ Video posted to ' + platform + '!', 'success');
+    } else {
+      if (['instagram','facebook','youtube'].includes(platform)) {
+        await navigator.clipboard.writeText(caption).catch(function(){});
+        var urls = { instagram:'https://www.instagram.com/create/style/', facebook:'https://www.facebook.com/', youtube:'https://studio.youtube.com/' };
+        showToast('Caption copied! Opening ' + platform + '...', 'success');
+        setTimeout(function(){ window.open(urls[platform], '_blank'); }, 500);
+      } else {
+        showToast('Failed — ' + (pubData.results && pubData.results[0] ? pubData.results[0].error : ''), 'error');
+      }
+    }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function postReelToAll() {
+  if (!_reelBlobUrl) { showToast('Create a reel first!', 'error'); return; }
+  // Upload to Supabase Storage then post
+  try {
+    var resp = await fetch(_reelBlobUrl);
+    var blob  = await resp.blob();
+    var fname = 'reels/' + Date.now() + '.webm';
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (await _db.auth.getSession()).data.session.access_token, 'Content-Type': 'video/webm', 'x-upsert': 'true' },
+      body: blob
+    });
+    if (upResp.ok || upResp.status===200 || upResp.status===201) {
+      var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+      window._composerImageUrl = videoUrl;
+      showToast('✅ Reel uploaded! Go to Compose to post it.', 'success');
+      showPage('compose');
+      var pc = document.getElementById('post-content');
+      var cap = document.getElementById('reel-caption');
+      if (pc && cap) pc.value = cap.value;
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
+// ── TAB 2: VIDEO ANALYZER ──────────────────────────────────
+
+function handleVideoAnalyzerDrop(e) {
+  e.preventDefault();
+  document.getElementById('video-dropzone').style.borderColor = 'var(--border)';
+  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('video/'); });
+  if (files[0]) processVideoAnalyzer(files[0]);
+}
+
+function handleVideoAnalyzer(input) {
+  if (input.files[0]) processVideoAnalyzer(input.files[0]);
+  input.value = '';
+}
+
+function processVideoAnalyzer(file) {
+  _reelVideoFile = file;
+  var url = URL.createObjectURL(file);
+  _reelVideoUrl = url;
+  var vid = document.getElementById('video-preview-el');
+  if (vid) { vid.src = url; vid.style.display = 'block'; }
+  // Auto generate caption
+  generateVideoCaption();
+}
+
+async function generateVideoCaption() {
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  showToast('AI is analyzing your video...', 'success');
+  document.getElementById('video-analysis-result').style.display = 'block';
+  var cap = document.getElementById('video-caption');
+  if (cap) cap.value = 'Analyzing video...';
+
+  try {
+    // Extract first frame from video as image for AI analysis
+    var vid = document.getElementById('video-preview-el');
+    var canvas = document.createElement('canvas');
+    canvas.width = 640; canvas.height = 360;
+    var ctx = canvas.getContext('2d');
+    vid.currentTime = 1; // Go to 1 second
+    await new Promise(function(res){ vid.onseeked = res; });
+    ctx.drawImage(vid, 0, 0, 640, 360);
+    var frameBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+    var bizname     = _bizProfile ? _bizProfile.name        : '';
+    var description = _bizProfile ? _bizProfile.description : '';
+
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64: frameBase64,
+        media_type:   'image/jpeg',
+        business_name: bizname,
+        description:   description
+      })
+    });
+    var data = await resp.json();
+    if (cap && data.post) {
+      cap.value = appendContactToPost(data.post);
+      showToast('✨ Caption generated from your video!', 'success');
+    }
+  } catch(e) {
+    if (cap) cap.value = '';
+    showToast('Analysis failed: ' + e.message, 'error');
+  }
+}
+
+async function postVideoToAll() {
+  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
+  var cap = document.getElementById('video-caption');
+  var caption = cap ? cap.value.trim() : '';
+  if (!caption) { showToast('Generate a caption first!', 'error'); return; }
+
+  showToast('Uploading video...', 'success');
+  try {
+    var fname = 'videos/' + Date.now() + '_' + _reelVideoFile.name.replace(/[^a-z0-9.]/gi,'_');
+    var upResp = await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + fname, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I', 'Content-Type': _reelVideoFile.type, 'x-upsert': 'true' },
+      body: _reelVideoFile
+    });
+    if (upResp.ok || upResp.status===200 || upResp.status===201) {
+      var videoUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + fname;
+      window._composerImageUrl = videoUrl;
+      var pc = document.getElementById('post-content');
+      if (pc) pc.value = caption;
+      showToast('✅ Video uploaded! Go to Compose to post it.', 'success');
+      showPage('compose');
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
 
 function updateManualPostButtons() {
   var manualDiv = document.getElementById('manual-post-btns');
@@ -2690,15 +3960,52 @@ function getConnectionForm(name) {
         '</div>';
     },
     twitter: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Twitter/X</div>' +
-        '<button onclick="connectTwitter()" style="width:100%;padding:13px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">𝕏 Auto Connect (Recommended)</button>' +
-        '<div style="font-size:11px;color:#8888aa;text-align:center;margin-bottom:14px;">One click — we detect your account automatically</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#1e1e2e;"></div><span style="font-size:11px;color:#444466;">or enter tokens manually</span><div style="flex:1;height:1px;background:#1e1e2e;"></div></div>' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:6px;">Get tokens from <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a855f7;">developer.twitter.com</a> → Your App → Keys and Tokens → Generate</div>' +
-        '<input id="tw-handle" placeholder="@handle" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-token" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:6px;outline:none;display:block;">' +
-        '<input id="tw-secret" placeholder="Access Token Secret" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:9px 12px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<button onclick="saveTwitterManual()" style="width:100%;padding:10px;background:var(--bg3);color:#8888aa;border:1px solid #2a2a3e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Manually</button>';
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">𝕏 Connect Twitter/X</div>' +
+        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Enter your Twitter API credentials to enable automatic posting</div>' +
+
+        '<!-- HOW TO GET TOKENS -->' +
+        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#e8e8f0;margin-bottom:10px;">📋 How to get your Twitter API keys (free)</div>' +
+          '<div style="font-size:12px;color:#8888aa;line-height:1.8;">' +
+            '1️⃣ Go to <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a78bfa;font-weight:600;">developer.twitter.com</a> → Sign in<br>' +
+            '2️⃣ Click <strong style="color:#e8e8f0;">+ Create Project</strong> → name it → choose <strong style="color:#e8e8f0;">Making a bot</strong><br>' +
+            '3️⃣ Create an App inside the project<br>' +
+            '4️⃣ Go to your App → <strong style="color:#e8e8f0;">Keys and Tokens</strong> tab<br>' +
+            '5️⃣ Copy <strong style="color:#e8e8f0;">API Key</strong> and <strong style="color:#e8e8f0;">API Key Secret</strong><br>' +
+            '6️⃣ Click <strong style="color:#e8e8f0;">Generate</strong> under Access Token → copy both tokens<br>' +
+            '7️⃣ In App Settings → set permissions to <strong style="color:#e8e8f0;">Read and Write</strong>' +
+          '</div>' +
+        '</div>' +
+
+        '<!-- TOKEN INPUTS -->' +
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">YOUR @HANDLE</label>' +
+            '<input id="tw-handle" placeholder="@yourusername" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY (Consumer Key)</label>' +
+            '<input id="tw-api-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY SECRET (Consumer Secret)</label>' +
+            '<input id="tw-api-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN</label>' +
+            '<input id="tw-token" placeholder="000000000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN SECRET</label>' +
+            '<input id="tw-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+        '</div>' +
+
+        '<button onclick="saveTwitterManual()" style="width:100%;padding:13px;background:#000;color:#fff;border:1px solid #333;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">𝕏 Connect Twitter/X</button>' +
+
+        '<div style="padding:10px 14px;background:rgba(168,85,247,0.08);border-radius:8px;font-size:11px;color:#8888aa;line-height:1.6;">' +
+          '🔒 <strong style="color:#e8e8f0;">Your keys are safe.</strong> They are stored encrypted in our database and only used to post on your behalf. We never share them.' +
+        '</div>';
     },
     linkedin: function() {
       return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account to share posts directly.</div>' +
@@ -2837,7 +4144,7 @@ function getConnectionForm(name) {
         '<input id="conn-bs1" placeholder="Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
         '<input id="conn-bs2" placeholder="App Password (from bsky.app Settings)" type="password" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
         '<div style="font-size:11px;color:#8888aa;margin-bottom:12px;">Get app password: bsky.app → Settings → App Passwords → Add App Password</div>' +
-        '<button onclick="saveConnection(\'bluesky\',{handle:document.getElementById(\'conn-bs1\').value,access_token:document.getElementById(\'conn-bs2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
+        '<button onclick="saveBlueskyConnection()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
     },
     google_business: function() {
       return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Google Business Profile</div>' +
@@ -2866,6 +4173,225 @@ function getConnectionForm(name) {
 
   };
   return s[name] ? s[name]() : '<p style="color:#8888aa;">Coming soon!</p>';
+}
+
+
+
+function showInstagramAccountSelector(accounts, userId) {
+  var existing = document.getElementById('ig-account-selector-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'ig-account-selector-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:28px;max-width:420px;width:100%;';
+
+  box.innerHTML =
+    '<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;">📸 Select Instagram Account</div>' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:20px;">Choose which Instagram account Autopostleey should post to:</div>' +
+    '<div id="ig-accounts-list" style="display:flex;flex-direction:column;gap:10px;"></div>' +
+    '<button id="ig-cancel-btn" style="width:100%;margin-top:16px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Cancel</button>';
+
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+
+  document.getElementById('ig-cancel-btn').onclick = function() { modal.remove(); };
+
+  var list = document.getElementById('ig-accounts-list');
+  accounts.forEach(function(acc) {
+    var btn = document.createElement('button');
+    btn.style.cssText = 'display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;width:100%;transition:border-color .2s;';
+    btn.onmouseover = function(){ this.style.borderColor='#e1306c'; };
+    btn.onmouseout  = function(){ this.style.borderColor='var(--border)'; };
+    btn.innerHTML =
+      '<div style="width:40px;height:40px;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📸</div>' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text);">@' + acc.ig_username + '</div>' +
+        '<div style="font-size:11px;color:var(--text3);">Linked to: ' + acc.page_name + '</div>' +
+      '</div>';
+    btn.onclick = function() { selectInstagramAccount(acc.ig_id, acc.ig_username, acc.ig_token, acc.page_name); };
+    list.appendChild(btn);
+  });
+}
+
+async function selectInstagramAccount(igId, igUsername, igToken, pageName) {
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'instagram',
+      access_token: igToken,
+      page_id:      igId,
+      page_name:    '@' + igUsername,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    var modal = document.getElementById('ig-account-selector-modal');
+    if (modal) modal.remove();
+    showToast('✅ Instagram connected — @' + igUsername + '!', 'success');
+    showPage('connections');
+    loadConnections();
+    setTimeout(validateAllConnections, 1500);
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+function showFacebookPageSelector(pages, userId) {
+  var existing = document.getElementById('fb-page-selector-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'fb-page-selector-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:28px;max-width:420px;width:100%;';
+
+  var html = '<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;">📘 Select Facebook Page</div>';
+  html += '<div style="font-size:13px;color:var(--text3);margin-bottom:20px;">Choose which page Autopostleey should post to:</div>';
+  html += '<div id="fb-pages-list" style="display:flex;flex-direction:column;gap:10px;"></div>';
+  html += '<button id="fb-cancel-btn" style="width:100%;margin-top:16px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Cancel</button>';
+  box.innerHTML = html;
+
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+
+  // Cancel button
+  document.getElementById('fb-cancel-btn').onclick = function() { modal.remove(); };
+
+  // Build page buttons safely
+  var list = document.getElementById('fb-pages-list');
+  pages.forEach(function(p) {
+    var btn = document.createElement('button');
+    btn.style.cssText = 'display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;width:100%;transition:border-color .2s;';
+    btn.onmouseover = function(){ this.style.borderColor='#1877f2'; };
+    btn.onmouseout  = function(){ this.style.borderColor='var(--border)'; };
+    btn.innerHTML = '<div style="width:40px;height:40px;background:#1877f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📘</div>'
+      + '<div><div style="font-size:14px;font-weight:700;color:var(--text);">' + p.name + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);">Page ID: ' + p.id + '</div></div>';
+    btn.onclick = function() { selectFacebookPage(p.access_token, p.id, p.name); };
+    list.appendChild(btn);
+  });
+}
+
+async function selectFacebookPage(token, pageId, pageName) {
+
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'facebook',
+      access_token: token,
+      page_id:      pageId,
+      page_name:    pageName,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    var modal = document.getElementById('fb-page-selector-modal');
+    if (modal) modal.remove();
+    showToast('✅ Facebook connected — ' + pageName + '!', 'success');
+    showPage('connections');
+    loadConnections();
+    setTimeout(validateAllConnections, 1500);
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+
+async function saveBlueskyConnection() {
+  var handle   = document.getElementById('conn-bs1') ? document.getElementById('conn-bs1').value.trim() : '';
+  var appPass  = document.getElementById('conn-bs2') ? document.getElementById('conn-bs2').value.trim() : '';
+  if (!handle || !appPass) { showToast('Please enter your handle and app password', 'error'); return; }
+  if (!handle.includes('.')) handle = handle + '.bsky.social';
+  if (handle.startsWith('@')) handle = handle.slice(1);
+  try {
+    // Test login first
+    showToast('Testing connection...', 'success');
+    var authResp = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: handle, password: appPass })
+    });
+    var auth = await authResp.json();
+    if (auth.error) { showToast('❌ ' + auth.message, 'error'); return; }
+
+    // Save with correct columns
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'bluesky',
+      access_token: appPass,      // app password in access_token
+      bot_token:    appPass,      // also in bot_token as backup
+      page_name:    handle,       // handle in page_name
+      page_id:      auth.did,     // DID in page_id
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Bluesky connected — ' + handle + '!', 'success');
+    closeConnModal(); loadConnections();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+
+async function validateAllConnections() {
+  if (!_user) return;
+  var res = await _db.from('autopostleey_connections')
+    .select('*').eq('user_id', _user.id);
+  var conns = res.data || [];
+  var issues = [];
+
+  conns.forEach(function(c) {
+    var p = c.platform;
+    if (p === 'telegram') {
+      if (!c.chat_id && !c.page_name) issues.push('Telegram: missing channel username — please reconnect');
+    }
+    if (p === 'discord') {
+      if (!c.webhook_url && !c.access_token) issues.push('Discord: missing webhook URL — please reconnect');
+      if (c.access_token && !c.webhook_url) {
+        // Fix it silently
+        _db.from('autopostleey_connections').update({ webhook_url: c.access_token })
+          .eq('user_id', _user.id).eq('platform', 'discord');
+      }
+    }
+    if (p === 'facebook') {
+      if (!c.access_token) issues.push('Facebook: missing access token — please reconnect');
+      if (!c.page_id) issues.push('Facebook: missing page ID — please reconnect');
+    }
+    if (p === 'instagram') {
+      if (!c.access_token) issues.push('Instagram: missing token — please reconnect');
+      if (!c.page_id) issues.push('Instagram: missing account ID — please reconnect');
+    }
+    if (p === 'bluesky') {
+      if (!c.access_token && !c.bot_token) issues.push('Bluesky: missing app password — please reconnect');
+      if (!c.page_name && !c.handle) issues.push('Bluesky: missing handle — please reconnect');
+    }
+    if (p === 'twitter') {
+      if (!c.access_token) issues.push('Twitter: missing Access Token — please reconnect');
+      if (!c.page_id) issues.push('Twitter: missing API Key — please reconnect');
+    }
+    if (p === 'linkedin') {
+      if (!c.access_token) issues.push('LinkedIn: missing token — please reconnect');
+    }
+  });
+
+  if (issues.length > 0) {
+    console.warn('Connection issues found:', issues);
+    // Show warning badge on Connections nav
+    var navItem = document.querySelector('[onclick*="connections"]');
+    if (navItem && !navItem.querySelector('.conn-warning')) {
+      var badge = document.createElement('span');
+      badge.className = 'conn-warning';
+      badge.style.cssText = 'background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:6px;';
+      badge.textContent = issues.length;
+      badge.title = issues.join('\n');
+      navItem.appendChild(badge);
+    }
+  }
+  return issues;
+}
+
+function closeConnModal() {
+  var modal = document.getElementById('conn-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 function connectPlatform(name) {
@@ -2907,7 +4433,8 @@ async function saveDiscordWebhook() {
     await _db.from('autopostleey_connections').upsert({
       user_id:      _user.id,
       platform:     'discord',
-      access_token: webhookUrl,
+      webhook_url:  webhookUrl,
+      access_token: webhookUrl,  // save in both for compatibility
       page_name:    serverName || 'Discord Server',
       connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' });
@@ -2956,52 +4483,56 @@ async function saveFacebookManual() {
 }
 
 async function saveTelegramChannel() {
-  var botToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
-  var chatId   = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
+  var customToken = document.getElementById('conn-tg1') ? document.getElementById('conn-tg1').value.trim() : '';
+  var chatId      = document.getElementById('conn-tg2') ? document.getElementById('conn-tg2').value.trim() : '';
 
   if (!chatId) {
     showToast('Please enter your channel @username or ID', 'error');
     return;
   }
 
-  // Use the AutopostleeyBot token if no custom token provided
-  var AUTOPOSTLEEY_BOT_TOKEN = '8843727525:AAE_mCiD8bPEQqbelujyXrFOb6qGnBHBvXk';
-  var token = botToken || AUTOPOSTLEEY_BOT_TOKEN;
-
   // Ensure @ prefix for usernames
   if (!chatId.startsWith('@') && !chatId.startsWith('-') && isNaN(chatId)) {
     chatId = '@' + chatId;
   }
 
-  // Test the connection by sending a test message
+  // Test via Cloudflare Worker (keeps bot token secure, not exposed in browser)
   try {
     showToast('Testing connection...', 'success');
-    var testResp = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+    var testResp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/telegram-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: chatId,
-        text: '✅ Autopostleey connected successfully! Your auto-posts will appear here.'
+        chat_id:    chatId,
+        bot_token:  customToken || '',  // empty = use AutopostleeyBot
+        user_id:    _user.id
       })
     });
     var testData = await testResp.json();
 
-    if (!testData.ok) {
-      showToast('❌ Failed: ' + (testData.description || 'Could not send message. Make sure @AutopostleeyBot is admin in your channel.'), 'error');
+    if (!testData.success) {
+      var errMsg = testData.error || 'Could not send message.';
+      if (errMsg.includes('403') || errMsg.includes('Forbidden')) {
+        showToast('❌ Bot is not admin yet! Please add @AutopostleeyBot as admin to your channel first.', 'error');
+      } else if (errMsg.includes('400') || errMsg.includes('chat not found')) {
+        showToast('❌ Channel not found. Make sure the @username is correct.', 'error');
+      } else {
+        showToast('❌ ' + errMsg, 'error');
+      }
       return;
     }
 
-    // Save to Supabase
+    // Save to Supabase — bot_token stored server-side via worker
     await _db.from('autopostleey_connections').upsert({
-      user_id:     _user.id,
-      platform:    'telegram',
-      bot_token:   token,
-      chat_id:     chatId,
-      page_name:   chatId,
+      user_id:      _user.id,
+      platform:     'telegram',
+      bot_token:    customToken || 'autopostleey', // marker = use our bot
+      chat_id:      chatId,
+      page_name:    chatId,
       connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' });
 
-    showToast('✅ Telegram channel connected — ' + chatId + '!', 'success');
+    showToast('✅ Telegram connected — ' + chatId + '!', 'success');
     closeConnModal();
     loadConnections();
   } catch(e) {
@@ -3041,6 +4572,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('dc_error')) {
     showToast('Discord connection failed. Please try again.', 'error');
@@ -3061,6 +4593,36 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
+  }
+  if(params.get('fb_select')) {
+    try {
+      var pagesJson = decodeURIComponent(params.get('fb_select'));
+      var pages = JSON.parse(pagesJson);
+      showFacebookPageSelector(pages, params.get('user_id') || '');
+    } catch(e) { showToast('Please reconnect Facebook', 'error'); }
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+  if(params.get('ig_select')) {
+    try {
+      var igJson = decodeURIComponent(params.get('ig_select'));
+      var accounts = JSON.parse(igJson);
+      showInstagramAccountSelector(accounts, params.get('user_id') || '');
+    } catch(e) { showToast('Please reconnect Instagram', 'error'); }
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+  if(params.get('ig_success')) {
+    showToast('✅ Instagram connected — ' + (params.get('ig_name') || 'your account') + '!', 'success');
+    window.history.replaceState({}, '', '/dashboard.html');
+    showPage('connections');
+    loadConnections();
+    setTimeout(validateAllConnections, 1500);
+  }
+  if(params.get('ig_error')) {
+    var igErr = params.get('ig_error');
+    var igMsg = igErr === 'no_instagram' ? 'No Instagram Business account found. Make sure your Instagram is linked to a Facebook Page.' : 'Instagram connection failed: ' + igErr;
+    showToast('❌ ' + igMsg, 'error');
+    window.history.replaceState({}, '', '/dashboard.html');
   }
   if(params.get('fb_error')) {
     var msgs = { 'cancelled':'Facebook connection cancelled.', 'token_failed':'Could not get token. Try again.', 'server_error':'Server error.' };
@@ -3075,6 +4637,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('ig_error')) {
     var errs = { 'cancelled':'Instagram cancelled.', 'no_instagram':'No Instagram Business account found. Make sure your Instagram is linked to a Facebook Page.', 'token_failed':'Could not get token.', 'server_error':'Server error.' };
@@ -3089,6 +4652,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('tw_error')) {
     var msgs = { 'cancelled':'Twitter connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
@@ -3103,6 +4667,7 @@ window.addEventListener('load', function() {
     window.history.replaceState({}, '', '/dashboard.html');
     showPage('connections');
     loadConnections();
+    setTimeout(validateAllConnections, 1500);
   }
   if(params.get('li_error')) {
     var msgs = { 'cancelled':'LinkedIn connection cancelled.', 'token_failed':'Could not get access token.', 'server_error':'Server error. Please try again.' };
@@ -3149,6 +4714,38 @@ function connectInstagram() {
 }
 
 async function saveTwitterManual() {
+  var handle    = document.getElementById('tw-handle')    ? document.getElementById('tw-handle').value.trim()    : '';
+  var apiKey    = document.getElementById('tw-api-key')   ? document.getElementById('tw-api-key').value.trim()   : '';
+  var apiSecret = document.getElementById('tw-api-secret')? document.getElementById('tw-api-secret').value.trim(): '';
+  var token     = document.getElementById('tw-token')     ? document.getElementById('tw-token').value.trim()     : '';
+  var secret    = document.getElementById('tw-secret')    ? document.getElementById('tw-secret').value.trim()    : '';
+
+  if (!handle || !token || !secret) {
+    showToast('Please fill in your @handle, Access Token and Access Token Secret', 'error');
+    return;
+  }
+  if (!handle.startsWith('@')) handle = '@' + handle;
+
+  try {
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'twitter',
+      access_token: token,
+      page_id:      apiKey,
+      page_name:    handle,
+      webhook_url:  secret,
+      bot_token:    apiSecret,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+    showToast('✅ Twitter/X connected — ' + handle + '!', 'success');
+    closeConnModal();
+    loadConnections();
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+async function saveTwitterManual_OLD() {
   var handle = document.getElementById('tw-handle').value.trim();
   var token  = document.getElementById('tw-token').value.trim();
   var secret = document.getElementById('tw-secret').value.trim();
@@ -3737,6 +5334,8 @@ showPage = function(name) {
   if(name === 'compose')   { renderTemplates(); }
   if(name === 'bulk')      { renderBulkTemplates(); renderBulkPostRows(); }
   if(name === 'support')   { /* static page */ }
+  if(name === 'reels')     { initReelsPage(); }
+  if(name === 'autoposter') { loadAPHistory(); }
   if(name === 'bulk') {
     var d = document.getElementById('bulk-start-date');
     if(d && !d.value) {
@@ -4047,6 +5646,7 @@ async function loadAutoConfig() {
   }
 
   loadConnectedPlatformsForAP();
+  loadAPHistory();
 }
 
 function applyAutoConfig() {
@@ -4334,151 +5934,102 @@ async function approveAndSchedule() {
   showToast('Post added to composer!', 'success');
 }
 
-function addToAPHistory(text, type, status) {
-  var history = document.getElementById('autoposter-history');
-  if (!history) return;
-  if (history.textContent.includes('No auto-generated')) history.innerHTML = '';
-  var item = document.createElement('div');
-  item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;';
-  item.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
-    +'<span style="font-size:11px;font-weight:700;color:#a855f7;">'+type+'</span>'
-    +'<span style="font-size:11px;color:var(--text3);">'+new Date().toLocaleString()+'</span>'
-    +'</div>'
-    +'<div style="font-size:13px;color:var(--text2);line-height:1.5;">'+text.slice(0,200)+(text.length>200?'...':'')+'</div>'
-    +'<div style="margin-top:8px;font-size:11px;font-weight:700;color:'+(status==='posted'?'#22c55e':'#f59e0b')+';">● '+status.toUpperCase()+'</div>';
-  history.insertBefore(item, history.firstChild);
+async function loadAPHistory() {
+  if (!_user) return;
+  var container = document.getElementById('autoposter-history');
+  if (!container) return;
+
+  try {
+    // Load last 4 autoposter posts from Supabase
+    var res = await _db.from('autopostleey_posts')
+      .select('id,content,created_at,platforms,status,image_url')
+      .eq('user_id', _user.id)
+      .eq('mode', 'autoposter')
+      .order('created_at', { ascending: false })
+      .limit(4);
+
+    var posts = res.data || [];
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px;">No auto-generated posts yet. Configure and enable AI AutoPoster above.</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+    posts.forEach(function(post) {
+      var date = new Date(post.created_at);
+      var timeStr = date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + ' · ' + date.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+      var platforms = Array.isArray(post.platforms) ? post.platforms.join(', ') : (post.platforms || '');
+      var preview = (post.content || '').slice(0, 120) + ((post.content || '').length > 120 ? '...' : '');
+
+      var item = document.createElement('div');
+      item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);';
+      item.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:' + (post.status === 'published' ? '#22c55e' : '#f59e0b') + ';"></div>' +
+            '<span style="font-size:11px;font-weight:700;color:var(--text3);">' + timeStr + '</span>' +
+          '</div>' +
+          '<span style="font-size:11px;color:var(--text3);">📤 ' + platforms + '</span>' +
+        '</div>' +
+        (post.image_url ? '<img src="' + post.image_url + '" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;margin-bottom:8px;">' : '') +
+        '<div style="font-size:13px;color:var(--text2);line-height:1.6;">' + preview + '</div>';
+
+      container.appendChild(item);
+    });
+
+    // Add "view all" note
+    var note = document.createElement('div');
+    note.style.cssText = 'font-size:11px;color:var(--text3);text-align:center;padding:8px;';
+    note.textContent = 'Showing last 4 posts · Go to Posts page for full history';
+    container.appendChild(note);
+
+  } catch(e) {
+    console.error('Failed to load AP history:', e);
+  }
 }
 
-// Spin animation
-var apStyle = document.createElement('style');
-apStyle.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
-document.head.appendChild(apStyle);
+function addToAPHistory(text, type, status) {
+  // Save to Supabase first
+  if (_user) {
+    _db.from('autopostleey_posts').insert([{
+      user_id:    _user.id,
+      content:    text,
+      platforms:  _selectedPlatforms || [],
+      image_url:  window._composerImageUrl || '',
+      status:     'published',
+      mode:       'autoposter',
+      created_at: new Date().toISOString()
+    }]).then(function() {
+      loadAPHistory(); // Reload history after saving
+    });
+  }
 
+  // Also update DOM immediately for instant feedback
+  var container = document.getElementById('autoposter-history');
+  if (!container) return;
+  if (container.textContent.includes('No auto-generated')) container.innerHTML = '';
+
+  var item = document.createElement('div');
+  item.style.cssText = 'background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);animation:fadeIn .3s ease;';
+  var now = new Date();
+  var timeStr = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + ' · ' + now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  item.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>' +
+        '<span style="font-size:11px;font-weight:700;color:var(--text3);">' + timeStr + '</span>' +
+      '</div>' +
+      '<span style="font-size:11px;color:var(--text3);">✅ ' + (status || 'posted') + '</span>' +
+    '</div>' +
+    (window._composerImageUrl ? '<img src="' + window._composerImageUrl + '" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;margin-bottom:8px;">' : '') +
+    '<div style="font-size:13px;color:var(--text2);line-height:1.6;">' + text.slice(0,120) + (text.length > 120 ? '...' : '') + '</div>';
+
+  // Keep max 4 items
+  container.insertBefore(item, container.firstChild);
+  var items = container.querySelectorAll('div[style*="border-radius:10px"]');
+  if (items.length > 4) items[items.length-1].remove();
+}
 </script>
-
-<!-- PAYPAL MODAL -->
-<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this){this.style.cssText='display:none';}">
-  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:400px;position:relative;">
-    <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
-    <div style="font-size:18px;font-weight:800;color:#e8e8f0;margin-bottom:4px;" id="paypal-plan-name">Upgrade Plan</div>
-    <div style="font-size:14px;color:#8888aa;margin-bottom:20px;" id="paypal-plan-price"></div>
-    <div id="paypal-btn-container"></div>
-    <p style="text-align:center;font-size:12px;color:#444466;margin-top:12px;">🔒 Secured by PayPal · Cancel anytime</p>
-  </div>
-</div>
-
-
-<!-- CONNECTION MODAL -->
-<div id="conn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#111118;border:1px solid #2a2a3e;border-radius:16px;padding:32px;width:100%;max-width:460px;position:relative;">
-    <button onclick="var m=document.getElementById('conn-modal');m.style.cssText='display:none';" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#444466;font-size:22px;cursor:pointer;">×</button>
-    <div id="conn-modal-title" style="font-size:20px;font-weight:800;color:#e8e8f0;margin-bottom:20px;"></div>
-    <div id="conn-modal-body"></div>
-  </div>
-</div>
 </body>
 </html>
-
-    <div class="page" id="page-support">
-      <div class="page-header">
-        <div>
-          <div class="page-title">💬 Support & Community</div>
-          <div class="page-sub">Get help, connect with us, and join our community</div>
-        </div>
-      </div>
-
-      <!-- Contact Support -->
-      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">📬 Contact Support</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <a href="mailto:support@autopostleey.com" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
-            <div style="font-size:28px;">📧</div>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text);">Email Support</div>
-              <div style="font-size:12px;color:var(--text3);">support@autopostleey.com</div>
-            </div>
-          </a>
-          <a href="https://t.me/autopostleey" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;">
-            <div style="font-size:28px;">✈️</div>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text);">Telegram Support</div>
-              <div style="font-size:12px;color:var(--text3);">@autopostleey</div>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      <!-- Follow Us -->
-      <div style="background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🌐 Follow Autopostleey</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Stay updated with tips, new features and announcements</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-
-          <a href="https://www.facebook.com/profile.php?id=61590869057936" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#1877f2'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:#1877f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📘</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">Facebook</div>
-            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
-          </a>
-
-          <a href="https://instagram.com/autopostleey" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#e1306c'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">📸</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">Instagram</div>
-            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
-          </a>
-
-          <a href="https://www.youtube.com/channel/UCnWc_kOUx6Ck80LAM85TFRQ" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#ff0000'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:#ff0000;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">▶️</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">YouTube</div>
-            <div style="font-size:10px;color:var(--text3);">@autopostleey</div>
-          </a>
-
-          <a href="https://discord.com/channels/1517982825180041397/1517982825922691225" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#5865f2'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:#5865f2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💬</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">Discord</div>
-            <div style="font-size:10px;color:var(--text3);">Join Community</div>
-          </a>
-
-          <a href="https://bsky.app/profile/autopostleey.com" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0085ff'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:#0085ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">🦋</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">Bluesky</div>
-            <div style="font-size:10px;color:var(--text3);">@autopostleey.com</div>
-          </a>
-
-          <a href="https://www.linkedin.com/company/autopostleey/posts/?feedView=all&viewAsMember=true" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#0077b5'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="width:40px;height:40px;background:#0077b5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">💼</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">LinkedIn</div>
-            <div style="font-size:10px;color:var(--text3);">Autopostleey</div>
-          </a>
-
-        </div>
-      </div>
-
-      <!-- FAQ -->
-      <div style="background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">❓ Frequently Asked Questions</div>
-
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How does AI AutoPoster work?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Enable AI AutoPoster, set your frequency, and Autopostleey will automatically generate and post content to all your connected platforms — 24/7, even when you're asleep!</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Which platforms are supported?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Autopostleey supports 13 platforms: Facebook, Instagram, Twitter/X, LinkedIn, YouTube, Telegram, Discord, Bluesky, Threads, Pinterest, Tumblr, Google Business, and Facebook Groups.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Is Autopostleey free?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Yes! Autopostleey has a free plan that lets you post to all platforms. Premium plans unlock more features like higher posting frequency, priority support, and advanced analytics.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">How do I connect my social media accounts?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Go to the Connections page in the dashboard. Click Connect next to each platform and follow the authorization steps. Most platforms connect in under 60 seconds.</div>
-          </details>
-          <details style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);">
-            <summary style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">Can I schedule posts in advance?</summary>
-            <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;">Absolutely! Use Bulk Schedule to queue up weeks or months of content at once. Set your dates, frequency, and let Autopostleey handle the rest.</div>
-          </details>
-        </div>
-      </div>
-
-    </div>
