@@ -1042,61 +1042,115 @@
         <!-- CONTENT TYPES CARD -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;">
           <div style="font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><span>🎨</span> Content Types</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">AI will rotate through these content types automatically</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">AI rotates through these automatically — upload images and AI generates captions ready for posting</div>
 
-          <div style="display:flex;flex-direction:column;gap:10px;" id="content-types-list">
+          <div style="display:flex;flex-direction:column;gap:12px;" id="content-types-list">
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-product" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🛍️ Product/Service Highlights</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Showcase what you sell with key benefits</div>
-                <input id="ct-product-url" placeholder="Product page URL (e.g. yoursite.com/products)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Product Highlights -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-product" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('product',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🛍️ Product/Service Highlights</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;padding:2px 8px;border-radius:20px;font-weight:700;">AUTO</span>
+              </label>
+              <div id="ct-product-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Upload product photos — AI generates selling captions one by one, queued for auto-posting</div>
+                <div id="ct-product-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-product-upload').click()" style="padding:7px 14px;background:rgba(168,85,247,0.1);border:1px dashed rgba(168,85,247,0.4);border-radius:8px;color:#a855f7;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Photos</button>
+                  <button onclick="generateCTCaptions('product')" style="padding:7px 14px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:8px;color:#a855f7;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Captions</button>
+                </div>
+                <input type="file" id="ct-product-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('product',this)">
+                <input id="ct-product-url" placeholder="Or add product page URL" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;margin-top:8px;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-website" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🌐 Website Screenshot Posts</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Auto-screenshot your site — uses your main website URL by default</div>
-                <input id="ct-website-url" placeholder="Custom page to screenshot (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Website Screenshot -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-website" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('website',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🌐 Website Screenshot Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(6,182,212,0.15);color:#06b6d4;padding:2px 8px;border-radius:20px;font-weight:700;">AUTO</span>
+              </label>
+              <div id="ct-website-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Auto-screenshots your site OR upload screenshots of your website/Facebook page — AI generates captions</div>
+                <div id="ct-website-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-website-upload').click()" style="padding:7px 14px;background:rgba(6,182,212,0.1);border:1px dashed rgba(6,182,212,0.4);border-radius:8px;color:#06b6d4;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Screenshots</button>
+                  <button onclick="generateCTCaptions('website')" style="padding:7px 14px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);border-radius:8px;color:#06b6d4;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Captions</button>
+                </div>
+                <input type="file" id="ct-website-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('website',this)">
+                <input id="ct-website-url" placeholder="Website URL to auto-screenshot (uses your main URL by default)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;margin-top:8px;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-educational" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">📚 Educational Content</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tips and knowledge related to your industry</div>
-                <input id="ct-educational-url" placeholder="Blog/resources page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Educational -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-educational" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('educational',this.checked)">
+                <span style="font-size:13px;font-weight:700;">📚 Educational Content</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-educational-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">AI auto-composes industry tips, how-tos and knowledge posts that position you as an expert</div>
+                <input id="ct-educational-url" placeholder="Blog/resources page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-engagement" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">💬 Engagement Posts</div>
-                <div style="font-size:11px;color:var(--text3);">Questions, polls and conversation starters</div>
+            <!-- Engagement -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-engagement" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('engagement',this.checked)">
+                <span style="font-size:13px;font-weight:700;">💬 Engagement Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-engagement-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Questions, polls, conversation starters — upload an image to make it more engaging</div>
+                <div id="ct-engagement-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-engagement-upload').click()" style="padding:7px 14px;background:rgba(245,158,11,0.1);border:1px dashed rgba(245,158,11,0.4);border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Image</button>
+                  <button onclick="generateCTCaptions('engagement')" style="padding:7px 14px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-engagement-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('engagement',this)">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-promo" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🎯 Promotional Posts</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Special offers, free trials, call to action</div>
-                <input id="ct-promo-url" placeholder="Pricing/offers page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Promotional -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-promo" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('promo',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🎯 Promotional Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(236,72,153,0.15);color:#ec4899;padding:2px 8px;border-radius:20px;font-weight:700;">AI IMAGE</span>
+              </label>
+              <div id="ct-promo-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Upload promo images OR enter your offer text — AI generates a beautiful promo image automatically</div>
+                <div id="ct-promo-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                  <button onclick="document.getElementById('ct-promo-upload').click()" style="padding:7px 14px;background:rgba(236,72,153,0.1);border:1px dashed rgba(236,72,153,0.4);border-radius:8px;color:#ec4899;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Image</button>
+                  <button onclick="generateCTCaptions('promo')" style="padding:7px 14px;background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.3);border-radius:8px;color:#ec4899;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-promo-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('promo',this)">
+                <input id="ct-promo-text" placeholder="Your offer text (e.g. 50% off this week!) — AI will create a promo image if no photo uploaded" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" id="ct-analytics" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">📊 Analytics Highlights</div>
-                <div style="font-size:11px;color:var(--text3);">Share social media growth milestones</div>
+            <!-- Analytics -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-analytics" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('analytics',this.checked)">
+                <span style="font-size:13px;font-weight:700;">📊 Analytics Highlights</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(99,102,241,0.15);color:#6366f1;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-analytics-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Share growth milestones — upload analytics screenshots and AI writes the celebration post</div>
+                <div id="ct-analytics-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-analytics-upload').click()" style="padding:7px 14px;background:rgba(99,102,241,0.1);border:1px dashed rgba(99,102,241,0.4);border-radius:8px;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Screenshot</button>
+                  <button onclick="generateCTCaptions('analytics')" style="padding:7px 14px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-analytics-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('analytics',this)">
               </div>
-            </label>
+            </div>
 
           </div>
 
@@ -4387,6 +4441,122 @@ async function validateAllConnections() {
     }
   }
   return issues;
+}
+
+
+// ── CONTENT TYPES IMAGE UPLOAD & CAPTION GENERATION ──────────
+var _ctImages = { product:[], website:[], engagement:[], promo:[], analytics:[] };
+
+function toggleCTCard(type, checked) {
+  var body = document.getElementById('ct-' + type + '-body');
+  if (body) body.style.opacity = checked ? '1' : '0.4';
+}
+
+function handleCTImageUpload(type, input) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var grid = document.getElementById('ct-' + type + '-images');
+  if (!grid) return;
+
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      _ctImages[type] = _ctImages[type] || [];
+      _ctImages[type].push({ dataUrl: dataUrl, file: file, caption: '' });
+
+      // Show thumbnail
+      var thumb = document.createElement('div');
+      thumb.style.cssText = 'position:relative;width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--border);';
+      thumb.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+        + '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:8px;color:#fff;text-align:center;padding:2px;">✓</div>';
+      grid.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+  showToast('✅ ' + files.length + ' photo(s) added to ' + type + ' queue!', 'success');
+}
+
+async function generateCTCaptions(type) {
+  var images = _ctImages[type] || [];
+  var bizname = _bizProfile ? _bizProfile.name : '';
+  var description = _bizProfile ? _bizProfile.description : '';
+
+  if (images.length === 0) {
+    showToast('Upload images first to generate captions!', 'error');
+    return;
+  }
+
+  showToast('Generating captions for ' + images.length + ' image(s)...', 'success');
+
+  var generated = 0;
+  for (var i = 0; i < images.length; i++) {
+    var img = images[i];
+    try {
+      var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64:  img.dataUrl.split(',')[1],
+          media_type:    img.file.type || 'image/jpeg',
+          business_name: bizname,
+          description:   description,
+          content_type:  type
+        })
+      });
+      var data = await resp.json();
+      if (data.post) {
+        images[i].caption = appendContactToPost(data.post);
+        generated++;
+
+        // Save to Supabase as a queued autoposter post
+        if (_user) {
+          // Upload image to Supabase Storage
+          var uploadPath = 'ct-images/' + _user.id + '/' + type + '_' + Date.now() + '_' + i + '.jpg';
+          var blob = await (await fetch(img.dataUrl)).blob();
+          await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + uploadPath, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I',
+              'Content-Type': img.file.type || 'image/jpeg',
+              'x-upsert': 'true'
+            },
+            body: blob
+          });
+          var imageUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + uploadPath;
+
+          // Save as queued post for autoposter
+          await _db.from('autopostleey_posts').insert([{
+            user_id:    _user.id,
+            content:    images[i].caption,
+            image_url:  imageUrl,
+            platforms:  [],
+            status:     'queued',
+            mode:       'ct-' + type,
+            created_at: new Date().toISOString()
+          }]);
+        }
+      }
+    } catch(e) {
+      console.error('Caption gen failed for image', i, e);
+    }
+  }
+
+  showToast('✅ ' + generated + '/' + images.length + ' captions generated & queued for auto-posting!', 'success');
+
+  // Update thumbnails to show checkmarks with captions
+  var grid = document.getElementById('ct-' + type + '-images');
+  if (grid) {
+    var thumbs = grid.querySelectorAll('div');
+    thumbs.forEach(function(t, i) {
+      var overlay = t.querySelector('div');
+      if (overlay && images[i] && images[i].caption) {
+        overlay.style.background = 'rgba(34,197,94,0.8)';
+        overlay.textContent = '✨';
+      }
+    });
+  }
 }
 
 function closeConnModal() {
