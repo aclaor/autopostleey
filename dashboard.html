@@ -3143,10 +3143,17 @@ async function postReelToPlatform(platform) {
       var err = pubData.results && pubData.results[0] ? pubData.results[0].error : 'Unknown error';
       // For Instagram/Facebook/YouTube - show copy & open flow
       if (['instagram','facebook','youtube'].includes(platform)) {
-        showToast('Opening ' + platform + ' — paste your caption there!', 'success');
         await navigator.clipboard.writeText(caption).catch(function(){});
-        var urls = { instagram:'https://www.instagram.com/create/style/', facebook:'https://www.facebook.com/', youtube:'https://studio.youtube.com/' };
-        window.open(urls[platform], '_blank');
+        if (platform === 'youtube') {
+          showToast('✅ Caption copied! Opening YouTube Studio — upload your video there and paste caption.', 'success');
+          window.open('https://studio.youtube.com/', '_blank');
+        } else if (platform === 'instagram') {
+          showToast('✅ Caption copied! Opening Instagram — paste your caption when uploading.', 'success');
+          window.open('https://www.instagram.com/create/style/', '_blank');
+        } else {
+          showToast('✅ Caption copied! Opening Facebook — paste your caption when uploading.', 'success');
+          window.open('https://www.facebook.com/', '_blank');
+        }
       } else {
         showToast('Failed: ' + err, 'error');
       }
@@ -5026,7 +5033,7 @@ async function connectYouTubeOAuth() {
     var { error } = await _db.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        scopes: 'https://www.googleapis.com/auth/youtube.readonly',
+        scopes: 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
         redirectTo: window.location.origin + '/dashboard.html?connect=youtube',
         queryParams: { access_type: 'offline', prompt: 'consent' }
       }
