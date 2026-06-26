@@ -1211,39 +1211,99 @@
       <div class="page-header">
         <div class="page-title">Billing & Plan</div>
       </div>
-      <div style="max-width:640px;">
-        <div class="card" style="border-color:var(--accent);">
-          <div class="card-title">⚡ Current Plan</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+
+      <!-- Current Plan Banner -->
+      <div style="max-width:760px;">
+        <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(139,92,246,0.08));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">⚡</div>
             <div>
-              <div style="font-size:24px;font-weight:800;" id="billing-plan-name">Free Plan</div>
-              <div style="font-size:14px;color:var(--text2);margin-top:4px;" id="billing-plan-desc">10 posts/month · Facebook only</div>
+              <div style="font-size:11px;color:#a855f7;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Current Plan</div>
+              <div style="font-size:20px;font-weight:800;color:var(--text);" id="billing-plan-name">Free Plan</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:2px;" id="billing-plan-desc">30 posts/month · All platforms</div>
             </div>
-            <div style="font-size:32px;font-weight:900;" id="billing-plan-price">$0<small style="font-size:14px;font-weight:400;color:var(--text2);">/mo</small></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:36px;font-weight:900;color:var(--text);line-height:1;" id="billing-plan-price">$0<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">No credit card required</div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:4px;">
-          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('starter')">
-            <div style="font-weight:700;margin-bottom:4px;">Starter — $9/mo</div>
-            <div style="font-size:13px;color:var(--text2);">200 posts · 3 platforms</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+
+        <!-- Trust badges -->
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">🔒 SSL Secured</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">💳 PayPal Protected</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">↩️ Cancel Anytime</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">⚡ Instant Activation</div>
+        </div>
+
+        <!-- Plan Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+
+          <!-- Starter -->
+          <div onclick="selectBillingPlan('starter')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#a855f7';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🌱 Starter</div>
+            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$9<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Perfect to get started</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 200 posts/month</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 3 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> AI captions</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;font-size:14px;">✗</span> Auto-poster</div>
+            </div>
+            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">Get Started →</button>
           </div>
-          <div class="card" style="cursor:pointer;border-color:var(--accent);" onclick="selectBillingPlan('growth')">
-            <div style="font-weight:700;margin-bottom:4px;">Growth — $19/mo ⚡</div>
-            <div style="font-size:13px;color:var(--text2);">Unlimited · All platforms</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:6px;color:#fff;font-size:12px;cursor:pointer;font-weight:700;">Select →</button>
+
+          <!-- Growth — POPULAR -->
+          <div onclick="selectBillingPlan('growth')" style="background:linear-gradient(160deg,#1e0a3c,#2d1065);border:2px solid #a855f7;border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;box-shadow:0 8px 32px rgba(168,85,247,0.2);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 48px rgba(168,85,247,0.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(168,85,247,0.2)'">
+            <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:10px;font-weight:700;padding:4px 14px;border-radius:20px;white-space:nowrap;letter-spacing:0.5px;">⚡ MOST POPULAR</div>
+            <div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:12px;">🚀 Growth</div>
+            <div style="font-size:32px;font-weight:900;color:#fff;line-height:1;margin-bottom:4px;">$19<span style="font-size:14px;font-weight:400;color:#c084fc;">/mo</span></div>
+            <div style="font-size:12px;color:#9d78d4;margin-bottom:16px;">Best for growing businesses</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> AI AutoPoster</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Reels & Shorts creator</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Priority support</div>
+            </div>
+            <button style="width:100%;padding:10px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(168,85,247,0.4);">Upgrade Now ⚡</button>
           </div>
-          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('agency')">
-            <div style="font-weight:700;margin-bottom:4px;">Agency — $49/mo</div>
-            <div style="font-size:13px;color:var(--text2);">Unlimited · 5 businesses</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+
+          <!-- Agency -->
+          <div onclick="selectBillingPlan('agency')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#f59e0b';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🏢 Agency</div>
+            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$49<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">For teams & agencies</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 5 businesses</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Team members</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Dedicated support</div>
+            </div>
+            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:13px;font-weight:600;cursor:pointer;">Contact Sales →</button>
+          </div>
+
+        </div>
+
+        <!-- Free plan details -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🎁 Your Free Plan includes:</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> 30 posts/month</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> All platforms</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> AI caption generation</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Bulk scheduler</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Content types</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;">✗</span> AI AutoPoster</div>
           </div>
         </div>
+
       </div>
     </div>
 
 
-    <!-- ── CALENDAR ───────────────── -->
     <div class="page" id="page-calendar">
       <div class="page-header">
         <div class="page-title">Content Calendar</div>
