@@ -6261,5 +6261,28 @@ function addToAPHistory(text, type, status) {
   if (items.length > 4) items[items.length-1].remove();
 }
 </script>
+
+<!-- PayPal Billing Modal -->
+<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px;width:420px;max-width:95vw;position:relative;">
+    <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;">×</button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:32px;margin-bottom:8px;">⚡</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;" id="paypal-plan-name">Growth Plan — $19/mo</div>
+      <div style="font-size:13px;color:var(--text2);" id="paypal-plan-price">$19/month</div>
+    </div>
+    <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+        ✅ Instant activation after payment<br>
+        ✅ Cancel anytime — no contracts<br>
+        ✅ Secured by PayPal
+      </div>
+    </div>
+    <div id="paypal-btn-container" style="min-height:48px;"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <button onclick="document.getElementById('paypal-modal').style.display='none'" style="background:transparent;border:none;color:var(--text3);font-size:12px;cursor:pointer;">Maybe later</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
