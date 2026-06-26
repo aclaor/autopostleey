@@ -3851,6 +3851,7 @@ async function submitPost(status) {
     var isNow = _postNow || new Date(scheduledAt) <= new Date(Date.now() + 2*60000);
     if(status === 'scheduled' && isNow && postData) {
       showToast('Publishing to platforms...', 'success');
+      // Email notification will be sent after publish result
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
@@ -3875,6 +3876,7 @@ async function submitPost(status) {
           var failed    = pubData.results.filter(function(r){return !r.success;});
           if(succeeded.length > 0) {
             showToast('✅ Posted to '+succeeded.map(function(r){return r.platform;}).join(', ')+'!', 'success');
+          sendNotification({ type: 'post_published', platforms: _selectedPlatforms, content: content, post_id: postData ? postData.id : '' });
           }
           if(failed.length > 0) {
             showToast('⚠️ Failed on: '+failed.map(function(r){return r.platform+' ('+r.error+')'}).join(', '), 'error');
@@ -5224,6 +5226,7 @@ window.addEventListener('DOMContentLoaded', function() {
       _db.auth.updateUser({ data: { plan: pending } }).then(function() {
         localStorage.removeItem('ap_pending_plan');
         showToast('🎉 Plan upgraded successfully!', 'success');
+        sendNotification({ type: 'plan_upgraded', plan: pending, amount: pending === 'starter' ? '9' : pending === 'growth' ? '19' : '49' });
         updatePlanUI(pending);
       });
     }
