@@ -1043,7 +1043,17 @@ async function submitAuth() {
       result = await window._sb.auth.signUp({ email, password: pass });
     }
     if (result.error) { showError(result.error.message); }
-    else { window.location.href = 'dashboard.html'; }
+    else {
+      // Send welcome email
+      try {
+        fetch('https://autopostleey-notify.alexclaor.workers.dev/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'signup', email: email, name: email.split('@')[0] })
+        }).catch(function(){});
+      } catch(e) {}
+      window.location.href = 'dashboard.html';
+    }
   } catch(e) { showError(e.message); }
   finally { btn.disabled = false; btn.textContent = _authMode === 'login' ? 'Sign in' : 'Create account'; }
 }
