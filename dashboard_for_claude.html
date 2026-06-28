@@ -176,7 +176,7 @@
 <!-- TOPBAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:16px;">
-    <a href="index.html" style="text-decoration:none;"><div class="logo">auto<span>postleey</span></div></a>
+    <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo">auto<span>postleey</span></div></a>
   </div>
   <div class="topbar-right">
     <span class="user-pill" id="topbar-email">Loading...</span>
@@ -1042,61 +1042,115 @@
         <!-- CONTENT TYPES CARD -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;">
           <div style="font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><span>🎨</span> Content Types</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">AI will rotate through these content types automatically</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">AI rotates through these automatically — upload images and AI generates captions ready for posting</div>
 
-          <div style="display:flex;flex-direction:column;gap:10px;" id="content-types-list">
+          <div style="display:flex;flex-direction:column;gap:12px;" id="content-types-list">
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-product" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🛍️ Product/Service Highlights</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Showcase what you sell with key benefits</div>
-                <input id="ct-product-url" placeholder="Product page URL (e.g. yoursite.com/products)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Product Highlights -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-product" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('product',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🛍️ Product/Service Highlights</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;padding:2px 8px;border-radius:20px;font-weight:700;">AUTO</span>
+              </label>
+              <div id="ct-product-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Upload product photos — AI generates selling captions one by one, queued for auto-posting</div>
+                <div id="ct-product-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-product-upload').click()" style="padding:7px 14px;background:rgba(168,85,247,0.1);border:1px dashed rgba(168,85,247,0.4);border-radius:8px;color:#a855f7;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Photos</button>
+                  <button onclick="generateCTCaptions('product')" style="padding:7px 14px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:8px;color:#a855f7;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Captions</button>
+                </div>
+                <input type="file" id="ct-product-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('product',this)">
+                <input id="ct-product-url" placeholder="Or add product page URL" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;margin-top:8px;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-website" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🌐 Website Screenshot Posts</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Auto-screenshot your site — uses your main website URL by default</div>
-                <input id="ct-website-url" placeholder="Custom page to screenshot (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Website Screenshot -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-website" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('website',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🌐 Website Screenshot Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(6,182,212,0.15);color:#06b6d4;padding:2px 8px;border-radius:20px;font-weight:700;">AUTO</span>
+              </label>
+              <div id="ct-website-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Auto-screenshots your site OR upload screenshots of your website/Facebook page — AI generates captions</div>
+                <div id="ct-website-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-website-upload').click()" style="padding:7px 14px;background:rgba(6,182,212,0.1);border:1px dashed rgba(6,182,212,0.4);border-radius:8px;color:#06b6d4;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Screenshots</button>
+                  <button onclick="generateCTCaptions('website')" style="padding:7px 14px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);border-radius:8px;color:#06b6d4;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Captions</button>
+                </div>
+                <input type="file" id="ct-website-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('website',this)">
+                <input id="ct-website-url" placeholder="Website URL to auto-screenshot (uses your main URL by default)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;margin-top:8px;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-educational" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">📚 Educational Content</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tips and knowledge related to your industry</div>
-                <input id="ct-educational-url" placeholder="Blog/resources page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Educational -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-educational" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('educational',this.checked)">
+                <span style="font-size:13px;font-weight:700;">📚 Educational Content</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-educational-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">AI auto-composes industry tips, how-tos and knowledge posts that position you as an expert</div>
+                <input id="ct-educational-url" placeholder="Blog/resources page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-engagement" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">💬 Engagement Posts</div>
-                <div style="font-size:11px;color:var(--text3);">Questions, polls and conversation starters</div>
+            <!-- Engagement -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-engagement" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('engagement',this.checked)">
+                <span style="font-size:13px;font-weight:700;">💬 Engagement Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-engagement-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Questions, polls, conversation starters — upload an image to make it more engaging</div>
+                <div id="ct-engagement-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-engagement-upload').click()" style="padding:7px 14px;background:rgba(245,158,11,0.1);border:1px dashed rgba(245,158,11,0.4);border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Image</button>
+                  <button onclick="generateCTCaptions('engagement')" style="padding:7px 14px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-engagement-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('engagement',this)">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" checked id="ct-promo" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">🎯 Promotional Posts</div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Special offers, free trials, call to action</div>
-                <input id="ct-promo-url" placeholder="Pricing/offers page URL (optional)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;">
+            <!-- Promotional -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-promo" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('promo',this.checked)">
+                <span style="font-size:13px;font-weight:700;">🎯 Promotional Posts</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(236,72,153,0.15);color:#ec4899;padding:2px 8px;border-radius:20px;font-weight:700;">AI IMAGE</span>
+              </label>
+              <div id="ct-promo-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Upload promo images OR enter your offer text — AI generates a beautiful promo image automatically</div>
+                <div id="ct-promo-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                  <button onclick="document.getElementById('ct-promo-upload').click()" style="padding:7px 14px;background:rgba(236,72,153,0.1);border:1px dashed rgba(236,72,153,0.4);border-radius:8px;color:#ec4899;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Image</button>
+                  <button onclick="generateCTCaptions('promo')" style="padding:7px 14px;background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.3);border-radius:8px;color:#ec4899;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-promo-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('promo',this)">
+                <input id="ct-promo-text" placeholder="Your offer text (e.g. 50% off this week!) — AI will create a promo image if no photo uploaded" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;outline:none;box-sizing:border-box;">
               </div>
-            </label>
+            </div>
 
-            <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:10px;cursor:pointer;">
-              <input type="checkbox" id="ct-analytics" style="width:16px;height:16px;accent-color:#a855f7;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;">📊 Analytics Highlights</div>
-                <div style="font-size:11px;color:var(--text3);">Share social media growth milestones</div>
+            <!-- Analytics -->
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+                <input type="checkbox" checked id="ct-analytics" style="width:16px;height:16px;accent-color:#a855f7;" onchange="toggleCTCard('analytics',this.checked)">
+                <span style="font-size:13px;font-weight:700;">📊 Analytics Highlights</span>
+                <span style="margin-left:auto;font-size:10px;background:rgba(99,102,241,0.15);color:#6366f1;padding:2px 8px;border-radius:20px;font-weight:700;">AI WRITTEN</span>
+              </label>
+              <div id="ct-analytics-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Share growth milestones — upload analytics screenshots and AI writes the celebration post</div>
+                <div id="ct-analytics-images" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="document.getElementById('ct-analytics-upload').click()" style="padding:7px 14px;background:rgba(99,102,241,0.1);border:1px dashed rgba(99,102,241,0.4);border-radius:8px;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;">📸 Upload Screenshot</button>
+                  <button onclick="generateCTCaptions('analytics')" style="padding:7px 14px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;">✨ Generate Caption</button>
+                </div>
+                <input type="file" id="ct-analytics-upload" accept="image/*" multiple style="display:none" onchange="handleCTImageUpload('analytics',this)">
               </div>
-            </label>
+            </div>
 
           </div>
 
@@ -1157,39 +1211,99 @@
       <div class="page-header">
         <div class="page-title">Billing & Plan</div>
       </div>
-      <div style="max-width:640px;">
-        <div class="card" style="border-color:var(--accent);">
-          <div class="card-title">⚡ Current Plan</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+
+      <!-- Current Plan Banner -->
+      <div style="max-width:760px;">
+        <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(139,92,246,0.08));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">⚡</div>
             <div>
-              <div style="font-size:24px;font-weight:800;" id="billing-plan-name">Free Plan</div>
-              <div style="font-size:14px;color:var(--text2);margin-top:4px;" id="billing-plan-desc">10 posts/month · Facebook only</div>
+              <div style="font-size:11px;color:#a855f7;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Current Plan</div>
+              <div style="font-size:20px;font-weight:800;color:var(--text);" id="billing-plan-name">Free Plan</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:2px;" id="billing-plan-desc">30 posts/month · All platforms</div>
             </div>
-            <div style="font-size:32px;font-weight:900;" id="billing-plan-price">$0<small style="font-size:14px;font-weight:400;color:var(--text2);">/mo</small></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:36px;font-weight:900;color:var(--text);line-height:1;" id="billing-plan-price">$0<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">No credit card required</div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:4px;">
-          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('starter')">
-            <div style="font-weight:700;margin-bottom:4px;">Starter — $9/mo</div>
-            <div style="font-size:13px;color:var(--text2);">200 posts · 3 platforms</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+
+        <!-- Trust badges -->
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">🔒 SSL Secured</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">💳 PayPal Protected</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">↩️ Cancel Anytime</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">⚡ Instant Activation</div>
+        </div>
+
+        <!-- Plan Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+
+          <!-- Starter -->
+          <div onclick="selectBillingPlan('starter')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#a855f7';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🌱 Starter</div>
+            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$9<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Perfect to get started</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 200 posts/month</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 3 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> AI captions</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;font-size:14px;">✗</span> Auto-poster</div>
+            </div>
+            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">Get Started →</button>
           </div>
-          <div class="card" style="cursor:pointer;border-color:var(--accent);" onclick="selectBillingPlan('growth')">
-            <div style="font-weight:700;margin-bottom:4px;">Growth — $19/mo ⚡</div>
-            <div style="font-size:13px;color:var(--text2);">Unlimited · All platforms</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:6px;color:#fff;font-size:12px;cursor:pointer;font-weight:700;">Select →</button>
+
+          <!-- Growth — POPULAR -->
+          <div onclick="selectBillingPlan('growth')" style="background:linear-gradient(160deg,#1e0a3c,#2d1065);border:2px solid #a855f7;border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;box-shadow:0 8px 32px rgba(168,85,247,0.2);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 48px rgba(168,85,247,0.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(168,85,247,0.2)'">
+            <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:10px;font-weight:700;padding:4px 14px;border-radius:20px;white-space:nowrap;letter-spacing:0.5px;">⚡ MOST POPULAR</div>
+            <div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:12px;">🚀 Growth</div>
+            <div style="font-size:32px;font-weight:900;color:#fff;line-height:1;margin-bottom:4px;">$19<span style="font-size:14px;font-weight:400;color:#c084fc;">/mo</span></div>
+            <div style="font-size:12px;color:#9d78d4;margin-bottom:16px;">Best for growing businesses</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> AI AutoPoster</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Reels & Shorts creator</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Priority support</div>
+            </div>
+            <button style="width:100%;padding:10px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(168,85,247,0.4);">Upgrade Now ⚡</button>
           </div>
-          <div class="card" style="cursor:pointer;" onclick="selectBillingPlan('agency')">
-            <div style="font-weight:700;margin-bottom:4px;">Agency — $49/mo</div>
-            <div style="font-size:13px;color:var(--text2);">Unlimited · 5 businesses</div>
-            <button style="margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;">Select →</button>
+
+          <!-- Agency -->
+          <div onclick="selectBillingPlan('agency')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#f59e0b';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🏢 Agency</div>
+            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$49<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">For teams & agencies</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 5 businesses</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Team members</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Dedicated support</div>
+            </div>
+            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:13px;font-weight:600;cursor:pointer;">Contact Sales →</button>
+          </div>
+
+        </div>
+
+        <!-- Free plan details -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🎁 Your Free Plan includes:</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> 30 posts/month</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> All platforms</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> AI caption generation</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Bulk scheduler</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Content types</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;">✗</span> AI AutoPoster</div>
           </div>
         </div>
+
       </div>
     </div>
 
 
-    <!-- ── CALENDAR ───────────────── -->
     <div class="page" id="page-calendar">
       <div class="page-header">
         <div class="page-title">Content Calendar</div>
@@ -3029,10 +3143,17 @@ async function postReelToPlatform(platform) {
       var err = pubData.results && pubData.results[0] ? pubData.results[0].error : 'Unknown error';
       // For Instagram/Facebook/YouTube - show copy & open flow
       if (['instagram','facebook','youtube'].includes(platform)) {
-        showToast('Opening ' + platform + ' — paste your caption there!', 'success');
         await navigator.clipboard.writeText(caption).catch(function(){});
-        var urls = { instagram:'https://www.instagram.com/create/style/', facebook:'https://www.facebook.com/', youtube:'https://studio.youtube.com/' };
-        window.open(urls[platform], '_blank');
+        if (platform === 'youtube') {
+          showToast('✅ Caption copied! Opening YouTube Studio — upload your video there and paste caption.', 'success');
+          window.open('https://studio.youtube.com/', '_blank');
+        } else if (platform === 'instagram') {
+          showToast('✅ Caption copied! Opening Instagram — paste your caption when uploading.', 'success');
+          window.open('https://www.instagram.com/create/style/', '_blank');
+        } else {
+          showToast('✅ Caption copied! Opening Facebook — paste your caption when uploading.', 'success');
+          window.open('https://www.facebook.com/', '_blank');
+        }
       } else {
         showToast('Failed: ' + err, 'error');
       }
@@ -3737,6 +3858,7 @@ async function submitPost(status) {
     var isNow = _postNow || new Date(scheduledAt) <= new Date(Date.now() + 2*60000);
     if(status === 'scheduled' && isNow && postData) {
       showToast('Publishing to platforms...', 'success');
+      // Email notification will be sent after publish result
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
@@ -3761,6 +3883,7 @@ async function submitPost(status) {
           var failed    = pubData.results.filter(function(r){return !r.success;});
           if(succeeded.length > 0) {
             showToast('✅ Posted to '+succeeded.map(function(r){return r.platform;}).join(', ')+'!', 'success');
+          sendNotification({ type: 'post_published', platforms: _selectedPlatforms, content: content, post_id: postData ? postData.id : '' });
           }
           if(failed.length > 0) {
             showToast('⚠️ Failed on: '+failed.map(function(r){return r.platform+' ('+r.error+')'}).join(', '), 'error');
@@ -4389,6 +4512,122 @@ async function validateAllConnections() {
   return issues;
 }
 
+
+// ── CONTENT TYPES IMAGE UPLOAD & CAPTION GENERATION ──────────
+var _ctImages = { product:[], website:[], engagement:[], promo:[], analytics:[] };
+
+function toggleCTCard(type, checked) {
+  var body = document.getElementById('ct-' + type + '-body');
+  if (body) body.style.opacity = checked ? '1' : '0.4';
+}
+
+function handleCTImageUpload(type, input) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var grid = document.getElementById('ct-' + type + '-images');
+  if (!grid) return;
+
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      _ctImages[type] = _ctImages[type] || [];
+      _ctImages[type].push({ dataUrl: dataUrl, file: file, caption: '' });
+
+      // Show thumbnail
+      var thumb = document.createElement('div');
+      thumb.style.cssText = 'position:relative;width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--border);';
+      thumb.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+        + '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:8px;color:#fff;text-align:center;padding:2px;">✓</div>';
+      grid.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+  showToast('✅ ' + files.length + ' photo(s) added to ' + type + ' queue!', 'success');
+}
+
+async function generateCTCaptions(type) {
+  var images = _ctImages[type] || [];
+  var bizname = _bizProfile ? _bizProfile.name : '';
+  var description = _bizProfile ? _bizProfile.description : '';
+
+  if (images.length === 0) {
+    showToast('Upload images first to generate captions!', 'error');
+    return;
+  }
+
+  showToast('Generating captions for ' + images.length + ' image(s)...', 'success');
+
+  var generated = 0;
+  for (var i = 0; i < images.length; i++) {
+    var img = images[i];
+    try {
+      var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64:  img.dataUrl.split(',')[1],
+          media_type:    img.file.type || 'image/jpeg',
+          business_name: bizname,
+          description:   description,
+          content_type:  type
+        })
+      });
+      var data = await resp.json();
+      if (data.post) {
+        images[i].caption = appendContactToPost(data.post);
+        generated++;
+
+        // Save to Supabase as a queued autoposter post
+        if (_user) {
+          // Upload image to Supabase Storage
+          var uploadPath = 'ct-images/' + _user.id + '/' + type + '_' + Date.now() + '_' + i + '.jpg';
+          var blob = await (await fetch(img.dataUrl)).blob();
+          await fetch('https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/post-media/' + uploadPath, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHB3cXJ5YWtnemd2dnByYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MDAxNTUsImV4cCI6MjA5Mzk3NjE1NX0.oMSZx15YsodlOdzPxg4d7a0WesYQRuPCRUZxZcqGA1I',
+              'Content-Type': img.file.type || 'image/jpeg',
+              'x-upsert': 'true'
+            },
+            body: blob
+          });
+          var imageUrl = 'https://gkxpwqryakgzgvvprbkl.supabase.co/storage/v1/object/public/post-media/' + uploadPath;
+
+          // Save as queued post for autoposter
+          await _db.from('autopostleey_posts').insert([{
+            user_id:    _user.id,
+            content:    images[i].caption,
+            image_url:  imageUrl,
+            platforms:  [],
+            status:     'queued',
+            mode:       'ct-' + type,
+            created_at: new Date().toISOString()
+          }]);
+        }
+      }
+    } catch(e) {
+      console.error('Caption gen failed for image', i, e);
+    }
+  }
+
+  showToast('✅ ' + generated + '/' + images.length + ' captions generated & queued for auto-posting!', 'success');
+
+  // Update thumbnails to show checkmarks with captions
+  var grid = document.getElementById('ct-' + type + '-images');
+  if (grid) {
+    var thumbs = grid.querySelectorAll('div');
+    thumbs.forEach(function(t, i) {
+      var overlay = t.querySelector('div');
+      if (overlay && images[i] && images[i].caption) {
+        overlay.style.background = 'rgba(34,197,94,0.8)';
+        overlay.textContent = '✨';
+      }
+    });
+  }
+}
+
 function closeConnModal() {
   var modal = document.getElementById('conn-modal');
   if (modal) modal.style.display = 'none';
@@ -4794,7 +5033,7 @@ async function connectYouTubeOAuth() {
     var { error } = await _db.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        scopes: 'https://www.googleapis.com/auth/youtube.readonly',
+        scopes: 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
         redirectTo: window.location.origin + '/dashboard.html?connect=youtube',
         queryParams: { access_type: 'offline', prompt: 'consent' }
       }
@@ -4994,6 +5233,7 @@ window.addEventListener('DOMContentLoaded', function() {
       _db.auth.updateUser({ data: { plan: pending } }).then(function() {
         localStorage.removeItem('ap_pending_plan');
         showToast('🎉 Plan upgraded successfully!', 'success');
+        sendNotification({ type: 'plan_upgraded', plan: pending, amount: pending === 'starter' ? '9' : pending === 'growth' ? '19' : '49' });
         updatePlanUI(pending);
       });
     }
@@ -6031,5 +6271,28 @@ function addToAPHistory(text, type, status) {
   if (items.length > 4) items[items.length-1].remove();
 }
 </script>
+
+<!-- PayPal Billing Modal -->
+<div id="paypal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px;width:420px;max-width:95vw;position:relative;">
+    <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;">×</button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:32px;margin-bottom:8px;">⚡</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;" id="paypal-plan-name">Growth Plan — $19/mo</div>
+      <div style="font-size:13px;color:var(--text2);" id="paypal-plan-price">$19/month</div>
+    </div>
+    <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+        ✅ Instant activation after payment<br>
+        ✅ Cancel anytime — no contracts<br>
+        ✅ Secured by PayPal
+      </div>
+    </div>
+    <div id="paypal-btn-container" style="min-height:48px;"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <button onclick="document.getElementById('paypal-modal').style.display='none'" style="background:transparent;border:none;color:var(--text3);font-size:12px;cursor:pointer;">Maybe later</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
