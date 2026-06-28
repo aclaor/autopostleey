@@ -50,14 +50,33 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
 .hero-stats h2{font-size:32px;font-weight:800;color:#111827;}
 .hero-stats p{margin-top:4px;font-size:14px;color:#6B7280;}
 /* Dashboard mockup */
-.dashboard{width:100%;max-width:580px;background:white;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,.12);overflow:hidden;}
-.dashboard-header{height:52px;background:#F8FAFC;display:flex;align-items:center;padding:0 20px;gap:8px;border-bottom:1px solid #E5E7EB;}
-.dashboard-header span{width:12px;height:12px;border-radius:50%;background:#D1D5DB;}
-.dashboard-body{padding:24px;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-.analytics-card{background:#F9FAFB;border:1px solid #E5E7EB;padding:18px;border-radius:14px;}
-.analytics-card h4{font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
-.analytics-card h2{font-size:24px;font-weight:800;color:#111827;}
-.chart-placeholder{grid-column:1/-1;height:180px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EEF2FF,#FCE7F3);font-size:20px;font-weight:700;color:#8B5CF6;}
+.dashboard{width:100%;max-width:580px;background:white;border-radius:24px;box-shadow:0 30px 80px rgba(109,94,248,.18);overflow:hidden;border:1px solid #E5E7EB;}
+.dash-topbar{height:52px;background:white;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #F3F4F6;}
+.dash-topbar-left{display:flex;align-items:center;gap:8px;}
+.dash-dot{width:10px;height:10px;border-radius:50%;}
+.dash-title{font-size:13px;font-weight:700;color:#111827;margin-left:8px;}
+.dash-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6D5EF8,#EC4899);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;}
+.dash-body{padding:20px;}
+.dash-welcome{font-size:13px;color:#6B7280;margin-bottom:4px;}
+.dash-name{font-size:18px;font-weight:800;color:#111827;margin-bottom:16px;}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.dash-stat{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:12px;}
+.dash-stat-val{font-size:22px;font-weight:900;background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.dash-stat-lbl{font-size:11px;color:#6B7280;margin-top:2px;font-weight:500;}
+/* Mini chart bars */
+.dash-chart{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:14px;margin-bottom:12px;}
+.dash-chart-title{font-size:11px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.dash-chart-badge{font-size:10px;background:#ECFDF5;color:#059669;padding:2px 8px;border-radius:100px;font-weight:700;}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:60px;}
+.bar{border-radius:4px 4px 0 0;flex:1;}
+/* Scheduled posts */
+.dash-scheduled{display:flex;flex-direction:column;gap:8px;}
+.sched-item{display:flex;align-items:center;gap:10px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sched-text{flex:1;font-size:12px;font-weight:600;color:#111827;}
+.sched-time{font-size:11px;color:#9CA3AF;}
+.sched-platforms{display:flex;gap:3px;}
+.sched-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;}
 /* Background effects */
 .hero-gradient{position:absolute;width:800px;height:800px;background:radial-gradient(circle,rgba(236,72,153,.2) 0%,transparent 70%);top:-200px;right:-200px;filter:blur(60px);z-index:-1;pointer-events:none;}
 .hero-circle{position:absolute;border-radius:50%;background:rgba(109,94,248,.07);z-index:-1;pointer-events:none;}
@@ -221,29 +240,73 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
     <!-- Right: Dashboard mockup -->
     <div class="hero-right">
       <div class="dashboard">
-        <div class="dashboard-header">
-          <span style="background:#FF5F57"></span>
-          <span style="background:#FFBD2E"></span>
-          <span style="background:#28C840"></span>
+        <!-- Topbar -->
+        <div class="dash-topbar">
+          <div class="dash-topbar-left">
+            <div class="dash-dot" style="background:#FF5F57"></div>
+            <div class="dash-dot" style="background:#FFBD2E"></div>
+            <div class="dash-dot" style="background:#28C840"></div>
+            <span class="dash-title">Autopostleey</span>
+          </div>
+          <div class="dash-avatar">AP</div>
         </div>
-        <div class="dashboard-body">
-          <div class="analytics-card">
-            <h4>Engagement</h4>
-            <h2>+284%</h2>
+        <!-- Body -->
+        <div class="dash-body">
+          <div class="dash-welcome">Welcome back 👋</div>
+          <div class="dash-name">Alex's Business</div>
+          <!-- Stats -->
+          <div class="dash-stats">
+            <div class="dash-stat">
+              <div class="dash-stat-val">2,847</div>
+              <div class="dash-stat-lbl">Posts published</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-val">13</div>
+              <div class="dash-stat-lbl">Platforms live</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-val">+284%</div>
+              <div class="dash-stat-lbl">Engagement</div>
+            </div>
           </div>
-          <div class="analytics-card">
-            <h4>Followers</h4>
-            <h2>18.6K</h2>
+          <!-- Chart -->
+          <div class="dash-chart">
+            <div class="dash-chart-title">
+              Posts this week
+              <span class="dash-chart-badge">↑ 32% vs last week</span>
+            </div>
+            <div class="chart-bars">
+              <div class="bar" style="height:35%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.4;"></div>
+              <div class="bar" style="height:55%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.5;"></div>
+              <div class="bar" style="height:45%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.6;"></div>
+              <div class="bar" style="height:70%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.7;"></div>
+              <div class="bar" style="height:60%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.8;"></div>
+              <div class="bar" style="height:85%;background:linear-gradient(180deg,#6D5EF8,#EC4899);opacity:.9;"></div>
+              <div class="bar" style="height:100%;background:linear-gradient(180deg,#6D5EF8,#EC4899);"></div>
+            </div>
           </div>
-          <div class="analytics-card">
-            <h4>Scheduled</h4>
-            <h2>256</h2>
+          <!-- Scheduled -->
+          <div class="dash-scheduled">
+            <div class="sched-item">
+              <div class="sched-dot" style="background:#10B981"></div>
+              <span class="sched-text">New product launch post</span>
+              <span class="sched-time">Today 9:00 AM</span>
+              <div class="sched-platforms">
+                <div class="sched-icon" style="background:#1877F2">f</div>
+                <div class="sched-icon" style="background:#E1306C">in</div>
+                <div class="sched-icon" style="background:#0A66C2">li</div>
+              </div>
+            </div>
+            <div class="sched-item">
+              <div class="sched-dot" style="background:#F59E0B"></div>
+              <span class="sched-text">Weekly promotion reel</span>
+              <span class="sched-time">Today 2:00 PM</span>
+              <div class="sched-platforms">
+                <div class="sched-icon" style="background:#FF0000">yt</div>
+                <div class="sched-icon" style="background:#010101">tt</div>
+              </div>
+            </div>
           </div>
-          <div class="analytics-card">
-            <h4>AI Generated</h4>
-            <h2>98%</h2>
-          </div>
-          <div class="chart-placeholder">📈 Analytics Growing</div>
         </div>
       </div>
     </div>
