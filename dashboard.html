@@ -3427,13 +3427,13 @@ async function copyAndOpenManual(url, modalOnly) {
   var box = document.createElement('div');
   box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:24px;max-width:420px;width:100%;';
 
-  var isIG = url.includes('instagram');
+  var isIG = url ? url.includes('instagram') : false;
   var platform = isIG ? 'Instagram' : 'Facebook';
   var icon = isIG ? '📸' : '📘';
 
   box.innerHTML =
-    '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">' + icon + ' Post to ' + platform + '</div>' +
-    '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Follow these steps to post in under 30 seconds</div>' +
+    '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">' + (modalOnly ? '📋 Manual Post — Copy & Share' : icon + ' Post to ' + platform) + '</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">' + (modalOnly ? 'Your images are uploaded. Copy your caption and open your destination.' : 'Follow these steps to post in under 30 seconds') + '</div>' +
 
     // Step 1: Download image if exists
     (imageUrls.length > 0 ? (
@@ -3458,10 +3458,56 @@ async function copyAndOpenManual(url, modalOnly) {
     '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;">' +
       '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">' + (imageUrl ? 'STEP 3' : 'STEP 2') + ' — Open ' + platform + ' and paste</div>' +
       '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Create a new post → ' + (imageUrl ? 'upload your image → ' : '') + 'paste your caption → Share!</div>' +
-      '<a href="' + url + '" target="_blank" style="display:block;text-align:center;padding:10px;background:' + (isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2') + ';color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">' + icon + ' Open ' + platform + ' Now</a>' +
-    '</div>' +
+      '</div>' +
 
     '<button onclick="var m=document.getElementById(\"manual-post-modal\");if(m)m.remove();" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Close</button>';
+
+  // If modalOnly (triggered from submitPost), inject destination buttons
+  if (modalOnly) {
+    var destDiv = document.createElement('div');
+    destDiv.style.cssText = 'margin-top:4px;';
+    destDiv.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">STEP ' + (window._composerImageUrls && window._composerImageUrls.length > 0 ? '3' : '2') + ' — OPEN YOUR DESTINATION & PASTE</div>';
+    var fbConn = _connectionsFull['facebook'];
+    if (fbConn && fbConn.access_token === 'manual') {
+      var dests2 = {};
+      try { dests2 = JSON.parse(fbConn.page_name); } catch(e) { dests2 = { page: fbConn.page_name }; }
+      [
+        { key:'page',   label:'📘 Open Facebook Page',    color:'#1877f2' },
+        { key:'group1', label:'👥 Open Facebook Group 1', color:'#165fcc' },
+        { key:'group2', label:'👥 Open Facebook Group 2', color:'#165fcc' },
+        { key:'group3', label:'👥 Open Facebook Group 3', color:'#165fcc' },
+      ].forEach(function(d) {
+        var du = dests2[d.key] ? dests2[d.key].trim() : '';
+        if (!du) return;
+        if (!du.startsWith('http')) du = 'https://www.facebook.com/' + du;
+        var b = document.createElement('button');
+        b.textContent = d.label;
+        b.style.cssText = 'width:100%;padding:10px 14px;background:' + d.color + ';color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;display:block;text-align:left;';
+        b.onclick = function(){ window.open(du, '_blank'); };
+        destDiv.appendChild(b);
+      });
+    }
+    var igConn2 = _connectionsFull['instagram'];
+    if (igConn2 && igConn2.access_token === 'manual') {
+      var ib = document.createElement('button');
+      ib.textContent = '📸 Open Instagram';
+      ib.style.cssText = 'width:100%;padding:10px 14px;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;display:block;text-align:left;';
+      ib.onclick = function(){ window.open('https://www.instagram.com/create/style/', '_blank'); };
+      destDiv.appendChild(ib);
+    }
+    box.appendChild(destDiv);
+  } else if (url) {
+    // Direct call with URL — add open button
+    var openDiv = document.createElement('div');
+    openDiv.style.marginTop = '8px';
+    var openBtn = document.createElement('a');
+    openBtn.href = url;
+    openBtn.target = '_blank';
+    openBtn.textContent = icon + ' Open ' + platform + ' Now';
+    openBtn.style.cssText = 'display:block;text-align:center;padding:10px;background:' + (isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2') + ';color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;';
+    openDiv.appendChild(openBtn);
+    box.appendChild(openDiv);
+  }
 
   modal.appendChild(box);
   modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
