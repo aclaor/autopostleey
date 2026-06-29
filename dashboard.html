@@ -526,7 +526,7 @@
             <div id="upload-zone" onclick="document.getElementById('file-input').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
               <div style="font-size:24px;margin-bottom:8px;">📁</div>
               <div style="font-size:13px;color:var(--text2);">Drag & drop or click to upload</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:4px;">Images & videos supported</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">Up to 5 images · videos supported</div>
               <div style="margin-top:10px;padding:8px 12px;background:rgba(168,85,247,0.1);border:1px dashed rgba(168,85,247,0.4);border-radius:8px;text-align:left;">
                 <div style="font-size:11px;font-weight:700;color:#a855f7;margin-bottom:4px;">✨ Canva users:</div>
                 <div style="font-size:11px;color:var(--text3);line-height:1.6;">
@@ -536,7 +536,7 @@
                 </div>
               </div>
             </div>
-            <input id="file-input" type="file" accept="image/*,video/*" style="display:none;" onchange="handleFileUpload(this)">
+            <input id="file-input" type="file" accept="image/*,video/*" multiple style="display:none;" onchange="handleFileUpload(this)">
             <div id="file-preview" style="margin-top:10px;display:none;">
               <img id="file-preview-img" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
@@ -3414,6 +3414,7 @@ async function copyAndOpenManual(url) {
 
   // Check if there's an image to include
   var imageUrl = window._composerImageUrl || '';
+  var imageUrls = (window._composerImageUrls && window._composerImageUrls.length) ? window._composerImageUrls : (imageUrl ? [imageUrl] : []);
 
   // Show modal with image download + caption copy
   var existing = document.getElementById('manual-post-modal');
@@ -3435,11 +3436,14 @@ async function copyAndOpenManual(url) {
     '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Follow these steps to post in under 30 seconds</div>' +
 
     // Step 1: Download image if exists
-    (imageUrl ? (
+    (imageUrls.length > 0 ? (
       '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">STEP 1 — Download your image</div>' +
-        '<img src="' + imageUrl + '" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover;margin-bottom:10px;">' +
-        '<a href="' + imageUrl + '" download="post-image.jpg" style="display:block;text-align:center;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;">⬇️ Download Image</a>' +
+        '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">STEP 1 — Download your image' + (imageUrls.length > 1 ? 's (' + imageUrls.length + ')' : '') + '</div>' +
+        (imageUrls.length === 1
+          ? '<img src="' + imageUrls[0] + '" style="width:100%;border-radius:8px;max-height:130px;object-fit:cover;margin-bottom:8px;">'
+          : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:5px;margin-bottom:8px;">' + imageUrls.map(function(u,i){ return '<img src="'+u+'" style="width:100%;height:64px;object-fit:cover;border-radius:5px;border:1px solid var(--border);">'; }).join('') + '</div>'
+        ) +
+        imageUrls.map(function(u,i){ return '<a href="'+u+'" download="post-image-'+(i+1)+'.jpg" style="display:block;text-align:center;padding:7px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-weight:700;text-decoration:none;margin-bottom:4px;">⬇️ Download Image ' + (imageUrls.length > 1 ? (i+1) : '') + '</a>'; }).join('') +
       '</div>'
     ) : '') +
 
@@ -3894,6 +3898,7 @@ async function submitPost(status) {
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
             image_url:   (postData && postData.image_url) ? postData.image_url : (window._composerImageUrl || ''),
+            image_urls:  (window._composerImageUrls && window._composerImageUrls.length > 1) ? window._composerImageUrls : null,
             connections: _connectionsFull
           })
         });
@@ -5644,33 +5649,96 @@ function setPostType(type) {
 }
 
 function handleFileUpload(input) {
-  var file = input.files[0];
-  if(!file) return;
-  _uploadedFile = file;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    _uploadedFileURL = e.target.result;
-    // Show file preview
-    var fp = document.getElementById('file-preview');
-    var img = document.getElementById('file-preview-img');
-    var fname = document.getElementById('file-name');
-    if(fp) fp.style.display = 'block';
-    if(img && file.type.startsWith('image/')) { img.src = _uploadedFileURL; img.style.display='block'; }
-    if(fname) fname.textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-    // Update preview
-    var prevImg = document.getElementById('preview-img');
-    var prevImgCon = document.getElementById('preview-img-container');
-    if(prevImg && file.type.startsWith('image/')) {
-      prevImg.src = _uploadedFileURL;
-      if(prevImgCon) prevImgCon.style.display = 'block';
-    }
-  };
-  reader.readAsDataURL(file);
+  var files = Array.from(input.files);
+  if (!files.length) return;
+
+  // Separate images from videos
+  var imageFiles = files.filter(function(f){ return f.type.startsWith('image/'); });
+  var videoFiles = files.filter(function(f){ return f.type.startsWith('video/'); });
+
+  // If video selected — single file, original flow
+  if (videoFiles.length > 0) {
+    var file = videoFiles[0];
+    _uploadedFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      _uploadedFileURL = e.target.result;
+      window._composerImageUrls = null;
+      var fp = document.getElementById('file-preview');
+      var img = document.getElementById('file-preview-img');
+      var fname = document.getElementById('file-name');
+      if(fp) fp.style.display = 'block';
+      if(img) { img.style.display = 'none'; }
+      if(fname) fname.textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  // Multiple images — cap at 5
+  if (imageFiles.length > 5) {
+    showToast('Max 5 images allowed — first 5 selected', 'warning');
+    imageFiles = imageFiles.slice(0, 5);
+  }
+
+  // Read all images
+  _uploadedFile = imageFiles[0];
+  window._composerImageUrls = [];
+
+  var loaded = 0;
+  var dataUrls = new Array(imageFiles.length);
+
+  imageFiles.forEach(function(file, i) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      dataUrls[i] = e.target.result;
+      loaded++;
+      if (loaded === imageFiles.length) {
+        // All loaded
+        _uploadedFileURL = dataUrls[0];
+        window._composerImageUrls = dataUrls;
+
+        // Show multi-image preview grid
+        var fp = document.getElementById('file-preview');
+        var img = document.getElementById('file-preview-img');
+        var fname = document.getElementById('file-name');
+        if (fp) fp.style.display = 'block';
+        if (img) img.style.display = 'none'; // hide single preview
+
+        if (fname) fname.textContent = imageFiles.length + ' image' + (imageFiles.length > 1 ? 's' : '') + ' selected';
+
+        // Build thumbnail grid
+        var grid = document.getElementById('multi-img-grid');
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.id = 'multi-img-grid';
+          grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:8px;';
+          if (fp) fp.appendChild(grid);
+        }
+        grid.innerHTML = dataUrls.map(function(url, idx) {
+          return '<div style="position:relative;">' +
+            '<img src="' + url + '" style="width:100%;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">' +
+            '<div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.55);color:#fff;font-size:9px;border-radius:3px;padding:1px 4px;">' + (idx+1) + '</div>' +
+            '</div>';
+        }).join('');
+
+        // Also update main post preview
+        var prevImg = document.getElementById('preview-img');
+        var prevImgCon = document.getElementById('preview-img-container');
+        if (prevImg) { prevImg.src = dataUrls[0]; }
+        if (prevImgCon) prevImgCon.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function clearFile() {
   _uploadedFile = null;
   _uploadedFileURL = null;
+  window._composerImageUrls = null;
+  var grid = document.getElementById('multi-img-grid');
+  if (grid) grid.innerHTML = '';
   var fp = document.getElementById('file-preview');
   var fi = document.getElementById('file-input');
   var pic = document.getElementById('preview-img-container');
