@@ -3412,114 +3412,111 @@ async function copyAndOpenManual(url, modalOnly) {
   var text = postContent ? postContent.value.trim() : '';
   if (!text) { showToast('Write your post first!', 'error'); return; }
 
-  // Check if there's an image to include
-  var imageUrl = window._composerImageUrl || '';
-  var imageUrls = (window._composerImageUrls && window._composerImageUrls.length) ? window._composerImageUrls : (imageUrl ? [imageUrl] : []);
-
-  // Show modal with image download + caption copy
+  // Remove any existing modal
   var existing = document.getElementById('manual-post-modal');
   if (existing) existing.remove();
 
-  var modal = document.createElement('div');
-  modal.id = 'manual-post-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-
-  var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg1);border-radius:16px;padding:24px;max-width:420px;width:100%;';
-
-  var isIG = url ? url.includes('instagram') : false;
-  var platform = isIG ? 'Instagram' : 'Facebook';
-  var icon = isIG ? '📸' : '📘';
-
-  box.innerHTML =
-    '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">' + (modalOnly ? '📋 Manual Post — Copy & Share' : icon + ' Post to ' + platform) + '</div>' +
-    '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">' + (modalOnly ? 'Your images are uploaded. Copy your caption and open your destination.' : 'Follow these steps to post in under 30 seconds') + '</div>' +
-
-    // Step 1: Download image if exists
-    (imageUrls.length > 0 ? (
-      '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">STEP 1 — Download your image' + (imageUrls.length > 1 ? 's (' + imageUrls.length + ')' : '') + '</div>' +
-        (imageUrls.length === 1
-          ? '<img src="' + imageUrls[0] + '" style="width:100%;border-radius:8px;max-height:130px;object-fit:cover;margin-bottom:8px;">'
-          : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:5px;margin-bottom:8px;">' + imageUrls.map(function(u,i){ return '<img src="'+u+'" style="width:100%;height:64px;object-fit:cover;border-radius:5px;border:1px solid var(--border);">'; }).join('') + '</div>'
-        ) +
-        imageUrls.map(function(u,i){ return '<a href="'+u+'" download="post-image-'+(i+1)+'.jpg" style="display:block;text-align:center;padding:7px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-weight:700;text-decoration:none;margin-bottom:4px;">⬇️ Download Image ' + (imageUrls.length > 1 ? (i+1) : '') + '</a>'; }).join('') +
-      '</div>'
-    ) : '') +
-
-    // Step 2: Copy caption
-    '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">' + (imageUrl ? 'STEP 2' : 'STEP 1') + ' — Copy your caption</div>' +
-      '<div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);max-height:80px;overflow-y:auto;margin-bottom:10px;line-height:1.5;">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
-      '<button id="copy-caption-btn" onclick="copyCaption()" style="width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy Caption</button>' +
-    '</div>' +
-
-    // Step 3: Open platform
-    '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">' + (imageUrl ? 'STEP 3' : 'STEP 2') + ' — Open ' + platform + ' and paste</div>' +
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Create a new post → ' + (imageUrl ? 'upload your image → ' : '') + 'paste your caption → Share!</div>' +
-      '</div>' +
-
-    '<button onclick="var m=document.getElementById(\"manual-post-modal\");if(m)m.remove();" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Close</button>';
-
-  // If modalOnly (triggered from submitPost), inject destination buttons
+  // Build destination list
+  var destinations = [];
   if (modalOnly) {
-    var destDiv = document.createElement('div');
-    destDiv.style.cssText = 'margin-top:4px;';
-    destDiv.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">STEP ' + (window._composerImageUrls && window._composerImageUrls.length > 0 ? '3' : '2') + ' — OPEN YOUR DESTINATION & PASTE</div>';
+    // Collect all saved manual destinations
     var fbConn = _connectionsFull['facebook'];
     if (fbConn && fbConn.access_token === 'manual') {
-      var dests2 = {};
-      try { dests2 = JSON.parse(fbConn.page_name); } catch(e) { dests2 = { page: fbConn.page_name }; }
-      [
+      var dests = {};
+      try { dests = JSON.parse(fbConn.page_name); } catch(e) { dests = { page: fbConn.page_name }; }
+      var destMap = [
         { key:'page',   label:'📘 Open Facebook Page',    color:'#1877f2' },
-        { key:'group1', label:'👥 Open Facebook Group 1', color:'#165fcc' },
-        { key:'group2', label:'👥 Open Facebook Group 2', color:'#165fcc' },
-        { key:'group3', label:'👥 Open Facebook Group 3', color:'#165fcc' },
-      ].forEach(function(d) {
-        var du = dests2[d.key] ? dests2[d.key].trim() : '';
+        { key:'group1', label:'👥 Open Facebook Group 1', color:'#1877f2' },
+        { key:'group2', label:'👥 Open Facebook Group 2', color:'#1877f2' },
+        { key:'group3', label:'👥 Open Facebook Group 3', color:'#1877f2' },
+      ];
+      destMap.forEach(function(d) {
+        var du = dests[d.key] ? dests[d.key].trim() : '';
         if (!du) return;
         if (!du.startsWith('http')) du = 'https://www.facebook.com/' + du;
-        var b = document.createElement('button');
-        b.textContent = d.label;
-        b.style.cssText = 'width:100%;padding:10px 14px;background:' + d.color + ';color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;display:block;text-align:left;';
-        b.onclick = function(){ window.open(du, '_blank'); };
-        destDiv.appendChild(b);
+        destinations.push({ label: d.label, url: du, color: d.color });
       });
     }
-    var igConn2 = _connectionsFull['instagram'];
-    if (igConn2 && igConn2.access_token === 'manual') {
-      var ib = document.createElement('button');
-      ib.textContent = '📸 Open Instagram';
-      ib.style.cssText = 'width:100%;padding:10px 14px;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;display:block;text-align:left;';
-      ib.onclick = function(){ window.open('https://www.instagram.com/create/style/', '_blank'); };
-      destDiv.appendChild(ib);
+    var igConn = _connectionsFull['instagram'];
+    if (igConn && igConn.access_token === 'manual') {
+      destinations.push({ label: '📸 Open Instagram', url: 'https://www.instagram.com/create/style/', color: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' });
     }
-    box.appendChild(destDiv);
   } else if (url) {
-    // Direct call with URL — add open button
-    var openDiv = document.createElement('div');
-    openDiv.style.marginTop = '8px';
-    var openBtn = document.createElement('a');
-    openBtn.href = url;
-    openBtn.target = '_blank';
-    openBtn.textContent = icon + ' Open ' + platform + ' Now';
-    openBtn.style.cssText = 'display:block;text-align:center;padding:10px;background:' + (isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2') + ';color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;';
-    openDiv.appendChild(openBtn);
-    box.appendChild(openDiv);
+    var isIG = url.includes('instagram');
+    destinations.push({ label: (isIG ? '📸 Open Instagram' : '📘 Open Facebook'), url: url, color: isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2' });
   }
+
+  // Build modal
+  var modal = document.createElement('div');
+  modal.id = 'manual-post-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg1);border-radius:18px;padding:28px 24px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;';
+
+  // Header
+  var header = document.createElement('div');
+  header.innerHTML =
+    '<div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px;">📋 Ready to Post!</div>' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:20px;">Caption copied ✅ — just open your destination and paste.</div>';
+  box.appendChild(header);
+
+  // Caption box
+  var captionBox = document.createElement('div');
+  captionBox.style.cssText = 'background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:18px;';
+  captionBox.innerHTML =
+    '<div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px;">YOUR CAPTION</div>' +
+    '<div style="font-size:13px;color:var(--text2);line-height:1.6;max-height:100px;overflow-y:auto;margin-bottom:12px;white-space:pre-wrap;">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+    '<button id="copy-caption-btn" onclick="navigator.clipboard.writeText(document.getElementById('manual-post-modal').querySelector('.caption-text').textContent).catch(function(){});this.textContent='✅ Copied!';this.style.background='#22c55e';" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy Caption Again</button>';
+  // Store text in a hidden span for re-copy
+  var captionSpan = document.createElement('span');
+  captionSpan.className = 'caption-text';
+  captionSpan.style.display = 'none';
+  captionSpan.textContent = text;
+  captionBox.appendChild(captionSpan);
+  box.appendChild(captionBox);
+
+  // Destination buttons
+  if (destinations.length > 0) {
+    var destLabel = document.createElement('div');
+    destLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:10px;';
+    destLabel.textContent = 'OPEN & PASTE YOUR CAPTION:';
+    box.appendChild(destLabel);
+
+    destinations.forEach(function(d) {
+      var btn = document.createElement('button');
+      btn.textContent = d.label;
+      btn.style.cssText = 'width:100%;padding:14px 18px;background:' + d.color + ';color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;display:block;text-align:left;letter-spacing:0.2px;';
+      btn.onclick = function() { window.open(d.url, '_blank'); };
+      box.appendChild(btn);
+    });
+  }
+
+  // Tip
+  var tip = document.createElement('div');
+  tip.style.cssText = 'font-size:12px;color:var(--text3);text-align:center;margin-top:4px;margin-bottom:16px;line-height:1.5;';
+  tip.textContent = 'Create a post → paste caption → upload your photos → Share!';
+  box.appendChild(tip);
+
+  // Close button
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.style.cssText = 'width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  closeBtn.onclick = function() { modal.remove(); };
+  box.appendChild(closeBtn);
 
   modal.appendChild(box);
   modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
   document.body.appendChild(modal);
 
-  // Auto-copy caption
+  // Auto-copy caption to clipboard
   try {
     await navigator.clipboard.writeText(text);
     var copyBtn = document.getElementById('copy-caption-btn');
     if (copyBtn) { copyBtn.textContent = '✅ Caption Copied!'; copyBtn.style.background = '#22c55e'; }
   } catch(e) {}
 }
+
 
 async function copyCaption() {
   var postContent = document.getElementById('post-content');
