@@ -4822,7 +4822,7 @@ async function saveDiscordWebhook() {
   }
 }
 
-async function saveInstagramManual() {
+async async function saveInstagramManual() {
   var username = document.getElementById('conn-ig-username') ? document.getElementById('conn-ig-username').value.trim() : '';
   if (!username) { showToast('Please enter your Instagram username', 'error'); return; }
   if (!username.startsWith('@')) username = '@' + username;
@@ -4840,7 +4840,7 @@ async function saveInstagramManual() {
   } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 }
 
-async function saveFacebookManual() {
+async async function saveFacebookManual() {
   var page   = document.getElementById('conn-fb-page')   ? document.getElementById('conn-fb-page').value.trim()   : '';
   var group1 = document.getElementById('conn-fb-group1') ? document.getElementById('conn-fb-group1').value.trim() : '';
   var group2 = document.getElementById('conn-fb-group2') ? document.getElementById('conn-fb-group2').value.trim() : '';
