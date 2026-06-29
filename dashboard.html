@@ -3368,23 +3368,44 @@ function updateManualPostButtons() {
   var manualDiv = document.getElementById('manual-post-btns');
   var btnsRow   = document.getElementById('manual-btns-row');
   if (!manualDiv || !btnsRow) return;
-  var manualPlatforms = [];
-  ['instagram','facebook'].forEach(function(p) {
-    var conn = _connectionsFull[p];
-    if (conn && conn.access_token === 'manual') {
-      manualPlatforms.push({ platform: p, name: conn.page_name });
+  var buttons = [];
+
+  // Facebook — supports Page + up to 3 Groups
+  var fbConn = _connectionsFull['facebook'];
+  if (fbConn && fbConn.access_token === 'manual') {
+    var dests = {};
+    try { dests = JSON.parse(fbConn.page_name); } catch(e) {
+      dests = { page: fbConn.page_name };
     }
-  });
-  if (manualPlatforms.length === 0) { manualDiv.style.display = 'none'; return; }
+    var destMap = [
+      { key: 'page',   label: '📘 Post to Facebook Page',    color: '#1877f2' },
+      { key: 'group1', label: '👥 Post to Facebook Group 1', color: '#165fcc' },
+      { key: 'group2', label: '👥 Post to Facebook Group 2', color: '#165fcc' },
+      { key: 'group3', label: '👥 Post to Facebook Group 3', color: '#165fcc' },
+    ];
+    destMap.forEach(function(d) {
+      var destUrl = dests[d.key] ? dests[d.key].trim() : '';
+      if (!destUrl) return;
+      if (!destUrl.startsWith('http')) destUrl = 'https://www.facebook.com/' + destUrl;
+      var safeUrl = destUrl.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      buttons.push('<button onclick="copyAndOpenManual(\'' + safeUrl + '\')" style="padding:10px 16px;background:' + d.color + ';color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;width:100%;text-align:left;">' + d.label + '</button>');
+    });
+    if (buttons.length === 0) {
+      buttons.push('<button onclick="copyAndOpenManual(\'https://www.facebook.com/\')" style="padding:10px 16px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;width:100%;text-align:left;">📘 Open Facebook</button>');
+    }
+  }
+
+  // Instagram — opens create page
+  var igConn = _connectionsFull['instagram'];
+  if (igConn && igConn.access_token === 'manual') {
+    buttons.push('<button onclick="copyAndOpenManual(\'https://www.instagram.com/create/style/\')" style="padding:10px 16px;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;width:100%;text-align:left;">📸 Post to Instagram</button>');
+  }
+
+  if (buttons.length === 0) { manualDiv.style.display = 'none'; return; }
   manualDiv.style.display = 'block';
-  btnsRow.innerHTML = manualPlatforms.map(function(mp) {
-    var isIG  = mp.platform === 'instagram';
-    var color = isIG ? 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' : '#1877f2';
-    var url   = isIG ? 'https://www.instagram.com/create/style/' : 'https://www.facebook.com/';
-    return '<button onclick="copyAndOpenManual(\'' + url + '\')" style="padding:8px 14px;background:' + color + ';color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px;">'
-      + (isIG ? '📸 Copy & Open Instagram' : '📘 Copy & Open Facebook') + '</button>';
-  }).join('');
+  btnsRow.innerHTML = buttons.join('');
 }
+
 
 async function copyAndOpenManual(url) {
   var postContent = document.getElementById('post-content');
@@ -4035,12 +4056,19 @@ function getConnectionForm(name) {
             '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
           '</div>' +
           '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
-            'Works with your personal Facebook profile.<br>' +
-            'When you post, we copy your caption and open Facebook.<br>' +
-            'Just <strong style="color:#e8e8f0;">paste and share</strong> — takes 10 seconds!' +
+            'Works with any Facebook account — personal, page or group.<br>' +
+            'When you post, we show your caption and open your exact Page or Group. Just paste and share!' +
           '</div>' +
-          '<input id="conn-fb-profile" placeholder="Your Facebook profile URL or name" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<button onclick="saveFacebookManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Set Up Manual Posting</button>' +
+          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK PAGE URL</div>' +
+          '<input id="conn-fb-page" placeholder="e.g. https://www.facebook.com/yourpage" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 1 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
+          '<input id="conn-fb-group1" placeholder="e.g. https://www.facebook.com/groups/yourgroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 2 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
+          '<input id="conn-fb-group2" placeholder="e.g. https://www.facebook.com/groups/anothergroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 3 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
+          '<input id="conn-fb-group3" placeholder="e.g. https://www.facebook.com/groups/thirdgroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
+          '<div style="font-size:12px;color:#555577;background:rgba(109,94,248,0.08);border:1px solid rgba(109,94,248,0.15);border-radius:8px;padding:10px;margin-bottom:12px;">💡 Fill in at least your Page URL. We will open each one so you can paste and post in seconds.</div>' +
+          '<button onclick="saveFacebookManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Save My Facebook Destinations</button>' +
         '</div>';
     },
     instagram: function() {
@@ -4707,17 +4735,22 @@ async function saveInstagramManual() {
 }
 
 async function saveFacebookManual() {
-  var profile = document.getElementById('conn-fb-profile') ? document.getElementById('conn-fb-profile').value.trim() : '';
-  if (!profile) { showToast('Please enter your Facebook profile URL or name', 'error'); return; }
+  var page   = document.getElementById('conn-fb-page')   ? document.getElementById('conn-fb-page').value.trim()   : '';
+  var group1 = document.getElementById('conn-fb-group1') ? document.getElementById('conn-fb-group1').value.trim() : '';
+  var group2 = document.getElementById('conn-fb-group2') ? document.getElementById('conn-fb-group2').value.trim() : '';
+  var group3 = document.getElementById('conn-fb-group3') ? document.getElementById('conn-fb-group3').value.trim() : '';
+  if (!page && !group1) { showToast('Please enter at least your Facebook Page or one Group URL', 'error'); return; }
+  var destinations = { page: page, group1: group1, group2: group2, group3: group3 };
+  var label = page ? page : group1;
   try {
     await _db.from('autopostleey_connections').upsert({
       user_id:      _user.id,
       platform:     'facebook',
       access_token: 'manual',
-      page_name:    profile,
+      page_name:    JSON.stringify(destinations),
       connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' });
-    showToast('✅ Facebook set up for manual posting — ' + profile, 'success');
+    showToast('✅ Facebook destinations saved!', 'success');
     closeConnModal();
     loadConnections();
   } catch(e) { showToast('Failed: ' + e.message, 'error'); }
