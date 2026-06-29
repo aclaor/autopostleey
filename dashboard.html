@@ -3889,6 +3889,21 @@ async function submitPost(status) {
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
+        // Upload multiple images to storage if present
+        var uploadedImageUrls = null;
+        if (window._composerImageUrls && window._composerImageUrls.length > 0) {
+          showToast('Uploading ' + window._composerImageUrls.length + ' image(s)...', 'success');
+          var uploads = await Promise.all(window._composerImageUrls.map(function(dataUrl, i) {
+            // Already a public URL (already uploaded) — skip
+            if (dataUrl.startsWith('http')) return Promise.resolve(dataUrl);
+            return uploadToSupabaseStorage(dataUrl, 'post-image-' + i);
+          }));
+          uploadedImageUrls = uploads.filter(Boolean);
+          // Also update the single image_url to first image
+          if (uploadedImageUrls.length > 0 && !window._composerImageUrl) {
+            window._composerImageUrl = uploadedImageUrls[0];
+          }
+        }
         var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
@@ -3898,7 +3913,7 @@ async function submitPost(status) {
             platforms:   _selectedPlatforms,
             user_id:     _user.id,
             image_url:   (postData && postData.image_url) ? postData.image_url : (window._composerImageUrl || ''),
-            image_urls:  (window._composerImageUrls && window._composerImageUrls.length > 1) ? window._composerImageUrls : null,
+            image_urls:  (uploadedImageUrls && uploadedImageUrls.length > 1) ? uploadedImageUrls : null,
             connections: _connectionsFull
           })
         });
@@ -4013,7 +4028,21 @@ function updateConnectionsUI() {
     var statusEl = document.getElementById(prefix+'-status');
     var btnEl    = document.getElementById(prefix+'-btn');
     if(_connections[p]) {
-      if(statusEl) statusEl.textContent = '✅ Connected' + (_connections[p].page_name ? ' — '+_connections[p].page_name : '');
+      if(statusEl) {
+        var pname = _connections[p].page_name || '';
+        var displayName = pname;
+        // If page_name is JSON (multi-destination), show friendly summary
+        try {
+          var dests = JSON.parse(pname);
+          var parts = [];
+          if (dests.page)   parts.push('Page');
+          if (dests.group1) parts.push('Group 1');
+          if (dests.group2) parts.push('Group 2');
+          if (dests.group3) parts.push('Group 3');
+          displayName = parts.length ? parts.join(' + ') : 'Manual';
+        } catch(e) { /* plain string — use as is */ }
+        statusEl.textContent = '✅ Connected' + (displayName ? ' — ' + displayName : '') + ((_connections[p].access_token === 'manual') ? ' (manual)' : '');
+      }
       if(btnEl)  { btnEl.textContent = 'Disconnect'; btnEl.classList.add('connected'); btnEl.onclick = function(){ disconnectPlatform(p); }; }
     } else {
       if(statusEl) statusEl.textContent = 'Not connected';
