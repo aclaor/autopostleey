@@ -3467,7 +3467,7 @@ async function copyAndOpenManual(url, modalOnly) {
   captionBox.innerHTML =
     '<div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px;">YOUR CAPTION</div>' +
     '<div style="font-size:13px;color:var(--text2);line-height:1.6;max-height:100px;overflow-y:auto;margin-bottom:12px;white-space:pre-wrap;">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
-    '<button id="copy-caption-btn" onclick="navigator.clipboard.writeText(document.getElementById('manual-post-modal').querySelector('.caption-text').textContent).catch(function(){});this.textContent='✅ Copied!';this.style.background='#22c55e';" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy Caption Again</button>';
+    '<button id="copy-caption-btn" onclick="var m=document.getElementById(&quot;manual-post-modal&quot;);var t=m?m.querySelector(&quot;.caption-text&quot;):null;navigator.clipboard.writeText(t?t.textContent:\'\').catch(function(){});this.textContent=\'✅ Copied!\';this.style.background=\'#22c55e\';" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy Caption Again</button>';
   // Store text in a hidden span for re-copy
   var captionSpan = document.createElement('span');
   captionSpan.className = 'caption-text';
@@ -4822,7 +4822,7 @@ async function saveDiscordWebhook() {
   }
 }
 
-async async function saveInstagramManual() {
+async function saveInstagramManual() {
   var username = document.getElementById('conn-ig-username') ? document.getElementById('conn-ig-username').value.trim() : '';
   if (!username) { showToast('Please enter your Instagram username', 'error'); return; }
   if (!username.startsWith('@')) username = '@' + username;
@@ -4840,7 +4840,7 @@ async async function saveInstagramManual() {
   } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 }
 
-async async function saveFacebookManual() {
+async function saveFacebookManual() {
   var page   = document.getElementById('conn-fb-page')   ? document.getElementById('conn-fb-page').value.trim()   : '';
   var group1 = document.getElementById('conn-fb-group1') ? document.getElementById('conn-fb-group1').value.trim() : '';
   var group2 = document.getElementById('conn-fb-group2') ? document.getElementById('conn-fb-group2').value.trim() : '';
