@@ -3407,7 +3407,7 @@ function updateManualPostButtons() {
 }
 
 
-async function copyAndOpenManual(url) {
+async function copyAndOpenManual(url, modalOnly) {
   var postContent = document.getElementById('post-content');
   var text = postContent ? postContent.value.trim() : '';
   if (!text) { showToast('Write your post first!', 'error'); return; }
@@ -3885,32 +3885,54 @@ async function submitPost(status) {
     var isNow = _postNow || new Date(scheduledAt) <= new Date(Date.now() + 2*60000);
     if(status === 'scheduled' && isNow && postData) {
       showToast('Publishing to platforms...', 'success');
-      // Email notification will be sent after publish result
+
+      // ── Separate manual vs API platforms ────────────────────
+      var manualPlats = _selectedPlatforms.filter(function(p) {
+        return _connectionsFull[p] && _connectionsFull[p].access_token === 'manual';
+      });
+      var apiPlats = _selectedPlatforms.filter(function(p) {
+        return !manualPlats.includes(p);
+      });
+
+      // Upload images first (needed for both manual download + API)
+      var uploadedImageUrls = null;
+      if (window._composerImageUrls && window._composerImageUrls.length > 0) {
+        showToast('Uploading ' + window._composerImageUrls.length + ' image(s)...', 'success');
+        var uploads = await Promise.all(window._composerImageUrls.map(function(dataUrl, i) {
+          if (dataUrl.startsWith('http')) return Promise.resolve(dataUrl);
+          return uploadToSupabaseStorage(dataUrl, 'post-image-' + i);
+        }));
+        uploadedImageUrls = uploads.filter(Boolean);
+        if (uploadedImageUrls.length > 0 && !window._composerImageUrl) {
+          window._composerImageUrl = uploadedImageUrls[0];
+        }
+        // Store public URLs back so manual modal can show them
+        window._composerImageUrls = uploadedImageUrls;
+      }
+
+      // ── Handle manual platforms — open copy/post modal ──────
+      if (manualPlats.length > 0) {
+        // Trigger the manual post modal
+        copyAndOpenManual(null, true);
+      }
+
+      // ── Handle API platforms via worker ─────────────────────
+      if (apiPlats.length === 0) {
+        // All manual — no worker call needed
+        if (manualPlats.length > 0) {
+          showToast('✅ Post saved! Use the buttons above to copy & post manually.', 'success');
+        }
+      } else {
       var session = await _db.auth.getSession();
       var token = session.data.session ? session.data.session.access_token : '';
       try {
-        // Upload multiple images to storage if present
-        var uploadedImageUrls = null;
-        if (window._composerImageUrls && window._composerImageUrls.length > 0) {
-          showToast('Uploading ' + window._composerImageUrls.length + ' image(s)...', 'success');
-          var uploads = await Promise.all(window._composerImageUrls.map(function(dataUrl, i) {
-            // Already a public URL (already uploaded) — skip
-            if (dataUrl.startsWith('http')) return Promise.resolve(dataUrl);
-            return uploadToSupabaseStorage(dataUrl, 'post-image-' + i);
-          }));
-          uploadedImageUrls = uploads.filter(Boolean);
-          // Also update the single image_url to first image
-          if (uploadedImageUrls.length > 0 && !window._composerImageUrl) {
-            window._composerImageUrl = uploadedImageUrls[0];
-          }
-        }
         var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
           body: JSON.stringify({
             post_id:     postData ? postData.id : null,
             content:     content,
-            platforms:   _selectedPlatforms,
+            platforms:   apiPlats,
             user_id:     _user.id,
             image_url:   (postData && postData.image_url) ? postData.image_url : (window._composerImageUrl || ''),
             image_urls:  (uploadedImageUrls && uploadedImageUrls.length > 1) ? uploadedImageUrls : null,
@@ -3935,6 +3957,7 @@ async function submitPost(status) {
           showToast('⚠️ Saved but publishing failed. Check your connections.', 'error');
         }
       } catch(pe) { console.error('Publish error:', pe); }
+      } // end apiPlats block
     } else {
       showToast(status==='draft' ? '✅ Draft saved!' : '✅ Post scheduled!', 'success');
     trackEvent('post_scheduled', { platforms: _selectedPlatforms.join(',') });
@@ -4540,12 +4563,18 @@ async function validateAllConnections() {
       }
     }
     if (p === 'facebook') {
-      if (!c.access_token) issues.push('Facebook: missing access token — please reconnect');
-      if (!c.page_id) issues.push('Facebook: missing page ID — please reconnect');
+      if (c.access_token === 'manual') { /* manual posting — no token needed */ }
+      else {
+        if (!c.access_token) issues.push('Facebook: missing access token — please reconnect');
+        if (!c.page_id) issues.push('Facebook: missing page ID — please reconnect');
+      }
     }
     if (p === 'instagram') {
-      if (!c.access_token) issues.push('Instagram: missing token — please reconnect');
-      if (!c.page_id) issues.push('Instagram: missing account ID — please reconnect');
+      if (c.access_token === 'manual') { /* manual posting — no token needed */ }
+      else {
+        if (!c.access_token) issues.push('Instagram: missing token — please reconnect');
+        if (!c.page_id) issues.push('Instagram: missing account ID — please reconnect');
+      }
     }
     if (p === 'bluesky') {
       if (!c.access_token && !c.bot_token) issues.push('Bluesky: missing app password — please reconnect');
