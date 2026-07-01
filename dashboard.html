@@ -125,7 +125,7 @@ body{background:var(--bg2);color:var(--text);font-family:var(--body);display:fle
 .toast.show{transform:translateY(0);opacity:1;}
 
 /* ── PUSH NOTIFICATIONS ─────────────────────────────────── */
-.notif-panel{position:fixed;bottom:80px;left:256px;width:320px;background:#fff;border:1.5px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:500;display:none;max-height:420px;overflow-y:auto;}
+.notif-panel{position:fixed;bottom:160px;left:16px;width:320px;background:#fff;border:1.5px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:500;display:none;max-height:480px;overflow-y:auto;}
 .notif-panel.open{display:block;}
 .notif-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
 .notif-title{font-size:15px;font-weight:700;color:var(--text);}
@@ -256,9 +256,9 @@ body{background:var(--bg2);color:var(--text);font-family:var(--body);display:fle
     </a>
   </div>
   <div class="sidebar-bottom">
-    <button id="notif-bell" onclick="toggleNotifPanel()" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;margin-bottom:10px;font-size:14px;font-weight:600;color:var(--text2);position:relative;">
+    <button id="notif-bell" onclick="toggleNotifPanel()" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;margin-bottom:10px;font-size:14px;font-weight:600;color:var(--text2);">
       🔔 Notifications
-      <span id="notif-count" style="display:none;background:#ff5a5f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;margin-left:auto;"></span>
+      <span id="notif-count" style="background:#ff5a5f;color:#fff;border-radius:20px;min-width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;margin-left:auto;"></span>
     </button>
     <div class="user-chip">
       <div class="user-avatar" id="user-initial">?</div>
@@ -266,15 +266,6 @@ body{background:var(--bg2);color:var(--text);font-family:var(--body);display:fle
     </div>
     <button class="sign-out-btn" onclick="signOut()">Sign out</button>
   </div>
-</div>
-
-<!-- NOTIFICATION PANEL -->
-<div class="notif-panel" id="notif-panel">
-  <div class="notif-header">
-    <div class="notif-title">🔔 Notifications</div>
-    <span class="notif-clear" onclick="clearNotifs()">Clear all</span>
-  </div>
-  <div id="notif-list"><div class="notif-empty">No notifications yet</div></div>
 </div>
 
 <!-- MAIN -->
@@ -1091,6 +1082,7 @@ function openNotif(id) {
 function updateNotifBadge() {
   var unread = _notifications.filter(function(n){ return n.unread; }).length;
   var badge = document.getElementById('notif-count');
+  var bell  = document.getElementById('notif-bell');
   if (badge) {
     badge.textContent = unread > 9 ? '9+' : unread;
     badge.style.display = unread > 0 ? 'inline-flex' : 'none';
