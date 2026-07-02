@@ -919,26 +919,16 @@ async function executeAPTool(name, args) {
     return {caption: d.choices&&d.choices[0] ? d.choices[0].message.content : 'Could not generate caption.'};
   }
   if (name === 'create_post') {
-    var date = args.schedule_date==='now' ? new Date().toISOString().split('T')[0] : (args.schedule_date||new Date().toISOString().split('T')[0]);
-    var time = args.schedule_time||'09:00';
-    var status = args.schedule_date==='now' ? 'published' : 'scheduled';
-    _apAIPending = {action:'create_post',content:args.content,platforms:args.platforms||['facebook','instagram'],date:date,time:time,status:status};
-    return {confirm_required:true,message:(status==='published'?'Post now':'Schedule for '+date+' at '+time)+' on '+(args.platforms||['facebook','instagram']).join(', ')+'?'};
+    return {needs_login: true};
   }
-  if (name === 'get_scheduled_posts') {
-    var { data } = await _db.from('autopostleey_posts').select('content,platforms,scheduled_at').eq('user_id',_user.id).eq('status','scheduled').order('scheduled_at',{ascending:true}).limit(5);
-    return {posts:data||[]};
-  }
-  if (name === 'get_analytics') {
-    var { data } = await _db.from('autopostleey_posts').select('status,platforms').eq('user_id',_user.id);
-    var all=data||[], pub=all.filter(function(p){return p.status==='published';}), sch=all.filter(function(p){return p.status==='scheduled';});
-    var byPlatform={};
-    all.forEach(function(p){(p.platforms||[]).forEach(function(pl){byPlatform[pl]=(byPlatform[pl]||0)+1;});});
-    return {total:all.length,published:pub.length,scheduled:sch.length,by_platform:byPlatform};
+  if (name === 'get_scheduled_posts' || name === 'get_analytics') {
+    return {needs_login: true};
   }
   if (name === 'navigate_to') {
-    if (typeof showPage==='function') showPage(args.page);
-    return {navigated:true,page:args.page};
+    // On index, navigate means scroll to section
+    var sectionMap = {pricing:'#pricing', features:'#features', platforms:'#platforms'};
+    if (sectionMap[args.page]) { document.querySelector(sectionMap[args.page]).scrollIntoView({behavior:'smooth'}); return {navigated:true,page:args.page}; }
+    return {needs_login:true};
   }
   return {error:'Unknown tool: '+name};
 }
@@ -970,7 +960,7 @@ async function sendAPAI() {
       body:JSON.stringify({
         model:'llama-3.3-70b-versatile',
         messages:[
-          {role:'system',content:'You are an agentic AI assistant for Autopostleey, a social media scheduling platform. Help users create posts, generate captions, schedule content, view analytics, and navigate the dashboard. Use tools to perform real actions. Be friendly and concise. '+bizCtx},
+          {role:'system',content:'You are an AI assistant for Autopostleey, a social media scheduling platform. On this page you can generate captions and content ideas for users. For scheduling and publishing posts, users need to sign up first (it\'s free). Use generate_caption tool when asked to write posts. Be friendly, creative and concise. If they want to schedule or publish, tell them to sign up.'},
           ..._apAIHistory
         ],
         tools:AP_AI_TOOLS,
@@ -985,7 +975,20 @@ async function sendAPAI() {
     if (choice&&choice.message&&choice.message.tool_calls&&choice.message.tool_calls.length>0) {
       var tc = choice.message.tool_calls[0];
       var result = await executeAPTool(tc.function.name, JSON.parse(tc.function.arguments));
-      if (result.confirm_required) {
+      if (result.needs_login) {
+        addAPAIMsg('To schedule and publish posts you need a free account! Sign up in seconds — it\'s free.','bot');
+        var d = document.createElement('div');
+        d.style.cssText='margin-top:8px;';
+        d.innerHTML='<button onclick="showAuth(\'signup\');toggleAPAI();" style="padding:10px 20px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">Sign up free →</button>';
+        document.getElementById('ap-ai-msgs').appendChild(d);
+        document.getElementById('ap-ai-msgs').scrollTop=999;
+      } else if (result.needs_login) {
+        addAPAIMsg('To schedule and publish posts you need a free account! Sign up in seconds.','bot');
+        var d=document.createElement('div'); d.style.marginTop='8px';
+        d.innerHTML='<button onclick="showAuth(\'signup\');toggleAPAI();" style="padding:10px 20px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">Sign up free →</button>';
+        document.getElementById('ap-ai-msgs').appendChild(d);
+        document.getElementById('ap-ai-msgs').scrollTop=9999;
+      } else if (result.confirm_required) {
         addAPAIMsg('Sure! Here is what I will do:','bot');
         showAPAIConfirm(result.message);
       } else if (result.caption) {
