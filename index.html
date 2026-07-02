@@ -182,7 +182,7 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
   .footer-grid{grid-template-columns:1fr;}
   .hero-stats{gap:28px;}
 }
-</style>
+#ap-lang-menu.open{display:block!important;}</style>
 </head>
 <body>
 
@@ -194,13 +194,17 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
       Autopostleey
     </a>
     <ul class="nav-links">
-      <li><a href="#features">Features</a></li>
-      <li><a href="#platforms">Platforms</a></li>
-      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#features" data-i18n="nav_features">Features</a></li>
+      <li><a href="#platforms" data-i18n="nav_platforms">Platforms</a></li>
+      <li><a href="#pricing" data-i18n="nav_pricing">Pricing</a></li>
     </ul>
     <div class="nav-buttons">
-      <a href="#" class="btn-login" onclick="showAuth('login');return false;">Log in</a>
-      <button class="btn-primary" onclick="showAuth('signup')">Start free →</button>
+      <div style="position:relative;margin-right:8px;display:inline-block;">
+        <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
+        <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:300;"></div>
+      </div>
+      <a href="#" class="btn-login" onclick="showAuth('login');return false;" data-i18n="nav_login">Log in</a>
+      <button class="btn-primary" onclick="showAuth('signup')" data-i18n="nav_signup">Start free →</button>
     </div>
     <button class="mobile-menu" onclick="toggleMobileNav()">
       <i class="fa-solid fa-bars"></i>
@@ -225,7 +229,7 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
     <!-- Left -->
     <div class="hero-left">
       <span class="hero-badge">🚀 AI Powered Social Media Automation</span>
-      <h1>Create Once.<br>Publish Everywhere.<br><span>Grow Faster.</span></h1>
+      <h1 data-i18n="hero_h1">Create Once.<br>Publish Everywhere.<br><span>Grow Faster.</span></h1>
       <p>Generate AI content, schedule unlimited posts, publish automatically across your favorite social platforms, and track your growth with one dashboard.</p>
       <div class="hero-buttons">
         <button class="btn-hero" onclick="showAuth('signup')">Start Free Trial</button>
@@ -362,39 +366,39 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
 <section class="features" id="features">
   <div class="container">
     <div style="text-align:center;margin-bottom:48px;">
-      <div class="section-eyebrow">Features</div>
-      <div class="section-title">Everything you need to go viral</div>
+      <div class="section-eyebrow" data-i18n="feat_eyebrow">Features</div>
+      <div class="section-title" data-i18n="feat_title">Everything you need to go viral</div>
       <div class="section-sub">Six AI features — all included on every plan.</div>
     </div>
     <div class="features-grid">
       <div class="feat-card">
         <div class="feat-icon">✍️</div>
-        <h3>AI Caption Writer</h3>
+        <h3 data-i18n="feat1_title">AI Caption Writer</h3>
         <p>Upload a photo — AI writes platform-perfect captions that drive engagement and sales automatically.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📅</div>
-        <h3>Bulk Scheduler</h3>
+        <h3 data-i18n="feat2_title">Bulk Scheduler</h3>
         <p>Upload 5+ posts at once. Set your frequency and Autopostleey handles the queue for weeks.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🎬</div>
-        <h3>Reels & Shorts Creator</h3>
+        <h3 data-i18n="feat3_title">Reels & Shorts Creator</h3>
         <p>Turn photos into short-form videos for Instagram Reels and YouTube Shorts — automatically.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🔄</div>
-        <h3>Content Type Rotation</h3>
+        <h3 data-i18n="feat4_title">Content Type Rotation</h3>
         <p>6 content types rotate automatically — product, promo, educational, engagement and more.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🤖</div>
-        <h3>AI AutoPoster</h3>
+        <h3 data-i18n="feat5_title">AI AutoPoster</h3>
         <p>Turn it on once. AI generates and posts content daily across all platforms — zero manual effort.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📊</div>
-        <h3>Auto Scheduler</h3>
+        <h3 data-i18n="feat6_title">Auto Scheduler</h3>
         <p>Posts go live at the best time on every platform. No manual scheduling. Ever again.</p>
       </div>
     </div>
@@ -436,12 +440,12 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
 <!-- PRICING -->
 <section class="pricing" id="pricing">
   <div class="container">
-    <div class="section-eyebrow">Pricing</div>
-    <div class="section-title">Start free. Upgrade anytime.</div>
-    <div class="section-sub">No contracts. Cancel anytime. Instant activation.</div>
+    <div class="section-eyebrow" data-i18n="price_eyebrow">Pricing</div>
+    <div class="section-title" data-i18n="price_title">Start free. Upgrade anytime.</div>
+    <div class="section-sub" data-i18n="price_sub">No contracts. Cancel anytime. Instant activation.</div>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-name">Free</div>
+        <div class="price-name" data-i18n="plan_free">Free</div>
         <div class="price-amount">$0</div>
         <div class="price-per">per month, forever</div>
         <div class="price-divider"></div>
@@ -635,6 +639,153 @@ function toggleMobileNav(){document.getElementById('mobile-nav').classList.toggl
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&document.getElementById('auth-overlay').style.display==='flex')submitAuth();
 });
+</script>
+
+<script>
+// ── AUTOPOSTLEEY I18N ─────────────────────────────────────
+const AP_I18N = {
+  en: {
+    nav_features: "Features", nav_platforms: "Platforms", nav_pricing: "Pricing",
+    nav_login: "Log in", nav_signup: "Start free →",
+    hero_badge: "🤖 Agentic AI Social Media Automation",
+    hero_h1: "Create Once.<br>Publish Everywhere.<br><span>Grow Faster.</span>",
+    hero_p: "Just tell your AI assistant what to post — it generates content, schedules it, publishes across all platforms, and reports results. Truly agentic social media automation.",
+    hero_cta: "Start free — it’s free", hero_demo: "Watch demo",
+    feat_eyebrow: "Features", feat_title: "Everything you need to go viral",
+    feat_sub: "Seven AI features — including an Agentic AI assistant that takes action for you.",
+    feat1_title: "AI Caption Writer", feat2_title: "Bulk Scheduler",
+    feat3_title: "Reels & Shorts Creator", feat4_title: "Content Type Rotation",
+    feat5_title: "AI AutoPoster", feat6_title: "Auto Scheduler", feat7_title: "Agentic AI Assistant",
+    price_eyebrow: "Pricing", price_title: "Start free. Upgrade anytime.",
+    price_sub: "No contracts. Cancel anytime. Instant activation.", plan_free: "Free"
+  },
+  es: {
+    nav_features: "Funciones", nav_platforms: "Plataformas", nav_pricing: "Precios",
+    nav_login: "Iniciar sesión", nav_signup: "Empezar gratis →",
+    hero_badge: "🤖 Automatización de Redes Sociales con IA Agéntica",
+    hero_h1: "Crea una vez.<br>Publica en todas partes.<br><span>Crece más rápido.</span>",
+    hero_p: "Solo dile a tu asistente de IA qué publicar — genera contenido, lo programa, publica en todas las plataformas y reporta resultados. Automatización de redes sociales verdaderamente agéntica.",
+    hero_cta: "Empezar gratis", hero_demo: "Ver demo",
+    feat_eyebrow: "Funciones", feat_title: "Todo lo que necesitas para hacerte viral",
+    feat_sub: "Siete funciones de IA — incluyendo un asistente de IA agéntico que actúa por ti.",
+    feat1_title: "Escritor de Subtítulos IA", feat2_title: "Programador Masivo",
+    feat3_title: "Creador de Reels y Shorts", feat4_title: "Rotación de Contenido",
+    feat5_title: "AutoPublicador IA", feat6_title: "Programador Automático", feat7_title: "Asistente IA Agéntico",
+    price_eyebrow: "Precios", price_title: "Empieza gratis. Actualiza cuando quieras.",
+    price_sub: "Sin contratos. Cancela en cualquier momento.", plan_free: "Gratis"
+  },
+  fr: {
+    nav_features: "Fonctionnalités", nav_platforms: "Plateformes", nav_pricing: "Tarifs",
+    nav_login: "Se connecter", nav_signup: "Commencer gratuitement →",
+    hero_badge: "🤖 Automatisation IA Agentique des Réseaux Sociaux",
+    hero_h1: "Créez une fois.<br>Publiez partout.<br><span>Grandissez plus vite.</span>",
+    hero_p: "Dites simplement à votre assistant IA quoi publier — il génère le contenu, le programme, publie sur toutes les plateformes et rapporte les résultats.",
+    hero_cta: "Commencer gratuitement", hero_demo: "Voir la démo",
+    feat_eyebrow: "Fonctionnalités", feat_title: "Tout ce qu’il vous faut pour devenir viral",
+    feat_sub: "Sept fonctionnalités IA — dont un assistant IA agentique qui agit pour vous.",
+    feat1_title: "Rédacteur de Légendes IA", feat2_title: "Planificateur en Masse",
+    feat3_title: "Créateur de Reels et Shorts", feat4_title: "Rotation de Contenu",
+    feat5_title: "AutoPublicateur IA", feat6_title: "Planificateur Automatique", feat7_title: "Assistant IA Agentique",
+    price_eyebrow: "Tarifs", price_title: "Commencez gratuitement. Passez à un plan supérieur à tout moment.",
+    price_sub: "Sans engagement. Annulez à tout moment.", plan_free: "Gratuit"
+  },
+  zh: {
+    nav_features: "功能", nav_platforms: "平台", nav_pricing: "价格",
+    nav_login: "登录", nav_signup: "免费开始 →",
+    hero_badge: "🤖 智能代理AI社交媒体自动化",
+    hero_h1: "创建一次。<br>处处发布。<br><span>加速成长。</span>",
+    hero_p: "只需告诉AI助手要发布什么—它生成内容、安排时间、在所有平台发布并报告结果。真正的代理AI社交媒体自动化。",
+    hero_cta: "免费开始", hero_demo: "观看演示",
+    feat_eyebrow: "功能", feat_title: "一切都在这里，让你爆火",
+    feat_sub: "七大AI功能—包括代理AI助手替你行动。",
+    feat1_title: "AI标题写作", feat2_title: "批量序列器",
+    feat3_title: "Reels和Shorts制作", feat4_title: "内容类型轮换",
+    feat5_title: "AI自动发布", feat6_title: "自动序列器", feat7_title: "代理AI助手",
+    price_eyebrow: "价格", price_title: "免费开始，随时升级。",
+    price_sub: "无合同。随时取消。立即激活。", plan_free: "免费"
+  },
+  ja: {
+    nav_features: "機能", nav_platforms: "プラットフォーム", nav_pricing: "料金",
+    nav_login: "ログイン", nav_signup: "無料で始める →",
+    hero_badge: "🤖 エージェンティックAI ソーシャルメディア自動化",
+    hero_h1: "一度作って。<br>どこでも投稿。<br><span>もっと速く成長。</span>",
+    hero_p: "AIアシスタントに投稿内容を伝えるだけ—コンテンツを生成し、スケジュールし、全プラットフォームに投稿して結果を報告します。",
+    hero_cta: "無料で始める", hero_demo: "デモを見る",
+    feat_eyebrow: "機能", feat_title: "バイラルに必要なすべて",
+    feat_sub: "7つのAI機能—エージェンティックAIアシスタントを含む。",
+    feat1_title: "AIキャプションライター", feat2_title: "バルクスケジューラー",
+    feat3_title: "Reels・Shortsクリエーター", feat4_title: "コンテンツローテーション",
+    feat5_title: "AI自動投稿", feat6_title: "自動スケジューラー", feat7_title: "エージェンティックAIアシスタント",
+    price_eyebrow: "料金", price_title: "無料で始める。いつでもアップグレード。",
+    price_sub: "契約不要。いつでもキャンセル可能。", plan_free: "無料"
+  },
+  ko: {
+    nav_features: "기능", nav_platforms: "플랫폼", nav_pricing: "가격",
+    nav_login: "로그인", nav_signup: "무료로 시작하기 →",
+    hero_badge: "🤖 에이전틱 AI 소셜 미디어 자동화",
+    hero_h1: "한 번 만들어서。<br>모든 곣에 게시하세요。<br><span>더 빠르게 성장하세요。</span>",
+    hero_p: "AI 어시스턴트에게 무엇을 게시할지 말하세요 — 콘텐츠를 생성하고, 예약하고, 모든 플랫폼에 게시하고 결과를 보고합니다.",
+    hero_cta: "무료로 시작하기", hero_demo: "데모 보기",
+    feat_eyebrow: "기능", feat_title: "바이럴에 필요한 모든 것",
+    feat_sub: "7가지 AI 기능 — 에이전틱 AI 어시스턴트를 포함합니다.",
+    feat1_title: "AI 컨텐츠 작성", feat2_title: "대량 스케줄러",
+    feat3_title: "Reels & Shorts 제작자", feat4_title: "콘텐츠 유형 로테이션",
+    feat5_title: "AI 자동 게시", feat6_title: "자동 스케줄러", feat7_title: "에이전틱 AI 어시스턴트",
+    price_eyebrow: "가격", price_title: "무료로 시작하세요. 언제든지 업그레이드.",
+    price_sub: "계약 불필요. 언제든지 취소 가능.", plan_free: "무료"
+  }
+};
+
+const AP_LANG_LABELS = { en:'EN', es:'ES', fr:'FR', zh:'中文', ja:'日本語', ko:'한국어' };
+const AP_LANG_ORDER  = ['en','es','fr','zh','ja','ko'];
+
+function getAPLang() { return localStorage.getItem('ap_lang') || 'en'; }
+
+function applyAPTranslations() {
+  var lang = getAPLang();
+  var dict = AP_I18N[lang] || AP_I18N.en;
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.innerHTML = dict[key];
+  });
+  var label = document.getElementById('ap-lang-label');
+  if (label) label.textContent = AP_LANG_LABELS[lang] || 'EN';
+  document.documentElement.lang = lang;
+  renderAPLangMenu();
+}
+
+function toggleAPLang() {
+  var menu = document.getElementById('ap-lang-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function setAPLang(lang) {
+  localStorage.setItem('ap_lang', lang);
+  applyAPTranslations();
+  var menu = document.getElementById('ap-lang-menu');
+  if (menu) menu.classList.remove('open');
+}
+
+function renderAPLangMenu() {
+  var menu = document.getElementById('ap-lang-menu');
+  if (!menu) return;
+  var current = getAPLang();
+  menu.innerHTML = AP_LANG_ORDER.map(function(l) {
+    var active = l === current ? 'background:#EEF2FF;color:#6D5EF8;font-weight:700;' : '';
+    var onclick = 'setAPLang(&quot;' + l + '&quot;)';
+    return '<div onclick="' + onclick + '" style="padding:10px 16px;cursor:pointer;font-size:13px;border-radius:8px;' + active + '">' + AP_LANG_LABELS[l] + '</div>';
+  }).join('');
+}
+
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('ap-lang-menu');
+  var btn  = document.getElementById('ap-lang-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', applyAPTranslations);
 </script>
 </body>
 </html>
