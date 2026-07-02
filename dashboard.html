@@ -246,7 +246,7 @@
   <div style="display:flex;align-items:center;gap:16px;">
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">🤖 AI Assistant</button><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">🤖 AI Assistant</button>
+  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">🤖 AI Assistant</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
@@ -6908,7 +6908,7 @@ async function sendAPAI() {
   var bizCtx = '';
   try {
     if (typeof _db!=='undefined' && typeof _user!=='undefined' && _user) {
-      var { data:biz } = await _db.from('autopostleey_businesses').select('name,industry').eq('user_id',_user.id).maybeSingle();
+      var { data:biz } = await _db.from('autopostleey_businesses').select('name,industry,description').eq('user_id',_user.id).maybeSingle();
       if (biz) bizCtx = 'Business: '+biz.name+' ('+biz.industry+').';
     }
   } catch(e){}
@@ -7040,7 +7040,7 @@ async function executeAPTool(name, args) {
     var bizName = '';
     try {
       var bizRes = await _db.from('autopostleey_businesses').select('name,industry').eq('user_id',_user.id).maybeSingle();
-      if (bizRes.data) bizName = bizRes.data.name + (bizRes.data.industry?' ('+bizRes.data.industry+')':'') + '. ';
+      if (bizRes.data) bizName = bizRes.data.name + (bizRes.data.industry?' ('+bizRes.data.industry+')':'') + (bizRes.data.description?' - '+bizRes.data.description.slice(0,100):'') + '. ';
     } catch(e) {}
     var platformHints = platforms.map(function(p) {
       return {instagram:'Add hashtags for Instagram.',twitter:'Keep under 280 chars.',linkedin:'Professional tone for LinkedIn.',discord:'Casual and community-friendly for Discord.',telegram:'Clear and concise for Telegram.',tiktok:'Trendy and fun for TikTok.',facebook:'Engaging and shareable for Facebook.'}[p] || '';
@@ -7085,7 +7085,7 @@ async function confirmAPAI(yes) {
   var c=document.getElementById('ap-ai-confirm'); if(c) c.remove();
   if (!yes) { addAPAIMsg('Cancelled! Let me know if you want to try something else.','bot'); return; }
   try {
-    var {error} = await _db.from('autopostleey_posts').insert({user_id:_user.id,content:p.content,platforms:p.platforms,scheduled_at:p.date+'T'+p.time+':00',status:p.status,mode:'ai-assistant'});
+    var {error} = await _db.from('autopostleey_posts').insert({user_id:_user.id,content:p.content,platforms:p.platforms,scheduled_at:p.date+'T'+p.time+':00',status:p.status,mode:'manual'});
     if (error) {
       addAPAIMsg('Error: '+error.message,'bot');
     } else {
@@ -7153,7 +7153,7 @@ async function sendAPAI() {
     var bRes=await _db.from('autopostleey_businesses').select('name,industry').eq('user_id',_user.id).maybeSingle();
     if(bRes.data) bizName=bRes.data.name+(bRes.data.industry?' ('+bRes.data.industry+')':'');
   } catch(e) {}
-  var sysPrompt='You are an agentic AI assistant for Autopostleey, a social media scheduling platform. '
+  var sysPrompt='You are an agentic AI assistant for Autopostleey, a social media scheduling and content creation platform. '
     +(platforms.length?'Connected platforms: '+platforms.join(', ')+'. ONLY use these platforms when posting — never suggest others.':'No platforms connected yet. Tell user to go to Connections page.')
     +(bizName?' Business: '+bizName+'.':'')
     +' When asked to post/share/announce/publish, use create_and_post tool immediately. '
