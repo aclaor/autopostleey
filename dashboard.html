@@ -171,7 +171,41 @@
     .sidebar { display: none; }
     .main { padding: 16px; }
   }
-#ap-lang-menu.open{display:block!important;}</style>
+#ap-lang-menu.open{display:block!important;}
+/* ── AUTOPOSTLEEY AI ─────────────────────────────────────── */
+.ap-ai-btn{padding:8px 16px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;}
+.ap-ai-btn:hover{opacity:.9;transform:translateY(-1px);}
+.ap-ai-panel{position:fixed;top:64px;right:16px;width:380px;max-height:580px;background:#fff;border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,0.15);z-index:2000;display:none;flex-direction:column;overflow:hidden;border:1px solid #e5e7eb;}
+.ap-ai-panel.open{display:flex;}
+.ap-ai-header{background:linear-gradient(135deg,#6D5EF8,#EC4899);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.ap-ai-header-info{display:flex;align-items:center;gap:10px;}
+.ap-ai-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.ap-ai-title{color:#fff;font-size:15px;font-weight:700;}
+.ap-ai-sub{color:rgba(255,255,255,0.8);font-size:11px;}
+.ap-ai-close{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.ap-ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.ap-ai-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;}
+.ap-ai-msg.bot{background:#f3f4f6;color:#111827;align-self:flex-start;border-bottom-left-radius:4px;}
+.ap-ai-msg.user{background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.ap-ai-msg.typing{background:#f3f4f6;align-self:flex-start;padding:14px;}
+.ap-ai-dot{width:6px;height:6px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s infinite;}
+.ap-ai-dot:nth-child(2){animation-delay:.2s;}
+.ap-ai-dot:nth-child(3){animation-delay:.4s;}
+@keyframes apDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.ap-ai-quick{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;}
+.ap-ai-qbtn{padding:5px 12px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;}
+.ap-ai-qbtn:hover{background:#ede9fe;}
+.ap-ai-input-wrap{padding:12px 16px;border-top:1px solid #f3f4f6;display:flex;gap:8px;}
+.ap-ai-input{flex:1;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;outline:none;font-family:inherit;}
+.ap-ai-input:focus{border-color:#6D5EF8;}
+.ap-ai-send{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;cursor:pointer;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.ap-ai-send:hover{opacity:.9;}
+.ap-ai-confirm{margin:8px 0;padding:12px 14px;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:14px;font-size:13px;color:#5b21b6;}
+.ap-ai-confirm-btns{display:flex;gap:8px;margin-top:10px;}
+.ap-ai-confirm-yes{flex:1;padding:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;}
+.ap-ai-confirm-no{flex:1;padding:8px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;}
+@media(max-width:480px){.ap-ai-panel{width:calc(100vw - 32px);right:16px;}}
+</style>
 </head>
 <body>
 
@@ -180,7 +214,7 @@
   <div style="display:flex;align-items:center;gap:16px;">
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right">
+  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">🤖 AI Assistant</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
@@ -6677,6 +6711,201 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', applyAPTranslations);
+</script>
+
+<!-- AUTOPOSTLEEY AI PANEL -->
+<div class="ap-ai-panel" id="ap-ai-panel">
+  <div class="ap-ai-header">
+    <div class="ap-ai-header-info">
+      <div class="ap-ai-avatar">🤖</div>
+      <div><div class="ap-ai-title">Autopostleey AI</div><div class="ap-ai-sub">Powered by Llama 3 · Your social media assistant</div></div>
+    </div>
+    <button class="ap-ai-close" onclick="toggleAPAI()">✕</button>
+  </div>
+  <div class="ap-ai-msgs" id="ap-ai-msgs">
+    <div class="ap-ai-msg bot">Hi! 👋 I can help you create posts, generate captions, schedule content, and manage your social media. What would you like to do?</div>
+  </div>
+  <div class="ap-ai-quick" id="ap-ai-quick"><button class="ap-ai-qbtn" onclick="apAIQuick(this)">📊 Show my analytics</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">✍️ Write a post for me</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">📅 Schedule posts for this week</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">💡 Give me content ideas</button>
+  </div>
+  <div class="ap-ai-input-wrap">
+    <input class="ap-ai-input" id="ap-ai-input" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendAPAI()"/>
+    <button class="ap-ai-send" onclick="sendAPAI()">➤</button>
+  </div>
+</div>
+<script>
+// ── AUTOPOSTLEEY AGENTIC AI ──────────────────────────────
+var _apAIOpen    = false;
+var _apAIHistory = [];
+var _apAIPending = null;
+
+var AP_AI_TOOLS = [
+  {type:'function',function:{name:'generate_caption',description:'Generate a social media caption based on topic, tone and platform',parameters:{type:'object',properties:{topic:{type:'string'},tone:{type:'string',description:'professional, casual, funny, inspirational, promotional'},platform:{type:'string',description:'instagram, facebook, twitter, linkedin'},include_hashtags:{type:'boolean'}},required:['topic']}}},
+  {type:'function',function:{name:'create_post',description:'Schedule or publish a social media post',parameters:{type:'object',properties:{content:{type:'string'},platforms:{type:'array',items:{type:'string'}},schedule_date:{type:'string',description:'YYYY-MM-DD or now'},schedule_time:{type:'string',description:'HH:MM'}},required:['content']}}},
+  {type:'function',function:{name:'get_scheduled_posts',description:'Show upcoming scheduled posts',parameters:{type:'object',properties:{}}}},
+  {type:'function',function:{name:'get_analytics',description:'Get post analytics and stats',parameters:{type:'object',properties:{}}}},
+  {type:'function',function:{name:'navigate_to',description:'Navigate to a dashboard page',parameters:{type:'object',properties:{page:{type:'string',description:'compose, scheduled, history, autoposter, calendar, analytics, bulk, reels, connections, business, billing, support'}},required:['page']}}}
+];
+
+function toggleAPAI() {
+  _apAIOpen = !_apAIOpen;
+  var panel = document.getElementById('ap-ai-panel');
+  if (panel) panel.classList.toggle('open', _apAIOpen);
+  if (_apAIOpen) setTimeout(function(){ var i=document.getElementById('ap-ai-input'); if(i) i.focus(); },200);
+}
+
+function apAIQuick(btn) {
+  var inp = document.getElementById('ap-ai-input');
+  if (inp) { inp.value = btn.textContent.trim(); sendAPAI(); }
+  var q = document.getElementById('ap-ai-quick'); if(q) q.style.display='none';
+}
+
+function addAPAIMsg(text, role) {
+  var msgs = document.getElementById('ap-ai-msgs');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  div.className = 'ap-ai-msg '+(role==='user'?'user':'bot');
+  div.innerHTML = text.split('\n').join('<br>');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showAPAIConfirm(msg) {
+  var msgs = document.getElementById('ap-ai-msgs');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  div.id = 'ap-ai-confirm'; div.className = 'ap-ai-confirm';
+  div.innerHTML = '<div style="margin-bottom:10px;">'+msg.split('\n').join('<br>')+'</div>'
+    +'<div class="ap-ai-confirm-btns">'
+    +'<button class="ap-ai-confirm-yes" onclick="confirmAPAI(true)">Yes, do it</button>'
+    +'<button class="ap-ai-confirm-no" onclick="confirmAPAI(false)">Cancel</button>'
+    +'</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function confirmAPAI(yes) {
+  if (!_apAIPending) return;
+  var p = _apAIPending; _apAIPending = null;
+  var c = document.getElementById('ap-ai-confirm'); if(c) c.remove();
+  if (!yes) { addAPAIMsg('OK, cancelled!','bot'); return; }
+  try {
+    if (p.action === 'create_post') {
+      var { error } = await _db.from('autopostleey_posts').insert({user_id:_user.id,content:p.content,platforms:p.platforms,scheduled_at:p.date+'T'+p.time+':00',status:p.status});
+      addAPAIMsg(error ? 'Error: '+error.message : 'Post '+(p.status==='published'?'published':'scheduled for '+p.date+' at '+p.time)+'!', 'bot');
+    }
+  } catch(e) { addAPAIMsg('Error: '+e.message,'bot'); }
+}
+
+async function executeAPTool(name, args) {
+  if (name === 'generate_caption') {
+    var tones = {professional:'Write professionally.',casual:'Write conversationally.',funny:'Write with humor.',inspirational:'Write inspirationally.',promotional:'Write promotionally with a CTA.'};
+    var platforms = {instagram:'Optimize for Instagram with hashtags.',facebook:'Optimize for Facebook sharing.',twitter:'Keep under 280 chars.',linkedin:'Write professionally for LinkedIn.'};
+    var prompt = 'Write a social media post about: '+args.topic+'. '+(tones[args.tone]||'')+(platforms[args.platform]||'')+(args.include_hashtags?' Include relevant hashtags.':'');
+    var r = await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer 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'},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:300,temperature:0.8})});
+    var d = await r.json();
+    return {caption: d.choices&&d.choices[0] ? d.choices[0].message.content : 'Could not generate caption.'};
+  }
+  if (name === 'create_post') {
+    var date = args.schedule_date==='now' ? new Date().toISOString().split('T')[0] : (args.schedule_date||new Date().toISOString().split('T')[0]);
+    var time = args.schedule_time||'09:00';
+    var status = args.schedule_date==='now' ? 'published' : 'scheduled';
+    _apAIPending = {action:'create_post',content:args.content,platforms:args.platforms||['facebook','instagram'],date:date,time:time,status:status};
+    return {confirm_required:true,message:(status==='published'?'Post now':'Schedule for '+date+' at '+time)+' on '+(args.platforms||['facebook','instagram']).join(', ')+'?'};
+  }
+  if (name === 'get_scheduled_posts') {
+    var { data } = await _db.from('autopostleey_posts').select('content,platforms,scheduled_at').eq('user_id',_user.id).eq('status','scheduled').order('scheduled_at',{ascending:true}).limit(5);
+    return {posts:data||[]};
+  }
+  if (name === 'get_analytics') {
+    var { data } = await _db.from('autopostleey_posts').select('status,platforms').eq('user_id',_user.id);
+    var all=data||[], pub=all.filter(function(p){return p.status==='published';}), sch=all.filter(function(p){return p.status==='scheduled';});
+    var byPlatform={};
+    all.forEach(function(p){(p.platforms||[]).forEach(function(pl){byPlatform[pl]=(byPlatform[pl]||0)+1;});});
+    return {total:all.length,published:pub.length,scheduled:sch.length,by_platform:byPlatform};
+  }
+  if (name === 'navigate_to') {
+    if (typeof showPage==='function') showPage(args.page);
+    return {navigated:true,page:args.page};
+  }
+  return {error:'Unknown tool: '+name};
+}
+
+async function sendAPAI() {
+  var input = document.getElementById('ap-ai-input');
+  var text  = input ? input.value.trim() : '';
+  if (!text) return;
+  input.value = '';
+  var q = document.getElementById('ap-ai-quick'); if(q) q.style.display='none';
+  addAPAIMsg(text,'user');
+  var msgs = document.getElementById('ap-ai-msgs');
+  var typing = document.createElement('div');
+  typing.className='ap-ai-msg typing'; typing.id='ap-ai-typing';
+  typing.innerHTML='<span class="ap-ai-dot"></span><span class="ap-ai-dot"></span><span class="ap-ai-dot"></span>';
+  msgs.appendChild(typing); msgs.scrollTop=msgs.scrollHeight;
+  _apAIHistory.push({role:'user',content:text});
+  var bizCtx = '';
+  try {
+    if (typeof _db!=='undefined' && typeof _user!=='undefined' && _user) {
+      var { data:biz } = await _db.from('autopostleey_businesses').select('name,industry').eq('user_id',_user.id).maybeSingle();
+      if (biz) bizCtx = 'Business: '+biz.name+' ('+biz.industry+').';
+    }
+  } catch(e){}
+  try {
+    var res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer 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'},
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        messages:[
+          {role:'system',content:'You are an agentic AI assistant for Autopostleey, a social media scheduling platform. Help users create posts, generate captions, schedule content, view analytics, and navigate the dashboard. Use tools to perform real actions. Be friendly and concise. '+bizCtx},
+          ..._apAIHistory
+        ],
+        tools:AP_AI_TOOLS,
+        tool_choice:'auto',
+        max_tokens:500,
+        temperature:0.5
+      })
+    });
+    var data = await res.json();
+    var choice = data.choices&&data.choices[0];
+    var t = document.getElementById('ap-ai-typing'); if(t) t.remove();
+    if (choice&&choice.message&&choice.message.tool_calls&&choice.message.tool_calls.length>0) {
+      var tc = choice.message.tool_calls[0];
+      var result = await executeAPTool(tc.function.name, JSON.parse(tc.function.arguments));
+      if (result.confirm_required) {
+        addAPAIMsg('Sure! Here is what I will do:','bot');
+        showAPAIConfirm(result.message);
+      } else if (result.caption) {
+        addAPAIMsg('Here is your caption:','bot');
+        var cd = document.createElement('div');
+        cd.className='ap-ai-msg bot';
+        cd.style.cssText='background:#f3f0ff;border:1.5px solid #c4b5fd;font-style:italic;';
+        cd.textContent=result.caption;
+        msgs.appendChild(cd);
+        addAPAIMsg('Want me to schedule this? Tell me when and which platforms!','bot');
+        msgs.scrollTop=msgs.scrollHeight;
+      } else if (result.posts!==undefined) {
+        if (!result.posts.length) { addAPAIMsg('No scheduled posts yet. Want me to create one?','bot'); }
+        else { addAPAIMsg('You have '+result.posts.length+' scheduled post(s). Check the Scheduled page for details.','bot'); }
+      } else if (result.total!==undefined) {
+        addAPAIMsg('Stats: '+result.total+' total, '+result.published+' published, '+result.scheduled+' scheduled. Top: '+Object.keys(result.by_platform).slice(0,3).join(', '),'bot');
+      } else if (result.navigated) {
+        addAPAIMsg('Opened the '+result.page+' page!','bot');
+      } else if (result.error) {
+        addAPAIMsg('Sorry: '+result.error,'bot');
+      }
+      _apAIHistory.push(choice.message);
+    } else {
+      var reply = choice ? choice.message.content : 'Sorry, try again.';
+      addAPAIMsg(reply,'bot');
+      _apAIHistory.push({role:'assistant',content:reply});
+    }
+    if (_apAIHistory.length>12) _apAIHistory=_apAIHistory.slice(-12);
+  } catch(e) {
+    var t=document.getElementById('ap-ai-typing'); if(t) t.remove();
+    addAPAIMsg('Connection error. Please try again.','bot');
+    console.error('AP AI:',e);
+  }
+}
 </script>
 </body>
 </html>
