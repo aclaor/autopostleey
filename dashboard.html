@@ -6840,7 +6840,7 @@ async function executeAPTool(name, args) {
     var time = args.schedule_time||'09:00';
     var status = args.schedule_date==='now' ? 'published' : 'scheduled';
     _apAIPending = {action:'create_post',content:args.content,platforms:args.platforms||['facebook','instagram'],date:date,time:time,status:status};
-    return {confirm_required:true,message:(status==='published'?'Post now':'Schedule for '+date+' at '+time)+' on '+(args.platforms||['facebook','instagram']).join(', ')+'?'};
+    return {confirm_required:true, content:args.content, message:(status==='published'?'Post now':'Schedule for '+date+' at '+time)+' on '+(args.platforms||['facebook','instagram']).join(', ')+'?'};
   }
   if (name === 'get_scheduled_posts') {
     var { data } = await _db.from('autopostleey_posts').select('content,platforms,scheduled_at').eq('user_id',_user.id).eq('status','scheduled').order('scheduled_at',{ascending:true}).limit(5);
@@ -6903,7 +6903,14 @@ async function sendAPAI() {
       var tc = choice.message.tool_calls[0];
       var result = await executeAPTool(tc.function.name, JSON.parse(tc.function.arguments));
       if (result.confirm_required) {
-        addAPAIMsg('Sure! Here is what I will do:','bot');
+        // Show the caption content if available
+        if (result.content) {
+          var cd = document.createElement('div');
+          cd.className='ap-ai-msg bot';
+          cd.style.cssText='background:#f3f0ff;border:1.5px solid #c4b5fd;font-style:italic;white-space:pre-wrap;align-self:flex-start;';
+          cd.textContent=result.content;
+          msgs.appendChild(cd);
+        }
         showAPAIConfirm(result.message);
       } else if (result.caption) {
         addAPAIMsg('Here is your caption:','bot');
