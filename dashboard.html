@@ -6782,6 +6782,37 @@ function showAPAIConfirm(msg) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+
+async function postCaptionNow(btn) {
+  btn.parentElement.remove();
+  var caption = decodeURIComponent(btn.getAttribute('data-caption'));
+  // Get connected platforms
+  var platforms = [];
+  try {
+    var { data: conns } = await _db.from('autopostleey_connections').select('platform').eq('user_id',_user.id).eq('connected',true);
+    platforms = (conns||[]).map(function(c){return c.platform;});
+  } catch(e) {}
+  if (!platforms.length) platforms = ['facebook','instagram'];
+  _apAIPending = {action:'create_post',content:caption,platforms:platforms,date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),status:'published'};
+  addAPAIMsg('Post now on: '+platforms.join(', ')+'?','bot');
+  showAPAIConfirm('Confirm posting to '+platforms.join(', ')+'?');
+}
+
+async function scheduleCaptionLater(btn) {
+  btn.parentElement.remove();
+  var caption = decodeURIComponent(btn.getAttribute('data-caption'));
+  var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  var date = tomorrow.toISOString().split('T')[0];
+  var platforms = [];
+  try {
+    var { data: conns } = await _db.from('autopostleey_connections').select('platform').eq('user_id',_user.id).eq('connected',true);
+    platforms = (conns||[]).map(function(c){return c.platform;});
+  } catch(e) {}
+  if (!platforms.length) platforms = ['facebook','instagram'];
+  _apAIPending = {action:'create_post',content:caption,platforms:platforms,date:date,time:'09:00',status:'scheduled'};
+  showAPAIConfirm('Schedule for '+date+' at 09:00 on '+platforms.join(', ')+'?');
+}
+
 async function confirmAPAI(yes) {
   if (!_apAIPending) return;
   var p = _apAIPending; _apAIPending = null;
@@ -6856,7 +6887,7 @@ async function sendAPAI() {
       body:JSON.stringify({
         model:'llama-3.3-70b-versatile',
         messages:[
-          {role:'system',content:'You are an agentic AI assistant for Autopostleey, a social media scheduling platform. Help users create posts, generate captions, schedule content, view analytics, and navigate the dashboard. Use tools to perform real actions. Be friendly and concise. '+bizCtx},
+          {role:'system',content:'You are an agentic AI assistant for Autopostleey. When user asks to create/write/post any content, ALWAYS use the generate_caption tool first to write the content, then use create_post tool to schedule or publish it. For simple requests like "post a good morning message", generate the caption AND immediately call create_post with status="now" in the same response. Be proactive - do not just generate captions, actually schedule/post them. Be friendly and concise. '+bizCtx},
           ..._apAIHistory
         ],
         tools:AP_AI_TOOLS,
@@ -6878,10 +6909,16 @@ async function sendAPAI() {
         addAPAIMsg('Here is your caption:','bot');
         var cd = document.createElement('div');
         cd.className='ap-ai-msg bot';
-        cd.style.cssText='background:#f3f0ff;border:1.5px solid #c4b5fd;font-style:italic;';
+        cd.style.cssText='background:#f3f0ff;border:1.5px solid #c4b5fd;font-style:italic;white-space:pre-wrap;';
         cd.textContent=result.caption;
         msgs.appendChild(cd);
-        addAPAIMsg('Want me to schedule this? Tell me when and which platforms!','bot');
+        // Store caption and offer to post it now
+        var _lastCaption = result.caption;
+        var offerDiv = document.createElement('div');
+        offerDiv.style.cssText='margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;';
+        offerDiv.innerHTML='<button onclick="postCaptionNow(this)" data-caption="'+encodeURIComponent(result.caption)+'" style="padding:8px 14px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🚀 Post now to all platforms</button>'
+          +'<button onclick="scheduleCaptionLater(this)" data-caption="'+encodeURIComponent(result.caption)+'" style="padding:8px 14px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📅 Schedule for later</button>';
+        msgs.appendChild(offerDiv);
         msgs.scrollTop=msgs.scrollHeight;
       } else if (result.posts!==undefined) {
         if (!result.posts.length) { addAPAIMsg('No scheduled posts yet. Want me to create one?','bot'); }
