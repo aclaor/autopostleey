@@ -7215,5 +7215,298 @@ async function sendAPAI() {
 }
 
 </script>
+
+<script>
+// ── AUTOPOSTLEEY FULL UI TRANSLATION ─────────────────────
+var AP_TEXT_MAP = {
+  es: {
+    // Nav & general
+    'Main':'Principal','Settings':'Configuración','Overview':'Panel','Compose':'Redactar',
+    'Scheduled':'Programados','History':'Historial','Calendar':'Calendario','Analytics':'Análisis',
+    'Bulk Schedule':'Programación Masiva','Business Profile':'Perfil Empresarial',
+    'Connections':'Conexiones','AI AutoPoster':'AutoPublicador IA','Billing':'Facturación',
+    'Reels & Shorts':'Reels y Shorts','Support':'Soporte','Sign Out':'Cerrar sesión',
+    'Upgrade Plan ⚡':'Mejorar Plan ⚡',
+    // Compose page
+    'Create Post':'Crear Publicación',
+    'Write manually, use AI Assist, or let AI AutoPoster generate everything.':'Escribe manualmente, usa IA o deja que el AutoPublicador genere todo.',
+    'AI AutoPoster — Generate post automatically':'AutoPublicador IA — Genera publicaciones automáticamente',
+    'Let AI analyze your business and write the perfect post — just approve and post':'Deja que la IA analice tu negocio y escriba la publicación perfecta',
+    'Generate Post':'Generar Publicación','Random type':'Tipo aleatorio',
+    'Product highlight':'Destacar producto','Educational tip':'Consejo educativo',
+    'Engagement post':'Publicación de engagement','Promotional':'Promocional',
+    'Website showcase':'Mostrar sitio web',
+    'Write your post content here...':'Escribe tu contenido aquí...',
+    'Add Hashtags':'Agregar Hashtags','AI Assist':'Asistencia IA',
+    'Schedule Post':'Programar Publicación','Post Now':'Publicar Ahora','Save Draft':'Guardar Borrador',
+    'Select platforms to post to':'Seleccionar plataformas',
+    // Business page
+    'Business Name':'Nombre del negocio','What does your business do?':'¿Qué hace tu negocio?',
+    'Industry':'Industria','Tone of Voice':'Tono de voz','Target Audience':'Público objetivo',
+    'Save Changes':'Guardar Cambios','Location':'Ubicación','Website':'Sitio web',
+    // Connections page
+    'Connect':'Conectar','Connected':'Conectado','Disconnect':'Desconectar',
+    'Platform Connections':'Conexiones de Plataforma',
+    'Connect your social media accounts to start posting.':'Conecta tus cuentas de redes sociales para empezar.',
+    // Scheduled/History
+    'Scheduled Posts':'Publicaciones Programadas','Post History':'Historial de Publicaciones',
+    'No scheduled posts yet':'Aún no hay publicaciones programadas',
+    'Schedule a post →':'Programar una publicación →',
+    'Published':'Publicado','Scheduled':'Programado','Draft':'Borrador','Failed':'Fallido',
+    // Billing
+    'Billing & Plan':'Facturación y Plan','Free':'Gratis','Upgrade':'Mejorar',
+    'Current Plan':'Plan Actual','posts/month':'publicaciones/mes',
+    // Analytics
+    'Analytics':'Análisis','Total Posts':'Total de publicaciones',
+    'Published Posts':'Publicaciones publicadas','Scheduled Posts':'Publicaciones programadas',
+    // Bulk
+    '⚡ Bulk Schedule':'⚡ Programación Masiva',
+    'Schedule multiple posts at once':'Programar múltiples publicaciones a la vez',
+    // Reels
+    '🎬 Reels & Shorts Creator':'🎬 Creador de Reels y Shorts',
+    // Support
+    '💬 Support & Community':'💬 Soporte y Comunidad',
+    // AI Chat
+    'Hi! I can create posts, schedule content, check analytics and more. What would you like to do?':'¡Hola! Puedo crear publicaciones, programar contenido, revisar análisis y más. ¿Qué te gustaría hacer?',
+    'Post a good morning message':'Publicar un mensaje de buenos días',
+    'Show my scheduled posts':'Ver mis publicaciones programadas',
+    'Show my analytics':'Ver mis análisis',
+    'Give me content ideas':'Dame ideas de contenido',
+    'Ask me anything...':'Pregúntame lo que quieras...',
+    'Yes, do it!':'¡Sí, hazlo!','Cancel':'Cancelar'
+  },
+  fr: {
+    'Main':'Principal','Settings':'Paramètres','Overview':'Tableau de bord','Compose':'Rédiger',
+    'Scheduled':'Planifiés','History':'Historique','Calendar':'Calendrier','Analytics':'Analyses',
+    'Bulk Schedule':'Planification en masse','Business Profile':'Profil commercial',
+    'Connections':'Connexions','AI AutoPoster':'Auto-publieur IA','Billing':'Facturation',
+    'Reels & Shorts':'Reels et Shorts','Support':'Support','Sign Out':'Déconnexion',
+    'Upgrade Plan ⚡':'Passer à Pro ⚡',
+    'Create Post':'Créer une publication',
+    'Write manually, use AI Assist, or let AI AutoPoster generate everything.':'Écrivez manuellement, utilisez l\'IA ou laissez l\'Auto-publieur tout générer.',
+    'AI AutoPoster — Generate post automatically':'Auto-publieur IA — Générer automatiquement',
+    'Generate Post':'Générer','Random type':'Type aléatoire',
+    'Product highlight':'Mise en avant produit','Educational tip':'Conseil éducatif',
+    'Engagement post':'Publication d\'engagement','Promotional':'Promotionnel',
+    'Website showcase':'Vitrine du site',
+    'Write your post content here...':'Écrivez votre contenu ici...',
+    'Add Hashtags':'Ajouter des Hashtags','AI Assist':'Assistance IA',
+    'Schedule Post':'Planifier','Post Now':'Publier maintenant','Save Draft':'Enregistrer brouillon',
+    'Business Name':'Nom de l\'entreprise','What does your business do?':'Que fait votre entreprise?',
+    'Industry':'Secteur','Tone of Voice':'Ton','Target Audience':'Public cible',
+    'Save Changes':'Enregistrer','Location':'Lieu','Website':'Site web',
+    'Connect':'Connecter','Connected':'Connecté','Disconnect':'Déconnecter',
+    'Scheduled Posts':'Publications planifiées','Post History':'Historique des publications',
+    'No scheduled posts yet':'Pas encore de publications planifiées',
+    'Schedule a post →':'Planifier une publication →',
+    'Published':'Publié','Draft':'Brouillon','Failed':'Échec',
+    'Billing & Plan':'Facturation et plan','Free':'Gratuit','Upgrade':'Mettre à niveau',
+    'Current Plan':'Plan actuel','posts/month':'publications/mois',
+    'Total Posts':'Total des publications',
+    'Hi! I can create posts, schedule content, check analytics and more. What would you like to do?':'Bonjour! Je peux créer des publications, planifier du contenu et plus encore. Que souhaitez-vous faire?',
+    'Post a good morning message':'Publier un message bonjour',
+    'Show my scheduled posts':'Voir mes publications planifiées',
+    'Show my analytics':'Voir mes analyses',
+    'Give me content ideas':'Donnez-moi des idées de contenu',
+    'Ask me anything...':'Demandez-moi n\'importe quoi...',
+    'Yes, do it!':'Oui, faites-le!','Cancel':'Annuler'
+  },
+  zh: {
+    'Main':'主要','Settings':'设置','Overview':'面板','Compose':'创作',
+    'Scheduled':'已安排','History':'历史','Calendar':'日历','Analytics':'分析',
+    'Bulk Schedule':'批量序列','Business Profile':'业务资料',
+    'Connections':'连接','AI AutoPoster':'AI自动发布','Billing':'账单',
+    'Reels & Shorts':'Reels和Shorts','Support':'支持','Sign Out':'退出登录',
+    'Upgrade Plan ⚡':'升级计划 ⚡',
+    'Create Post':'创建帖子',
+    'Write manually, use AI Assist, or let AI AutoPoster generate everything.':'手动写作、使用AI助手或让AI自动生成所有内容。',
+    'AI AutoPoster — Generate post automatically':'AI自动发布 — 自动生成帖子',
+    'Generate Post':'生成帖子','Random type':'随机类型',
+    'Product highlight':'产品推荐','Educational tip':'教育技巧',
+    'Engagement post':'互动帖子','Promotional':'促销',
+    'Website showcase':'网站展示',
+    'Write your post content here...':'在这里写下您的内容...',
+    'Add Hashtags':'添加标签','AI Assist':'AI辅助',
+    'Schedule Post':'安排发布','Post Now':'立即发布','Save Draft':'保存草稿',
+    'Business Name':'企业名称','What does your business do?':'您的企业做什么？',
+    'Industry':'行业','Tone of Voice':'语气','Target Audience':'目标受众',
+    'Save Changes':'保存更改','Location':'位置','Website':'网站',
+    'Connect':'连接','Connected':'已连接','Disconnect':'断开连接',
+    'Scheduled Posts':'已安排的帖子','Post History':'发布历史',
+    'No scheduled posts yet':'还没有安排的帖子',
+    'Schedule a post →':'安排一个帖子 →',
+    'Published':'已发布','Draft':'草稿','Failed':'失败',
+    'Billing & Plan':'账单与计划','Free':'免费','Upgrade':'升级',
+    'Current Plan':'当前计划','posts/month':'帖子/月',
+    'Total Posts':'总帖子数',
+    'Hi! I can create posts, schedule content, check analytics and more. What would you like to do?':'你好！我可以创建帖子、安排内容、查看分析等。您想做什么？',
+    'Post a good morning message':'发布早上好消息',
+    'Show my scheduled posts':'查看已安排的帖子',
+    'Show my analytics':'查看分析',
+    'Give me content ideas':'给我内容创意',
+    'Ask me anything...':'问我任何问题...',
+    'Yes, do it!':'是的，做吧！','Cancel':'取消'
+  },
+  ja: {
+    'Main':'メイン','Settings':'設定','Overview':'概要','Compose':'投稿作成',
+    'Scheduled':'予約済み','History':'履歴','Calendar':'カレンダー','Analytics':'分析',
+    'Bulk Schedule':'一括スケジュール','Business Profile':'ビジネスプロフィール',
+    'Connections':'接続','AI AutoPoster':'AI自動投稿','Billing':'請求書',
+    'Reels & Shorts':'Reels & Shorts','Support':'サポート','Sign Out':'サインアウト',
+    'Upgrade Plan ⚡':'プランをアップグレード ⚡',
+    'Create Post':'投稿を作成',
+    'Write manually, use AI Assist, or let AI AutoPoster generate everything.':'手動で書くか、AIアシストを使うか、AI自動投稿にすべて任せましょう。',
+    'AI AutoPoster — Generate post automatically':'AI自動投稿 — 自動生成',
+    'Generate Post':'投稿を生成','Random type':'ランダムタイプ',
+    'Product highlight':'製品紹介','Educational tip':'教育的なヒント',
+    'Engagement post':'エンゲージメント投稿','Promotional':'プロモーション',
+    'Website showcase':'ウェブサイト紹介',
+    'Write your post content here...':'ここにコンテンツを書いてください...',
+    'Add Hashtags':'ハッシュタグを追加','AI Assist':'AIアシスト',
+    'Schedule Post':'投稿を予約','Post Now':'今すぐ投稿','Save Draft':'下書きを保存',
+    'Business Name':'ビジネス名','What does your business do?':'あなたのビジネスは何をしていますか？',
+    'Industry':'業界','Tone of Voice':'トーン','Target Audience':'ターゲット層',
+    'Save Changes':'変更を保存','Location':'場所','Website':'ウェブサイト',
+    'Connect':'接続する','Connected':'接続済み','Disconnect':'切断',
+    'Scheduled Posts':'予約済み投稿','Post History':'投稿履歴',
+    'No scheduled posts yet':'まだ予約投稿はありません',
+    'Schedule a post →':'投稿を予約する →',
+    'Published':'公開済み','Draft':'下書き','Failed':'失敗',
+    'Billing & Plan':'請求書とプラン','Free':'無料','Upgrade':'アップグレード',
+    'Current Plan':'現在のプラン','posts/month':'投稿/月',
+    'Total Posts':'総投稿数',
+    'Hi! I can create posts, schedule content, check analytics and more. What would you like to do?':'こんにちは！投稿の作成、コンテンツのスケジュール、分析の確認などができます。何をしますか？',
+    'Post a good morning message':'おはようメッセージを投稿',
+    'Show my scheduled posts':'予約投稿を見る',
+    'Show my analytics':'分析を見る',
+    'Give me content ideas':'コンテンツのアイデアをください',
+    'Ask me anything...':'何でも聞いてください...',
+    'Yes, do it!':'はい、やって！','Cancel':'キャンセル'
+  },
+  ko: {
+    'Main':'메인','Settings':'설정','Overview':'개요','Compose':'글 작성',
+    'Scheduled':'예약된 게시물','History':'기록','Calendar':'캘린더','Analytics':'분석',
+    'Bulk Schedule':'대량 예약','Business Profile':'비즈니스 프로필',
+    'Connections':'연결','AI AutoPoster':'AI 자동 게시','Billing':'청구서',
+    'Reels & Shorts':'Reels & Shorts','Support':'지원','Sign Out':'로그아웃',
+    'Upgrade Plan ⚡':'플랜 업그레이드 ⚡',
+    'Create Post':'게시물 작성',
+    'Write manually, use AI Assist, or let AI AutoPoster generate everything.':'직접 작성하거나 AI를 사용하거나 AI 자동 게시에게 모든 것을 맡기세요.',
+    'AI AutoPoster — Generate post automatically':'AI 자동 게시 — 자동으로 생성',
+    'Generate Post':'게시물 생성','Random type':'랜덤 유형',
+    'Product highlight':'제품 강조','Educational tip':'교육적 팁',
+    'Engagement post':'참여 게시물','Promotional':'홍보',
+    'Website showcase':'웹사이트 소개',
+    'Write your post content here...':'여기에 콘텐츠를 작성하세요...',
+    'Add Hashtags':'해시태그 추가','AI Assist':'AI 도움',
+    'Schedule Post':'게시물 예약','Post Now':'지금 게시','Save Draft':'임시저장',
+    'Business Name':'비즈니스 이름','What does your business do?':'귀사의 비즈니스는 무엇을 합니까?',
+    'Industry':'업종','Tone of Voice':'어조','Target Audience':'타겟 고객',
+    'Save Changes':'변경 사항 저장','Location':'위치','Website':'웹사이트',
+    'Connect':'연결','Connected':'연결됨','Disconnect':'연결 해제',
+    'Scheduled Posts':'예약된 게시물','Post History':'게시 기록',
+    'No scheduled posts yet':'아직 예약된 게시물이 없습니다',
+    'Schedule a post →':'게시물 예약하기 →',
+    'Published':'게시됨','Draft':'초안','Failed':'실패',
+    'Billing & Plan':'청구 및 플랜','Free':'무료','Upgrade':'업그레이드',
+    'Current Plan':'현재 플랜','posts/month':'게시물/월',
+    'Total Posts':'총 게시물',
+    'Hi! I can create posts, schedule content, check analytics and more. What would you like to do?':'안녕하세요! 게시물 작성, 콘텐츠 예약, 분석 확인 등을 도와드릴 수 있습니다. 무엇을 하시겠습니까?',
+    'Post a good morning message':'좋은 아침 메시지 게시',
+    'Show my scheduled posts':'예약된 게시물 보기',
+    'Show my analytics':'분석 보기',
+    'Give me content ideas':'콘텐츠 아이디어 주세요',
+    'Ask me anything...':'무엇이든 물어보세요...',
+    'Yes, do it!':'네, 해주세요!','Cancel':'취소'
+  }
+};
+
+// ── Deep text node translator ─────────────────────────────
+function translateTextNodes(lang) {
+  if (lang === 'en') return; // English is default
+  var map = AP_TEXT_MAP[lang];
+  if (!map) return;
+
+  // Translate text nodes throughout the document
+  function walkNode(node) {
+    if (node.nodeType === 3) { // Text node
+      var txt = node.textContent.trim();
+      if (txt && map[txt]) {
+        node.textContent = node.textContent.replace(txt, map[txt]);
+      }
+    } else if (node.nodeType === 1) { // Element
+      // Skip script and style tags
+      if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
+      // Translate placeholder
+      if (node.placeholder && map[node.placeholder]) {
+        node.placeholder = map[node.placeholder];
+      }
+      // Translate title/tooltip
+      if (node.title && map[node.title]) {
+        node.title = map[node.title];
+      }
+      Array.from(node.childNodes).forEach(walkNode);
+    }
+  }
+
+  // Walk the main app body
+  var appBody = document.querySelector('.app-body') || document.body;
+  walkNode(appBody);
+
+  // Also translate the AI chat panel
+  var aiPanel = document.getElementById('ap-ai-panel');
+  if (aiPanel) walkNode(aiPanel);
+}
+
+// Override applyAPTranslations to also translate text nodes
+var _origApplyAPTranslations = typeof applyAPTranslations === 'function' ? applyAPTranslations : null;
+function applyAPTranslations() {
+  if (_origApplyAPTranslations) _origApplyAPTranslations();
+  var lang = typeof getAPLang === 'function' ? getAPLang() : localStorage.getItem('ap_lang') || 'en';
+  // Re-render the menu
+  if (typeof renderAPLangMenu === 'function') renderAPLangMenu();
+  // Update label
+  var LABELS = { en:'EN', es:'ES', fr:'FR', zh:'\u4e2d\u6587', ja:'\u65e5\u672c\u8a9e', ko:'\ud55c\uad6d\uc5b4' };
+  var label = document.getElementById('ap-lang-label');
+  if (label) label.textContent = LABELS[lang] || 'EN';
+}
+
+// Apply text node translation when page changes
+var _origShowPage = typeof showPage === 'function' ? showPage : null;
+if (_origShowPage) {
+  showPage = function(name) {
+    _origShowPage(name);
+    var lang = localStorage.getItem('ap_lang') || 'en';
+    if (lang !== 'en') {
+      setTimeout(function() { translateTextNodes(lang); }, 100);
+    }
+  };
+}
+
+// Apply on initial load
+document.addEventListener('DOMContentLoaded', function() {
+  var lang = localStorage.getItem('ap_lang') || 'en';
+  if (lang !== 'en') {
+    setTimeout(function() {
+      if (typeof applyAPTranslations === 'function') applyAPTranslations();
+      translateTextNodes(lang);
+    }, 500);
+  }
+});
+
+// Re-apply when language changes
+var _origSetAPLang = typeof setAPLang === 'function' ? setAPLang : null;
+if (_origSetAPLang) {
+  setAPLang = function(lang) {
+    _origSetAPLang(lang);
+    if (lang !== 'en') {
+      setTimeout(function() { translateTextNodes(lang); }, 100);
+    } else {
+      // Reload page to reset to English
+      window.location.reload();
+    }
+  };
+}
+</script>
 </body>
 </html>
