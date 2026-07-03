@@ -6670,9 +6670,9 @@ async function confirmAPAI(yes) {
         if (!results.length && pubData.success > 0) {
           addAPAIMsg('✅ Published to ' + p.platforms.join(', ') + '!', 'bot');
         } else if (succeeded.length > 0 && failed.length === 0) {
-          addAPAIMsg('✅ Published to all platforms: ' + succeeded.map(function(r){return r.platform;}).join(', '), 'bot');
+          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ') + (_lastImageUrl ? ' (with image)' : ''), 'bot');
         } else if (succeeded.length > 0 && failed.length > 0) {
-          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ')
+          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ') + (_lastImageUrl ? ' (with image)' : '')
             + '\n⚠️ Could not publish to: ' + failed.map(function(r){return r.platform + (r.error?' ('+r.error+')':'');}).join(', ')
             + '\nFor those platforms, go to Compose to post manually.', 'bot');
         } else {
@@ -6987,9 +6987,9 @@ async function uploadAIImageToSupabase(dataUrl) {
     for (var i=0; i<bytes.length; i++) arr[i] = bytes.charCodeAt(i);
     var blob = new Blob([arr], {type: mime});
     var fname = 'ai-image-' + Date.now() + '.jpg';
-    var { data, error } = await _db.storage.from('post-images').upload(fname, blob, {contentType: mime, upsert: true});
+    var { data, error } = await _db.storage.from('post-media').upload(fname, blob, {contentType: mime, upsert: true});
     if (error) return null;
-    var { data: urlData } = _db.storage.from('post-images').getPublicUrl(fname);
+    var { data: urlData } = _db.storage.from('post-media').getPublicUrl(fname);
     return urlData ? urlData.publicUrl : null;
   } catch(e) { return null; }
 }
