@@ -6656,12 +6656,20 @@ async function confirmAPAI(yes) {
           })
         });
         var pubData = await pubRes.json();
-        var succeeded = pubData.success || (pubData.results ? pubData.results.filter(function(r){return r.success;}).length : 0);
-        var failed    = pubData.results ? pubData.results.filter(function(r){return !r.success;}) : [];
-        if (succeeded > 0) {
-          addAPAIMsg('✅ Published to ' + succeeded + ' platform(s): ' + p.platforms.join(', '), 'bot');
+        var results   = pubData.results || [];
+        var succeeded = results.filter(function(r){return r.success;});
+        var failed    = results.filter(function(r){return !r.success;});
+        // Fall back to pubData.success count if no results array
+        if (!results.length && pubData.success > 0) {
+          addAPAIMsg('✅ Published to ' + p.platforms.join(', ') + '!', 'bot');
+        } else if (succeeded.length > 0 && failed.length === 0) {
+          addAPAIMsg('✅ Published to all platforms: ' + succeeded.map(function(r){return r.platform;}).join(', '), 'bot');
+        } else if (succeeded.length > 0 && failed.length > 0) {
+          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ')
+            + '\n⚠️ Could not publish to: ' + failed.map(function(r){return r.platform + (r.error?' ('+r.error+')':'');}).join(', ')
+            + '\nFor those platforms, go to Compose to post manually.', 'bot');
         } else {
-          addAPAIMsg('⚠️ Post saved but publishing failed. Try from Compose page. Error: ' + (pubData.error || JSON.stringify(failed.map(function(f){return f.platform+': '+f.error;}))), 'bot');
+          addAPAIMsg('⚠️ Post saved but publishing failed. Try from Compose page.', 'bot');
         }
       } catch(pubErr) {
         addAPAIMsg('⚠️ Post saved to history but could not publish to platforms. Error: ' + pubErr.message, 'bot');
