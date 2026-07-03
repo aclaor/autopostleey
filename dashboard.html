@@ -7207,5 +7207,49 @@ async function sendAPAI() {
 }
 
 </script>
+<script>
+const AP_LANG_LABELS_DASH = { en:'EN', es:'ES', fr:'FR', zh:'中文', ja:'日本語', ko:'한국어' };
+const AP_LANG_ORDER_DASH  = ['en','es','fr','zh','ja','ko'];
+function getAPLang() { return localStorage.getItem('ap_lang') || 'en'; }
+function toggleAPLang() {
+  var menu = document.getElementById('ap-lang-menu');
+  if (menu) menu.classList.toggle('open');
+}
+function setAPLang(lang) {
+  localStorage.setItem('ap_lang', lang);
+  var label = document.getElementById('ap-lang-label');
+  if (label) label.textContent = AP_LANG_LABELS_DASH[lang] || 'EN';
+  var menu = document.getElementById('ap-lang-menu');
+  if (menu) menu.classList.remove('open');
+  if (lang === 'en') { window.location.reload(); return; }
+  applyAPTranslations();
+}
+function renderAPLangMenu() {
+  var menu = document.getElementById('ap-lang-menu');
+  if (!menu) return;
+  var current = getAPLang();
+  menu.innerHTML = AP_LANG_ORDER_DASH.map(function(l) {
+    var active = l === current ? 'background:#EEF2FF;color:#6D5EF8;font-weight:700;' : '';
+    return '<div onclick="setAPLang(' + String.fromCharCode(39) + l + String.fromCharCode(39) + ')" style="padding:10px 16px;cursor:pointer;font-size:13px;border-radius:8px;' + active + '">' + AP_LANG_LABELS_DASH[l] + '</div>';
+  }).join('');
+}
+function applyAPTranslations() {
+  var lang = getAPLang();
+  var label = document.getElementById('ap-lang-label');
+  if (label) label.textContent = AP_LANG_LABELS_DASH[lang] || 'EN';
+  renderAPLangMenu();
+}
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('ap-lang-menu');
+  var btn  = document.getElementById('ap-lang-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+document.addEventListener('DOMContentLoaded', function() {
+  applyAPTranslations();
+  renderAPLangMenu();
+});
+</script>
 </body>
 </html>
