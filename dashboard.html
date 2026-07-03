@@ -176,10 +176,8 @@
 30%{transform:translateY(-5px)}}
 
 /* ── AP AI ── */
-.ap-ai-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 15px rgba(109,94,248,0.4);transition:all .2s;letter-spacing:0.01em;}
-.ap-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(109,94,248,0.5);}
-.ap-ai-btn:active{transform:translateY(0);}
-.ap-ai-btn svg{width:16px;height:16px;flex-shrink:0;}
+.ap-ai-btn{padding:8px 18px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.02em;transition:opacity .2s;}
+.ap-ai-btn:hover{opacity:.88;}
 @keyframes apDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 @keyframes apPulse{0%,100%{opacity:1}50%{opacity:0.6}}
 </style>
@@ -191,15 +189,7 @@
   <div style="display:flex;align-items:center;gap:16px;">
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="rgba(255,255,255,0.25)"/>
-    <path d="M9 9h6M9 12h6M9 15h4" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="17" cy="7" r="2.5" fill="#fff"/>
-    <path d="M17 5.5v1.5h1.5" stroke="rgba(109,94,248,0.8)" stroke-width="1" stroke-linecap="round"/>
-  </svg>
-  AI Assistant
-</button>
+  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">&#10024; AI Assistant</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
@@ -368,7 +358,7 @@
     <div class="page" id="page-compose">
       <div class="page-header">
         <div>
-          <div class="page-title"  data-i18n="title_compose"><>Create Post</div>
+          <div class="page-title"  data-i18n="title_compose">Create Post</div>
           <div class="page-sub" data-i18n="sub_compose">Write manually, use AI Assist, or let AI AutoPoster generate everything.</div>
         </div>
       </div>
@@ -756,7 +746,7 @@
     <!-- ── SCHEDULED ──────────────── -->
     <div class="page" id="page-scheduled">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_scheduled"><>Scheduled Posts</div>
+        <div class="page-title"  data-i18n="title_scheduled">Scheduled Posts</div>
         <button class="btn-accent" onclick="showPage('compose')">+ New Post</button>
       </div>
       <div id="scheduled-list">
@@ -772,7 +762,7 @@
     <!-- ── HISTORY ────────────────── -->
     <div class="page" id="page-history">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_history"><>Post History</div>
+        <div class="page-title"  data-i18n="title_history">Post History</div>
       </div>
       <div id="history-list">
         <div class="empty-state">
@@ -786,7 +776,7 @@
     <!-- ── BUSINESS PROFILE ───────── -->
     <div class="page" id="page-business">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_business"><>Business Profile</div>
+        <div class="page-title"  data-i18n="title_business">Business Profile</div>
         <div class="page-sub">This is how AI learns to write posts for your business</div>
       </div>
       <div class="card" style="max-width:640px;">
@@ -855,7 +845,7 @@
     <!-- ── CONNECTIONS ────────────── -->
     <div class="page" id="page-connections">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_connections"><>Platform Connections</div>
+        <div class="page-title"  data-i18n="title_connections">Platform Connections</div>
         <div class="page-sub">Connect your social media accounts to start posting</div>
       </div>
       <div style="max-width:560px;">
@@ -1234,7 +1224,7 @@
 
     <div class="page" id="page-billing">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_billing"><>Billing & Plan</div>
+        <div class="page-title"  data-i18n="title_billing">Billing & Plan</div>
       </div>
 
       <!-- Current Plan Banner -->
@@ -1331,7 +1321,7 @@
 
     <div class="page" id="page-calendar">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_calendar"><>Content Calendar</div>
+        <div class="page-title"  data-i18n="title_calendar">Content Calendar</div>
         <button class="btn-accent" onclick="showPage('compose')">+ New Post</button>
       </div>
       <div class="card">
@@ -1357,7 +1347,7 @@
     <!-- ── ANALYTICS ─────────────────── -->
     <div class="page" id="page-analytics">
       <div class="page-header">
-        <div class="page-title"  data-i18n="title_analytics"><>Analytics</div>
+        <div class="page-title"  data-i18n="title_analytics">Analytics</div>
         <div class="page-sub">Track your post performance across platforms</div>
       </div>
       <div class="stats-row" id="analytics-stats">
@@ -1402,7 +1392,7 @@
     <div class="page" id="page-bulk">
       <div class="page-header">
         <div>
-          <div class="page-title"  data-i18n="title_bulk"><>⚡ Bulk Schedule</div>
+          <div class="page-title"  data-i18n="title_bulk">⚡ Bulk Schedule</div>
           <div class="page-sub">Schedule multiple posts across all platforms at once</div>
         </div>
       </div>
@@ -1588,7 +1578,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
     <div class="page" id="page-reels">
       <div class="page-header">
         <div>
-          <div class="page-title"  data-i18n="title_reels"><>🎬 Reels & Shorts Creator</div>
+          <div class="page-title"  data-i18n="title_reels">🎬 Reels & Shorts Creator</div>
           <div class="page-sub">Turn product photos into Reels, or analyze your videos and post automatically</div>
         </div>
       </div>
@@ -1825,7 +1815,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
     <div class="page" id="page-support">
       <div class="page-header">
         <div>
-          <div class="page-title"  data-i18n="title_support"><>💬 Support & Community</div>
+          <div class="page-title"  data-i18n="title_support">💬 Support & Community</div>
           <div class="page-sub">Get help, connect with us, and join our community</div>
         </div>
       </div>
