@@ -7207,23 +7207,168 @@ async function sendAPAI() {
 }
 
 </script>
+
 <script>
-const AP_LANG_LABELS_DASH = { en:'EN', es:'ES', fr:'FR', zh:'中文', ja:'日本語', ko:'한국어' };
+const AP_I18N_DASH = {
+  en: {
+    sign_out:"Sign Out",nav_section_main:"Main",nav_section_settings:"Settings",
+    nav_overview:"Overview",nav_compose:"Compose",nav_scheduled:"Scheduled",
+    nav_history:"History",nav_calendar:"Calendar",nav_analytics:"Analytics",
+    nav_bulk:"Bulk Schedule",nav_business:"Business Profile",nav_connections:"Connections",
+    nav_autoposter:"AI AutoPoster",nav_billing:"Billing",nav_reels:"Reels & Shorts",
+    nav_support:"Support",nav_upgrade:"Upgrade Plan \u26a1",
+    sub_overview:"Here\u2019s what\u2019s happening with your social media today.",
+    title_compose:"Create Post",sub_compose:"Write manually, use AI Assist, or let AI AutoPoster generate everything.",
+    title_scheduled:"Scheduled Posts",title_history:"Post History",title_business:"Business Profile",
+    title_connections:"Platform Connections",title_billing:"Billing & Plan",title_calendar:"Content Calendar",
+    title_analytics:"Analytics",title_bulk:"\u26a1 Bulk Schedule",
+    title_reels:"\ud83c\udfac Reels & Shorts Creator",title_support:"\ud83d\udcac Support & Community",
+    btn_schedule:"Schedule Post",btn_post_now:"Post Now",btn_save_draft:"Save Draft",
+    btn_generate_ai:"Generate with AI",btn_connect:"Connect",btn_save_changes:"Save Changes"
+  },
+  es: {
+    sign_out:"Cerrar sesi\u00f3n",nav_section_main:"Principal",nav_section_settings:"Configuraci\u00f3n",
+    nav_overview:"Panel",nav_compose:"Redactar",nav_scheduled:"Programados",
+    nav_history:"Historial",nav_calendar:"Calendario",nav_analytics:"An\u00e1lisis",
+    nav_bulk:"Programaci\u00f3n Masiva",nav_business:"Perfil Empresarial",nav_connections:"Conexiones",
+    nav_autoposter:"AutoPublicador IA",nav_billing:"Facturaci\u00f3n",nav_reels:"Reels y Shorts",
+    nav_support:"Soporte",nav_upgrade:"Mejorar Plan \u26a1",
+    sub_overview:"Esto es lo que est\u00e1 pasando con tus redes sociales hoy.",
+    title_compose:"Crear Publicaci\u00f3n",sub_compose:"Escribe manualmente, usa IA o deja que el AutoPublicador genere todo.",
+    title_scheduled:"Publicaciones Programadas",title_history:"Historial de Publicaciones",
+    title_business:"Perfil Empresarial",title_connections:"Conexiones de Plataforma",
+    title_billing:"Facturaci\u00f3n y Plan",title_calendar:"Calendario de Contenido",
+    title_analytics:"An\u00e1lisis",title_bulk:"\u26a1 Programaci\u00f3n Masiva",
+    title_reels:"\ud83c\udfac Creador de Reels y Shorts",title_support:"\ud83d\udcac Soporte y Comunidad",
+    btn_schedule:"Programar Publicaci\u00f3n",btn_post_now:"Publicar Ahora",btn_save_draft:"Guardar Borrador",
+    btn_generate_ai:"Generar con IA",btn_connect:"Conectar",btn_save_changes:"Guardar Cambios"
+  },
+  fr: {
+    sign_out:"D\u00e9connexion",nav_section_main:"Principal",nav_section_settings:"Param\u00e8tres",
+    nav_overview:"Tableau de bord",nav_compose:"R\u00e9diger",nav_scheduled:"Planifi\u00e9s",
+    nav_history:"Historique",nav_calendar:"Calendrier",nav_analytics:"Analyses",
+    nav_bulk:"Planification en masse",nav_business:"Profil commercial",nav_connections:"Connexions",
+    nav_autoposter:"Auto-publieur IA",nav_billing:"Facturation",nav_reels:"Reels & Shorts",
+    nav_support:"Support",nav_upgrade:"Passer \u00e0 Pro \u26a1",
+    sub_overview:"Voici ce qui se passe avec vos r\u00e9seaux sociaux aujourd\u2019hui.",
+    title_compose:"Cr\u00e9er une publication",sub_compose:"R\u00e9digez manuellement ou laissez l\u2019IA g\u00e9n\u00e9rer tout.",
+    title_scheduled:"Publications planifi\u00e9es",title_history:"Historique des publications",
+    title_business:"Profil commercial",title_connections:"Connexions de plateforme",
+    title_billing:"Facturation et plan",title_calendar:"Calendrier de contenu",
+    title_analytics:"Analyses",title_bulk:"\u26a1 Planification en masse",
+    title_reels:"\ud83c\udfac Cr\u00e9ateur Reels & Shorts",title_support:"\ud83d\udcac Support & Communaut\u00e9",
+    btn_schedule:"Planifier",btn_post_now:"Publier maintenant",btn_save_draft:"Enregistrer brouillon",
+    btn_generate_ai:"G\u00e9n\u00e9rer avec IA",btn_connect:"Connecter",btn_save_changes:"Enregistrer"
+  },
+  zh: {
+    sign_out:"\u9000\u51fa\u767b\u5f55",nav_section_main:"\u4e3b\u8981",nav_section_settings:"\u8bbe\u7f6e",
+    nav_overview:"\u9762\u677f",nav_compose:"\u521b\u4f5c",nav_scheduled:"\u5df2\u5b89\u6392",
+    nav_history:"\u5386\u53f2",nav_calendar:"\u65e5\u5386",nav_analytics:"\u5206\u6790",
+    nav_bulk:"\u6279\u91cf\u5e8f\u5217",nav_business:"\u4e1a\u52a1\u8d44\u6599",nav_connections:"\u8fde\u63a5",
+    nav_autoposter:"AI\u81ea\u52a8\u53d1\u5e03",nav_billing:"\u8d26\u5355",nav_reels:"Reels\u548cShorts",
+    nav_support:"\u652f\u6301",nav_upgrade:"\u5347\u7ea7\u8ba1\u5212 \u26a1",
+    sub_overview:"\u8fd9\u662f\u4eca\u5929\u60a8\u7684\u793e\u4ea4\u5a92\u4f53\u52a8\u6001\u3002",
+    title_compose:"\u521b\u5efa\u5e16\u5b50",sub_compose:"\u624b\u52a8\u64b0\u5199\u3001\u4f7f\u7528AI\u52a9\u624b\u6216\u8ba9AI\u81ea\u52a8\u751f\u6210\u6240\u6709\u5185\u5bb9\u3002",
+    title_scheduled:"\u5df2\u5b89\u6392\u5e16\u5b50",title_history:"\u53d1\u5e03\u5386\u53f2",
+    title_business:"\u4e1a\u52a1\u8d44\u6599",title_connections:"\u5e73\u53f0\u8fde\u63a5",
+    title_billing:"\u8d26\u5355\u4e0e\u8ba1\u5212",title_calendar:"\u5185\u5bb9\u65e5\u5386",
+    title_analytics:"\u5206\u6790",title_bulk:"\u26a1 \u6279\u91cf\u5e8f\u5217",
+    title_reels:"\ud83c\udfac Reels\u548cShorts\u5236\u4f5c",title_support:"\ud83d\udcac \u652f\u6301\u4e0e\u793e\u533a",
+    btn_schedule:"\u5b89\u6392\u5e16\u5b50",btn_post_now:"\u7acb\u5373\u53d1\u5e03",btn_save_draft:"\u4fdd\u5b58\u8349\u7a3f",
+    btn_generate_ai:"AI\u751f\u6210",btn_connect:"\u8fde\u63a5",btn_save_changes:"\u4fdd\u5b58\u66f4\u6539"
+  },
+  ja: {
+    sign_out:"\u30b5\u30a4\u30f3\u30a2\u30a6\u30c8",nav_section_main:"\u30e1\u30a4\u30f3",nav_section_settings:"\u8a2d\u5b9a",
+    nav_overview:"\u6982\u8981",nav_compose:"\u6295\u7a3f\u4f5c\u6210",nav_scheduled:"\u4e88\u7d04\u6e08\u307f",
+    nav_history:"\u5c65\u6b74",nav_calendar:"\u30ab\u30ec\u30f3\u30c0\u30fc",nav_analytics:"\u5206\u6790",
+    nav_bulk:"\u4e00\u62ec\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb",nav_business:"\u30d3\u30b8\u30cd\u30b9\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb",
+    nav_connections:"\u63a5\u7d9a",nav_autoposter:"AI\u81ea\u52d5\u6295\u7a3f",nav_billing:"\u8acb\u6c42\u66f8",
+    nav_reels:"Reels & Shorts",nav_support:"\u30b5\u30dd\u30fc\u30c8",nav_upgrade:"\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9 \u26a1",
+    sub_overview:"\u4eca\u65e5\u306e\u30bd\u30fc\u30b7\u30e3\u30eb\u30e1\u30c7\u30a3\u30a2\u306e\u6982\u8981\u3067\u3059\u3002",
+    title_compose:"\u6295\u7a3f\u3092\u4f5c\u6210",sub_compose:"\u624b\u52d5\u3067\u66f8\u304f\u304b\u3001AI\u3092\u4f7f\u3063\u3066\u81ea\u52d5\u751f\u6210\u3002",
+    title_scheduled:"\u4e88\u7d04\u6e08\u307f\u306e\u6295\u7a3f",title_history:"\u6295\u7a3f\u5c65\u6b74",
+    title_business:"\u30d3\u30b8\u30cd\u30b9\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb",title_connections:"\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u63a5\u7d9a",
+    title_billing:"\u8acb\u6c42\u66f8\u3068\u30d7\u30e9\u30f3",title_calendar:"\u30b3\u30f3\u30c6\u30f3\u30c4\u30ab\u30ec\u30f3\u30c0\u30fc",
+    title_analytics:"\u5206\u6790",title_bulk:"\u26a1 \u4e00\u62ec\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb",
+    title_reels:"\ud83c\udfac Reels & Shorts\u30af\u30ea\u30a8\u30fc\u30bf\u30fc",title_support:"\ud83d\udcac \u30b5\u30dd\u30fc\u30c8 & \u30b3\u30df\u30e5\u30cb\u30c6\u30a3",
+    btn_schedule:"\u6295\u7a3f\u3092\u4e88\u7d04",btn_post_now:"\u4eca\u3059\u3050\u6295\u7a3f",btn_save_draft:"\u4e0b\u66f8\u304d\u3092\u4fdd\u5b58",
+    btn_generate_ai:"AI\u3067\u751f\u6210",btn_connect:"\u63a5\u7d9a\u3059\u308b",btn_save_changes:"\u5909\u66f4\u3092\u4fdd\u5b58"
+  },
+  ko: {
+    sign_out:"\ub85c\uadf8\uc544\uc6c3",nav_section_main:"\uba54\uc778",nav_section_settings:"\uc124\uc815",
+    nav_overview:"\uac1c\uc694",nav_compose:"\uae00 \uc791\uc131",nav_scheduled:"\uc608\uc57d\ub41c \uac8c\uc2dc\ubb3c",
+    nav_history:"\uae30\ub85d",nav_calendar:"\uce98\ub9b0\ub354",nav_analytics:"\ubd84\uc11d",
+    nav_bulk:"\ub300\ub7c9 \uc608\uc57d",nav_business:"\ube44\uc988\ub2c8\uc2a4 \ud504\ub85c\ud544",nav_connections:"\uc5f0\uacb0",
+    nav_autoposter:"AI \uc790\ub3d9 \uac8c\uc2dc",nav_billing:"\uccad\uad6c\uc11c",nav_reels:"Reels & Shorts",
+    nav_support:"\uc9c0\uc6d0",nav_upgrade:"\ud50c\ub79c \uc5c5\uadf8\ub808\uc774\ub4dc \u26a1",
+    sub_overview:"\uc624\ub298 \uc18c\uc15c \ubbf8\ub514\uc5b4 \ud604\ud669\uc785\ub2c8\ub2e4.",
+    title_compose:"\uac8c\uc2dc\ubb3c \uc791\uc131",sub_compose:"\uc9c1\uc811 \uc791\uc131\ud558\uac70\ub098 AI\ub97c \uc0ac\uc6a9\ud558\uc138\uc694.",
+    title_scheduled:"\uc608\uc57d\ub41c \uac8c\uc2dc\ubb3c",title_history:"\uac8c\uc2dc \uae30\ub85d",
+    title_business:"\ube44\uc988\ub2c8\uc2a4 \ud504\ub85c\ud544",title_connections:"\ud50c\ub7ab\ud3fc \uc5f0\uacb0",
+    title_billing:"\uccad\uad6c \ubc0f \ud50c\ub79c",title_calendar:"\ucf58\ud150\uce20 \uce98\ub9b0\ub354",
+    title_analytics:"\ubd84\uc11d",title_bulk:"\u26a1 \ub300\ub7c9 \uc608\uc57d",
+    title_reels:"\ud83c\udfac Reels & Shorts \uc81c\uc791\uc790",title_support:"\ud83d\udcac \uc9c0\uc6d0 & \ucee4\ubba4\ub2c8\ud2f0",
+    btn_schedule:"\uac8c\uc2dc\ubb3c \uc608\uc57d",btn_post_now:"\uc9c0\uae08 \uac8c\uc2dc",btn_save_draft:"\uc784\uc2dc\uc800\uc7a5",
+    btn_generate_ai:"AI\ub85c \uc0dd\uc131",btn_connect:"\uc5f0\uacb0",btn_save_changes:"\ubcc0\uacbd \uc0ac\ud56d \uc800\uc7a5"
+  }
+};
+
+const AP_TEXT_MAP = {
+  es:{"Sign Out":"Cerrar sesi\u00f3n","Overview":"Panel","Compose":"Redactar","Scheduled":"Programados","History":"Historial","Calendar":"Calendario","Analytics":"An\u00e1lisis","Bulk Schedule":"Programaci\u00f3n Masiva","Business Profile":"Perfil Empresarial","Connections":"Conexiones","AI AutoPoster":"AutoPublicador IA","Billing":"Facturaci\u00f3n","Reels & Shorts":"Reels y Shorts","Support":"Soporte","Create Post":"Crear Publicaci\u00f3n","Schedule Post":"Programar Publicaci\u00f3n","Post Now":"Publicar Ahora","Save Draft":"Guardar Borrador","Generate with AI":"Generar con IA","Connect":"Conectar","Save Changes":"Guardar Cambios","Published":"Publicado","Scheduled":"Programado","Draft":"Borrador","Failed":"Fallido","Free":"Gratis","Upgrade":"Mejorar","Yes, do it!":"S\u00ed, hazlo!","Cancel":"Cancelar","Ask me anything...":"Preg\u00fantame lo que quieras...","Post a good morning message":"Publicar mensaje de buenos d\u00edas","Show my scheduled posts":"Ver mis publicaciones programadas","Show my analytics":"Ver mis an\u00e1lisis","Give me content ideas":"Dame ideas de contenido"},
+  fr:{"Sign Out":"D\u00e9connexion","Overview":"Tableau de bord","Compose":"R\u00e9diger","Scheduled":"Planifi\u00e9s","History":"Historique","Calendar":"Calendrier","Analytics":"Analyses","Bulk Schedule":"Planification en masse","Business Profile":"Profil commercial","Connections":"Connexions","AI AutoPoster":"Auto-publieur IA","Billing":"Facturation","Reels & Shorts":"Reels & Shorts","Support":"Support","Create Post":"Cr\u00e9er une publication","Schedule Post":"Planifier","Post Now":"Publier maintenant","Save Draft":"Enregistrer brouillon","Generate with AI":"G\u00e9n\u00e9rer avec IA","Connect":"Connecter","Save Changes":"Enregistrer","Published":"Publi\u00e9","Scheduled":"Planifi\u00e9","Draft":"Brouillon","Failed":"\u00c9chec","Free":"Gratuit","Upgrade":"Mettre \u00e0 niveau","Yes, do it!":"Oui, faites-le!","Cancel":"Annuler","Ask me anything...":"Demandez-moi n\u2019importe quoi...","Post a good morning message":"Publier un message bonjour","Show my scheduled posts":"Voir mes publications planifi\u00e9es","Show my analytics":"Voir mes analyses","Give me content ideas":"Donnez-moi des id\u00e9es de contenu"},
+  zh:{"Sign Out":"\u9000\u51fa\u767b\u5f55","Overview":"\u9762\u677f","Compose":"\u521b\u4f5c","Scheduled":"\u5df2\u5b89\u6392","History":"\u5386\u53f2","Calendar":"\u65e5\u5386","Analytics":"\u5206\u6790","Bulk Schedule":"\u6279\u91cf\u5e8f\u5217","Business Profile":"\u4e1a\u52a1\u8d44\u6599","Connections":"\u8fde\u63a5","AI AutoPoster":"AI\u81ea\u52a8\u53d1\u5e03","Billing":"\u8d26\u5355","Reels & Shorts":"Reels\u548cShorts","Support":"\u652f\u6301","Create Post":"\u521b\u5efa\u5e16\u5b50","Schedule Post":"\u5b89\u6392\u5e16\u5b50","Post Now":"\u7acb\u5373\u53d1\u5e03","Save Draft":"\u4fdd\u5b58\u8349\u7a3f","Generate with AI":"AI\u751f\u6210","Connect":"\u8fde\u63a5","Save Changes":"\u4fdd\u5b58\u66f4\u6539","Published":"\u5df2\u53d1\u5e03","Draft":"\u8349\u7a3f","Failed":"\u5931\u8d25","Free":"\u514d\u8d39","Upgrade":"\u5347\u7ea7","Yes, do it!":"\u662f\u7684\uff0c\u505a\u5427\uff01","Cancel":"\u53d6\u6d88","Ask me anything...":"\u95ee\u6211\u4efb\u4f55\u95ee\u9898...","Post a good morning message":"\u53d1\u5e03\u65e9\u4e0a\u597d\u6d88\u606f","Show my scheduled posts":"\u67e5\u770b\u5df2\u5b89\u6392\u5e16\u5b50","Show my analytics":"\u67e5\u770b\u5206\u6790","Give me content ideas":"\u7ed9\u6211\u5185\u5bb9\u521b\u610f"},
+  ja:{"Sign Out":"\u30b5\u30a4\u30f3\u30a2\u30a6\u30c8","Overview":"\u6982\u8981","Compose":"\u6295\u7a3f\u4f5c\u6210","Scheduled":"\u4e88\u7d04\u6e08\u307f","History":"\u5c65\u6b74","Calendar":"\u30ab\u30ec\u30f3\u30c0\u30fc","Analytics":"\u5206\u6790","Bulk Schedule":"\u4e00\u62ec\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb","Business Profile":"\u30d3\u30b8\u30cd\u30b9\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb","Connections":"\u63a5\u7d9a","AI AutoPoster":"AI\u81ea\u52d5\u6295\u7a3f","Billing":"\u8acb\u6c42\u66f8","Reels & Shorts":"Reels & Shorts","Support":"\u30b5\u30dd\u30fc\u30c8","Create Post":"\u6295\u7a3f\u3092\u4f5c\u6210","Schedule Post":"\u6295\u7a3f\u3092\u4e88\u7d04","Post Now":"\u4eca\u3059\u3050\u6295\u7a3f","Save Draft":"\u4e0b\u66f8\u304d\u3092\u4fdd\u5b58","Generate with AI":"AI\u3067\u751f\u6210","Connect":"\u63a5\u7d9a\u3059\u308b","Save Changes":"\u5909\u66f4\u3092\u4fdd\u5b58","Published":"\u516c\u958b\u6e08\u307f","Draft":"\u4e0b\u66f8\u304d","Failed":"\u5931\u6557","Free":"\u7121\u6599","Upgrade":"\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9","Yes, do it!":"\u306f\u3044\u3001\u3084\u3063\u3066\uff01","Cancel":"\u30ad\u30e3\u30f3\u30bb\u30eb","Ask me anything...":"\u4f55\u3067\u3082\u8074\u3044\u3066\u304f\u3060\u3055\u3044...","Post a good morning message":"\u304a\u306f\u3088\u3046\u30e1\u30c3\u30bb\u30fc\u30b8\u3092\u6295\u7a3f","Show my scheduled posts":"\u4e88\u7d04\u6e08\u307f\u6295\u7a3f\u3092\u898b\u308b","Show my analytics":"\u5206\u6790\u3092\u898b\u308b","Give me content ideas":"\u30b3\u30f3\u30c6\u30f3\u30c4\u306e\u30a2\u30a4\u30c7\u30a2\u3092\u304f\u3060\u3055\u3044"},
+  ko:{"Sign Out":"\ub85c\uadf8\uc544\uc6c3","Overview":"\uac1c\uc694","Compose":"\uae00 \uc791\uc131","Scheduled":"\uc608\uc57d\ub41c \uac8c\uc2dc\ubb3c","History":"\uae30\ub85d","Calendar":"\uce98\ub9b0\ub354","Analytics":"\ubd84\uc11d","Bulk Schedule":"\ub300\ub7c9 \uc608\uc57d","Business Profile":"\ube44\uc988\ub2c8\uc2a4 \ud504\ub85c\ud544","Connections":"\uc5f0\uacb0","AI AutoPoster":"AI \uc790\ub3d9 \uac8c\uc2dc","Billing":"\uccad\uad6c\uc11c","Reels & Shorts":"Reels & Shorts","Support":"\uc9c0\uc6d0","Create Post":"\uac8c\uc2dc\ubb3c \uc791\uc131","Schedule Post":"\uac8c\uc2dc\ubb3c \uc608\uc57d","Post Now":"\uc9c0\uae08 \uac8c\uc2dc","Save Draft":"\uc784\uc2dc\uc800\uc7a5 \uc800\uc7a5","Generate with AI":"AI\ub85c \uc0dd\uc131","Connect":"\uc5f0\uacb0","Save Changes":"\ubcc0\uacbd \uc0ac\ud56d \uc800\uc7a5","Published":"\uac8c\uc2dc\ub428","Draft":"\uc784\uc2dc","Failed":"\uc2e4\ud328","Free":"\ubb34\ub8cc","Upgrade":"\uc5c5\uadf8\ub808\uc774\ub4dc","Yes, do it!":"\ub124, \ud574\uc8fc\uc138\uc694!","Cancel":"\ucde8\uc18c","Ask me anything...":"\ubb34\uc5c7\uc774\ub4e0\uc9c0 \ubb3c\uc5b4\ubcf4\uc138\uc694...","Post a good morning message":"\uc88b\uc740 \uc544\uce68 \uba54\uc2dc\uc9c0 \uac8c\uc2dc","Show my scheduled posts":"\uc608\uc57d\ub41c \uac8c\uc2dc\ubb3c \ubcf4\uae30","Show my analytics":"\ubd84\uc11d \ubcf4\uae30","Give me content ideas":"\ucf58\ud150\uce20 \uc544\uc774\ub514\uc5b4 \uc8fc\uc138\uc694"}
+};
+
+const AP_LANG_LABELS_DASH = { en:'EN', es:'ES', fr:'FR', zh:'\u4e2d\u6587', ja:'\u65e5\u672c\u8a9e', ko:'\ud55c\uad6d\uc5b4' };
 const AP_LANG_ORDER_DASH  = ['en','es','fr','zh','ja','ko'];
+
 function getAPLang() { return localStorage.getItem('ap_lang') || 'en'; }
+
+function applyAPTranslations() {
+  var lang = getAPLang();
+  var dict = AP_I18N_DASH[lang] || AP_I18N_DASH.en;
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.innerHTML = dict[key];
+  });
+  var label = document.getElementById('ap-lang-label');
+  if (label) label.textContent = AP_LANG_LABELS_DASH[lang] || 'EN';
+  renderAPLangMenu();
+  if (lang !== 'en') translateTextNodes(lang);
+}
+
+function translateTextNodes(lang) {
+  var map = AP_TEXT_MAP[lang];
+  if (!map) return;
+  function walk(node) {
+    if (node.nodeType === 3) {
+      var txt = node.textContent.trim();
+      if (txt && map[txt]) node.textContent = node.textContent.replace(txt, map[txt]);
+    } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+      if (node.placeholder && map[node.placeholder]) node.placeholder = map[node.placeholder];
+      Array.from(node.childNodes).forEach(walk);
+    }
+  }
+  walk(document.querySelector('.app-body') || document.body);
+  var panel = document.getElementById('ap-ai-panel');
+  if (panel) walk(panel);
+}
+
 function toggleAPLang() {
   var menu = document.getElementById('ap-lang-menu');
   if (menu) menu.classList.toggle('open');
 }
+
 function setAPLang(lang) {
   localStorage.setItem('ap_lang', lang);
-  var label = document.getElementById('ap-lang-label');
-  if (label) label.textContent = AP_LANG_LABELS_DASH[lang] || 'EN';
-  var menu = document.getElementById('ap-lang-menu');
-  if (menu) menu.classList.remove('open');
   if (lang === 'en') { window.location.reload(); return; }
   applyAPTranslations();
+  var menu = document.getElementById('ap-lang-menu');
+  if (menu) menu.classList.remove('open');
 }
+
 function renderAPLangMenu() {
   var menu = document.getElementById('ap-lang-menu');
   if (!menu) return;
@@ -7233,19 +7378,22 @@ function renderAPLangMenu() {
     return '<div onclick="setAPLang(' + String.fromCharCode(39) + l + String.fromCharCode(39) + ')" style="padding:10px 16px;cursor:pointer;font-size:13px;border-radius:8px;' + active + '">' + AP_LANG_LABELS_DASH[l] + '</div>';
   }).join('');
 }
-function applyAPTranslations() {
-  var lang = getAPLang();
-  var label = document.getElementById('ap-lang-label');
-  if (label) label.textContent = AP_LANG_LABELS_DASH[lang] || 'EN';
-  renderAPLangMenu();
-}
+
 document.addEventListener('click', function(e) {
   var menu = document.getElementById('ap-lang-menu');
   var btn  = document.getElementById('ap-lang-btn');
-  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-    menu.classList.remove('open');
-  }
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
 });
+
+var _origShowPage = typeof showPage === 'function' ? showPage : null;
+if (_origShowPage) {
+  showPage = function(name) {
+    _origShowPage(name);
+    var lang = getAPLang();
+    if (lang !== 'en') setTimeout(function() { translateTextNodes(lang); }, 80);
+  };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   applyAPTranslations();
   renderAPLangMenu();
