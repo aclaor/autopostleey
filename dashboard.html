@@ -172,37 +172,9 @@
     .main { padding: 16px; }
   }
 #ap-lang-menu.open{display:block!important;}
-/* ── AUTOPOSTLEEY AI CHAT ─────────────────────────────── */
-.ap-ai-btn{padding:8px 16px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
-.ap-ai-panel{position:fixed;top:64px;right:16px;width:360px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:9999;display:none;border:1px solid #e5e7eb;}
-.ap-ai-panel.open{display:block;}
-.ap-ai-header{background:linear-gradient(135deg,#6D5EF8,#EC4899);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;}
-.ap-ai-header-info{display:flex;align-items:center;gap:10px;}
-.ap-ai-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;}
-.ap-ai-title{color:#fff;font-size:14px;font-weight:700;}
-.ap-ai-sub{color:rgba(255,255,255,0.8);font-size:11px;}
-.ap-ai-close{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:14px;}
-.ap-ai-msgs{height:320px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fff;}
-.ap-ai-msg{max-width:85%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.5;word-break:break-word;}
-.ap-ai-msg.bot{background:#f3f4f6;color:#111827;align-self:flex-start;}
-.ap-ai-msg.user{background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;align-self:flex-end;}
-.ap-ai-msg.typing{background:#f3f4f6;align-self:flex-start;padding:14px;}
-.ap-ai-dot{width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s infinite;}
-.ap-ai-dot:nth-child(2){animation-delay:.2s;}
-.ap-ai-dot:nth-child(3){animation-delay:.4s;}
+/* ── AP AI CHAT ── */
+.ap-ai-btn{padding:7px 15px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 @keyframes apDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
-.ap-ai-quick{display:flex;flex-wrap:wrap;gap:5px;padding:8px 14px;border-top:1px solid #f3f4f6;background:#fff;}
-.ap-ai-qbtn{padding:4px 10px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;}
-.ap-ai-input-wrap{padding:10px 14px;border-top:1px solid #f3f4f6;display:flex;gap:8px;background:#fff;border-radius:0 0 16px 16px;}
-.ap-ai-input{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;outline:none;font-family:inherit;}
-.ap-ai-input:focus{border-color:#6D5EF8;}
-.ap-ai-send{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.ap-ai-confirm{margin:4px 0;padding:10px 12px;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:10px;font-size:12px;color:#5b21b6;align-self:stretch;}
-.ap-ai-confirm-btns{display:flex;gap:6px;margin-top:8px;}
-.ap-ai-confirm-yes{flex:1;padding:7px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;}
-.ap-ai-confirm-no{flex:1;padding:7px;background:#f3f4f6;color:#374151;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;}
-.ap-ai-caption{background:#f3f0ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:10px 12px;font-size:12px;color:#5b21b6;align-self:stretch;white-space:pre-wrap;word-break:break-word;}
-@media(max-width:480px){.ap-ai-panel{width:calc(100vw - 20px);right:10px;top:56px;}}
 </style>
 </head>
 <body>
@@ -6715,42 +6687,7 @@ document.addEventListener('DOMContentLoaded', applyAPTranslations);
     </div>
     <button class="ap-ai-close" onclick="toggleAPAI()">✕</button>
   </div>
-  <div class="ap-ai-msgs" id="ap-ai-msgs">
-    <div class="ap-ai-msg bot">Hi! 👋 I can help you create posts, generate captions, schedule content, and manage your social media. What would you like to do?</div>
-  </div>
-  <div class="ap-ai-quick" id="ap-ai-quick"><button class="ap-ai-qbtn" onclick="apAIQuick(this)">📊 Show my analytics</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">✍️ Write a post for me</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">📅 Schedule posts for this week</button><button class="ap-ai-qbtn" onclick="apAIQuick(this)">💡 Give me content ideas</button>
-  </div>
-  
-
-
-
-
-
-
-<!-- AI ASSISTANT PANEL -->
-<div class="ap-ai-panel" id="ap-ai-panel">
-  <div class="ap-ai-header">
-    <div class="ap-ai-header-info">
-      <div class="ap-ai-avatar">&#x1F916;</div>
-      <div><div class="ap-ai-title">Autopostleey AI</div><div class="ap-ai-sub">Agentic AI &middot; Llama 3</div></div>
-    </div>
-    <button class="ap-ai-close" onclick="toggleAPAI()">&#x2715;</button>
-  </div>
-  <div class="ap-ai-msgs" id="ap-ai-msgs">
-    <div class="ap-ai-msg bot">Hi! &#x1F44B; I can create and post content to your connected platforms, schedule posts, check analytics, and navigate the dashboard. What would you like to do?</div>
-  </div>
-  <div class="ap-ai-quick" id="ap-ai-quick">
-    <button class="ap-ai-qbtn" onclick="apAIQuick(this)">Post a good morning message</button>
-    <button class="ap-ai-qbtn" onclick="apAIQuick(this)">Show my scheduled posts</button>
-    <button class="ap-ai-qbtn" onclick="apAIQuick(this)">Show my analytics</button>
-    <button class="ap-ai-qbtn" onclick="apAIQuick(this)">Give me content ideas</button>
-  </div>
-  <div class="ap-ai-input-wrap">
-    <input class="ap-ai-input" id="ap-ai-input" placeholder="Ask me anything..."/>
-    <button class="ap-ai-send" onclick="sendAPAI()">&#x27A4;</button>
-  </div>
-</div>
-<script>
+  <script>
 var _apAIOpen    = false;
 var _apAIHistory = [];
 var _apAIPending = null;
@@ -6914,9 +6851,14 @@ async function confirmAPAI(yes) {
 
 function toggleAPAI() {
   _apAIOpen = !_apAIOpen;
-  var panel = document.getElementById('ap-ai-panel');
-  if (panel) panel.classList.toggle('open', _apAIOpen);
-  if (_apAIOpen) setTimeout(function(){ var i=document.getElementById('ap-ai-input'); if(i) i.focus(); }, 200);
+  var p = document.getElementById('ap-ai-panel');
+  if (p) p.style.display = _apAIOpen ? 'block' : 'none';
+  if (_apAIOpen) {
+    // Add welcome msg if empty
+    var msgs = document.getElementById('ap-ai-msgs');
+    if (msgs && msgs.children.length === 0) addAPAIMsg("Hi! 👋 I can create posts, schedule content, check analytics and navigate the dashboard. What would you like to do?", 'bot');
+    setTimeout(function(){ var i=document.getElementById('ap-ai-input'); if(i) i.focus(); }, 150);
+  }
 }
 
 function apAIQuick(btn) {
@@ -6928,24 +6870,29 @@ function apAIQuick(btn) {
 function addAPAIMsg(text, role) {
   var msgs = document.getElementById('ap-ai-msgs');
   if (!msgs) return;
-  var div = document.createElement('div');
-  div.className = 'ap-ai-msg ' + (role==='user' ? 'user' : 'bot');
-  div.innerHTML = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-  msgs.appendChild(div);
+  var d = document.createElement('div');
+  var u = role === 'user';
+  d.style.cssText = 'padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.5;max-width:85%;word-break:break-word;margin-bottom:2px;'
+    + (u ? 'background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;align-self:flex-end;margin-left:auto;'
+         : 'background:#f3f4f6;color:#111827;align-self:flex-start;');
+  d.innerHTML = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
+  msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
 function showAPAIConfirm(msg) {
   var msgs = document.getElementById('ap-ai-msgs');
   if (!msgs) return;
-  var div = document.createElement('div');
-  div.id = 'ap-ai-confirm'; div.className = 'ap-ai-confirm';
-  div.innerHTML = '<div style="margin-bottom:10px;font-weight:600;line-height:1.5;">' + msg + '</div>'
-    + '<div class="ap-ai-confirm-btns">'
-    + '<button class="ap-ai-confirm-yes" onclick="confirmAPAI(true)">Yes, do it!</button>'
-    + '<button class="ap-ai-confirm-no" onclick="confirmAPAI(false)">Cancel</button>'
+  var d = document.createElement('div');
+  d.id = 'ap-ai-confirm';
+  d.style.cssText = 'padding:10px 12px;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:10px;font-size:12px;color:#5b21b6;align-self:stretch;margin:2px 0;';
+  d.innerHTML = '<div style="font-weight:600;margin-bottom:8px;line-height:1.5;">' + msg + '</div>'
+    + '<div style="display:flex;gap:6px;">'
+    + '<button onclick="confirmAPAI(true)" style="flex:1;padding:7px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">Yes, do it!</button>'
+    + '<button onclick="confirmAPAI(false)" style="flex:1;padding:7px;background:#f3f4f6;color:#374151;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;">Cancel</button>'
     + '</div>';
-  msgs.appendChild(div);
+  msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
@@ -6964,8 +6911,9 @@ async function sendAPAI() {
 
   var msgs = document.getElementById('ap-ai-msgs');
   var typing = document.createElement('div');
-  typing.className='ap-ai-msg typing'; typing.id='ap-ai-typing';
-  typing.innerHTML='<span class="ap-ai-dot"></span><span class="ap-ai-dot"></span><span class="ap-ai-dot"></span>';
+  typing.id='ap-ai-typing';
+  typing.style.cssText='background:#f3f4f6;border-radius:12px;padding:12px 14px;align-self:flex-start;';
+  typing.innerHTML='<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s infinite"></span><span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s .2s infinite"></span><span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s .4s infinite"></span>';
   msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight;
 
   _apAIHistory.push({role:'user', content:text});
@@ -7011,7 +6959,7 @@ async function sendAPAI() {
         // Show caption first
         if (result.content) {
           var cd = document.createElement('div');
-          cd.className = 'ap-ai-caption';
+          cd.style.cssText = 'background:#f3f0ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:10px 12px;font-size:12px;color:#5b21b6;white-space:pre-wrap;word-break:break-word;align-self:stretch;margin:2px 0;';
           cd.textContent = result.content;
           msgs.appendChild(cd);
         }
@@ -7058,5 +7006,29 @@ async function sendAPAI() {
 }
 
 </script>
+
+<div id="ap-ai-panel" style="display:none;position:fixed;top:64px;right:16px;width:360px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:99999;border:1px solid #e5e7eb;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+  <div style="background:linear-gradient(135deg,#6D5EF8,#EC4899);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
+      <div>
+        <div style="color:#fff;font-size:14px;font-weight:700;">Autopostleey AI</div>
+        <div style="color:rgba(255,255,255,0.8);font-size:11px;">Agentic AI · Llama 3</div>
+      </div>
+    </div>
+    <button onclick="toggleAPAI()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:14px;">✕</button>
+  </div>
+  <div id="ap-ai-msgs" style="height:300px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fff;"></div>
+  <div id="ap-ai-quick" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 14px;border-top:1px solid #f0f0f0;background:#fff;">
+    <button onclick="apAIQuick(this)" style="padding:4px 10px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">Post a good morning message</button>
+    <button onclick="apAIQuick(this)" style="padding:4px 10px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">Show my scheduled posts</button>
+    <button onclick="apAIQuick(this)" style="padding:4px 10px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">Show my analytics</button>
+    <button onclick="apAIQuick(this)" style="padding:4px 10px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">Give me content ideas</button>
+  </div>
+  <div style="padding:10px 14px;border-top:1px solid #f0f0f0;display:flex;gap:8px;background:#fff;">
+    <input id="ap-ai-input" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendAPAI()" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;outline:none;font-family:inherit;min-width:0;"/>
+    <button onclick="sendAPAI()" style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;cursor:pointer;color:#fff;font-size:16px;flex-shrink:0;">➤</button>
+  </div>
+</div>
 </body>
 </html>
