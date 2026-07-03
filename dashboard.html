@@ -176,8 +176,12 @@
 30%{transform:translateY(-5px)}}
 
 /* ── AP AI ── */
-.ap-ai-btn{padding:7px 15px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.ap-ai-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 15px rgba(109,94,248,0.4);transition:all .2s;letter-spacing:0.01em;}
+.ap-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(109,94,248,0.5);}
+.ap-ai-btn:active{transform:translateY(0);}
+.ap-ai-btn svg{width:16px;height:16px;flex-shrink:0;}
 @keyframes apDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@keyframes apPulse{0%,100%{opacity:1}50%{opacity:0.6}}
 </style>
 </head>
 <body>
@@ -187,7 +191,15 @@
   <div style="display:flex;align-items:center;gap:16px;">
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">🤖 AI Assistant</button>
+  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:8px;">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="rgba(255,255,255,0.25)"/>
+    <path d="M9 9h6M9 12h6M9 15h4" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="17" cy="7" r="2.5" fill="#fff"/>
+    <path d="M17 5.5v1.5h1.5" stroke="rgba(109,94,248,0.8)" stroke-width="1" stroke-linecap="round"/>
+  </svg>
+  AI Assistant
+</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
@@ -6670,9 +6682,9 @@ async function confirmAPAI(yes) {
         if (!results.length && pubData.success > 0) {
           addAPAIMsg('✅ Published to ' + p.platforms.join(', ') + '!', 'bot');
         } else if (succeeded.length > 0 && failed.length === 0) {
-          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ') + (_lastImageUrl ? ' (with image)' : ''), 'bot');
+          addAPAIMsg('✅ Published to all platforms: ' + succeeded.map(function(r){return r.platform;}).join(', '), 'bot');
         } else if (succeeded.length > 0 && failed.length > 0) {
-          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ') + (_lastImageUrl ? ' (with image)' : '')
+          addAPAIMsg('✅ Published to: ' + succeeded.map(function(r){return r.platform;}).join(', ')
             + '\n⚠️ Could not publish to: ' + failed.map(function(r){return r.platform + (r.error?' ('+r.error+')':'');}).join(', ')
             + '\nFor those platforms, go to Compose to post manually.', 'bot');
         } else {
@@ -6987,9 +6999,9 @@ async function uploadAIImageToSupabase(dataUrl) {
     for (var i=0; i<bytes.length; i++) arr[i] = bytes.charCodeAt(i);
     var blob = new Blob([arr], {type: mime});
     var fname = 'ai-image-' + Date.now() + '.jpg';
-    var { data, error } = await _db.storage.from('post-media').upload(fname, blob, {contentType: mime, upsert: true});
+    var { data, error } = await _db.storage.from('post-images').upload(fname, blob, {contentType: mime, upsert: true});
     if (error) return null;
-    var { data: urlData } = _db.storage.from('post-media').getPublicUrl(fname);
+    var { data: urlData } = _db.storage.from('post-images').getPublicUrl(fname);
     return urlData ? urlData.publicUrl : null;
   } catch(e) { return null; }
 }
