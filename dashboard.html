@@ -6702,7 +6702,8 @@ var AP_AI_TOOLS = [
   {type:'function',function:{name:'get_scheduled_posts',description:'Show the users upcoming scheduled posts',parameters:{type:'object',properties:{}}}},
   {type:'function',function:{name:'get_analytics',description:'Show analytics and stats about posts',parameters:{type:'object',properties:{}}}},
   {type:'function',function:{name:'navigate_to',description:'Go to a specific page in the dashboard',parameters:{type:'object',properties:{page:{type:'string',description:'compose, scheduled, history, autoposter, calendar, analytics, bulk, reels, connections, business, billing, support'}},required:['page']}}},
-  {type:'function',function:{name:'get_connections',description:'Show which social media platforms are connected',parameters:{type:'object',properties:{}}}}
+  {type:'function',function:{name:'get_connections',description:'Show which social media platforms are connected',parameters:{type:'object',properties:{}}}},
+  {type:'function',function:{name:'generate_image',description:'Generate an AI image. Call when user asks to show, create, make or generate an image or picture.',parameters:{type:'object',properties:{topic:{type:'string',description:'What the image should show'}},required:['topic']}}}
 ];
 
 async function executeAPTool(name, args) {
@@ -6825,14 +6826,99 @@ async function executeAPTool(name, args) {
     return {navigated: true, page: args.page};
   }
 
+  if (name === 'generate_image') {
+    return { generate_image: true, topic: args.topic };
+  }
+  if (name === 'generate_image') { return { generate_image: true, topic: args.topic }; }
   return {error: 'Unknown tool: ' + name};
 }
 
 
-function apAISuggestImages() {
-  document.querySelectorAll('#ap-ai-msgs button').forEach(function(b){ if(b.parentElement && b.parentElement.style.display!='none') b.parentElement.style.display='none'; });
-  addAPAIMsg('Here are some image ideas for your post:', 'bot');
-  addAPAIMsg('1. A bright, energetic photo matching the post theme\n2. An infographic summarizing your key message\n3. A branded graphic with your logo and post text\n4. A behind-the-scenes photo of your team or workspace\n5. A motivational quote card with your brand colors\n\nYou can create these in Canva, Adobe Express, or go to Compose to upload an existing image!', 'bot');
+async function apAISuggestImages() {
+  // Hide action buttons
+  document.querySelectorAll('#ap-ai-msgs > div[style*="display:flex;gap:6px"]').forEach(function(d){ d.style.display='none'; });
+  addAPAIMsg('Generating image options for you... ⏳', 'bot');
+
+  // Get the last post content from history for context
+  var postCtx = 'social media marketing for a business';
+  for (var i = _apAIHistory.length - 1; i >= 0; i--) {
+    if (_apAIHistory[i].role === 'assistant' && typeof _apAIHistory[i].content === 'string') {
+      var txt = _apAIHistory[i].content;
+      if (txt.length > 20) { postCtx = txt.slice(0, 100); break; }
+    }
+  }
+
+  // Use Groq to generate 3 image prompts
+  var msgs = document.getElementById('ap-ai-msgs');
+  try {
+    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer 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'},
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'user',
+          content: 'Generate exactly 3 short image generation prompts (each under 15 words) for a social media post about: ' + postCtx + '. Return ONLY a JSON array of 3 strings. Example: ["prompt one","prompt two","prompt three"]'
+        }],
+        max_tokens: 150,
+        temperature: 0.8
+      })
+    });
+    var d = await r.json();
+    var raw = d.choices && d.choices[0] ? d.choices[0].message.content.trim() : '';
+    // Parse the JSON array
+    var match = raw.match(/\[.*\]/s);
+    var prompts = match ? JSON.parse(match[0]) : [
+      'professional social media marketing graphic vibrant colors',
+      'modern business automation technology digital art',
+      'social media growth success inspiring minimal design'
+    ];
+
+    // Remove "Generating..." message
+    var lastMsg = msgs.lastElementChild;
+    if (lastMsg && lastMsg.textContent.includes('Generating')) lastMsg.remove();
+
+    addAPAIMsg('Here are 3 AI-generated image options for your post. Click one to use it:', 'bot');
+
+    // Generate and show each image using Pollinations (free, no API key)
+    prompts.forEach(function(prompt, i) {
+      var encodedPrompt = encodeURIComponent(prompt + ', professional, high quality, 16:9');
+      var imgUrl = 'https://image.pollinations.ai/prompt/' + encodedPrompt + '?width=800&height=450&seed=' + (Date.now() + i);
+
+      var card = document.createElement('div');
+      card.style.cssText = 'align-self:stretch;margin:4px 0;border-radius:10px;overflow:hidden;border:1.5px solid #e5e7eb;cursor:pointer;transition:border-color .2s;';
+      card.onmouseover = function(){ this.style.borderColor='#6D5EF8'; };
+      card.onmouseout  = function(){ this.style.borderColor='#e5e7eb'; };
+
+      var img = document.createElement('img');
+      img.src = imgUrl;
+      img.alt = prompt;
+      img.style.cssText = 'width:100%;display:block;min-height:80px;background:#f3f4f6;';
+
+      var label = document.createElement('div');
+      label.style.cssText = 'padding:8px 10px;font-size:11px;color:#6b7280;background:#fafafa;';
+      label.textContent = (i+1) + '. ' + prompt;
+
+      var useBtn = document.createElement('button');
+      useBtn.textContent = '📋 Copy & use this image';
+      useBtn.style.cssText = 'width:100%;padding:7px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;';
+      useBtn.onclick = function() {
+        navigator.clipboard.writeText(imgUrl).catch(function(){});
+        addAPAIMsg('Image URL copied! You can paste it in Compose when uploading your post image. 🎨', 'bot');
+      };
+
+      card.appendChild(img);
+      card.appendChild(label);
+      card.appendChild(useBtn);
+      msgs.appendChild(card);
+    });
+
+    msgs.scrollTop = msgs.scrollHeight;
+
+  } catch(e) {
+    if (msgs.lastElementChild && msgs.lastElementChild.textContent.includes('Generating')) msgs.lastElementChild.remove();
+    addAPAIMsg('Could not generate images right now. You can create images using Canva or Adobe Express and upload them in Compose!', 'bot');
+  }
 }
 
 function apAINewPost() {
@@ -6954,7 +7040,7 @@ async function sendAPAI() {
     + '(2) Post NOW by default unless user says "schedule". '
     + '(3) Write ONE unified post — not separate versions per platform. '
     + '(4) Generate content that matches the business context above. '
-    + '(5) When user says "yes" after image suggestions, give SPECIFIC image ideas (not another post). '
+    + '(5) When user asks to show/generate/create an image, tell them to click the "💡 Suggest image ideas" button which will generate real AI images for free. '
     + '(6) Be smart — if user says "yes" after asking about images, they want image ideas, not a new post. '
     + 'Be concise and action-oriented.';
 
@@ -7010,6 +7096,17 @@ async function sendAPAI() {
       } else if (result.navigated) {
         addAPAIMsg('Opened the ' + result.page + ' page!', 'bot');
 
+      } else if (result.generate_image) {
+        addAPAIMsg('Generating AI images for: ' + result.topic + '...', 'bot');
+        // Override history context for better prompts
+        _apAIHistory.push({role:'assistant', content: result.topic});
+        await apAISuggestImages();
+      } else if (result.generate_image) {
+        _apAIHistory.push({role:'assistant', content: result.topic});
+        await apAISuggestImages();
+      } else if (result.generate_image) {
+        _apAIHistory.push({role:'assistant', content: result.topic});
+        await apAISuggestImages();
       } else if (result.error) {
         addAPAIMsg('Sorry: ' + result.error, 'bot');
       }
