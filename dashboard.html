@@ -176,8 +176,9 @@
 30%{transform:translateY(-5px)}}
 
 /* ── AP AI ── */
-.ap-ai-btn{padding:10px 26px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:24px;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(109,94,248,0.5);text-transform:uppercase;font-family:inherit;}
-.ap-ai-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(109,94,248,0.65);}
+.ap-ai-btn{padding:10px 26px !important;background:linear-gradient(135deg,#6D5EF8,#EC4899) !important;color:#fff !important;border:none !important;outline:none !important;border-radius:24px !important;font-size:16px !important;font-weight:900 !important;cursor:pointer !important;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(109,94,248,0.5) !important;font-family:inherit !important;text-transform:uppercase;}
+.ap-ai-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(109,94,248,0.65) !important;}
+.ap-ai-btn:focus{outline:none !important;box-shadow:0 4px 20px rgba(109,94,248,0.5) !important;}
 @keyframes apDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 @keyframes apPulse{0%,100%{opacity:1}50%{opacity:0.6}}
 </style>
@@ -189,7 +190,7 @@
   <div style="display:flex;align-items:center;gap:16px;">
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:10px;">AI Assistant</button>
+  <div class="topbar-right"><button class="ap-ai-btn" onclick="toggleAPAI()" style="margin-right:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg> AI Assistant</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
