@@ -6899,7 +6899,20 @@ async function sendAPAI() {
     +' - User says "yes" after image is shown → they want to post it, call create_and_post.'
     +' RULES: Post NOW by default. Write ONE post for all platforms. Be smart and proactive.';
   try {
-    var res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    // Pre-check: if user is asking for image, force generate_image tool
+  var lowerText = text.toLowerCase();
+  var wantsImage = (lowerText.includes('image') || lowerText.includes('picture') || lowerText.includes('photo') || lowerText.includes('generate') || lowerText.includes('show me') || lowerText.includes('create image') || lowerText.includes('make image'));
+  var wantsPost = (lowerText.includes('post') || lowerText.includes('share') || lowerText.includes('publish') || lowerText.includes('announce') || lowerText.includes('tell'));
+  
+  // If ONLY wants image (no posting intent), call directly
+  if(wantsImage && !wantsPost) {
+    var t2=document.getElementById('ap-ai-typing');if(t2)t2.remove();
+    await generateAndShowImage(text, false, null);
+    _apAIHistory.push({role:'assistant',content:'I generated an image based on your request.'});
+    return;
+  }
+  
+  var res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:sysPrompt},..._apAIHistory],tools:AP_AI_TOOLS,tool_choice:'auto',max_tokens:500,temperature:0.3})
@@ -6910,7 +6923,9 @@ async function sendAPAI() {
     if(choice&&choice.message&&choice.message.tool_calls&&choice.message.tool_calls.length>0){
       var tc=choice.message.tool_calls[0];
       var result=await executeAPTool(tc.function.name,JSON.parse(tc.function.arguments));
-      if(result&&result.confirm_required){
+      if(result&&result.done){
+        // generate_image handled its own UI - nothing to do here
+      } else if(result&&result.confirm_required){
         if(result.content){var cd=document.createElement('div');cd.style.cssText='background:#f3f0ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:10px 12px;font-size:12px;color:#5b21b6;align-self:stretch;white-space:pre-wrap;word-break:break-word;margin:4px 0;';cd.textContent=result.content;msgs.appendChild(cd);}
         showAPAIConfirm(result.message);
       } else if(result&&result.platforms!==undefined){
@@ -6926,8 +6941,21 @@ async function sendAPAI() {
       }
       _apAIHistory.push(choice.message);
     } else {
-      var reply=choice?choice.message.content:'Sorry, could not process that. Please try again.';
-      addAPAIMsg(reply,'bot');
+      var reply=choice?choice.message.content:'';
+      if(!reply||reply.trim()==='') {
+        addAPAIMsg('Sorry, could not process that. Please try again.','bot');
+      } else {
+        // Check if AI described generating an image but didn't call the tool
+        var lowerReply = reply.toLowerCase();
+        if(lowerReply.includes('generat') && (lowerReply.includes('image') || lowerReply.includes('picture') || lowerReply.includes('photo'))) {
+          addAPAIMsg(reply,'bot');
+          // Extract topic from conversation
+          var imgTopic = text;
+          generateAndShowImage(imgTopic, false, null);
+        } else {
+          addAPAIMsg(reply,'bot');
+        }
+      }
       _apAIHistory.push({role:'assistant',content:reply});
     }
     if(_apAIHistory.length>12)_apAIHistory=_apAIHistory.slice(-12);
