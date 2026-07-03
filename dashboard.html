@@ -6705,7 +6705,7 @@ async function apAICreatePost(topic, postNow, imageUrl) {
     headers:{'Content-Type':'application/json','Authorization':'Bearer ' + GROQ},
     body:JSON.stringify({
       model:'llama-3.3-70b-versatile',
-      messages:[{role:'user',content:'Write a social media post about: ' + topic + '. Business: ' + bizCtx + '. ' + hints + imageNote + ' ONE unified post for all platforms: ' + platforms.join(', ') + '. Ready to publish. No hashtag spam.'}],
+      messages:[{role:'user',content:'Write a social media post about: ' + topic + '. This is for: ' + bizCtx + '. IMPORTANT: Do NOT write about finance, investing or money. Write ONLY about the actual topic requested. ' + hints + imageNote + ' Write ONE concise post for: ' + platforms.join(', ') + '. No more than 3 hashtags.'}],
       max_tokens:200,temperature:0.8
     })
   });
@@ -6756,7 +6756,7 @@ async function executeAPTool(name, args) {
       headers:{'Content-Type':'application/json','Authorization':'Bearer ' + GROQ},
       body:JSON.stringify({
         model:'llama-3.3-70b-versatile',
-        messages:[{role:'user',content:'Write a social media post about: ' + args.topic + '. Business: ' + bizCtx + '. ' + (tones[args.tone]||'Write engagingly.') + ' ' + hints + imageNote + ' ONE post for: ' + platforms.join(', ') + '. Keep it concise and ready to publish.'}],
+        messages:[{role:'user',content:'Write a social media post about: ' + args.topic + '. This is for: ' + bizCtx + '. IMPORTANT: Do NOT write about finance, investing or money. Stay on topic. ' + (tones[args.tone]||'Write engagingly.') + ' ' + hints + imageNote + ' ONE concise post for: ' + platforms.join(', ') + '. No more than 3 hashtags.'}],
         max_tokens:200,temperature:0.8
       })
     });
