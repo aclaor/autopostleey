@@ -6681,9 +6681,7 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', applyAPTranslations);
-</script>
-
-      <div><div class="ap-ai-title">Autopostleey AI</div><div class="ap-ai-sub">Powered by Llama 3 · Your social media assistant</div></div>
+</script><div class="ap-ai-sub">Powered by Llama 3 · Your social media assistant</div></div>
     </div>
     <button class="ap-ai-close" onclick="toggleAPAI()">✕</button>
   </div>
@@ -6721,7 +6719,7 @@ async function executeAPTool(name, args) {
     }
 
     // Get business context
-    var bizCtx = 'Autopostleey - a social media scheduling and automation platform.';
+    var bizCtx = 'Autopostleey - AI-powered social media scheduling and automation tool for small businesses.';
     try {
       var br = await _db.from('autopostleey_businesses')
         .select('name,industry,description').eq('user_id',_user.id).maybeSingle();
@@ -6830,6 +6828,17 @@ async function executeAPTool(name, args) {
   return {error: 'Unknown tool: ' + name};
 }
 
+
+function apAISuggestImages() {
+  document.querySelectorAll('#ap-ai-msgs button').forEach(function(b){ if(b.parentElement && b.parentElement.style.display!='none') b.parentElement.style.display='none'; });
+  addAPAIMsg('Here are some image ideas for your post:', 'bot');
+  addAPAIMsg('1. A bright, energetic photo matching the post theme\n2. An infographic summarizing your key message\n3. A branded graphic with your logo and post text\n4. A behind-the-scenes photo of your team or workspace\n5. A motivational quote card with your brand colors\n\nYou can create these in Canva, Adobe Express, or go to Compose to upload an existing image!', 'bot');
+}
+
+function apAINewPost() {
+  document.querySelectorAll('#ap-ai-msgs button').forEach(function(b){ if(b.parentElement && b.parentElement.style.display!='none') b.parentElement.style.display='none'; });
+  addAPAIMsg('Sure! What would you like to post about?', 'bot');
+}
 async function confirmAPAI(yes) {
   if (!_apAIPending) return;
   var p = _apAIPending; _apAIPending = null;
@@ -6841,10 +6850,16 @@ async function confirmAPAI(yes) {
     if (result.error) {
       addAPAIMsg('Error saving post: ' + result.error.message, 'bot');
     } else {
-      addAPAIMsg((p.status==='published' ? 'Done! Post published' : 'Done! Scheduled for ' + p.date + ' at ' + p.time) + ' on: ' + p.platforms.join(', '), 'bot');
+      addAPAIMsg((p.status==='published' ? '✅ Done! Post published' : '✅ Scheduled for ' + p.date + ' at ' + p.time) + ' on: ' + p.platforms.join(', '), 'bot');
       setTimeout(function() {
-        addAPAIMsg('Would you like to add an image? Go to Compose to attach one, or I can suggest image ideas!', 'bot');
-      }, 700);
+        var imgDiv = document.createElement('div');
+        imgDiv.style.cssText = 'display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;';
+        imgDiv.innerHTML = '<button onclick="apAISuggestImages()" style="padding:5px 12px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">💡 Suggest image ideas</button>'
+          + '<button onclick="showPage(&quot;compose&quot;)" style="padding:5px 12px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">📎 Go to Compose</button>'
+          + '<button onclick="apAINewPost()" style="padding:5px 12px;background:#f3f0ff;color:#6D5EF8;border:1px solid #c4b5fd;border-radius:16px;font-size:11px;cursor:pointer;font-weight:600;">✍️ Write another post</button>';
+        var msgs = document.getElementById('ap-ai-msgs');
+        if (msgs) { msgs.appendChild(imgDiv); msgs.scrollTop = msgs.scrollHeight; }
+      }, 600);
     }
   } catch(e) { addAPAIMsg('Error: ' + e.message, 'bot'); }
 }
@@ -6919,20 +6934,29 @@ async function sendAPAI() {
   _apAIHistory.push({role:'user', content:text});
 
   var platforms = getConnectedPlatforms();
-  var bizName = 'Autopostleey (social media scheduling platform)';
+  var bizName = 'Autopostleey - AI-powered social media scheduling and automation platform for businesses';
   try {
     var br = await _db.from('autopostleey_businesses').select('name,industry,description').eq('user_id',_user.id).maybeSingle();
     if (br.data && br.data.name) {
-      bizName = br.data.name + (br.data.industry ? ' (' + br.data.industry + ')' : '') + (br.data.description ? ' - ' + br.data.description.slice(0,100) : '');
+      bizName = br.data.name + (br.data.industry ? ' (' + br.data.industry + ')' : '') + (br.data.description ? ': ' + br.data.description.slice(0,120) : '');
     }
   } catch(e) {}
 
-  var sysPrompt = 'You are an agentic AI assistant for Autopostleey, a social media scheduling and automation platform dashboard. '
+  var sysPrompt = 'You are a smart agentic AI assistant inside the Autopostleey dashboard. '
+    + 'Autopostleey is a social media scheduling and automation platform — NOT a finance app. '
+    + 'NEVER write about finance, investing, money, or wealth unless the business profile explicitly mentions it. '
     + (platforms.length
-        ? 'User has these platforms CONNECTED: ' + platforms.join(', ') + '. When asked to post anything, ALWAYS use these exact platforms. Never suggest other platforms.'
-        : 'User has NO platforms connected. Tell them to go to Connections page to connect their accounts.')
-    + ' Business context: ' + bizName + '.'
-    + ' IMPORTANT RULES: (1) When user asks to post/share/announce/publish, use create_and_post tool IMMEDIATELY — do not ask for confirmation first, the tool will show a confirmation dialog automatically. (2) Always post NOW by default unless user says schedule. (3) Write ONE post for all platforms, not separate versions. (4) After posting, offer image suggestions only if user asks. (5) Be concise and action-oriented.';
+        ? 'Connected platforms: ' + platforms.join(', ') + '. ONLY post to these platforms.'
+        : 'No platforms connected — tell user to go to Connections page.')
+    + ' Business: ' + bizName + '.'
+    + ' RULES: '
+    + '(1) When user asks to post/share/announce/publish anything, call create_and_post immediately. '
+    + '(2) Post NOW by default unless user says "schedule". '
+    + '(3) Write ONE unified post — not separate versions per platform. '
+    + '(4) Generate content that matches the business context above. '
+    + '(5) When user says "yes" after image suggestions, give SPECIFIC image ideas (not another post). '
+    + '(6) Be smart — if user says "yes" after asking about images, they want image ideas, not a new post. '
+    + 'Be concise and action-oriented.';
 
   try {
     var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
