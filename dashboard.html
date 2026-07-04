@@ -3161,7 +3161,12 @@ async function postVideoToPlatform(platform) {
     var pubData = {};
     try {
       pubData = await pubResp.json();
-      console.log('[Publish] Response:', pubData);
+      console.log('[Publish] Response:', JSON.stringify(pubData));
+      if (pubData.results) {
+        pubData.results.forEach(function(r) {
+          console.log('[Publish Detail]', r.platform, r.success ? 'OK' : 'FAIL: ' + r.error);
+        });
+      }
     } catch(je) {
       console.error('[Publish] JSON parse error:', je, 'Status:', pubResp.status);
       pubData = { success: 0, results: [{ platform: platform, success: false, error: 'HTTP ' + pubResp.status }] };
