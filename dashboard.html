@@ -3915,7 +3915,7 @@ async function generateAIPost() {
 // ── PLAN LIMITS ───────────────────────────────────────────
 var PLAN_LIMITS = {
   free:    { posts: 30,       platforms: 999, autoposter: true, bulk: true, reels: true },
-  starter: { posts: 200,      platforms: 3,   autoposter: false, bulk: false, reels: false },
+  starter: { posts: 200,      platforms: 999, autoposter: true,  bulk: true,  reels: true  },
   growth:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true },
   agency:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true }
 };
