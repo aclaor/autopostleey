@@ -1778,7 +1778,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <textarea id="video-caption" rows="5" class="form-textarea" placeholder="AI will analyze your video and generate a caption..."></textarea>
               <div style="display:flex;gap:8px;margin-top:10px;">
                 <button onclick="generateVideoCaption()" style="flex:1;padding:10px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">✨ Regenerate</button>
-                <button onclick="showVideoPlatformPicker()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Choose Platformlatforms</button>
+                <button onclick="showVideoPlatformPicker()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Post Video Now</button>
               </div>
             </div>
           </div>
@@ -1789,7 +1789,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">&#x1F4F1; Post To Platform</div>
               <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Select platforms to post your video</div>
               <div id="video-platform-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-              <button onclick="postVideoToSelected()" style="width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">&#x1F680; Post Video Now</button>
+              <button onclick="document.getElementById('video-platform-list').scrollIntoView({behavior:'smooth'});showToast('Select your platforms above then click Post Video Now!','success')" style="width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">&#x1F3AF; Choose Platforms</button>
             </div>
             <div style="background:var(--bg2);border-radius:14px;padding:16px;border:1px solid var(--border);margin-top:12px;">
               <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">&#x1F4CB; Tips</div>
