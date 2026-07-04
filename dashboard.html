@@ -4606,10 +4606,11 @@ async function selectFacebookPage(token, pageId, pageName) {
 
     var modal = document.getElementById('fb-page-selector-modal');
     if (modal) modal.remove();
-    showToast('✅ Facebook connected — ' + pageName + '!', 'success');
+    showToast('✅ Facebook Page "' + pageName + '" connected!', 'success');
     showPage('connections');
     loadConnections();
     setTimeout(validateAllConnections, 1500);
+    setTimeout(async function() { try { await connectInstagramViaFacebook(true); } catch(e) {} }, 2000);
   } catch(e) {
     showToast('Failed to save: ' + e.message, 'error');
   }
@@ -5034,26 +5035,7 @@ function handleFBDirectOAuth() {
       if (!data) return;
       console.log('[FB OAuth] Pages:', JSON.stringify(data));
       if (data.error || !data.data || !data.data.length) {
-        // Token doesn't have pages permission or no pages returned
-        // Try via worker which uses app secret to exchange token
-        console.log('[FB OAuth] Trying worker to get pages...');
-        fetch('https://autopostleey-ai.alexclaor.workers.dev/fb-pages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_token: token })
-        }).then(function(r) { return r.json(); })
-          .then(function(d) {
-            console.log('[FB OAuth] Worker pages:', JSON.stringify(d));
-            if (d.pages && d.pages.length) {
-              if (d.pages.length === 1) {
-                selectFacebookPageDirect(d.pages[0].id, d.pages[0].name, d.pages[0].access_token);
-              } else {
-                showFacebookPageSelector(d.pages, '');
-              }
-            } else {
-              console.log('[FB OAuth] Worker logs:', JSON.stringify(d.logs));
-            }
-          }).catch(function(e) { console.error('[FB OAuth] Worker error:', e); });
+        // Railway is handling this via fb_select - ignore
         return;
       }
       if (data.data.length === 1) {
@@ -5283,14 +5265,7 @@ function connectDiscordOAuth() {
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  var p = new URLSearchParams({
-    client_id:     '474990059818223',
-    redirect_uri:  'https://autopostleey.com/dashboard.html',
-    scope:         'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,pages_manage_metadata',
-    response_type: 'token',
-    state:         'fb_' + (_user ? _user.id : 'user')
-  });
-  window.location.href = 'https://www.facebook.com/dialog/oauth?' + p.toString();
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
 }
 
 function connectInstagram() {
