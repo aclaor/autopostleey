@@ -5026,7 +5026,8 @@ function handleFBDirectOAuth() {
         return;
       }
       if (!data.data || !data.data.length) {
-        showToast('No Facebook Pages found. Make sure you are an admin of a Facebook Page.', 'error');
+        // Railway already handled page selection - this is expected, ignore
+        console.log('[FB OAuth] No pages via direct token - Railway handled it');
         return;
       }
       if (data.data.length === 1) {
