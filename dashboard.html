@@ -3124,7 +3124,7 @@ async function postReelToPlatform(platform) {
           window.open('https://www.facebook.com/', '_blank');
         }
       } else {
-        showToast('Failed: ' + err, 'error');
+        showToast('Could not post: ' + (err || 'Unknown error'), 'error');
       }
     }
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
@@ -3159,7 +3159,13 @@ async function postVideoToPlatform(platform) {
       })
     });
     var pubData = {};
-    try { pubData = await pubResp.json(); } catch(je) { pubData = { success: 0, results: [] }; }
+    try {
+      pubData = await pubResp.json();
+      console.log('[Publish] Response:', pubData);
+    } catch(je) {
+      console.error('[Publish] JSON parse error:', je, 'Status:', pubResp.status);
+      pubData = { success: 0, results: [{ platform: platform, success: false, error: 'HTTP ' + pubResp.status }] };
+    }
     var success = pubData.results && pubData.results[0] && pubData.results[0].success;
     if (success) {
       showToast('✅ Video posted to ' + platform + '!', 'success');
@@ -3170,7 +3176,16 @@ async function postVideoToPlatform(platform) {
         showToast('Caption copied! Opening ' + platform + '...', 'success');
         setTimeout(function(){ window.open(urls[platform], '_blank'); }, 500);
       } else {
-        showToast('Failed — ' + (pubData.results && pubData.results[0] ? pubData.results[0].error : ''), 'error');
+        var errDetail = '';
+        if (pubData.results && pubData.results[0]) {
+          errDetail = pubData.results[0].error || 'Platform API error';
+        } else if (pubData.error) {
+          errDetail = pubData.error;
+        } else {
+          errDetail = 'Could not publish — check your connection settings';
+        }
+        console.error('[Publish Error]', platform, pubData);
+        showToast('Could not post to ' + platform + ': ' + errDetail, 'error');
       }
     }
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
