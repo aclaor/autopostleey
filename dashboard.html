@@ -5016,17 +5016,44 @@ function handleFBDirectOAuth() {
 
   showToast('Connecting Facebook...', 'success');
 
-  // Get user Facebook Pages
-  fetch('https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token&access_token=' + token)
+  // First verify token is valid
+  console.log('[FB OAuth] Got token, fetching user info...');
+  fetch('https://graph.facebook.com/v19.0/me?fields=id,name&access_token=' + token)
     .then(function(r) { return r.json(); })
+    .then(function(me) {
+      console.log('[FB OAuth] Me:', JSON.stringify(me));
+      if (me.error) {
+        showToast('Facebook token error: ' + me.error.message, 'error');
+        return;
+      }
+      // Now get pages with this token
+      return fetch('https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,category&access_token=' + token);
+    })
+    .then(function(r) { return r && r.json(); })
     .then(function(data) {
-      console.log('[FB OAuth] Pages response:', JSON.stringify(data));
+      if (!data) return;
+      console.log('[FB OAuth] Pages:', JSON.stringify(data));
       if (data.error) {
-        showToast('Facebook error: ' + data.error.message, 'error');
+        // Token doesn't have pages permission - pass token to worker to get pages
+        console.log('[FB OAuth] No page permission, trying via worker...');
+        fetch('https://autopostleey-ai.alexclaor.workers.dev/fb-pages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_token: token })
+        }).then(function(r) { return r.json(); })
+          .then(function(d) {
+            console.log('[FB OAuth] Worker pages:', JSON.stringify(d));
+            if (d.pages && d.pages.length) {
+              if (d.pages.length === 1) {
+                selectFacebookPageDirect(d.pages[0].id, d.pages[0].name, d.pages[0].access_token);
+              } else {
+                showFacebookPageSelector(d.pages, '');
+              }
+            }
+          }).catch(function(e) { console.error('[FB OAuth] Worker error:', e); });
         return;
       }
       if (!data.data || !data.data.length) {
-        // Railway already handled page selection - this is expected, ignore
         console.log('[FB OAuth] No pages via direct token - Railway handled it');
         return;
       }
@@ -5037,7 +5064,7 @@ function handleFBDirectOAuth() {
       }
     })
     .catch(function(e) {
-      showToast('Facebook error: ' + e.message, 'error');
+      console.error('[FB OAuth] Error:', e);
     });
 }
 
