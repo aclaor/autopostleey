@@ -4228,232 +4228,52 @@ function getConnectionForm(name) {
     instagram: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📸 Connect Instagram</div>' +
 
-        '<!-- OPTION 1: Business API -->' +
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:10px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Post (Business/Creator)</div>' +
-            '<div style="font-size:10px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">FULLY AUTO</div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
-            '✓ Requires Instagram <strong style="color:#e8e8f0;">Business or Creator</strong> account<br>' +
-            '✓ Must be <strong style="color:#e8e8f0;">linked to a Facebook Page</strong> in Meta Business Suite<br>' +
-            '✓ Even if Instagram shows Business — you must link it to a FB Page first<br>' +
-            '<span style="color:#f59e0b;font-size:11px;">👉 Go to Meta Business Suite → Settings → Instagram → Connect Account</span>' +
-          '</div>' +
-          '<button onclick="connectInstagram()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">📷 Connect via Instagram OAuth</button>' +
-          '<button onclick="connectInstagramViaFacebook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5bd1);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Connect via Facebook Page (Recommended)</button>' +
-        '</div>' +
-
-        '<!-- DIVIDER -->' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-        '</div>' +
-
-        '<!-- OPTION 2: Manual -->' +
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#3d3d5c;color:#e8e8f0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Manual Post (Personal Account)</div>' +
-            '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
-            'Works with any Instagram account — personal or business.<br>' +
-            'When you post, we copy your caption and open Instagram.<br>' +
-            'Just <strong style="color:#e8e8f0;">paste and share</strong> — takes 10 seconds!' +
-          '</div>' +
-          '<input id="conn-ig-username" placeholder="Your Instagram @username (e.g. @mybusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<button onclick="saveInstagramManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Set Up Manual Posting</button>' +
-        '</div>';
-    },
-    twitter: function() {
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">𝕏 Connect Twitter/X</div>' +
-        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Enter your Twitter API credentials to enable automatic posting</div>' +
-
-        '<!-- HOW TO GET TOKENS -->' +
-        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:14px;">' +
-          '<div style="font-size:12px;font-weight:700;color:#e8e8f0;margin-bottom:10px;">📋 How to get your Twitter API keys (free)</div>' +
-          '<div style="font-size:12px;color:#8888aa;line-height:1.8;">' +
-            '1️⃣ Go to <a href="https://developer.twitter.com/en/portal/projects-and-apps" target="_blank" style="color:#a78bfa;font-weight:600;">developer.twitter.com</a> → Sign in<br>' +
-            '2️⃣ Click <strong style="color:#e8e8f0;">+ Create Project</strong> → name it → choose <strong style="color:#e8e8f0;">Making a bot</strong><br>' +
-            '3️⃣ Create an App inside the project<br>' +
-            '4️⃣ Go to your App → <strong style="color:#e8e8f0;">Keys and Tokens</strong> tab<br>' +
-            '5️⃣ Copy <strong style="color:#e8e8f0;">API Key</strong> and <strong style="color:#e8e8f0;">API Key Secret</strong><br>' +
-            '6️⃣ Click <strong style="color:#e8e8f0;">Generate</strong> under Access Token → copy both tokens<br>' +
-            '7️⃣ In App Settings → set permissions to <strong style="color:#e8e8f0;">Read and Write</strong>' +
-          '</div>' +
-        '</div>' +
-
-        '<!-- TOKEN INPUTS -->' +
-        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">' +
-          '<div>' +
-            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">YOUR @HANDLE</label>' +
-            '<input id="tw-handle" placeholder="@yourusername" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
-          '</div>' +
-          '<div>' +
-            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY (Consumer Key)</label>' +
-            '<input id="tw-api-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
-          '</div>' +
-          '<div>' +
-            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">API KEY SECRET (Consumer Secret)</label>' +
-            '<input id="tw-api-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
-          '</div>' +
-          '<div>' +
-            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN</label>' +
-            '<input id="tw-token" placeholder="000000000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
-          '</div>' +
-          '<div>' +
-            '<label style="font-size:11px;font-weight:700;color:#8888aa;display:block;margin-bottom:4px;">ACCESS TOKEN SECRET</label>' +
-            '<input id="tw-secret" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;box-sizing:border-box;">' +
-          '</div>' +
-        '</div>' +
-
-        '<button onclick="saveTwitterManual()" style="width:100%;padding:13px;background:#000;color:#fff;border:1px solid #333;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">𝕏 Connect Twitter/X</button>' +
-
-        '<div style="padding:10px 14px;background:rgba(168,85,247,0.08);border-radius:8px;font-size:11px;color:#8888aa;line-height:1.6;">' +
-          '🔒 <strong style="color:#e8e8f0;">Your keys are safe.</strong> They are stored encrypted in our database and only used to post on your behalf. We never share them.' +
-        '</div>';
-    },
-    linkedin: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:20px;">Connect your LinkedIn account to share posts directly.</div>' +
-        '<button onclick="connectLinkedIn()" style="width:100%;padding:14px;background:#0077b5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">💼 Connect LinkedIn</button>' +
-        '<div style="font-size:12px;color:#444466;margin-top:10px;text-align:center;">We will automatically detect your profile!</div>';
-    },
-    youtube: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect YouTube</div>' +
-        '<div style="background:rgba(255,0,0,0.06);border:1px solid rgba(255,0,0,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
-          '📺 YouTube requires Google OAuth approval.<br>' +
-          'Your channel <strong style="color:#e8e8f0;">alex claor</strong> is already detected!<br>' +
-          'Click below to reconnect with posting permission.' +
-        '</div>' +
-        '<button onclick="connectYouTubeOAuth()" style="width:100%;padding:14px;background:#ff0000;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">📺 Connect YouTube Channel</button>' +
-        '<div style="font-size:12px;color:#444466;text-align:center;">Requires Google account with YouTube channel</div>';
-    },
-    tumblr: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Tumblr</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
-          '1. Go to <a href="https://www.tumblr.com/oauth/apps" target="_blank" style="color:#a855f7;">tumblr.com/oauth/apps</a><br>' +
-          '2. Click <strong style="color:#e8e8f0;">Register application</strong><br>' +
-          '3. Fill in app details → get <strong style="color:#e8e8f0;">OAuth Consumer Key</strong><br>' +
-          '4. Go to <a href="https://api.tumblr.com/console" target="_blank" style="color:#a855f7;">api.tumblr.com/console</a><br>' +
-          '5. Authenticate → copy your <strong style="color:#e8e8f0;">OAuth Token</strong>' +
-        '</div>' +
-        '<input id="conn-tb1" placeholder="Your Tumblr blog name (e.g. myblog)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-tb2" placeholder="OAuth Consumer Key" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-tb3" placeholder="OAuth Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'tumblr\',{page_name:document.getElementById(\'conn-tb1\').value,access_token:document.getElementById(\'conn-tb3\').value,page_id:document.getElementById(\'conn-tb2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#35465c,#4e6480);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📝 Connect Tumblr</button>';
-    },
-    pinterest: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Pinterest</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
-          '1. Go to <a href="https://developers.pinterest.com/apps/" target="_blank" style="color:#a855f7;">developers.pinterest.com/apps</a><br>' +
-          '2. Create app → get <strong style="color:#e8e8f0;">App ID</strong> and <strong style="color:#e8e8f0;">App Secret</strong><br>' +
-          '3. Go to <strong style="color:#e8e8f0;">Generate Access Token</strong><br>' +
-          '4. Select scopes: <strong style="color:#e8e8f0;">boards:read, pins:write</strong><br>' +
-          '5. Copy your access token below' +
-        '</div>' +
-        '<input id="conn-pi1" placeholder="Pinterest username (e.g. @mybusiness)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-pi2" placeholder="Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'pinterest\',{page_name:document.getElementById(\'conn-pi1\').value,access_token:document.getElementById(\'conn-pi2\').value})" style="width:100%;padding:12px;background:linear-gradient(135deg,#e60023,#c0001e);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📌 Connect Pinterest</button>';
-    },
-    threads: function() {
-      return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Threads</div>' +
-        '<div style="background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#8888aa;line-height:1.8;">' +
-          '1. Go to <a href="https://developers.facebook.com" target="_blank" style="color:#a855f7;">developers.facebook.com</a><br>' +
-          '2. Create an app → Add <strong style="color:#e8e8f0;">Threads API</strong> product<br>' +
-          '3. Generate a long-lived access token<br>' +
-          '4. Get your Threads User ID from the API<br>' +
-          '5. Paste both below' +
-        '</div>' +
-        '<input id="conn-th1" placeholder="Threads User ID (numeric)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-th2" placeholder="Long-lived Access Token" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:12px;outline:none;display:block;">' +
-        '<button onclick="saveConnection(\'threads\',{page_id:document.getElementById(\'conn-th1\').value,access_token:document.getElementById(\'conn-th2\').value})" style="width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🧵 Connect Threads</button>';
-    },
-    discord: function() {
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">Connect Discord</div>' +
-
-        '<!-- OPTION 1: WEBHOOK -->' +
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:14px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#5865f2;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Paste Webhook URL</div>' +
-            '<div style="font-size:10px;background:#22c55e22;color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">RECOMMENDED</div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
-            '1️⃣ Open your Discord server<br>' +
-            '2️⃣ Right-click a channel → <strong style="color:#c8c8e8;">Edit Channel</strong><br>' +
-            '3️⃣ Click <strong style="color:#c8c8e8;">Integrations</strong> → <strong style="color:#c8c8e8;">Webhooks</strong> → <strong style="color:#c8c8e8;">New Webhook</strong><br>' +
-            '4️⃣ Name it <strong style="color:#c8c8e8;">Autopostleey</strong> → Click <strong style="color:#c8c8e8;">Copy Webhook URL</strong><br>' +
-            '5️⃣ Paste it below 👇' +
-          '</div>' +
-          '<input id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box;">' +
-          '<input id="discord-server-name" placeholder="Your server name (e.g. My Community)" style="width:100%;background:#0d0d1a;border:1px solid #3d3d5c;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box;">' +
-          '<button onclick="saveDiscordWebhook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#5865f2,#7983f5);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✅ Save Webhook & Connect</button>' +
-        '</div>' +
-
-        '<!-- DIVIDER -->' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-        '</div>' +
-
-        '<!-- OPTION 2: OAUTH -->' +
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#7983f5;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Connect via OAuth</div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.6;">' +
-            '1️⃣ Click the button below<br>' +
-            '2️⃣ Log in to Discord and authorize Autopostleey<br>' +
-            '3️⃣ Select the server and channel<br>' +
-            '4️⃣ Click <strong style="color:#c8c8e8;">Authorize</strong> — done!' +
-          '</div>' +
-          '<button onclick="connectDiscordOAuth()" style="width:100%;padding:12px;background:#2d2d44;color:#e8e8f0;border:1px solid #5865f2;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💬 Auto Connect via Discord OAuth</button>' +
-        '</div>';
-    },
-    
-    telegram: function() {
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">✈️ Connect Telegram</div>' +
-        '<div style="font-size:12px;color:#8888aa;margin-bottom:16px;">Post automatically to your Telegram channel or personal chat</div>' +
-
         '<!-- STEP 1 -->' +
-        '<div style="background:#1e1e2e;border:1px solid #26a5e4;border-radius:12px;padding:14px;margin-bottom:10px;">' +
-          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 1 — Add our bot to your channel</div>' +
-          '<div style="font-size:12px;color:#c8c8e8;line-height:1.8;margin-bottom:10px;">' +
-            '1. Open your Telegram channel<br>' +
-            '2. Tap <strong>Manage Channel</strong> → <strong>Administrators</strong><br>' +
-            '3. Tap <strong>Add Admin</strong> → search <strong style="color:#26a5e4;">@AutopostleeyBot</strong><br>' +
-            '4. Enable <strong>Post Messages</strong> → Save' +
+        '<div style="background:rgba(24,119,242,0.1);border:1px solid #1877f2;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+            '<div style="background:#1877f2;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">1</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Connect your Facebook Page first</div>' +
           '</div>' +
-          '<a href="https://t.me/AutopostleeyBot" target="_blank" style="display:block;text-align:center;padding:8px;background:rgba(38,165,228,0.1);border:1px solid rgba(38,165,228,0.3);border-radius:8px;color:#26a5e4;font-size:12px;font-weight:700;text-decoration:none;">Open @AutopostleeyBot in Telegram</a>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
+            'Instagram connects through your Facebook Page.<br>' +
+            'If you already connected Facebook ✅ skip to Step 2.' +
+          '</div>' +
+          '<button onclick="closeConnModal();setTimeout(function(){openConnModal(\'facebook\')},100)" style="width:100%;padding:10px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📘 Go to Facebook Connection</button>' +
         '</div>' +
 
         '<!-- STEP 2 -->' +
-        '<div style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:12px;padding:14px;margin-bottom:10px;">' +
-          '<div style="font-size:12px;font-weight:700;color:#26a5e4;margin-bottom:8px;">STEP 2 — Enter your channel username</div>' +
-          '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;">Your channel username starts with @ (e.g. @mybusiness)</div>' +
-          '<div style="display:flex;gap:8px;">' +
-            '<div style="display:flex;align-items:center;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:0 12px;color:#8888aa;font-size:14px;font-weight:700;">@</div>' +
-            '<input id="conn-tg2" placeholder="mychannel" style="flex:1;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:14px;outline:none;">' +
+        '<div style="background:rgba(225,48,108,0.1);border:1px solid rgba(225,48,108,0.4);border-radius:12px;padding:16px;margin-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+            '<div style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">2</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Connect Instagram via Facebook Page</div>' +
+            '<div style="font-size:10px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;margin-left:4px;">RECOMMENDED</div>' +
           '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
+            '✓ Works with Business &amp; Creator accounts<br>' +
+            '✓ Your Instagram must be linked to your Facebook Page<br>' +
+            '<span style="color:#f59e0b;">👉 Facebook Page → Settings → Instagram → Connect Account</span>' +
+          '</div>' +
+          '<button onclick="connectInstagramViaFacebook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📷 Connect Instagram (via Facebook Page)</button>' +
         '</div>' +
 
-        '<!-- CONNECT -->' +
-        '<button onclick="saveTelegramChannel()" style="width:100%;padding:13px;background:linear-gradient(135deg,#26a5e4,#1a8bc4);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ Connect My Channel</button>' +
+        '<!-- DIVIDER -->' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+          '<span style="font-size:11px;color:#555577;font-weight:600;">OR use Instagram OAuth directly</span>' +
+          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
+        '</div>' +
 
-        '<!-- PERSONAL CHAT -->' +
-        '<div style="text-align:center;font-size:12px;color:#8888aa;">No channel yet? <a onclick="window.open(\'https://t.me/AutopostleeyBot?start=connect_\'+(_user?_user.id:\'guest\'),\'_blank\')" style="color:#26a5e4;cursor:pointer;font-weight:600;">Post to personal chat instead →</a></div>';
-    },
-    bluesky: function() {
-      return '<div style="font-size:13px;color:#8888aa;margin-bottom:16px;">Connect your Bluesky account using your handle and app password.</div>' +
-        '<input id="conn-bs1" placeholder="Handle (e.g. yourname.bsky.social)" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<input id="conn-bs2" placeholder="App Password (from bsky.app Settings)" type="password" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;color:#e8e8f0;font-size:13px;margin-bottom:8px;outline:none;display:block;">' +
-        '<div style="font-size:11px;color:#8888aa;margin-bottom:12px;">Get app password: bsky.app → Settings → App Passwords → Add App Password</div>' +
-        '<button onclick="saveBlueskyConnection()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0085ff,#0066cc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🦋 Connect Bluesky</button>';
+        '<button onclick="connectInstagram()" style="width:100%;padding:10px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">🔗 Connect via Instagram OAuth</button>' +
+
+        '<!-- MANUAL -->' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:14px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Manual Post (any account)</div>' +
+            '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;">Works with any Instagram — we copy your caption and open Instagram for you.</div>' +
+          '<button onclick="saveInstagramManual()" style="width:100%;padding:10px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📋 Set Up Manual Posting</button>' +
+        '</div>';
     },
     google_business: function() {
       return '<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:12px;">Connect Google Business Profile</div>' +
