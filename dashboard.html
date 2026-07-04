@@ -4996,38 +4996,42 @@ function connectFacebookOAuth() {
 }
 
 // Handle direct Facebook OAuth token return (fragment #access_token=...)
-(function handleFBDirectOAuth() {
+// Runs after page fully loads so all functions are available
+function handleFBDirectOAuth() {
   var hash = window.location.hash;
   if (!hash || !hash.includes('access_token')) return;
   var hashParams = new URLSearchParams(hash.slice(1));
   var token = hashParams.get('access_token');
-  var state = hashParams.get('state') || '';
-  if (!token || !state.startsWith('fb_connect_')) return;
+  if (!token) return;
 
+  // Clear the hash from URL
   window.history.replaceState({}, '', '/dashboard.html');
 
-  // Get user's Facebook Pages
+  showToast('Connecting Facebook...', 'success');
+
+  // Get user Facebook Pages
   fetch('https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token&access_token=' + token)
     .then(function(r) { return r.json(); })
-    .then(async function(data) {
+    .then(function(data) {
+      console.log('[FB OAuth] Pages response:', JSON.stringify(data));
+      if (data.error) {
+        showToast('Facebook error: ' + data.error.message, 'error');
+        return;
+      }
       if (!data.data || !data.data.length) {
-        showToast('No Facebook Pages found. Please create a Facebook Page first at facebook.com/pages/create', 'error');
+        showToast('No Facebook Pages found. Make sure you are an admin of a Facebook Page.', 'error');
         return;
       }
       if (data.data.length === 1) {
-        // Only one page - connect directly
-        await selectFacebookPageDirect(data.data[0].id, data.data[0].name, data.data[0].access_token);
+        selectFacebookPageDirect(data.data[0].id, data.data[0].name, data.data[0].access_token);
       } else {
-        // Multiple pages - show selector
-        showFacebookPageSelector(data.data.map(function(p) {
-          return { id: p.id, name: p.name, access_token: p.access_token };
-        }), state.replace('fb_connect_', ''));
+        showFacebookPageSelector(data.data, '');
       }
     })
     .catch(function(e) {
-      showToast('Facebook connection error: ' + e.message, 'error');
+      showToast('Facebook error: ' + e.message, 'error');
     });
-})();
+}
 
 async function selectFacebookPageDirect(pageId, pageName, pageToken) {
   try {
@@ -5056,6 +5060,10 @@ async function selectFacebookPageDirect(pageId, pageName, pageToken) {
 
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
+  // Handle Facebook direct OAuth (token in URL hash)
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    setTimeout(handleFBDirectOAuth, 800);
+  }
   var params = new URLSearchParams(window.location.search);
   // Discord OAuth return
   if(params.get('dc_success')) {
@@ -7556,6 +7564,10 @@ if (_origShowPage) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Handle Facebook OAuth return
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    setTimeout(handleFBDirectOAuth, 500); // slight delay so auth loads first
+  }
   applyAPTranslations();
   renderAPLangMenu();
 });
