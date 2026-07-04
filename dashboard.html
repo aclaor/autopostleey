@@ -1764,7 +1764,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 ondrop="handleVideoAnalyzerDrop(event)">
                 <div style="font-size:36px;margin-bottom:8px;">🎥</div>
                 <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag your video here</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI · Max 50MB</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI · Max 200MB · Tip: use short clips for best results</div>
               </div>
               <input id="video-input" type="file" accept="video/*" style="display:none" onchange="handleVideoAnalyzer(this)">
 
@@ -3212,11 +3212,20 @@ function handleVideoAnalyzer(input) {
 }
 
 function processVideoAnalyzer(file) {
+  var maxMB = 200;
+  var fileMB = (file.size / 1024 / 1024).toFixed(1);
+  if (file.size > maxMB * 1024 * 1024) {
+    showToast('Video is ' + fileMB + 'MB — please use a shorter clip (max ' + maxMB + 'MB). Screen recordings can be trimmed in your phone gallery or using free tools like Handbrake.', 'error');
+    return;
+  }
   _reelVideoFile = file;
   var url = URL.createObjectURL(file);
   _reelVideoUrl = url;
   var vid = document.getElementById('video-preview-el');
   if (vid) { vid.src = url; vid.style.display = 'block'; }
+  // Show file size info
+  var dropzone = document.getElementById('video-dropzone');
+  if (dropzone) dropzone.querySelector('div:last-child').textContent = file.name + ' (' + fileMB + 'MB)';
   // Auto generate caption
   generateVideoCaption();
 }
@@ -7461,20 +7470,28 @@ document.addEventListener('DOMContentLoaded', function() {
 // -- R2 Upload Helpers --
 async function uploadFileToR2(file, folder) {
   folder = folder || 'media';
+  var fileMB = (file.size / 1024 / 1024).toFixed(1);
+  if (file.size > 200 * 1024 * 1024) {
+    throw new Error('File is ' + fileMB + 'MB — max 200MB. Please trim your video first.');
+  }
   var ext = (file.name || 'file').split('.').pop() || 'bin';
   var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
-  console.log('[R2 Upload] Starting:', fname, file.type, file.size + ' bytes');
+  console.log('[R2] Uploading:', fname, file.type, fileMB + 'MB');
   var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
     method: 'POST',
     headers: { 'x-file-name': fname, 'x-file-type': file.type || 'application/octet-stream' },
     body: file
   });
   var respText = await res.text();
-  console.log('[R2 Upload] Response', res.status, ':', respText);
-  if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + respText);
+  console.log('[R2] Response', res.status, ':', respText);
+  if (!res.ok) {
+    var errMsg = respText;
+    try { errMsg = JSON.parse(respText).error || respText; } catch(e2) {}
+    throw new Error(errMsg);
+  }
   var d = JSON.parse(respText);
   if (!d.url) throw new Error(d.error || 'No URL in response');
-  console.log('[R2 Upload] Success:', d.url);
+  console.log('[R2] Success:', d.url);
   return d.url;
 }
 async function uploadDataUrlToR2(dataUrl, folder, ext) {
