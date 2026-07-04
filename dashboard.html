@@ -266,52 +266,52 @@
     <div class="page active" id="page-overview">
       <div class="page-header">
         <div>
-          <div class="page-title">Good morning! 👋</div>
-          <div class="page-sub" id="overview-sub">Here's what's happening with your social media today.</div>
+          <div class="page-title" data-i18n="ov_title">Good morning! 👋</div>
+          <div class="page-sub" id="overview-sub" data-i18n="sub_overview">Here's what's happening with your social media today.</div>
         <div id="trial-banner" style="display:none;margin-top:8px;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:8px 14px;font-size:13px;color:#c084fc;">
           ⏰ <span id="trial-text">Free trial active</span> · <a href="#" onclick="showPage('billing');return false;" style="color:#a855f7;font-weight:700;">Upgrade now →</a>
         </div>
         </div>
-        <button class="btn-accent" onclick="showPage('compose')">+ Create Post</button>
+        <button class="btn-accent" onclick="showPage('compose')" data-i18n="ov_create">+ Create Post</button>
       </div>
 
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-label">Posts This Month</div>
+          <div class="stat-label" data-i18n="ov_stat1">Posts This Month</div>
           <div class="stat-val" id="stat-posts">0</div>
-          <div class="stat-sub">of <span id="stat-limit">10</span> allowed</div>
+          <div class="stat-sub" data-i18n="ov_stat1_sub">of <span id="stat-limit">10</span> allowed</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Scheduled</div>
+          <div class="stat-label" data-i18n="ov_stat2">Scheduled</div>
           <div class="stat-val" id="stat-scheduled">0</div>
-          <div class="stat-sub">upcoming posts</div>
+          <div class="stat-sub" data-i18n="ov_stat2_sub">upcoming posts</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Platforms</div>
+          <div class="stat-label" data-i18n="ov_stat3">Platforms</div>
           <div class="stat-val" id="stat-platforms">0</div>
-          <div class="stat-sub">connected</div>
+          <div class="stat-sub" data-i18n="ov_stat3_sub">connected</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Posted</div>
+          <div class="stat-label" data-i18n="ov_stat4">Posted</div>
           <div class="stat-val" id="stat-posted">0</div>
-          <div class="stat-sub">all time</div>
+          <div class="stat-sub" data-i18n="ov_stat4_sub">all time</div>
         </div>
       </div>
 
       <!-- Onboarding checklist -->
       <div class="card" id="onboarding-card">
-        <div class="card-title">🚀 Get started</div>
+        <div class="card-title" data-i18n="ov_getstarted">🚀 Get started</div>
         <div id="onboarding-list">
           <div class="post-item" id="ob-step1">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <span id="ob1-icon">⬜</span>
                 <div>
-                  <div style="font-weight:600;font-size:14px;">Set up your business profile</div>
-                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Tell us about your business so AI can write posts for you</div>
+                  <div style="font-weight:600;font-size:14px;" data-i18n="ov_ob1_title">Set up your business profile</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;" data-i18n="ov_ob1_sub">Tell us about your business so AI can write posts for you</div>
                 </div>
               </div>
-              <button class="post-btn" onclick="showPage('business')">Set up →</button>
+              <button class="post-btn" onclick="showPage('business')" data-i18n="ov_ob1_btn">Set up →</button>
             </div>
           </div>
           <div class="post-item" id="ob-step2">
@@ -319,11 +319,11 @@
               <div style="display:flex;align-items:center;gap:10px;">
                 <span id="ob2-icon">⬜</span>
                 <div>
-                  <div style="font-weight:600;font-size:14px;">Connect a platform</div>
-                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Link your Facebook, Instagram or other accounts</div>
+                  <div style="font-weight:600;font-size:14px;" data-i18n="ov_ob2_title">Connect a platform</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;" data-i18n="ov_ob2_sub">Link your Facebook, Instagram or other accounts</div>
                 </div>
               </div>
-              <button class="post-btn" onclick="showPage('connections')">Connect →</button>
+              <button class="post-btn" onclick="showPage('connections')" data-i18n="ov_ob2_btn">Connect →</button>
             </div>
           </div>
           <div class="post-item" id="ob-step3">
@@ -331,11 +331,11 @@
               <div style="display:flex;align-items:center;gap:10px;">
                 <span id="ob3-icon">⬜</span>
                 <div>
-                  <div style="font-weight:600;font-size:14px;">Create your first post</div>
-                  <div style="font-size:12px;color:var(--text3);margin-top:2px;">Write manually or let AI generate it for you</div>
+                  <div style="font-weight:600;font-size:14px;" data-i18n="ov_ob3_title">Create your first post</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px;" data-i18n="ov_ob3_sub">Write manually or let AI generate it for you</div>
                 </div>
               </div>
-              <button class="post-btn" onclick="showPage('compose')">Create →</button>
+              <button class="post-btn" onclick="showPage('compose')" data-i18n="ov_ob3_btn">Create →</button>
             </div>
           </div>
         </div>
