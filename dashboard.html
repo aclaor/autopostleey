@@ -279,7 +279,7 @@
         <div class="stat-card">
           <div class="stat-label" data-i18n="ov_stat1">Posts This Month</div>
           <div class="stat-val" id="stat-posts">0</div>
-          <div class="stat-sub" data-i18n="ov_stat1_sub">of <span id="stat-limit">10</span> allowed</div>
+          <div class="stat-sub" data-i18n="ov_stat1_sub">of <span id="stat-limit">60</span> allowed</div>
         </div>
         <div class="stat-card">
           <div class="stat-label" data-i18n="ov_stat2">Scheduled</div>
@@ -1262,10 +1262,10 @@
             <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$9<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
             <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Perfect to get started</div>
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 200 posts/month</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 3 platforms</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> AI captions</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;font-size:14px;">✗</span> Auto-poster</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 500 posts/month</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All features included</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> AI AutoPoster</div>
             </div>
             <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">Get Started →</button>
           </div>
@@ -3914,8 +3914,8 @@ async function generateAIPost() {
 
 // ── PLAN LIMITS ───────────────────────────────────────────
 var PLAN_LIMITS = {
-  free:    { posts: 30,       platforms: 999, autoposter: true, bulk: true, reels: true },
-  starter: { posts: 200,      platforms: 999, autoposter: true,  bulk: true,  reels: true  },
+  free:    { posts: 60,       platforms: 999, autoposter: true, bulk: true, reels: true },
+  starter: { posts: 500,      platforms: 999, autoposter: true,  bulk: true,  reels: true  },
   growth:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true },
   agency:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true }
 };
@@ -5498,7 +5498,7 @@ function updatePlanUI(plan) {
   if(el1) el1.textContent = names[plan]  || 'FREE PLAN';
   if(el2) el2.textContent = limits[plan] || '10 posts/month';
   var limitEl = document.getElementById('stat-limit');
-  if(limitEl) limitEl.textContent = plan==='free' ? '30' : plan==='starter' ? '200' : '∞';
+  if(limitEl) limitEl.textContent = plan==='free' ? '60' : plan==='starter' ? '500' : '∞';
   if(_user) getPostsThisMonth().then(function(n){ var el=document.getElementById('stat-posts'); if(el) el.textContent=n; });
   // Update stat card monthly count
   if(_user) getPostsThisMonth().then(function(n){ var el=document.getElementById('stat-posts'); if(el) el.textContent=n; });
