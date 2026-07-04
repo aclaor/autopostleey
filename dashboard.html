@@ -3860,10 +3860,6 @@ function setBestTime() {
 
 // ── AI POST GENERATOR ───────────────────────────────────────
 async function generateAIPost() {
-  if(!getPlanLimit().autoposter) {
-    showUpgradeModal('AI AutoPoster is available on Growth ($19/mo) and Agency ($49/mo) plans. Upgrade to automate your posting!');
-    return;
-  }
   var limits = getPlanLimit();
   if(!limits.autoposter) {
     showUpgradeModal('The AI AutoPoster is available on Growth ($19/mo) and Agency ($49/mo) plans. Upgrade to automate your posting!');
@@ -3915,79 +3911,84 @@ async function generateAIPost() {
 
 // ── SUBMIT POST ─────────────────────────────────────────────
 
+
 // ── PLAN LIMITS ───────────────────────────────────────────
 var PLAN_LIMITS = {
-  free:    { posts: 30,  platforms: 999, autoposter: false, bulk: false, reels: false },
-  starter: { posts: 200, platforms: 3,   autoposter: false, bulk: false, reels: false },
+  free:    { posts: 30,       platforms: 999, autoposter: true, bulk: true, reels: true },
+  starter: { posts: 200,      platforms: 3,   autoposter: false, bulk: false, reels: false },
   growth:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true },
   agency:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true }
 };
 
 function getUserPlan() {
-  var meta = _user && _user.user_metadata || {};
-  return meta.plan || 'free';
+  return (_user && _user.user_metadata && _user.user_metadata.plan) || "free";
 }
-
 function getPlanLimit() {
   return PLAN_LIMITS[getUserPlan()] || PLAN_LIMITS.free;
 }
-
 async function getPostsThisMonth() {
-  var now = new Date();
-  var start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  var res = await _db.from('autopostleey_posts')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', _user.id)
-    .eq('status', 'published')
-    .gte('created_at', start);
+  var start = new Date();
+  start.setDate(1); start.setHours(0,0,0,0);
+  var res = await _db.from("autopostleey_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", _user.id)
+    .eq("status", "published")
+    .gte("created_at", start.toISOString());
   return res.count || 0;
 }
-
 async function checkPostLimit() {
-  var plan = getUserPlan();
   var limits = getPlanLimit();
   if (limits.posts === Infinity) return { allowed: true };
-
   var used = await getPostsThisMonth();
-  if (used >= limits.posts) {
-    return {
-      allowed: false,
-      used: used,
-      limit: limits.posts,
-      plan: plan
-    };
-  }
+  if (used >= limits.posts) return { allowed: false, used: used, limit: limits.posts };
   return { allowed: true, used: used, limit: limits.posts };
 }
-
 function showUpgradeModal(reason) {
+  var existing = document.getElementById("upgrade-overlay");
+  if (existing) existing.remove();
   var plan = getUserPlan();
-  var msg = reason || 'You have reached your plan limit.';
-  var nextPlan = plan === 'free' ? 'Starter ($9/mo)' : plan === 'starter' ? 'Growth ($19/mo)' : 'Growth ($19/mo)';
+  var msg = reason || "You have reached your plan limit.";
+  var nextPlan = plan === "free" ? "Starter ($9/mo)" : "Growth ($19/mo)";
+  var nextFeatures = plan === "free"
+    ? "✓ 200 posts/month<br>✓ 3 platforms<br>✓ AI captions"
+    : "✓ Unlimited posts<br>✓ All 13 platforms<br>✓ AI AutoPoster<br>✓ Reels & Shorts";
 
-  var overlay = document.createElement('div');
-  overlay.id = 'upgrade-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  var overlay = document.createElement("div");
+  overlay.id = "upgrade-overlay";
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;";
 
-  var modal = document.createElement('div');
-  modal.style.cssText = 'background:#fff;border-radius:20px;padding:36px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
-  modal.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">⚡</div>'
+  var modal = document.createElement("div");
+  modal.style.cssText = "background:#fff;border-radius:20px;padding:36px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);";
+
+  var closeBtn = document.createElement("button");
+  closeBtn.textContent = "Not now";
+  closeBtn.style.cssText = "flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:#374151;";
+  closeBtn.onclick = function() { overlay.remove(); };
+
+  var upgradeBtn = document.createElement("button");
+  upgradeBtn.textContent = "Upgrade Now ⚡";
+  upgradeBtn.style.cssText = "flex:1;padding:12px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;";
+  upgradeBtn.onclick = function() { showPage("billing"); overlay.remove(); };
+
+  var btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;gap:10px;";
+  btnRow.appendChild(closeBtn);
+  btnRow.appendChild(upgradeBtn);
+
+    modal.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">⚡</div>'
     + '<div style="font-size:22px;font-weight:800;color:#0D1117;margin-bottom:8px;">Upgrade to post more</div>'
     + '<div style="font-size:14px;color:#6B7280;margin-bottom:24px;line-height:1.6;">' + msg + '</div>'
     + '<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;">'
     + '<div style="font-size:13px;font-weight:700;color:#6D5EF8;margin-bottom:8px;">Upgrade to ' + nextPlan + '</div>'
-    + (plan === 'free' ? '<div style="font-size:13px;color:#374151;line-height:1.8;">✓ 200 posts/month<br>✓ 3 platforms<br>✓ AI captions</div>'
-      : '<div style="font-size:13px;color:#374151;line-height:1.8;">✓ Unlimited posts<br>✓ All 13 platforms<br>✓ AI AutoPoster<br>✓ Reels & Shorts</div>')
-    + '</div>'
-    + '<div style="display:flex;gap:10px;">'
-    + '<button onclick="document.getElementById('upgrade-overlay').remove()" style="flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:#374151;">Not now</button>'
-    + '<button onclick="showPage('billing');document.getElementById('upgrade-overlay').remove();" style="flex:1;padding:12px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;">Upgrade Now ⚡</button>'
+    + '<div style="font-size:13px;color:#374151;line-height:1.8;">' + nextFeatures + '</div>'
     + '</div>';
+  modal.appendChild(btnRow);
 
   overlay.appendChild(modal);
-  overlay.onclick = function(e) { if(e.target === overlay) overlay.remove(); };
+  overlay.addEventListener("click", function(e) { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
 }
+
 
 async function submitPost(status) {
   var content = document.getElementById('post-content').value.trim();
@@ -4009,13 +4010,6 @@ async function submitPost(status) {
     _selectedPlatforms = Array.from(document.querySelectorAll('#platform-checkboxes input[type="checkbox"]:checked')).map(function(i){return i.value;});
   }
   if(!_selectedPlatforms.length) { showToast('Please select at least one platform!', 'error'); return; }
-
-  // Check platform limit (Starter = max 3 platforms)
-  var planLimits = getPlanLimit();
-  if(_selectedPlatforms.length > planLimits.platforms) {
-    showUpgradeModal('Your ' + getUserPlan().charAt(0).toUpperCase() + getUserPlan().slice(1) + ' plan allows up to ' + planLimits.platforms + ' platforms per post. Upgrade to post to all platforms!');
-    return;
-  }
 
   status = status || 'scheduled';
   var dateVal = document.getElementById('post-date').value;
@@ -5505,6 +5499,7 @@ function updatePlanUI(plan) {
   if(el2) el2.textContent = limits[plan] || '10 posts/month';
   var limitEl = document.getElementById('stat-limit');
   if(limitEl) limitEl.textContent = plan==='free' ? '30' : plan==='starter' ? '200' : '∞';
+  if(_user) getPostsThisMonth().then(function(n){ var el=document.getElementById('stat-posts'); if(el) el.textContent=n; });
   // Update stat card monthly count
   if(_user) getPostsThisMonth().then(function(n){ var el=document.getElementById('stat-posts'); if(el) el.textContent=n; });
 }
@@ -6734,11 +6729,11 @@ async function confirmAPAI(yes) {
   if (c) c.remove();
   if (!yes) { addAPAIMsg('Cancelled! Let me know what else you need.', 'bot'); return; }
   try {
-    // Check post limit before AI post too
-    if (p.status === 'published') {
-      var aiLimitCheck = await checkPostLimit();
-      if (!aiLimitCheck.allowed) {
-        showUpgradeModal('You\'ve used all ' + aiLimitCheck.limit + ' posts this month. Upgrade to keep posting!');
+    // Check post limit
+    if (p.status === "published") {
+      var aiLimit = await checkPostLimit();
+      if (!aiLimit.allowed) {
+        showUpgradeModal("You have used all " + aiLimit.limit + " posts this month. Upgrade to keep posting!");
         return;
       }
     }
