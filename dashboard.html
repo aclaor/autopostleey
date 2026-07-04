@@ -3710,7 +3710,7 @@ async function loadPosts() {
   try {
     var { data } = await _db.from('autopostleey_posts')
       .select('*').eq('user_id', _user.id)
-      .order('created_at', { ascending: false }).limit(50);
+      .order('created_at', { ascending: false }).limit(500);
     _posts = data || [];
     renderRecentPosts();
     renderScheduled();
@@ -3734,14 +3734,14 @@ function renderScheduled() {
 
 function renderHistory() {
   var el = document.getElementById('history-list');
-  var hist = _posts.filter(function(p){ return p.status === 'posted' || p.status === 'failed'; });
+  var hist = _posts.filter(function(p){ return p.status === 'published' || p.status === 'posted' || p.status === 'failed'; });
   if(!hist.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div class="empty-title">No posts yet</div><div class="empty-desc">Posts that have been published will appear here</div></div>'; return; }
   el.innerHTML = hist.map(function(p){ return renderPostItem(p); }).join('');
 }
 
 function renderPostItem(p) {
-  var statusClass = { scheduled:'status-scheduled', posted:'status-posted', draft:'status-draft', failed:'status-failed' }[p.status] || 'status-draft';
-  var statusText  = { scheduled:'⏰ Scheduled', posted:'✓ Posted', draft:'✎ Draft', failed:'✗ Failed' }[p.status] || p.status;
+  var statusClass = { scheduled:'status-scheduled', published:'status-posted', posted:'status-posted', draft:'status-draft', failed:'status-failed' }[p.status] || 'status-draft';
+  var statusText  = { scheduled:'⏰ Scheduled', published:'✓ Posted', posted:'✓ Posted', draft:'✎ Draft', failed:'✗ Failed' }[p.status] || p.status;
   var platforms = (p.platforms||[]).map(function(pl){
     var colors = { facebook:'#1877f2', instagram:'#e1306c', linkedin:'#0077b5', twitter:'#1da1f2', discord:'#5865f2', telegram:'#26a5e4' };
     return '<span class="platform-dot" style="background:'+( colors[pl]||'#888')+';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;"></span>';
