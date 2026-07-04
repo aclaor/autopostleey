@@ -7463,13 +7463,18 @@ async function uploadFileToR2(file, folder) {
   folder = folder || 'media';
   var ext = (file.name || 'file').split('.').pop() || 'bin';
   var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+  console.log('[R2 Upload] Starting:', fname, file.type, file.size + ' bytes');
   var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
     method: 'POST',
-    headers: { 'X-File-Name': fname, 'X-File-Type': file.type || 'application/octet-stream' },
+    headers: { 'x-file-name': fname, 'x-file-type': file.type || 'application/octet-stream' },
     body: file
   });
-  var d = await res.json();
-  if (!d.url) throw new Error(d.error || 'R2 upload failed');
+  var respText = await res.text();
+  console.log('[R2 Upload] Response', res.status, ':', respText);
+  if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + respText);
+  var d = JSON.parse(respText);
+  if (!d.url) throw new Error(d.error || 'No URL in response');
+  console.log('[R2 Upload] Success:', d.url);
   return d.url;
 }
 async function uploadDataUrlToR2(dataUrl, folder, ext) {
