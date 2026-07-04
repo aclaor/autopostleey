@@ -7240,6 +7240,52 @@ async function sendAPAI() {
   var platforms = getConnectedPlatforms();
   var biz = await getBizContext();
 
+  // ── Smart intent detection — bypass Groq for clear requests ──
+  var lower = text.toLowerCase();
+  var imageWords = ['image', 'picture', 'photo', 'pic', 'generate', 'create image', 'make image', 'show me', 'draw', 'ilustr', 'visual'];
+  var postWords  = ['post', 'share', 'publish', 'announce', 'tell', 'write post', 'caption', 'tweet', 'send'];
+  var wantsImage = imageWords.some(function(w){ return lower.includes(w); });
+  var wantsPost  = postWords.some(function(w){ return lower.includes(w); });
+
+  // Extract image subject from message e.g. "create me image of house" → "house"
+  var imageSubject = text;
+  var ofMatch = text.match(/(?:image|picture|photo|pic)\s+(?:of\s+)?(.+)/i);
+  if (ofMatch) imageSubject = ofMatch[1].trim();
+
+  var t2 = document.getElementById('ap-ai-typing'); if(t2) t2.remove();
+
+  if (wantsImage && !wantsPost) {
+    // ONLY image — generate directly, no Groq needed
+    await generateAndShowImage(imageSubject, false, null);
+    _apAIHistory.push({ role: 'assistant', content: 'I generated an image of ' + imageSubject + '.' });
+    return;
+  }
+
+  if (wantsImage && wantsPost) {
+    // Image + post — generate image first, then auto-post
+    await generateAndShowImage(imageSubject, true, text);
+    _apAIHistory.push({ role: 'assistant', content: 'I generated an image and am preparing the post.' });
+    return;
+  }
+
+  if (!wantsImage && wantsPost) {
+    // Post only — prepare post directly
+    await preparePost(text, true, null);
+    _apAIHistory.push({ role: 'assistant', content: 'Preparing post.' });
+    return;
+  }
+
+  // Re-add typing for Groq fallback
+  var msgs2 = document.getElementById('ap-ai-msgs');
+  var typing2 = document.createElement('div');
+  typing2.id = 'ap-ai-typing';
+  typing2.style.cssText = 'background:#f3f4f6;border-radius:12px;padding:12px 14px;align-self:flex-start;';
+  typing2.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s infinite"></span>'
+    + '<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s .2s infinite"></span>'
+    + '<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 2px;animation:apDot 1.2s .4s infinite"></span>';
+  msgs2.appendChild(typing2);
+  msgs2.scrollTop = msgs2.scrollHeight;
+
   var sysPrompt = 'You are a smart AI assistant inside the Autopostleey dashboard (social media scheduling platform). '
     + 'Business context: ' + biz + '. '
     + (platforms.length ? 'Connected platforms: ' + platforms.join(', ') + '.' : 'No platforms connected yet.')
