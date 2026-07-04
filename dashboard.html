@@ -1783,27 +1783,21 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             </div>
           </div>
 
-          <!-- Right: Platform tips -->
+          <!-- Right: Platform Selector -->
           <div>
             <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);">
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📱 Platform Requirements</div>
-              <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:var(--text3);">
-                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📸 Instagram Reels</div>
-                  Max 90 sec · MP4 · 9:16 ratio · Under 4GB
-                </div>
-                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">▶️ YouTube Shorts</div>
-                  Max 60 sec · MP4 · Under 256MB
-                </div>
-                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📘 Facebook Reels</div>
-                  Max 90 sec · MP4 · 9:16 ratio
-                </div>
-                <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">💬 Telegram</div>
-                  Max 50MB · Any format supported
-                </div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">&#x1F4F1; Post To Platform</div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Select platforms to post your video</div>
+              <div id="video-platform-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button onclick="postVideoToSelected()" style="width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">&#x1F680; Post Video Now</button>
+            </div>
+            <div style="background:var(--bg2);border-radius:14px;padding:16px;border:1px solid var(--border);margin-top:12px;">
+              <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">&#x1F4CB; Tips</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.7;">
+                &#x2022; MP4 or MOV recommended<br>
+                &#x2022; Max 50MB file size<br>
+                &#x2022; 9:16 ratio for Reels &amp; Shorts<br>
+                &#x2022; Generate caption before posting
               </div>
             </div>
           </div>
@@ -2512,9 +2506,9 @@ async function syncBulkRowsToTextarea() {
 // ── SUPABASE STORAGE UPLOAD ────────────────────────────────
 async function uploadToSupabaseStorage(dataUrl, filename) {
   try {
-    var ext = dataUrl.includes(';') ? (dataUrl.split(';')[0].split('/')[1] || 'jpg') : 'jpg';
+    var ext = dataUrl.includes(';') ? (dataUrl.split(';')[0].split('/')[1]||'jpg') : 'jpg';
     return await uploadDataUrlToR2(dataUrl, 'posts', ext);
-  } catch(e) { console.error('R2 upload error:', e); return null; }
+  } catch(e) { console.error('R2 upload error:',e); return null; }
 }
 
 async function getPublicImageUrl(dataUrl) {
@@ -2559,6 +2553,7 @@ function initReelsPage() {
 function switchReelsTab(n) {
   document.getElementById('reels-panel-1').style.display = n===1 ? '' : 'none';
   document.getElementById('reels-panel-2').style.display = n===2 ? '' : 'none';
+  if (n===2) setTimeout(renderVideoPlatformList, 100);
   document.getElementById('reels-tab-1').style.background = n===1 ? 'var(--accent)' : 'var(--bg3)';
   document.getElementById('reels-tab-1').style.color      = n===1 ? '#fff' : 'var(--text2)';
   document.getElementById('reels-tab-1').style.border     = n===1 ? 'none' : '1px solid var(--border)';
@@ -7538,6 +7533,73 @@ async function uploadDataUrlToR2(dataUrl, folder, ext) {
   var d = await res.json();
   if (!d.url) throw new Error(d.error || 'R2 upload failed');
   return d.url;
+}
+
+
+// -- R2 Upload Helpers --
+async function uploadFileToR2(file, folder) {
+  folder = folder || 'media';
+  var ext = (file.name || 'file').split('.').pop() || 'bin';
+  var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+  var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
+    method: 'POST',
+    headers: { 'x-file-name': fname, 'x-file-type': file.type || 'application/octet-stream' },
+    body: file
+  });
+  var d = await res.json();
+  if (!d.url) throw new Error(d.error || 'R2 upload failed');
+  return d.url;
+}
+async function uploadDataUrlToR2(dataUrl, folder, ext) {
+  folder = folder || 'media'; ext = ext || 'jpg';
+  var mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+  var base64 = dataUrl.split(',')[1];
+  var binary = atob(base64);
+  var bytes = new Uint8Array(binary.length);
+  for (var i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+  var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
+    method: 'POST',
+    headers: { 'x-file-name': fname, 'x-file-type': mimeType },
+    body: bytes.buffer
+  });
+  var d = await res.json();
+  if (!d.url) throw new Error(d.error || 'R2 upload failed');
+  return d.url;
+}
+function renderVideoPlatformList() {
+  var list = document.getElementById('video-platform-list');
+  if (!list) return;
+  var allMeta = {
+    instagram:{label:'Instagram',color:'#e1306c'},youtube:{label:'YouTube',color:'#ff0000'},
+    facebook:{label:'Facebook',color:'#1877f2'},telegram:{label:'Telegram',color:'#26a5e4'},
+    discord:{label:'Discord',color:'#5865f2'},bluesky:{label:'Bluesky',color:'#0085ff'},
+    threads:{label:'Threads',color:'#000'},twitter:{label:'Twitter/X',color:'#1da1f2'},
+    linkedin:{label:'LinkedIn',color:'#0077b5'},tiktok:{label:'TikTok',color:'#010101'}
+  };
+  var connected = typeof getConnectedPlatforms === 'function' ? getConnectedPlatforms() : [];
+  var platforms = connected.length ? connected : Object.keys(allMeta);
+  list.innerHTML = '';
+  platforms.forEach(function(id) {
+    var m = allMeta[id] || {label:id,color:'#888'};
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);';
+    var chk = document.createElement('input');
+    chk.type='checkbox'; chk.value=id;
+    chk.style.cssText='width:16px;height:16px;accent-color:'+m.color+';cursor:pointer;';
+    var dot = document.createElement('span');
+    dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+m.color+';flex-shrink:0;display:inline-block;';
+    lbl.appendChild(chk); lbl.appendChild(dot);
+    lbl.appendChild(document.createTextNode(' '+m.label));
+    list.appendChild(lbl);
+  });
+}
+async function postVideoToSelected() {
+  var list = document.getElementById('video-platform-list');
+  if (!list) return;
+  var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
+  if (!checked.length) { showToast('Select at least one platform!','error'); return; }
+  for (var i=0;i<checked.length;i++) await postVideoToPlatform(checked[i]);
 }
 
 </script>
