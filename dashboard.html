@@ -1778,7 +1778,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <textarea id="video-caption" rows="5" class="form-textarea" placeholder="AI will analyze your video and generate a caption..."></textarea>
               <div style="display:flex;gap:8px;margin-top:10px;">
                 <button onclick="generateVideoCaption()" style="flex:1;padding:10px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">✨ Regenerate</button>
-                <button onclick="showVideoPlatformPicker()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Post Video Now</button>
+                <button onclick="postVideoToSelected()" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Post Video Now</button>
               </div>
             </div>
           </div>
@@ -2553,6 +2553,7 @@ function initReelsPage() {
 function switchReelsTab(n) {
   document.getElementById('reels-panel-1').style.display = n===1 ? '' : 'none';
   document.getElementById('reels-panel-2').style.display = n===2 ? '' : 'none';
+  if (n===2) setTimeout(renderVideoPlatformList, 150);
   if (n===2) setTimeout(renderVideoPlatformList, 100);
   document.getElementById('reels-tab-1').style.background = n===1 ? 'var(--accent)' : 'var(--bg3)';
   document.getElementById('reels-tab-1').style.color      = n===1 ? '#fff' : 'var(--text2)';
@@ -3129,54 +3130,7 @@ async function postReelToPlatform(platform) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-function showVideoPlatformPicker() {
-  if (!_reelVideoFile) { showToast('Upload a video first!', 'error'); return; }
-  var existing = document.getElementById('video-platform-modal');
-  if (existing) existing.remove();
 
-  var modal = document.createElement('div');
-  modal.id = 'video-platform-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-
-  // Use all connected platforms + their colors
-  var allPlatformMeta = {
-    instagram: { label:'Instagram',  color:'#e1306c' },
-    youtube:   { label:'YouTube',    color:'#ff0000' },
-    facebook:  { label:'Facebook',   color:'#1877f2' },
-    telegram:  { label:'Telegram',   color:'#26a5e4' },
-    discord:   { label:'Discord',    color:'#5865f2' },
-    bluesky:   { label:'Bluesky',    color:'#0085ff' },
-    threads:   { label:'Threads',    color:'#000000' },
-    twitter:   { label:'Twitter/X',  color:'#1da1f2' },
-    linkedin:  { label:'LinkedIn',   color:'#0077b5' },
-    pinterest: { label:'Pinterest',  color:'#e60023' },
-    tiktok:    { label:'TikTok',     color:'#010101' },
-    reddit:    { label:'Reddit',     color:'#ff4500' },
-    snapchat:  { label:'Snapchat',   color:'#fffc00' },
-  };
-  var connectedKeys = getConnectedPlatforms();
-  var platforms = (connectedKeys.length ? connectedKeys : Object.keys(allPlatformMeta)).map(function(id) {
-    var meta = allPlatformMeta[id] || { label: id.charAt(0).toUpperCase()+id.slice(1), color:'#888' };
-    return { id: id, label: meta.label, color: meta.color };
-  });
-
-  var box = document.createElement('div');
-  box.style.cssText = 'background:#1e1b2e;border-radius:16px;padding:24px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5);';
-  box.innerHTML = '<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">🎥 Post Video To</div>'
-    + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:16px;">Select where to post your video</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;">'
-    + platforms.map(function(p) {
-        return '<button data-pid="' + p.id + '" onclick="postVideoToPlatform(this.dataset.pid)" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:' + p.bg + ';border:1px solid ' + p.color + '33;border-radius:10px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:left;">'
-          + '<div style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0;"></div>'
-          + p.label + '</button>';
-      }).join('')
-    + '</div>'
-    + '<button onclick="var m=document.getElementById(\"video-platform-modal\");if(m)m.remove();" style="width:100%;margin-top:14px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;">Cancel</button>';
-
-  modal.appendChild(box);
-  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
 
 async function postVideoToPlatform(platform) {
   var modal = document.getElementById('video-platform-modal');
@@ -3204,7 +3158,8 @@ async function postVideoToPlatform(platform) {
         image_url: videoUrl, connections: _connectionsFull
       })
     });
-    var pubData = await pubResp.json();
+    var pubData = {};
+    try { pubData = await pubResp.json(); } catch(je) { pubData = { success: 0, results: [] }; }
     var success = pubData.results && pubData.results[0] && pubData.results[0].success;
     if (success) {
       showToast('✅ Video posted to ' + platform + '!', 'success');
