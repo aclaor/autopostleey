@@ -5211,7 +5211,14 @@ function connectDiscordOAuth() {
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
+  var p = new URLSearchParams({
+    client_id:     '474990059818223',
+    redirect_uri:  'https://autopostleey.com/dashboard.html',
+    scope:         'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,pages_manage_metadata',
+    response_type: 'token',
+    state:         'fb_' + (_user ? _user.id : 'user')
+  });
+  window.location.href = 'https://www.facebook.com/dialog/oauth?' + p.toString();
 }
 
 function connectInstagram() {
