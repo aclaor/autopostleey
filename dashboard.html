@@ -4241,7 +4241,8 @@ function getConnectionForm(name) {
             '✓ Even if Instagram shows Business — you must link it to a FB Page first<br>' +
             '<span style="color:#f59e0b;font-size:11px;">👉 Go to Meta Business Suite → Settings → Instagram → Connect Account</span>' +
           '</div>' +
-          '<button onclick="connectInstagram()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📷 Connect Instagram Business Account</button>' +
+          '<button onclick="connectInstagram()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">📷 Connect via Instagram OAuth</button>' +
+          '<button onclick="connectInstagramViaFacebook()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5bd1);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Connect via Facebook Page (Recommended)</button>' +
         '</div>' +
 
         '<!-- DIVIDER -->' +
@@ -7598,6 +7599,61 @@ async function postVideoToSelected() {
   var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
   if (!checked.length) { showToast('Select at least one platform!','error'); return; }
   for (var i=0;i<checked.length;i++) await postVideoToPlatform(checked[i]);
+}
+
+
+async function connectInstagramViaFacebook() {
+  // Use existing Facebook token to find linked Instagram account
+  var fbConn = _connectionsFull && _connectionsFull['facebook'];
+  if (!fbConn || !fbConn.access_token || fbConn.access_token === 'manual') {
+    showToast('Please connect your Facebook Page first, then try this option.', 'error');
+    return;
+  }
+
+  showToast('Looking for your Instagram account via Facebook...', 'success');
+
+  try {
+    var token  = fbConn.access_token;
+    var pageId = fbConn.page_id;
+
+    // Get Instagram Business Account linked to the Facebook Page
+    var igRes = await fetch(
+      'https://graph.facebook.com/v19.0/' + pageId + '?fields=instagram_business_account{id,username,name,profile_picture_url}&access_token=' + token
+    );
+    var igData = await igRes.json();
+
+    if (igData.error) {
+      showToast('Facebook API error: ' + igData.error.message, 'error');
+      return;
+    }
+
+    if (!igData.instagram_business_account) {
+      showToast('No Instagram found linked to your Facebook Page. Go to your Facebook Page Settings → Instagram → Connect Account first.', 'error');
+      return;
+    }
+
+    var igAccount = igData.instagram_business_account;
+    var igId      = igAccount.id;
+    var igHandle  = igAccount.username || 'Instagram';
+
+    // Save to Supabase
+    await _db.from('autopostleey_connections').upsert({
+      user_id:      _user.id,
+      platform:     'instagram',
+      access_token: token,
+      page_id:      igId,
+      page_name:    '@' + igHandle,
+      connected_at: new Date().toISOString()
+    }, { onConflict: 'user_id,platform' });
+
+    showToast('✅ Instagram @' + igHandle + ' connected!', 'success');
+    closeConnModal();
+    loadConnections();
+    setTimeout(validateAllConnections, 1000);
+
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 </script>
