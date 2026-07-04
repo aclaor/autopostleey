@@ -5034,11 +5034,33 @@ function handleFBDirectOAuth() {
 }
 
 async function selectFacebookPageDirect(pageId, pageName, pageToken) {
+  console.log('[FB Connect] pageId:', pageId, 'pageName:', pageName, 'hasToken:', !!pageToken);
+  
+  // If no page token, use the FB App token to get one via our worker
+  var finalToken = pageToken;
+  if (!finalToken && pageId) {
+    showToast('Getting page access token...', 'success');
+    try {
+      // Exchange app credentials for page token via Graph API
+      var appTokenRes = await fetch(
+        'https://graph.facebook.com/v19.0/' + pageId + '?fields=access_token&access_token=' + 
+        '474990059818223|e0c3ce178d9cab9b68f66e05362d21bf'
+      );
+      var appTokenData = await appTokenRes.json();
+      console.log('[FB Connect] App token response:', JSON.stringify(appTokenData));
+      if (appTokenData.access_token) {
+        finalToken = appTokenData.access_token;
+      }
+    } catch(e) {
+      console.error('[FB Connect] Token fetch error:', e);
+    }
+  }
+
   try {
     await _db.from('autopostleey_connections').upsert({
       user_id:      _user.id,
       platform:     'facebook',
-      access_token: pageToken,
+      access_token: finalToken || pageToken || '',
       page_id:      pageId,
       page_name:    pageName,
       connected_at: new Date().toISOString()
@@ -5105,8 +5127,21 @@ window.addEventListener('load', function() {
     try {
       var pagesJson = decodeURIComponent(params.get('fb_select'));
       var pages = JSON.parse(pagesJson);
-      showFacebookPageSelector(pages, params.get('user_id') || '');
-    } catch(e) { showToast('Please reconnect Facebook', 'error'); }
+      console.log('[FB Select] Pages from Railway:', JSON.stringify(pages));
+      // If pages don't have access_token, fetch them with user token
+      var needsToken = pages.length && !pages[0].access_token;
+      if (needsToken) {
+        // Pages came from Railway without page tokens
+        // Get fresh page tokens using Railway's user token approach
+        // For now show selector - tokens will be fetched via Graph API
+        showFacebookPageSelector(pages, params.get('user_id') || '');
+      } else {
+        showFacebookPageSelector(pages, params.get('user_id') || '');
+      }
+    } catch(e) { 
+      console.error('[FB Select] Error:', e);
+      showToast('Please reconnect Facebook', 'error'); 
+    }
     window.history.replaceState({}, '', '/dashboard.html');
   }
   if(params.get('ig_select')) {
