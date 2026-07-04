@@ -5033,9 +5033,10 @@ function handleFBDirectOAuth() {
     .then(function(data) {
       if (!data) return;
       console.log('[FB OAuth] Pages:', JSON.stringify(data));
-      if (data.error) {
-        // Token doesn't have pages permission - pass token to worker to get pages
-        console.log('[FB OAuth] No page permission, trying via worker...');
+      if (data.error || !data.data || !data.data.length) {
+        // Token doesn't have pages permission or no pages returned
+        // Try via worker which uses app secret to exchange token
+        console.log('[FB OAuth] Trying worker to get pages...');
         fetch('https://autopostleey-ai.alexclaor.workers.dev/fb-pages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -5049,12 +5050,10 @@ function handleFBDirectOAuth() {
               } else {
                 showFacebookPageSelector(d.pages, '');
               }
+            } else {
+              console.log('[FB OAuth] Worker logs:', JSON.stringify(d.logs));
             }
           }).catch(function(e) { console.error('[FB OAuth] Worker error:', e); });
-        return;
-      }
-      if (!data.data || !data.data.length) {
-        console.log('[FB OAuth] No pages via direct token - Railway handled it');
         return;
       }
       if (data.data.length === 1) {
