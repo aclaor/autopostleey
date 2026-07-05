@@ -5262,14 +5262,7 @@ function connectDiscordOAuth() {
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  var p = new URLSearchParams({
-    client_id:     '474990059818223',
-    redirect_uri:  'https://autopostleey.com/dashboard.html',
-    scope:         'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata,instagram_basic,instagram_content_publish',
-    response_type: 'code',
-    state:         'fbcode_' + (_user ? _user.id : '')
-  });
-  window.location.href = 'https://www.facebook.com/dialog/oauth?' + p.toString();
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
 }
 
 function connectInstagram() {
