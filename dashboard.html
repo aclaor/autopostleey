@@ -4180,26 +4180,38 @@ function getConnectionForm(name) {
     facebook: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook</div>' +
 
-        '<button onclick="connectFacebook()" style="width:100%;padding:13px;background:#1877f2;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;">📘 Connect with Facebook</button>' +
-
-        '<div style="text-align:center;font-size:11px;color:#555577;margin-bottom:12px;">— or paste a Page token manually —</div>' +
-
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:10px;padding:14px;">' +
-          '<div style="font-size:11px;color:#8888aa;margin-bottom:10px;line-height:1.8;">' +
-            '1. Go to <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a><br>' +
-            '2. Select app <b style=\"color:#e8e8f0;\">Zeus-AI</b> → Generate Access Token<br>' +
-            '3. Change dropdown to your <b style=\"color:#e8e8f0;\">Page name</b><br>' +
-            '4. Copy the Page token and paste below' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:10px;">' +
+          '<div style="font-size:13px;color:#8888aa;margin-bottom:10px;line-height:1.7;">' +
+            '✓ Requires a <strong style="color:#e8e8f0;">Facebook Page</strong> (not personal profile)<br>' +
+            '✓ You must be the Page <strong style="color:#e8e8f0;">Admin</strong><br>' +
+            '✓ Also auto-connects Instagram if linked to your Page' +
           '</div>' +
-          '<input id="fb-tok" placeholder="Page Access Token" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;margin-bottom:7px;box-sizing:border-box;">' +
-          '<select id="fb-pid" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;margin-bottom:9px;">' +
-            '<option value="61590869057936">Autopostleey</option>' +
-            '<option value="61591617354902">Rentleeys.com</option>' +
-            '<option value="61591216766877">Rentleeys</option>' +
-            '<option value="61590526313448">Investleey AI</option>' +
-          '</select>' +
-          '<button onclick="saveFBManual()" style="width:100%;padding:10px;background:#6D5EF8;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;">✅ Save Page Token</button>' +
-        '</div>';
+          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">📘 Connect Facebook Page</button>' +
+        '</div>' +
+
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:10px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:8px;">📢 Connect Facebook Group</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;">Post to up to 3 Facebook Groups</div>' +
+          '<div style="margin-bottom:8px;"><input id="fb-grp1" placeholder="Group 1 URL or ID" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;box-sizing:border-box;"></div>' +
+          '<div style="margin-bottom:8px;"><input id="fb-grp2" placeholder="Group 2 URL or ID (optional)" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;box-sizing:border-box;"></div>' +
+          '<div style="margin-bottom:10px;"><input id="fb-grp3" placeholder="Group 3 URL or ID (optional)" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;box-sizing:border-box;"></div>' +
+          '<button onclick="saveFacebookGroups()" style="width:100%;padding:10px;background:#6D5EF8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 Save Groups</button>' +
+        '</div>' +
+
+        '<details style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:10px;padding:12px;">' +
+          '<summary style="font-size:12px;color:#6D5EF8;cursor:pointer;font-weight:600;">🔑 Advanced: paste Page token manually</summary>' +
+          '<div style="margin-top:10px;">' +
+            '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;line-height:1.6;">Get from <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a> → select app → Generate Token → switch to your Page → copy token</div>' +
+            '<input id="fb-tok" placeholder="Page Access Token" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;margin-bottom:7px;box-sizing:border-box;">' +
+            '<select id="fb-pid" style="width:100%;padding:9px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:7px;color:#e8e8f0;font-size:12px;margin-bottom:9px;">' +
+              '<option value="61590869057936">Autopostleey</option>' +
+              '<option value="61591617354902">Rentleeys.com</option>' +
+              '<option value="61591216766877">Rentleeys</option>' +
+              '<option value="61590526313448">Investleey AI</option>' +
+            '</select>' +
+            '<button onclick="saveFBManual()" style="width:100%;padding:10px;background:#6D5EF8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✅ Save Page Token</button>' +
+          '</div>' +
+        '</details>';
     },
     instagram: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📸 Connect Instagram</div>' +
@@ -7814,6 +7826,34 @@ async function saveFacebookManualToken() {
   await selectFacebookPage(token, pageId, pageName);
 }
 
+
+async function saveFBManual() {
+  var tok = (document.getElementById('fb-tok')||{}).value||'';
+  var sel = document.getElementById('fb-pid');
+  var pid = sel ? sel.value : '';
+  var pname = sel && sel.selectedIndex>=0 ? sel.options[sel.selectedIndex].text : 'My Page';
+  if (!tok) { showToast('Please paste your Page Token', 'error'); return; }
+  await selectFacebookPage(tok, pid, pname);
+}
+
+
+async function saveFacebookGroups() {
+  var g1 = (document.getElementById('fb-grp1')||{}).value||'';
+  var g2 = (document.getElementById('fb-grp2')||{}).value||'';
+  var g3 = (document.getElementById('fb-grp3')||{}).value||'';
+  if (!g1) { showToast('Please enter at least one group URL', 'error'); return; }
+  var groups = [g1, g2, g3].filter(Boolean);
+  await _db.from('autopostleey_connections').upsert({
+    user_id: _user.id,
+    platform: 'facebook_groups',
+    page_name: groups.join(','),
+    access_token: 'groups',
+    connected_at: new Date().toISOString()
+  }, { onConflict: 'user_id,platform' });
+  showToast('✅ Facebook Groups saved!', 'success');
+  closeConnModal();
+  loadConnections();
+}
 
 async function saveFBManual() {
   var tok = (document.getElementById('fb-tok')||{}).value||'';
