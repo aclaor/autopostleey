@@ -7758,15 +7758,21 @@ async function uploadFileToR2(file, folder) {
       body: JSON.stringify({ filename: 'upload.' + ext, content_type: file.type || 'application/octet-stream', folder: folder })
     });
     var presignData = await presignRes.json();
+    console.log('[R2] Presign response:', JSON.stringify(presignData).slice(0, 200));
     if (!presignData.upload_url) throw new Error(presignData.error || 'Presign failed');
 
-    // Upload directly to R2
+    // Upload directly to R2 - no extra headers needed for presigned URL
+    console.log('[R2] Starting direct upload to R2...');
     var r2Res = await fetch(presignData.upload_url, {
       method: 'PUT',
-      headers: presignData.headers,
+      headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-amz-content-sha256': 'UNSIGNED-PAYLOAD' },
       body: file
     });
-    if (!r2Res.ok) throw new Error('R2 direct upload failed: ' + r2Res.status);
+    console.log('[R2] R2 PUT response:', r2Res.status, r2Res.statusText);
+    if (!r2Res.ok) {
+      var errText = await r2Res.text();
+      throw new Error('R2 upload failed ' + r2Res.status + ': ' + errText.slice(0,200));
+    }
     console.log('[R2] Direct upload success:', presignData.public_url);
     return presignData.public_url;
   }
