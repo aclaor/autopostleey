@@ -3231,6 +3231,79 @@ function handleVideoAnalyzer(input) {
   input.value = '';
 }
 
+
+// ── Video compression using MediaRecorder ────────────────
+async function compressVideo(file) {
+  // Skip compression if already small enough
+  if (file.size <= 40 * 1024 * 1024) return file;
+
+  return new Promise(function(resolve) {
+    showToast('Compressing video...', 'success');
+    var url = URL.createObjectURL(file);
+    var video = document.createElement('video');
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+
+    video.onloadedmetadata = function() {
+      var canvas = document.createElement('canvas');
+      // Scale down to max 720p
+      var scale = Math.min(1, 1280 / video.videoWidth, 720 / video.videoHeight);
+      canvas.width  = Math.round(video.videoWidth  * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      var ctx = canvas.getContext('2d');
+
+      var stream = canvas.captureStream(24);
+      // Add audio track if available
+      try {
+        var audioCtx = new AudioContext();
+        var src = audioCtx.createMediaElementSource(video);
+        var dst = audioCtx.createMediaStreamDestination();
+        src.connect(dst);
+        dst.stream.getAudioTracks().forEach(function(t){ stream.addTrack(t); });
+      } catch(e) {}
+
+      var options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 1500000 };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'video/webm', videoBitsPerSecond: 1500000 };
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        // Browser doesn't support compression - use original
+        resolve(file);
+        return;
+      }
+
+      var recorder = new MediaRecorder(stream, options);
+      var chunks = [];
+      recorder.ondataavailable = function(e){ if(e.data.size) chunks.push(e.data); };
+      recorder.onstop = function() {
+        var blob = new Blob(chunks, { type: 'video/webm' });
+        var compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.webm'), { type: 'video/webm' });
+        var origMB = (file.size/1024/1024).toFixed(1);
+        var newMB  = (compressed.size/1024/1024).toFixed(1);
+        showToast('Compressed: ' + origMB + 'MB → ' + newMB + 'MB ✅', 'success');
+        URL.revokeObjectURL(url);
+        resolve(compressed);
+      };
+
+      video.play().then(function() {
+        recorder.start();
+        var draw = function() {
+          if (video.ended || video.paused) { recorder.stop(); return; }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(draw);
+        };
+        requestAnimationFrame(draw);
+      }).catch(function(){ resolve(file); });
+
+      video.onended = function() { if(recorder.state==='recording') recorder.stop(); };
+    };
+
+    video.onerror = function() { resolve(file); };
+    video.load();
+  });
+}
+
 function processVideoAnalyzer(file) {
   var maxMB = 200;
   var fileMB = (file.size / 1024 / 1024).toFixed(1);
@@ -3238,16 +3311,24 @@ function processVideoAnalyzer(file) {
     showToast('Video is ' + fileMB + 'MB — please use a shorter clip (max ' + maxMB + 'MB). Screen recordings can be trimmed in your phone gallery or using free tools like Handbrake.', 'error');
     return;
   }
-  _reelVideoFile = file;
+  // Show preview immediately with original file
   var url = URL.createObjectURL(file);
   _reelVideoUrl = url;
+  _reelVideoFile = file;
   var vid = document.getElementById('video-preview-el');
   if (vid) { vid.src = url; vid.style.display = 'block'; }
-  // Show file size info
   var dropzone = document.getElementById('video-dropzone');
   if (dropzone) dropzone.querySelector('div:last-child').textContent = file.name + ' (' + fileMB + 'MB)';
-  // Auto generate caption
+  // Generate caption immediately
   generateVideoCaption();
+  // Compress in background if large
+  if (file.size > 40 * 1024 * 1024) {
+    compressVideo(file).then(function(compressed) {
+      _reelVideoFile = compressed;
+      var newMB = (compressed.size/1024/1024).toFixed(1);
+      if (dropzone) dropzone.querySelector('div:last-child').textContent = file.name + ' (' + newMB + 'MB compressed)';
+    });
+  }
 }
 
 async function generateVideoCaption() {
