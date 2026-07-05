@@ -4178,35 +4178,14 @@ function updateConnectionsUI() {
 function getConnectionForm(name) {
   var s = {
     facebook: function() {
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook Page</div>' +
-
-        '<!-- AUTO CONNECT -->' +
-        '<div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:12px;padding:14px;margin-bottom:10px;">' +
-          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">⚡ Quick Connect</div>' +
-          '<button onclick="connectFacebook()" style="width:100%;padding:11px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📘 Connect with Facebook OAuth</button>' +
-        '</div>' +
-
-        '<!-- MANUAL TOKEN - shown prominently -->' +
-        '<div style="background:#1e1e2e;border:1px solid #4d5fcc;border-radius:12px;padding:16px;margin-bottom:10px;">' +
-          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:4px;">🔑 Manual Page Token <span style=\"background:rgba(109,94,248,0.2);color:#6D5EF8;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;\">RECOMMENDED</span></div>' +
-          '<div style="font-size:11px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
-            '1. Go to <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a><br>' +
-            '2. Top right: select app <strong style=\"color:#e8e8f0;\">Zeus-AI</strong><br>' +
-            '3. Click <strong style=\"color:#e8e8f0;\">Generate Access Token</strong> → grant all permissions<br>' +
-            '4. Change dropdown from <em>User Token</em> to <strong style=\"color:#e8e8f0;\">your Page name</strong><br>' +
-            '5. Copy the Page token below' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook</div>' +
+        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;margin-bottom:14px;">' +
+          '<div style="font-size:13px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
+            '✓ Requires a <strong style="color:#e8e8f0;">Facebook Page</strong> (not personal profile)<br>' +
+            '✓ You must be the Page <strong style="color:#e8e8f0;">Admin</strong><br>' +
+            '✓ Also connects Instagram if linked to your Page' +
           '</div>' +
-          '<input id="fb-manual-token" placeholder="Paste Page Access Token here..." style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
-          '<select id="fb-manual-pageid" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;">' +
-            '<option value="">Select your page...</option>' +
-            '<option value="61590869057936">Autopostleey</option>' +
-            '<option value="61591617354902">Rentleeys.com</option>' +
-            '<option value="61591216766877">Rentleeys</option>' +
-            '<option value="61590526313448">Investleey AI</option>' +
-            '<option value="other">Other (enter below)</option>' +
-          '</select>' +
-          '<input id="fb-manual-pagename" placeholder="Page name (if Other selected)" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:10px;box-sizing:border-box;">' +
-          '<button onclick="saveFacebookManualToken()" style="width:100%;padding:11px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✅ Save & Connect Page</button>' +
+          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Connect Facebook Page</button>' +
         '</div>';
     },
     instagram: function() {
@@ -5082,38 +5061,7 @@ async function selectFacebookPageDirect(pageId, pageName, pageToken) {
 
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
-  // Handle Facebook code OAuth return
-  var urlParams = new URLSearchParams(window.location.search);
-  var fbCode  = urlParams.get('code');
-  var fbState = urlParams.get('state') || '';
-  if (fbCode && fbState.startsWith('fbcode_')) {
-    window.history.replaceState({}, '', '/dashboard.html');
-    showToast('Connecting Facebook Pages...', 'success');
-    fetch('https://autopostleey-ai.alexclaor.workers.dev/fb-connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code:         fbCode,
-        redirect_uri: 'https://autopostleey.com/dashboard.html',
-        user_id:      fbState.replace('fbcode_', '')
-      })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      console.log('[FB Code] Result:', JSON.stringify(d).slice(0,300));
-      if (d.pages && d.pages.length) {
-        if (d.pages.length === 1) {
-          selectFacebookPage(d.pages[0].access_token, d.pages[0].id, d.pages[0].name);
-        } else {
-          showFacebookPageSelector(d.pages, '');
-        }
-      } else {
-        showToast('No Facebook Pages found. ' + (d.error || ''), 'error');
-      }
-    })
-    .catch(function(e) { showToast('Facebook error: ' + e.message, 'error'); });
-    return;
-  }
+
   // Handle Facebook direct OAuth (token in URL hash)
   // Only run if Railway isn't already handling it via fb_select/fb_success params
   var searchParams = new URLSearchParams(window.location.search);
@@ -5281,15 +5229,7 @@ function connectDiscordOAuth() {
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  // Direct FB OAuth with code flow - exchanges via worker for full page access
-  var p = new URLSearchParams({
-    client_id:     '474990059818223',
-    redirect_uri:  'https://autopostleey.com/dashboard.html',
-    scope:         'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata,instagram_basic,instagram_content_publish',
-    response_type: 'code',
-    state:         'fbcode_' + (_user ? _user.id : '')
-  });
-  window.location.href = 'https://www.facebook.com/dialog/oauth?' + p.toString();
+  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
 }
 
 function connectInstagram() {
