@@ -7765,7 +7765,6 @@ async function uploadFileToR2(file, folder) {
     console.log('[R2] Starting direct upload to R2...');
     var r2Res = await fetch(presignData.upload_url, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-amz-content-sha256': 'UNSIGNED-PAYLOAD' },
       body: file
     });
     console.log('[R2] R2 PUT response:', r2Res.status, r2Res.statusText);
