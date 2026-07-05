@@ -7776,9 +7776,13 @@ function renderVideoPlatformList() {
 async function postVideoToSelected() {
   var list = document.getElementById('video-platform-list');
   if (!list) return;
+  // Prevent double click
+  var btn = document.querySelector('[onclick="postVideoToSelected()"]');
+  if (btn && btn.disabled) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading...'; }
   var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
-  if (!checked.length) { showToast('Select at least one platform!','error'); return; }
-  if (!_reelVideoFile) { showToast('Upload a video first!','error'); return; }
+  if (!checked.length) { showToast('Select at least one platform!','error'); if(btn){btn.disabled=false;btn.textContent='🚀 Post Video Now';} return; }
+  if (!_reelVideoFile) { showToast('Upload a video first!','error'); if(btn){btn.disabled=false;btn.textContent='🚀 Post Video Now';} return; }
   var cap = document.getElementById('video-caption');
   var caption = (cap ? cap.value.trim() : '') || 'Check out our latest video!';
   showToast('Uploading to Cloudflare R2...','success');
@@ -7797,7 +7801,7 @@ async function postVideoToSelected() {
     console.log('[Publish]',JSON.stringify(d));
     var ok=[],fail=[];
     (d.results||[]).forEach(function(r){if(r.success)ok.push(r.platform);else fail.push(r.platform);});
-    if(ok.length){showToast('✅ Posted to: '+ok.join(', '),'success');await _db.from('autopostleey_posts').insert({user_id:_user.id,content:caption,platforms:ok,status:'published',image_url:videoUrl,mode:'video'});}
+    if(ok.length){showToast('✅ Posted to: '+ok.join(', '),'success');await _db.from('autopostleey_posts').insert({user_id:_user.id,content:caption,platforms:ok,status:'published',mode:'video'}).catch(function(){});}
     if(fail.length) showToast('Failed: '+fail.join(', '),'error');
   } catch(e){showToast('Error: '+e.message,'error');}
 }
