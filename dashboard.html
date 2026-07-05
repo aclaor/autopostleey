@@ -4180,50 +4180,33 @@ function getConnectionForm(name) {
     facebook: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook</div>' +
 
-        '<!-- OPTION 1: Page API -->' +
-        '<div style="background:#1e1e2e;border:1px solid #1877f2;border-radius:12px;padding:16px;margin-bottom:10px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#1877f2;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 1</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Auto Post to Facebook Page</div>' +
-            '<div style="font-size:10px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;padding:2px 6px;font-weight:700;">FULLY AUTO</div>' +
+        '<!-- AUTO CONNECT -->' +
+        '<div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:12px;padding:16px;margin-bottom:12px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">🔗 Auto Connect (Recommended)</div>' +
+          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
+            'Connects directly to your Facebook Page.<br>' +
+            '<span style="color:#f59e0b;">⚠️ If it shows No Pages Found: go to<br>facebook.com/settings?tab=business_tools → find Zeus-AI → Remove → try again</span>' +
           '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
-            '✓ Requires a <strong style="color:#e8e8f0;">Facebook Page</strong> (not a personal profile)<br>' +
-            '✓ You must be the Page admin<br>' +
-            '<a href="https://www.facebook.com/pages/create" target="_blank" style="color:#4a9eff;font-size:11px;">Create a free Facebook Page →</a>' +
-          '</div>' +
-          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Continue with Facebook</button>' +
+          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Connect with Facebook</button>' +
         '</div>' +
 
-        '<!-- DIVIDER -->' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-          '<span style="font-size:11px;color:#555577;font-weight:600;">OR</span>' +
-          '<div style="flex:1;height:1px;background:#2a2a3e;"></div>' +
-        '</div>' +
-
-        '<!-- OPTION 2: Manual personal profile -->' +
-        '<div style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:16px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-            '<div style="background:#3d3d5c;color:#e8e8f0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">OPTION 2</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#e8e8f0;">Manual Post (Personal Profile)</div>' +
-            '<div style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:2px 6px;font-weight:700;">ANY ACCOUNT</div>' +
+        '<!-- MANUAL TOKEN -->' +
+        '<details style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:14px;">' +
+          '<summary style="font-size:13px;font-weight:700;color:#e8e8f0;cursor:pointer;list-style:none;">🔑 Manual Token Entry (Advanced)</summary>' +
+          '<div style="margin-top:12px;">' +
+            '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;line-height:1.6;">' +
+              '1. Go to <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a><br>' +
+              '2. Select your App → Generate Token<br>' +
+              '3. Add permissions: pages_show_list, pages_manage_posts<br>' +
+              '4. Click Generate Access Token<br>' +
+              '5. Copy token + your Page ID below' +
+            '</div>' +
+            '<input id="fb-manual-token" placeholder="Page Access Token" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
+            '<input id="fb-manual-pageid" placeholder="Page ID (numbers only)" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
+            '<input id="fb-manual-pagename" placeholder="Page Name" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:10px;box-sizing:border-box;">' +
+            '<button onclick="saveFacebookManualToken()" style="width:100%;padding:10px;background:#6D5EF8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Save Page Token</button>' +
           '</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:12px;line-height:1.7;">' +
-            'Works with any Facebook account — personal, page or group.<br>' +
-            'When you post, we show your caption and open your exact Page or Group. Just paste and share!' +
-          '</div>' +
-          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK PAGE URL</div>' +
-          '<input id="conn-fb-page" placeholder="e.g. https://www.facebook.com/yourpage" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 1 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
-          '<input id="conn-fb-group1" placeholder="e.g. https://www.facebook.com/groups/yourgroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 2 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
-          '<input id="conn-fb-group2" placeholder="e.g. https://www.facebook.com/groups/anothergroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<div style="font-size:11px;font-weight:700;color:#8888aa;letter-spacing:1px;margin-bottom:5px;">FACEBOOK GROUP 3 URL <span style="font-weight:400;color:#555577;">(optional)</span></div>' +
-          '<input id="conn-fb-group3" placeholder="e.g. https://www.facebook.com/groups/thirdgroup" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3e;border-radius:8px;padding:10px 12px;color:#e8e8f0;font-size:13px;margin-bottom:10px;outline:none;display:block;box-sizing:border-box;">' +
-          '<div style="font-size:12px;color:#555577;background:rgba(109,94,248,0.08);border:1px solid rgba(109,94,248,0.15);border-radius:8px;padding:10px;margin-bottom:12px;">💡 Fill in at least your Page URL. We will open each one so you can paste and post in seconds.</div>' +
-          '<button onclick="saveFacebookManual()" style="width:100%;padding:12px;background:#3d3d5c;color:#e8e8f0;border:1px solid #5d5d7c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📋 Save My Facebook Destinations</button>' +
-        '</div>';
+        '</details>';
     },
     instagram: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📸 Connect Instagram</div>' +
@@ -7835,6 +7818,16 @@ async function connectInstagramViaFacebook(silent) {
   } catch(e) {
     if (!silent) showToast('Error: ' + e.message, 'error');
   }
+}
+
+
+async function saveFacebookManualToken() {
+  var token    = document.getElementById('fb-manual-token')    ? document.getElementById('fb-manual-token').value.trim()    : '';
+  var pageId   = document.getElementById('fb-manual-pageid')   ? document.getElementById('fb-manual-pageid').value.trim()   : '';
+  var pageName = document.getElementById('fb-manual-pagename') ? document.getElementById('fb-manual-pagename').value.trim() : '';
+  if (!token || !pageId) { showToast('Please enter token and page ID', 'error'); return; }
+  if (!pageName) pageName = 'My Page';
+  await selectFacebookPage(token, pageId, pageName);
 }
 
 </script>
