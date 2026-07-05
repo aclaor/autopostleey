@@ -6731,7 +6731,7 @@ var _apAIHistory = [];
 var _apAIPending = null;
 var _lastImageUrl = null;
 var _lastImagePrompt = null;
-var GROQ_KEY = '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';
+var GROQ_KEY = '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';
 
 function getConnectedPlatforms() {
   if (typeof _connections === 'object' && Object.keys(_connections).length > 0) {
@@ -6962,7 +6962,8 @@ async function generateAndShowImage(promptText, thenPost, postTopic) {
     postWithBtn.style.cssText = 'padding:5px 10px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:700;';
     postWithBtn.onclick = function() {
       var topic = postTopic || _lastImagePrompt || 'this image';
-      preparePost(topic, true, imageUrl);
+      var only = (_apAIPending && _apAIPending.onlyPlatforms) || null;
+      preparePost(topic, true, imageUrl, only);
     };
 
     actions.appendChild(copyBtn);
@@ -6990,8 +6991,8 @@ async function generateAndShowImage(promptText, thenPost, postTopic) {
 }
 
 // ── Prepare post: generate caption then show confirm ──────
-async function preparePost(topic, postNow, imageUrl) {
-  var platforms = getConnectedPlatforms();
+async function preparePost(topic, postNow, imageUrl, onlyPlatforms) {
+  var platforms = onlyPlatforms && onlyPlatforms.length ? onlyPlatforms : getConnectedPlatforms();
   if (!platforms.length) {
     addAPAIMsg('No platforms connected! Go to Connections to link your accounts first.', 'bot');
     return;
@@ -7328,30 +7329,40 @@ async function sendAPAI() {
   var wantsImage = imageWords.some(function(w){ return lower.includes(w); });
   var wantsPost  = postWords.some(function(w){ return lower.includes(w); });
 
-  // Extract image subject from message e.g. "create me image of house" → "house"
+  // Extract image subject: "create image of house and post to facebook" → "house"
   var imageSubject = text;
-  var ofMatch = text.match(/(?:image|picture|photo|pic)\s+(?:of\s+)?(.+)/i);
+  var ofMatch = text.match(/(?:image|picture|photo|pic)\s+(?:of\s+)?([^,\.]+)/i);
   if (ofMatch) imageSubject = ofMatch[1].trim();
+
+  // Extract specific platform mentions: "only in facebook" → ['facebook']
+  var allPlatforms = ['facebook','instagram','telegram','discord','bluesky','twitter','linkedin','tiktok','youtube','threads'];
+  var mentionedPlatforms = allPlatforms.filter(function(p){ return lower.includes(p); });
+  var onlyPlatforms = mentionedPlatforms.length ? mentionedPlatforms : null;
+
+  // Extract post topic (what to say) vs image subject
+  var postTopic = text;
+  var andTell = text.match(/(?:and\s+)?(?:tell|post|say|write|caption)[^:]*?(?:that\s+)?(.+?)(?:\s+(?:to|on)\s+\w+)?$/i);
+  if (andTell) postTopic = andTell[1].trim();
 
   var t2 = document.getElementById('ap-ai-typing'); if(t2) t2.remove();
 
   if (wantsImage && !wantsPost) {
-    // ONLY image — generate directly, no Groq needed
     await generateAndShowImage(imageSubject, false, null);
     _apAIHistory.push({ role: 'assistant', content: 'I generated an image of ' + imageSubject + '.' });
     return;
   }
 
   if (wantsImage && wantsPost) {
-    // Image + post — generate image first, then auto-post
-    await generateAndShowImage(imageSubject, true, text);
+    // Store platform preference so Post button uses it
+    _apAIPending = _apAIPending || {};
+    _apAIPending.onlyPlatforms = onlyPlatforms;
+    await generateAndShowImage(imageSubject, true, postTopic);
     _apAIHistory.push({ role: 'assistant', content: 'I generated an image and am preparing the post.' });
     return;
   }
 
   if (!wantsImage && wantsPost) {
-    // Post only — prepare post directly
-    await preparePost(text, true, null);
+    await preparePost(postTopic, true, null, onlyPlatforms);
     _apAIHistory.push({ role: 'assistant', content: 'Preparing post.' });
     return;
   }
