@@ -7728,19 +7728,7 @@ async function uploadDataUrlToR2(dataUrl, folder, ext) {
 
 
 // -- R2 Upload Helpers --
-async function uploadFileToR2(file, folder) {
-  folder = folder || 'media';
-  var ext = (file.name || 'file').split('.').pop() || 'bin';
-  var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
-  var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
-    method: 'POST',
-    headers: { 'x-file-name': fname, 'x-file-type': file.type || 'application/octet-stream' },
-    body: file
-  });
-  var d = await res.json();
-  if (!d.url) throw new Error(d.error || 'R2 upload failed');
-  return d.url;
-}
+
 async function uploadDataUrlToR2(dataUrl, folder, ext) {
   folder = folder || 'media'; ext = ext || 'jpg';
   var mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
