@@ -4178,35 +4178,36 @@ function updateConnectionsUI() {
 function getConnectionForm(name) {
   var s = {
     facebook: function() {
-      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook</div>' +
+      return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📘 Connect Facebook Page</div>' +
 
         '<!-- AUTO CONNECT -->' +
-        '<div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:12px;padding:16px;margin-bottom:12px;">' +
-          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">🔗 Auto Connect (Recommended)</div>' +
-          '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
-            'Connects directly to your Facebook Page.<br>' +
-            '<span style="color:#f59e0b;">⚠️ If it shows No Pages Found: go to<br>facebook.com/settings?tab=business_tools → find Zeus-AI → Remove → try again</span>' +
-          '</div>' +
-          '<button onclick="connectFacebook()" style="width:100%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📘 Connect with Facebook</button>' +
+        '<div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:12px;padding:14px;margin-bottom:10px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:6px;">⚡ Quick Connect</div>' +
+          '<button onclick="connectFacebook()" style="width:100%;padding:11px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📘 Connect with Facebook OAuth</button>' +
         '</div>' +
 
-        '<!-- MANUAL TOKEN -->' +
-        '<details style="background:#1e1e2e;border:1px solid #3d3d5c;border-radius:12px;padding:14px;">' +
-          '<summary style="font-size:13px;font-weight:700;color:#e8e8f0;cursor:pointer;list-style:none;">🔑 Manual Token Entry (Advanced)</summary>' +
-          '<div style="margin-top:12px;">' +
-            '<div style="font-size:11px;color:#8888aa;margin-bottom:8px;line-height:1.6;">' +
-              '1. Go to <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a><br>' +
-              '2. Select your App → Generate Token<br>' +
-              '3. Add permissions: pages_show_list, pages_manage_posts<br>' +
-              '4. Click Generate Access Token<br>' +
-              '5. Copy token + your Page ID below' +
-            '</div>' +
-            '<input id="fb-manual-token" placeholder="Page Access Token" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
-            '<input id="fb-manual-pageid" placeholder="Page ID (numbers only)" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
-            '<input id="fb-manual-pagename" placeholder="Page Name" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:10px;box-sizing:border-box;">' +
-            '<button onclick="saveFacebookManualToken()" style="width:100%;padding:10px;background:#6D5EF8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Save Page Token</button>' +
+        '<!-- MANUAL TOKEN - shown prominently -->' +
+        '<div style="background:#1e1e2e;border:1px solid #4d5fcc;border-radius:12px;padding:16px;margin-bottom:10px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:4px;">🔑 Manual Page Token <span style=\"background:rgba(109,94,248,0.2);color:#6D5EF8;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;\">RECOMMENDED</span></div>' +
+          '<div style="font-size:11px;color:#8888aa;margin-bottom:10px;line-height:1.6;">' +
+            '1. Go to <a href=\"https://developers.facebook.com/tools/explorer/\" target=\"_blank\" style=\"color:#6D5EF8;\">Graph API Explorer</a><br>' +
+            '2. Top right: select app <strong style=\"color:#e8e8f0;\">Zeus-AI</strong><br>' +
+            '3. Click <strong style=\"color:#e8e8f0;\">Generate Access Token</strong> → grant all permissions<br>' +
+            '4. Change dropdown from <em>User Token</em> to <strong style=\"color:#e8e8f0;\">your Page name</strong><br>' +
+            '5. Copy the Page token below' +
           '</div>' +
-        '</details>';
+          '<input id="fb-manual-token" placeholder="Paste Page Access Token here..." style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;box-sizing:border-box;">' +
+          '<select id="fb-manual-pageid" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:8px;">' +
+            '<option value="">Select your page...</option>' +
+            '<option value="61590869057936">Autopostleey</option>' +
+            '<option value="61591617354902">Rentleeys.com</option>' +
+            '<option value="61591216766877">Rentleeys</option>' +
+            '<option value="61590526313448">Investleey AI</option>' +
+            '<option value="other">Other (enter below)</option>' +
+          '</select>' +
+          '<input id="fb-manual-pagename" placeholder="Page name (if Other selected)" style="width:100%;padding:10px;background:#0a0a0f;border:1px solid #3d3d5c;border-radius:8px;color:#e8e8f0;font-size:12px;margin-bottom:10px;box-sizing:border-box;">' +
+          '<button onclick="saveFacebookManualToken()" style="width:100%;padding:11px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✅ Save & Connect Page</button>' +
+        '</div>';
     },
     instagram: function() {
       return '<div style="font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:16px;">📸 Connect Instagram</div>' +
@@ -7823,10 +7824,20 @@ async function connectInstagramViaFacebook(silent) {
 
 async function saveFacebookManualToken() {
   var token    = document.getElementById('fb-manual-token')    ? document.getElementById('fb-manual-token').value.trim()    : '';
-  var pageId   = document.getElementById('fb-manual-pageid')   ? document.getElementById('fb-manual-pageid').value.trim()   : '';
+  var sel      = document.getElementById('fb-manual-pageid');
+  var pageId   = sel ? sel.value : '';
   var pageName = document.getElementById('fb-manual-pagename') ? document.getElementById('fb-manual-pagename').value.trim() : '';
-  if (!token || !pageId) { showToast('Please enter token and page ID', 'error'); return; }
-  if (!pageName) pageName = 'My Page';
+
+  if (!token) { showToast('Please paste your Page Access Token', 'error'); return; }
+  if (!pageId || pageId === 'other') {
+    if (!pageName) { showToast('Please enter page name', 'error'); return; }
+    pageId = 'manual_' + Date.now();
+  } else {
+    // Get page name from select option
+    var opt = sel.options[sel.selectedIndex];
+    if (!pageName) pageName = opt ? opt.text : 'My Page';
+  }
+
   await selectFacebookPage(token, pageId, pageName);
 }
 
