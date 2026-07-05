@@ -7667,15 +7667,37 @@ async function uploadFileToR2(file, folder) {
     throw new Error('File is ' + fileMB + 'MB — max 200MB. Please trim your video first.');
   }
   var ext = (file.name || 'file').split('.').pop() || 'bin';
+  console.log('[R2] Uploading:', folder, file.type, fileMB + 'MB');
+
+  // For files over 5MB use presigned URL (direct to R2, bypasses worker limit)
+  if (file.size > 5 * 1024 * 1024) {
+    var presignRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: 'upload.' + ext, content_type: file.type || 'application/octet-stream', folder: folder })
+    });
+    var presignData = await presignRes.json();
+    if (!presignData.upload_url) throw new Error(presignData.error || 'Presign failed');
+
+    // Upload directly to R2
+    var r2Res = await fetch(presignData.upload_url, {
+      method: 'PUT',
+      headers: presignData.headers,
+      body: file
+    });
+    if (!r2Res.ok) throw new Error('R2 direct upload failed: ' + r2Res.status);
+    console.log('[R2] Direct upload success:', presignData.public_url);
+    return presignData.public_url;
+  }
+
+  // Small files go through worker as before
   var fname = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
-  console.log('[R2] Uploading:', fname, file.type, fileMB + 'MB');
   var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/upload-image', {
     method: 'POST',
     headers: { 'x-file-name': fname, 'x-file-type': file.type || 'application/octet-stream' },
     body: file
   });
   var respText = await res.text();
-  console.log('[R2] Response', res.status, ':', respText);
   if (!res.ok) {
     var errMsg = respText;
     try { errMsg = JSON.parse(respText).error || respText; } catch(e2) {}
