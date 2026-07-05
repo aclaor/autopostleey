@@ -7790,7 +7790,28 @@ async function postVideoToSelected() {
   if (!list) return;
   var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
   if (!checked.length) { showToast('Select at least one platform!','error'); return; }
-  for (var i=0;i<checked.length;i++) await postVideoToPlatform(checked[i]);
+  if (!_reelVideoFile) { showToast('Upload a video first!','error'); return; }
+  var cap = document.getElementById('video-caption');
+  var caption = (cap ? cap.value.trim() : '') || 'Check out our latest video!';
+  showToast('Uploading to Cloudflare R2...','success');
+  var videoUrl;
+  try { videoUrl = await uploadFileToR2(_reelVideoFile,'videos'); }
+  catch(e) { showToast('Upload failed: '+e.message,'error'); return; }
+  showToast('Publishing to '+checked.join(', ')+'...','success');
+  try {
+    var sess = await _db.auth.getSession();
+    var token = sess.data&&sess.data.session ? sess.data.session.access_token : '';
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish',{
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({content:caption,platforms:checked,user_id:_user.id,image_url:videoUrl,connections:_connectionsFull})
+    });
+    var d = await resp.json();
+    console.log('[Publish]',JSON.stringify(d));
+    var ok=[],fail=[];
+    (d.results||[]).forEach(function(r){if(r.success)ok.push(r.platform);else fail.push(r.platform);});
+    if(ok.length){showToast('✅ Posted to: '+ok.join(', '),'success');await _db.from('autopostleey_posts').insert({user_id:_user.id,content:caption,platforms:ok,status:'published',image_url:videoUrl,mode:'video'});}
+    if(fail.length) showToast('Failed: '+fail.join(', '),'error');
+  } catch(e){showToast('Error: '+e.message,'error');}
 }
 
 
