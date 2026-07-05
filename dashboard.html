@@ -5098,6 +5098,38 @@ async function selectFacebookPageDirect(pageId, pageName, pageToken) {
 
 // Handle OAuth return from Facebook
 window.addEventListener('load', function() {
+  // Handle Facebook code OAuth return
+  var urlParams = new URLSearchParams(window.location.search);
+  var fbCode  = urlParams.get('code');
+  var fbState = urlParams.get('state') || '';
+  if (fbCode && fbState.startsWith('fbcode_')) {
+    window.history.replaceState({}, '', '/dashboard.html');
+    showToast('Connecting Facebook Pages...', 'success');
+    fetch('https://autopostleey-ai.alexclaor.workers.dev/fb-connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code:         fbCode,
+        redirect_uri: 'https://autopostleey.com/dashboard.html',
+        user_id:      fbState.replace('fbcode_', '')
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      console.log('[FB Code] Result:', JSON.stringify(d).slice(0,300));
+      if (d.pages && d.pages.length) {
+        if (d.pages.length === 1) {
+          selectFacebookPage(d.pages[0].access_token, d.pages[0].id, d.pages[0].name);
+        } else {
+          showFacebookPageSelector(d.pages, '');
+        }
+      } else {
+        showToast('No Facebook Pages found. ' + (d.error || ''), 'error');
+      }
+    })
+    .catch(function(e) { showToast('Facebook error: ' + e.message, 'error'); });
+    return;
+  }
   // Handle Facebook direct OAuth (token in URL hash)
   // Only run if Railway isn't already handling it via fb_select/fb_success params
   var searchParams = new URLSearchParams(window.location.search);
@@ -5265,7 +5297,15 @@ function connectDiscordOAuth() {
 
 function connectFacebook() {
   if(!_user) { showToast('Please sign in first', 'error'); return; }
-  window.location.href = 'https://autopostleey-api-production.up.railway.app/facebook/auth?user_id=' + encodeURIComponent(_user.id);
+  // Direct FB OAuth with code flow - exchanges via worker for full page access
+  var p = new URLSearchParams({
+    client_id:     '474990059818223',
+    redirect_uri:  'https://autopostleey.com/dashboard.html',
+    scope:         'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata,instagram_basic,instagram_content_publish',
+    response_type: 'code',
+    state:         'fbcode_' + (_user ? _user.id : '')
+  });
+  window.location.href = 'https://www.facebook.com/dialog/oauth?' + p.toString();
 }
 
 function connectInstagram() {
