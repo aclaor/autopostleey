@@ -3084,12 +3084,20 @@ async function postReelToPlatform(platform) {
     // Upload reel blob directly to R2 via presigned URL
     var videoUrl;
     try {
-      var reelFile = new File([blob], 'reel.' + ext, { type: mime });
+      // Strip codec info from mime (e.g. "video/mp4;codecs=..." → "video/mp4")
+      var cleanMime = mime.split(';')[0].trim();
+      var reelFile = new File([blob], 'reel.' + ext, { type: cleanMime });
       videoUrl = await uploadFileToR2(reelFile, 'reels');
     } catch(e) { showToast('Upload failed: ' + e.message, 'error'); return; }
 
     // Post to selected platform via worker
     var conn = _connectionsFull[platform];
+    if (!conn) {
+      // Try to find connection (platform names may differ slightly)
+      var connKeys = Object.keys(_connectionsFull);
+      var match = connKeys.find(function(k){ return k.toLowerCase() === platform.toLowerCase(); });
+      if (match) conn = _connectionsFull[match];
+    }
     if (!conn) {
       showToast('Connect ' + platform + ' first in Connections!', 'error'); return;
     }
