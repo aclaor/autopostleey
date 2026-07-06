@@ -3462,7 +3462,7 @@ async function copyAndOpenManual(url, modalOnly) {
   if (modalOnly) {
     // Collect all saved manual destinations
     var fbConn = _connectionsFull['facebook'];
-    if (fbConn && fbConn.access_token === 'manual') {
+    if (fbConn) {
       var dests = {};
       try { dests = JSON.parse(fbConn.page_name); } catch(e) { dests = { page: fbConn.page_name }; }
       var destMap = [
@@ -3476,6 +3476,15 @@ async function copyAndOpenManual(url, modalOnly) {
         if (!du) return;
         if (!du.startsWith('http')) du = 'https://www.facebook.com/' + du;
         destinations.push({ label: d.label, url: du, color: d.color });
+      });
+    }
+    // Also check facebook_groups connection (comma-separated URLs)
+    var fgConn = _connectionsFull['facebook_groups'];
+    if (fgConn && fgConn.page_name) {
+      var grpUrls = fgConn.page_name.split(',').map(function(u){return u.trim();}).filter(Boolean);
+      grpUrls.forEach(function(url, i) {
+        if (!url.startsWith('http')) url = 'https://www.facebook.com/groups/' + url;
+        destinations.push({ label: '👥 Open Facebook Group ' + (i+1), url: url, color: '#1877f2' });
       });
     }
     var igConn = _connectionsFull['instagram'];
@@ -4066,7 +4075,15 @@ async function submitPost(status) {
 
       // ── Separate manual vs API platforms ────────────────────
       var manualPlats = _selectedPlatforms.filter(function(p) {
-        return _connectionsFull[p] && _connectionsFull[p].access_token === 'manual';
+        // facebook with manual token, fbgroup, or facebook with JSON destinations
+        if (p === 'fbgroup') return true;
+        if (!_connectionsFull[p]) return false;
+        if (_connectionsFull[p].access_token === 'manual') return true;
+        // facebook stored as JSON page_name (manual destinations)
+        if (p === 'facebook') {
+          try { JSON.parse(_connectionsFull[p].page_name); return true; } catch(e) {}
+        }
+        return false;
       });
       var apiPlats = _selectedPlatforms.filter(function(p) {
         return !manualPlats.includes(p);
