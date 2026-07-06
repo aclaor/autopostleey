@@ -3081,11 +3081,12 @@ async function postReelToPlatform(platform) {
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
     var ext = (window._reelExt || 'webm');
     var mime = (window._reelMimeType || 'video/webm');
-    var reelImageUrl;
+    // Upload reel blob directly to R2 via presigned URL
+    var videoUrl;
     try {
-      reelImageUrl = await uploadDataUrlToR2(canvas.toDataURL('image/jpeg', 0.9), 'reels', 'jpg');
-    } catch(e) { showToast('R2 upload failed: ' + e.message, 'error'); return; }
-    var videoUrl = reelImageUrl;
+      var reelFile = new File([blob], 'reel.' + ext, { type: mime });
+      videoUrl = await uploadFileToR2(reelFile, 'reels');
+    } catch(e) { showToast('Upload failed: ' + e.message, 'error'); return; }
 
     // Post to selected platform via worker
     var conn = _connectionsFull[platform];
@@ -7913,7 +7914,21 @@ async function postVideoToSelected() {
     console.log('[Publish]',JSON.stringify(d));
     var ok=[],fail=[];
     (d.results||[]).forEach(function(r){if(r.success)ok.push(r.platform);else fail.push(r.platform);});
-    if(ok.length){showToast('✅ Posted to: '+ok.join(', '),'success');await _db.from('autopostleey_posts').insert({user_id:_user.id,content:caption,platforms:ok,status:'published',mode:'video'}).catch(function(){});}
+    if(ok.length){
+      showToast('✅ Posted to: '+ok.join(', '),'success');
+      await _db.from('autopostleey_posts').insert({user_id:_user.id,content:caption,platforms:ok,status:'published',mode:'video'}).catch(function(){});
+      // If facebook_groups posted, open the groups for manual pasting
+      if(ok.includes('facebook_groups')) {
+        await navigator.clipboard.writeText(caption).catch(function(){});
+        var fgConn = _connectionsFull['facebook_groups'];
+        if(fgConn && fgConn.page_name) {
+          var grpUrls = fgConn.page_name.split(',').map(function(u){return u.trim();}).filter(Boolean);
+          grpUrls.forEach(function(url, i){
+            setTimeout(function(){ window.open(url,'_blank'); }, i*800);
+          });
+          showToast('Caption copied! Opening your groups...','success');
+        }
+      }}
     if(fail.length) showToast('Failed: '+fail.join(', '),'error');
   } catch(e){showToast('Error: '+e.message,'error');}
 }
