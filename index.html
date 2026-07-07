@@ -356,6 +356,11 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
   /* Nav buttons on mobile */
   .nav-buttons .ap-ai-btn{padding:6px 10px !important;font-size:11px !important;}
 }
+
+.mobile-topbar-right{display:none;align-items:center;gap:6px;}
+@media(max-width:992px){
+  .mobile-topbar-right{display:flex !important;}
+}
 </style>
 </head>
 <body>
@@ -380,9 +385,13 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
       <a href="#" class="btn-login" onclick="showAuth('login');return false;" data-i18n="nav_login">Log in</a>
       <button class="btn-primary" onclick="showAuth('signup')" data-i18n="nav_signup">Start free →</button>
     </div>
-    <button class="mobile-menu" onclick="toggleMobileNav()">
-      <span style="font-size:22px;line-height:1;">☰</span>
-    </button>
+    <div class="mobile-topbar-right">
+      <button class="ap-ai-btn" onclick="toggleAPAI()" style="padding:6px 10px;font-size:11px;">🤖 AI</button>
+      <button id="ap-lang-btn-mob" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label-mob">EN</span></button>
+      <button class="mobile-menu" onclick="toggleMobileNav()">
+        <span style="font-size:22px;line-height:1;">☰</span>
+      </button>
+    </div>
   </div>
 </nav>
 
@@ -1041,6 +1050,8 @@ function toggleAPLang() {
 
 function setAPLang(lang) {
   localStorage.setItem('ap_lang', lang);
+  var mobLabel = document.getElementById('ap-lang-label-mob');
+  if (mobLabel) mobLabel.textContent = AP_LANG_LABELS[lang] || 'EN';
   applyAPTranslations();
   var menu = document.getElementById('ap-lang-menu');
   if (menu) menu.classList.remove('open');
