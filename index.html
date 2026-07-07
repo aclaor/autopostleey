@@ -172,6 +172,7 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
 @media(max-width:992px){
   .nav-links,.nav-buttons{display:none;}
   .mobile-menu{display:flex !important;}
+  #mobile-topbar-right{display:flex !important;}
   .how-grid,.features-grid{grid-template-columns:1fr 1fr;}
   .pricing-grid{grid-template-columns:1fr 1fr;}
   .how-arrow{display:none;}
@@ -356,11 +357,6 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
   /* Nav buttons on mobile */
   .nav-buttons .ap-ai-btn{padding:6px 10px !important;font-size:11px !important;}
 }
-
-.mobile-topbar-right{display:none;align-items:center;gap:6px;}
-@media(max-width:992px){
-  .mobile-topbar-right{display:flex !important;}
-}
 </style>
 </head>
 <body>
@@ -385,10 +381,13 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
       <a href="#" class="btn-login" onclick="showAuth('login');return false;" data-i18n="nav_login">Log in</a>
       <button class="btn-primary" onclick="showAuth('signup')" data-i18n="nav_signup">Start free →</button>
     </div>
-    <div class="mobile-topbar-right">
-      <button class="ap-ai-btn" onclick="toggleAPAI()" style="padding:6px 10px;font-size:11px;">🤖 AI</button>
-      <button id="ap-lang-btn-mob" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label-mob">EN</span></button>
-      <button class="mobile-menu" onclick="toggleMobileNav()">
+    <div style="display:none;align-items:center;gap:6px;" id="mobile-topbar-right">
+      <button onclick="toggleAPAI()" style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:20px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🤖 AI</button>
+      <div style="position:relative;">
+        <button id="ap-lang-btn-mob" onclick="toggleMobileLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#6B7280;min-height:36px;">🌐 <span id="ap-lang-label-mob">EN</span></button>
+        <div id="ap-lang-menu-mob" style="display:none;position:fixed;top:64px;right:8px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);padding:6px;min-width:120px;z-index:9999;"></div>
+      </div>
+      <button class="mobile-menu" onclick="toggleMobileNav()" style="display:flex;">
         <span style="font-size:22px;line-height:1;">☰</span>
       </button>
     </div>
@@ -1047,11 +1046,47 @@ function toggleAPLang() {
   var menu = document.getElementById('ap-lang-menu');
   if (menu) menu.classList.toggle('open');
 }
+function toggleMobileLang() {
+  var menu = document.getElementById('ap-lang-menu-mob');
+  if (!menu) return;
+  if (menu.style.display === 'none' || !menu.style.display) {
+    var langs = {en:'EN',es:'ES',fr:'FR',zh:'中文',ja:'日本語',ko:'한국어'};
+    var cur = localStorage.getItem('ap_lang') || 'en';
+    menu.innerHTML = Object.keys(langs).map(function(l){
+      var a = l===cur ? 'background:#EEF2FF;color:#6D5EF8;font-weight:700;' : '';
+      return '<div onclick="setAPLang(\''+l+'\');document.getElementById(\'ap-lang-menu-mob\').style.display=\'none\';" style="padding:10px 16px;cursor:pointer;font-size:13px;border-radius:8px;'+a+'">'+langs[l]+'</div>';
+    }).join('');
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
+  }
+}
+function toggleMobileLang() {
+  var menu = document.getElementById('ap-lang-menu-mob');
+  if (!menu) return;
+  if (menu.style.display === 'none') {
+    // Populate if empty
+    if (!menu.innerHTML.trim()) renderMobileLangMenu();
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
+  }
+}
+function renderMobileLangMenu() {
+  var menu = document.getElementById('ap-lang-menu-mob');
+  if (!menu) return;
+  var current = getAPLang ? getAPLang() : (localStorage.getItem('ap_lang') || 'en');
+  var langs = typeof AP_LANG_LABELS !== 'undefined' ? AP_LANG_LABELS : {en:'EN',es:'ES',fr:'FR',zh:'中文',ja:'日本語',ko:'한국어'};
+  var order = ['en','es','fr','zh','ja','ko'];
+  menu.innerHTML = order.map(function(l) {
+    var active = l === current ? 'background:#EEF2FF;color:#6D5EF8;font-weight:700;' : '';
+    return '<div onclick="setAPLang(\'' + l + '\');document.getElementById(\'ap-lang-menu-mob\').style.display=\'none\';" style="padding:10px 16px;cursor:pointer;font-size:13px;border-radius:8px;' + active + '">' + (langs[l] || l.toUpperCase()) + '</div>';
+  }).join('');
+}
 
 function setAPLang(lang) {
   localStorage.setItem('ap_lang', lang);
-  var mobLabel = document.getElementById('ap-lang-label-mob');
-  if (mobLabel) mobLabel.textContent = AP_LANG_LABELS[lang] || 'EN';
+  var ml=document.getElementById('ap-lang-label-mob'); if(ml){var ll={en:'EN',es:'ES',fr:'FR',zh:'中文',ja:'日本語',ko:'한국어'};ml.textContent=ll[lang]||'EN';}
   applyAPTranslations();
   var menu = document.getElementById('ap-lang-menu');
   if (menu) menu.classList.remove('open');
