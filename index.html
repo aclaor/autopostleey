@@ -324,6 +324,104 @@ body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#111827;overflow-x:
 .ap-ai-confirm-yes{flex:1;padding:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;}
 .ap-ai-confirm-no{flex:1;padding:8px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;}
 @media(max-width:480px){.ap-ai-panel{width:calc(100vw - 32px);right:16px;}}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Mobile / Tablet
+══════════════════════════════════════════════ */
+
+/* Mobile nav — ensure it shows and works */
+@media(max-width:992px){
+  .mobile-menu{display:flex !important;align-items:center;justify-content:center;}
+  .nav-links,.nav-buttons{display:none !important;}
+}
+
+/* ── Mobile (≤768px) ── */
+@media(max-width:768px){
+  /* Container */
+  .container{padding:0 16px;}
+
+  /* Nav */
+  .nav{padding:0 16px;height:60px;}
+
+  /* Mobile nav dropdown */
+  .mobile-nav{top:60px;}
+  .mobile-nav a{font-size:15px;padding:4px 0;}
+
+  /* Hero */
+  .hero{padding-top:88px;padding-bottom:56px;}
+  .hero-content{flex-direction:column !important;gap:28px;text-align:center;}
+  .hero-right{display:none !important;}
+  .hero-left{width:100%;}
+  .hero h1{font-size:clamp(26px,7vw,38px) !important;letter-spacing:-0.5px;}
+  .hero > .container > .hero-content > .hero-left > p{font-size:15px;}
+  .hero-badge{font-size:12px;padding:7px 14px;}
+  .hero-buttons{justify-content:center !important;flex-wrap:wrap;gap:10px;}
+  .hero-buttons a,.hero-buttons button{
+    width:100% !important;
+    max-width:320px;
+    text-align:center;
+    padding:14px 20px !important;
+    font-size:15px !important;
+  }
+  .hero-stats{justify-content:center;flex-wrap:wrap;gap:16px 28px;}
+  .hero-stat-num{font-size:26px;}
+
+  /* Section headings */
+  .features h2,.how h2,[class*="section"] h2{
+    font-size:clamp(22px,6vw,30px) !important;
+  }
+
+  /* Platform grid */
+  .platform-grid{grid-template-columns:repeat(3,1fr) !important;gap:12px !important;}
+  .platform-card{padding:18px 10px !important;border-radius:14px !important;}
+  .platform-card img,.platform-card svg{width:32px !important;height:32px !important;}
+  .platform-card p{font-size:11px !important;}
+
+  /* Flagship / AI section — inline grid fix */
+  [style*="grid-template-columns:1fr 1fr"]{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:20px !important;
+  }
+  [style*="grid-template-columns:1fr 1fr"] > *{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  /* Feature, how, compare, pricing grids */
+  .features-grid,.how-grid,.compare-grid{grid-template-columns:1fr !important;}
+  .pricing-grid{grid-template-columns:1fr !important;}
+  .pricing-card{padding:24px 18px;}
+  .price-amount{font-size:40px;}
+
+  /* Testimonials */
+  .testimonials-grid{grid-template-columns:1fr !important;}
+
+  /* CTA section */
+  .cta-section{padding:48px 0;}
+  .cta-section h2{font-size:24px !important;}
+  .cta-buttons{flex-direction:column;align-items:center;gap:10px;}
+  .cta-buttons a,.cta-buttons button{width:100%;max-width:300px;text-align:center;}
+
+  /* Footer */
+  .footer-grid{grid-template-columns:1fr 1fr !important;}
+  .footer-brand{grid-column:1/-1;}
+  .footer-bottom{flex-direction:column;gap:8px;text-align:center;}
+
+  /* Section padding */
+  .features,.how,.pricing-section,.testimonials{padding:48px 0 !important;}
+}
+
+/* ── Tablet (769–1024px) ── */
+@media(min-width:769px) and (max-width:1024px){
+  .container{padding:0 24px;}
+  .hero{padding-top:120px;}
+  .hero h1{font-size:clamp(32px,4.5vw,50px);}
+  .platform-grid{grid-template-columns:repeat(4,1fr) !important;}
+  .pricing-grid{grid-template-columns:repeat(2,1fr) !important;}
+  .testimonials-grid{grid-template-columns:repeat(2,1fr) !important;}
+  [style*="grid-template-columns:1fr 1fr"]{gap:24px !important;}
+}
 </style>
 </head>
 <body>
