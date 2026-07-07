@@ -383,8 +383,22 @@
 
 /* ── Mobile (≤768px) ── */
 @media(max-width:768px){
-  /* Hide sidebar */
-  .sidebar{display:none !important;}
+  /* Sidebar — slide in/out */
+  .sidebar{
+    display:flex !important;
+    position:fixed !important;
+    top:56px !important;
+    left:0 !important;
+    height:calc(100vh - 56px) !important;
+    z-index:100 !important;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    box-shadow:4px 0 24px rgba(0,0,0,0.15);
+  }
+  .sidebar.open{transform:translateX(0) !important;}
+
+  /* Show hamburger */
+  #ap-hamburger{display:flex !important;}
 
   /* Show bottom nav */
   .mobile-nav{display:block !important;}
@@ -478,7 +492,8 @@
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button id="ap-hamburger" onclick="toggleAPSidebar()" style="display:none;background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;color:var(--text2);line-height:1;">☰</button>
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
   <div class="topbar-right"><button onclick="toggleAPAI()" style="margin-right:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;letter-spacing:0.01em;">AI Assistant</button>
@@ -491,53 +506,56 @@
   </div>
 </div>
 
+<!-- SIDEBAR OVERLAY -->
+<div id="ap-sidebar-overlay" onclick="closeAPSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99;"></div>
+
 <!-- APP BODY -->
 <div class="app-body">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="ap-sidebar">
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_main">Main</span></div>
-      <a class="nav-item active" onclick="showPage('overview');return false;" href="#">
+      <a class="nav-item active" onclick="showPage('overview');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
       </a>
-      <a class="nav-item" onclick="showPage('compose');return false;" href="#">
+      <a class="nav-item" onclick="showPage('compose');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">✏️</span> <span data-i18n="nav_compose">Compose</span>
       </a>
-      <a class="nav-item" onclick="showPage('scheduled');return false;" href="#">
+      <a class="nav-item" onclick="showPage('scheduled');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📅</span> <span data-i18n="nav_scheduled">Scheduled</span>
       </a>
-      <a class="nav-item" onclick="showPage('history');return false;" href="#">
+      <a class="nav-item" onclick="showPage('history');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📜</span> <span data-i18n="nav_history">History</span>
       </a>
-      <a class="nav-item" onclick="showPage('calendar');return false;" href="#">
+      <a class="nav-item" onclick="showPage('calendar');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🗓️</span> <span data-i18n="nav_calendar">Calendar</span>
       </a>
-      <a class="nav-item" onclick="showPage('analytics');return false;" href="#">
+      <a class="nav-item" onclick="showPage('analytics');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📈</span> <span data-i18n="nav_analytics">Analytics</span>
       </a>
-      <a class="nav-item" onclick="showPage('bulk');return false;" href="#">
+      <a class="nav-item" onclick="showPage('bulk');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">⚡</span> <span data-i18n="nav_bulk">Bulk Schedule</span>
       </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_settings">Settings</span></div>
-      <a class="nav-item" onclick="showPage('business');return false;" href="#">
+      <a class="nav-item" onclick="showPage('business');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🏢</span> <span data-i18n="nav_business">Business Profile</span>
       </a>
-      <a class="nav-item" onclick="showPage('connections');return false;" href="#">
+      <a class="nav-item" onclick="showPage('connections');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🔗</span> <span data-i18n="nav_connections">Connections</span>
       </a>
-      <a class="nav-item" onclick="showPage('autoposter');return false;" href="#" id="nav-autoposter">
+      <a class="nav-item" onclick="showPage('autoposter');closeAPSidebar();return false;" href="#" id="nav-autoposter">
         <span class="nav-icon">🤖</span> <span data-i18n="nav_autoposter">AI AutoPoster</span>
       </a>
-      <a class="nav-item" onclick="showPage('billing');return false;" href="#">
+      <a class="nav-item" onclick="showPage('billing');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">💳</span> <span data-i18n="nav_billing">Billing</span>
       </a>
-      <a class="nav-item" onclick="showPage('reels');return false;" href="#">
+      <a class="nav-item" onclick="showPage('reels');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🎬</span> <span data-i18n="nav_reels">Reels & Shorts</span>
       </a>
-      <a class="nav-item" onclick="showPage('support');return false;" href="#">
+      <a class="nav-item" onclick="showPage('support');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">💬</span> <span data-i18n="nav_support">Support</span>
       </a>
     </div>
@@ -8375,6 +8393,21 @@ async function saveFBManual() {
 function setMobileNav(btn) {
   document.querySelectorAll('.mobile-nav-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
+  closeAPSidebar();
+}
+function toggleAPSidebar() {
+  var s = document.getElementById('ap-sidebar');
+  var ov = document.getElementById('ap-sidebar-overlay');
+  if (!s) return;
+  var isOpen = s.classList.contains('open');
+  s.classList.toggle('open', !isOpen);
+  if (ov) ov.style.display = isOpen ? 'none' : 'block';
+}
+function closeAPSidebar() {
+  var s = document.getElementById('ap-sidebar');
+  var ov = document.getElementById('ap-sidebar-overlay');
+  if (s) s.classList.remove('open');
+  if (ov) ov.style.display = 'none';
 }
 </script>
 
