@@ -8379,7 +8379,7 @@ function setMobileNav(btn) {
 </script>
 
 <!-- MOBILE BOTTOM NAV -->
-<div class="mobile-nav">
+<div class="mobile-nav" id="mobile-bottom-nav">
   <div class="mobile-nav-inner">
     <button class="mobile-nav-btn active" id="mnav-overview" onclick="showPage('overview');setMobileNav('overview')">
       <span class="mnav-icon">📊</span><span>Home</span>
@@ -8393,17 +8393,74 @@ function setMobileNav(btn) {
     <button class="mobile-nav-btn" id="mnav-reels" onclick="showPage('reels');setMobileNav('reels')">
       <span class="mnav-icon">🎬</span><span>Reels</span>
     </button>
-    <button class="mobile-nav-btn" id="mnav-history" onclick="showPage('history');setMobileNav('history')">
-      <span class="mnav-icon">📜</span><span>More</span>
+    <button class="mobile-nav-btn" id="mnav-more" onclick="toggleMobileMore()">
+      <span class="mnav-icon">☰</span><span>More</span>
     </button>
   </div>
 </div>
+
+<!-- MOBILE MORE MENU -->
+<div id="mobile-more-menu" style="display:none;position:fixed;bottom:64px;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:299;padding:12px;box-shadow:0 -8px 24px rgba(0,0,0,0.12);">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+    <button onclick="showPage('scheduled');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">📅</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Scheduled</span>
+    </button>
+    <button onclick="showPage('history');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">📜</span><span style="font-size:11px;color:var(--text2);font-weight:600;">History</span>
+    </button>
+    <button onclick="showPage('calendar');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">🗓️</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Calendar</span>
+    </button>
+    <button onclick="showPage('analytics');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">📈</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Analytics</span>
+    </button>
+    <button onclick="showPage('bulk');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">⚡</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Bulk</span>
+    </button>
+    <button onclick="showPage('autoposter');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">🤖</span><span style="font-size:11px;color:var(--text2);font-weight:600;">AutoPoster</span>
+    </button>
+    <button onclick="showPage('business');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">🏢</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Business</span>
+    </button>
+    <button onclick="showPage('billing');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">💳</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Billing</span>
+    </button>
+    <button onclick="showPage('support');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">💬</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Support</span>
+    </button>
+  </div>
+</div>
+
 <script>
 function setMobileNav(page) {
   document.querySelectorAll('.mobile-nav-btn').forEach(function(b){ b.classList.remove('active'); });
   var btn = document.getElementById('mnav-' + page);
   if (btn) btn.classList.add('active');
+  closeMobileMore();
 }
+function toggleMobileMore() {
+  var menu = document.getElementById('mobile-more-menu');
+  var btn = document.getElementById('mnav-more');
+  if (!menu) return;
+  var isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.classList.toggle('active', !isOpen);
+}
+function closeMobileMore() {
+  var menu = document.getElementById('mobile-more-menu');
+  if (menu) menu.style.display = 'none';
+  var btn = document.getElementById('mnav-more');
+  if (btn) btn.classList.remove('active');
+}
+// Close more menu when tapping outside
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('mobile-more-menu');
+  var nav  = document.getElementById('mobile-bottom-nav');
+  if (menu && menu.style.display !== 'none' && !menu.contains(e.target) && !nav.contains(e.target)) {
+    closeMobileMore();
+  }
+});
 </script>
 </body>
 </html>
