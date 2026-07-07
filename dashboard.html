@@ -167,10 +167,180 @@
   .modal-close-btn { position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--text3); font-size: 22px; cursor: pointer; }
 
   /* ── RESPONSIVE ─────────────────── */
-  @media(max-width: 768px) {
-    .sidebar { display: none; }
-    .main { padding: 16px; }
+  /* ── RESPONSIVE — Mobile / Tablet / TV ─────────────────── */
+
+/* ── Mobile bottom nav bar ── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  z-index: 200;
+  padding: 6px 0 env(safe-area-inset-bottom, 6px);
+}
+.mobile-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--text3);
+  font-size: 10px;
+  font-family: var(--sans);
+  min-width: 52px;
+}
+.mobile-nav-btn .mnav-icon { font-size: 20px; }
+.mobile-nav-btn.active { color: var(--accent); }
+
+/* ── Tablet (769–1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .main { padding: 16px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  #page-compose > div[style*="grid-template-columns:1fr 340px"],
+  #page-bulk    > div[style*="grid-template-columns:1fr 340px"] {
+    grid-template-columns: 1fr !important;
   }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .sidebar { display: none !important; }
+
+  /* Show mobile bottom nav */
+  .mobile-nav { display: block; }
+
+  /* Main area */
+  .app-body { height: calc(100vh - 56px); }
+  .main {
+    padding: 12px 12px 80px; /* bottom pad for nav bar */
+    overflow-y: auto;
+  }
+
+  /* Topbar */
+  .topbar { padding: 0 12px; }
+  .user-pill { display: none; }
+  .logo span { font-size: 14px; }
+
+  /* AI assistant button — smaller */
+  .ap-ai-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* Page headers */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .page-title { font-size: 18px !important; }
+
+  /* Stats row */
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-val { font-size: 22px !important; }
+
+  /* Cards */
+  .card { padding: 14px; }
+
+  /* Compose — single column */
+  #page-compose > div[style*="grid-template-columns:1fr 340px"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Bulk — single column */
+  #page-bulk > div[style*="grid-template-columns:1fr 340px"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Reels panels — single column */
+  #reels-panel-1 > div[style*="grid-template-columns:1fr 340px"],
+  #reels-panel-2 > div[style*="grid-template-columns:1fr 340px"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Platform grid */
+  .platform-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Connection items */
+  .connection-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .connect-btn { width: 100%; text-align: center; }
+
+  /* Analytics grid */
+  #page-analytics > div[style*="grid-template-columns:1fr 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Billing plan cards */
+  #page-billing > div > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Support grid */
+  #page-support > div[style*="grid-template-columns:1fr 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #page-support > div > div[style*="grid-template-columns:repeat(3"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Modal */
+  .modal-box { padding: 20px; }
+
+  /* Conn modal */
+  #conn-modal > div { padding: 20px 16px; max-height: 92vh; }
+
+  /* AI panel — full width on mobile */
+  #ap-ai-panel {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    top: 56px !important;
+  }
+
+  /* Calendar grid */
+  #cal-grid > div { min-height: 44px !important; font-size: 11px; }
+
+  /* Bulk post rows */
+  #bulk-post-rows > div { flex-direction: column; }
+
+  /* Templates grid */
+  #templates-grid { grid-template-columns: 1fr !important; }
+  #bulk-templates-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Reel platform checks */
+  #reel-platform-checks { gap: 6px; }
+  #reel-platform-checks label { padding: 7px 10px; }
+
+  /* Autoposter grid */
+  #page-autoposter > div[style*="grid-template-columns"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Video dropzone */
+  #video-dropzone, #reel-dropzone { padding: 20px; }
+}
+
+/* ── Large screens / TV (≥1440px) ── */
+@media (min-width: 1440px) {
+  .sidebar { width: 240px; }
+  .main { padding: 32px 40px; }
+  .stats-row { grid-template-columns: repeat(4, 1fr); }
+  .stat-val { font-size: 36px; }
+}
 #ap-lang-menu.open{display:block!important;}
 30%{transform:translateY(-5px)}}
 30%{transform:translateY(-5px)}}
@@ -8058,6 +8228,33 @@ async function saveFBManual() {
   await selectFacebookPage(tok, pid, pname);
 }
 
+</script>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn" onclick="showPage('overview');setMobileNav(this)">
+      <span class="mnav-icon">📊</span><span>Home</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="showPage('compose');setMobileNav(this)">
+      <span class="mnav-icon">✏️</span><span>Post</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="showPage('connections');setMobileNav(this)">
+      <span class="mnav-icon">🔗</span><span>Connect</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="showPage('reels');setMobileNav(this)">
+      <span class="mnav-icon">🎬</span><span>Reels</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="showPage('history');setMobileNav(this)">
+      <span class="mnav-icon">📜</span><span>History</span>
+    </button>
+  </div>
+</div>
+<script>
+function setMobileNav(btn) {
+  document.querySelectorAll('.mobile-nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
 </script>
 </body>
 </html>
