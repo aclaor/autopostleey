@@ -2499,8 +2499,9 @@ async function analyzeImageAndGenerate() {
     });
 
     var data = await resp.json();
-    var text = (data.post || '').trim();
-    if (!text || !data.success) throw new Error(data.error || 'Could not analyze image');
+    console.log('[Analyze] Worker response:', JSON.stringify(data).slice(0,200));
+    var text = (data.post || data.caption || data.content || '').trim();
+    if (!text) throw new Error(data.error || data.message || 'Could not analyze image');
 
     var enrichedAnalyze = appendContactToPost(text);
     var postContent = document.getElementById('post-content');
@@ -2991,8 +2992,9 @@ async function generateReelCaption() {
     });
     var data = await resp.json();
     var cap = document.getElementById('reel-caption');
-    if (cap && data.post) {
-      cap.value = appendContactToPost(data.post);
+    var captionText = data.post || data.caption || '';
+    if (cap && captionText) {
+      cap.value = appendContactToPost(captionText);
       previewReelFrame(0);
       showToast('✨ Caption generated!', 'success');
     }
