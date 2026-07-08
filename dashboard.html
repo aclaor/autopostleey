@@ -7457,41 +7457,46 @@ async function preparePost(topic, postNow, imageUrl, onlyPlatforms) {
 var AP_AI_TOOLS = [
   {type:'function',function:{
     name:'create_post',
-    description:'Write a caption and post to connected platforms. Use when user wants to post/share/announce/publish something WITHOUT an image.',
+    description:'Write a caption and post/schedule to social media. Use ONLY when user explicitly wants to create or publish a post/caption/content.',
     parameters:{type:'object',properties:{
       topic:{type:'string',description:'What to post about'},
       post_now:{type:'boolean',description:'true=post now, false=schedule'},
-      schedule_date:{type:'string'},schedule_time:{type:'string'}
+      only_platforms:{type:'array',items:{type:'string'},description:'specific platforms to post to, empty=all'}
     },required:['topic']}
   }},
   {type:'function',function:{
     name:'generate_image',
-    description:'Generate an AI image. Use when user asks to create/generate/show/make an image or picture. If they also want to post it, set then_post=true.',
+    description:'Generate an AI image using pollinations.ai. Use when user asks to create/generate/show/make/draw an image, photo, picture or visual.',
     parameters:{type:'object',properties:{
-      image_prompt:{type:'string',description:'Detailed description of the image to generate'},
-      then_post:{type:'boolean',description:'true if user wants to also post this image to their platforms'},
-      post_topic:{type:'string',description:'What the post should say if then_post is true'}
+      image_prompt:{type:'string',description:'Detailed visual description of the image'},
+      then_post:{type:'boolean',description:'true if user also wants to post this image'},
+      post_topic:{type:'string',description:'Caption topic if then_post is true'}
     },required:['image_prompt']}
   }},
   {type:'function',function:{
-    name:'get_scheduled_posts',
-    description:'Show upcoming scheduled posts',
+    name:'get_analytics',
+    description:'Get real post counts and stats from the database. Use when user asks: how many posts, total posts, post count, published posts, analytics, statistics, autoposter status.',
     parameters:{type:'object',properties:{}}
   }},
   {type:'function',function:{
-    name:'get_analytics',
-    description:'Show analytics stats',
+    name:'get_scheduled_posts',
+    description:'Show upcoming scheduled posts. Use when user asks about scheduled, upcoming, queued posts.',
+    parameters:{type:'object',properties:{}}
+  }},
+  {type:'function',function:{
+    name:'get_connections',
+    description:'Show connected social media platforms and their status.',
+    parameters:{type:'object',properties:{}}
+  }},
+  {type:'function',function:{
+    name:'get_autoposter_status',
+    description:'Check if AI AutoPoster is enabled and configured. Use when user asks if autoposter is working, active, enabled or running.',
     parameters:{type:'object',properties:{}}
   }},
   {type:'function',function:{
     name:'navigate_to',
-    description:'Go to a dashboard page: compose, scheduled, history, autoposter, calendar, analytics, bulk, reels, connections, business, billing, support',
-    parameters:{type:'object',properties:{page:{type:'string'}},required:['page']}
-  }},
-  {type:'function',function:{
-    name:'get_connections',
-    description:'Show which platforms are connected',
-    parameters:{type:'object',properties:{}}
+    description:'Navigate to a dashboard page.',
+    parameters:{type:'object',properties:{page:{type:'string',enum:['compose','scheduled','history','autoposter','calendar','analytics','bulk','reels','connections','business','billing','support','overview']}},required:['page']}
   }}
 ];
 
@@ -7510,17 +7515,39 @@ async function executeAPTool(name, args) {
     return { posts: r.data || [] };
   }
   if (name === 'get_analytics') {
-    var r = await _db.from('autopostleey_posts').select('status,platforms').eq('user_id',_user.id);
-    var all = r.data || [], byP = {};
-    all.forEach(function(p){ (p.platforms||[]).forEach(function(pl){ byP[pl]=(byP[pl]||0)+1; }); });
-    return { total:all.length, published:all.filter(function(p){return p.status==='published';}).length, scheduled:all.filter(function(p){return p.status==='scheduled';}).length, by_platform:byP };
+    var r = await _db.from('autopostleey_posts').select('status,platforms,created_at').eq('user_id',_user.id);
+    var all = r.data || [];
+    var byP = {}, byStatus = {};
+    all.forEach(function(p){
+      byStatus[p.status] = (byStatus[p.status]||0) + 1;
+      (p.platforms||[]).forEach(function(pl){ byP[pl]=(byP[pl]||0)+1; });
+    });
+    var thisMonth = all.filter(function(p){ return new Date(p.created_at).getMonth() === new Date().getMonth(); });
+    return {
+      total: all.length,
+      published: all.filter(function(p){return p.status==='published';}).length,
+      scheduled: all.filter(function(p){return p.status==='scheduled';}).length,
+      draft: all.filter(function(p){return p.status==='draft';}).length,
+      this_month: thisMonth.length,
+      by_platform: byP,
+      by_status: byStatus
+    };
+  }
+  if (name === 'get_autoposter_status') {
+    try {
+      var r = await _db.from('autopostleey_autoposter').select('enabled,bizname,frequency,posting_time,last_posted_at,post_count').eq('user_id',_user.id).single();
+      if (r.data) return { configured: true, enabled: r.data.enabled, bizname: r.data.bizname, frequency: r.data.frequency, posting_time: r.data.posting_time, last_posted_at: r.data.last_posted_at, post_count: r.data.post_count || 0 };
+      return { configured: false, enabled: false };
+    } catch(e) { return { configured: false, enabled: false }; }
   }
   if (name === 'navigate_to') {
     if (typeof showPage === 'function') showPage(args.page);
     return { navigated: true, page: args.page };
   }
   if (name === 'get_connections') {
-    return { platforms: getConnectedPlatforms() };
+    var conns = _connectionsFull || {};
+    var details = Object.keys(conns).map(function(k){ return { platform:k, name: conns[k].page_name||k }; });
+    return { count: details.length, platforms: details };
   }
   return { error: 'Unknown tool: ' + name };
 }
@@ -7818,15 +7845,19 @@ async function sendAPAI() {
   msgs2.appendChild(typing2);
   msgs2.scrollTop = msgs2.scrollHeight;
 
-  var sysPrompt = 'You are a smart AI assistant inside the Autopostleey dashboard (social media scheduling platform). '
-    + 'Business context: ' + biz + '. '
-    + (platforms.length ? 'Connected platforms: ' + platforms.join(', ') + '.' : 'No platforms connected yet.')
-    + ' THINK before acting:'
-    + ' - User wants ONLY an image → call generate_image with then_post=false'
-    + ' - User wants image AND post → call generate_image with then_post=true and post_topic set'
-    + ' - User wants ONLY a post → call create_post'
-    + ' - Never write about finance unless business profile says so'
-    + ' - Always use the exact connected platforms listed above';
+  var sysPrompt = 'You are the AI assistant inside the Autopostleey social media dashboard. '
+    + 'Business: ' + biz + '. '
+    + (platforms.length ? 'Connected platforms: ' + platforms.join(', ') + '. ' : 'No platforms connected yet. ')
+    + 'STRICT RULES — always call a tool, NEVER generate a post as a text reply: '
+    + '1. User asks about counts/stats/analytics/how many posts → call get_analytics '
+    + '2. User asks if autoposter is working/enabled/active → call get_autoposter_status '
+    + '3. User asks what platforms are connected → call get_connections '
+    + '4. User asks about scheduled posts → call get_scheduled_posts '
+    + '5. User wants to go to a page → call navigate_to '
+    + '6. User asks to generate/create/draw an image → call generate_image '
+    + '7. User explicitly asks to CREATE or POST content → call create_post '
+    + 'NEVER write a social media post as a chat reply — always use create_post tool instead. '
+    + 'Answer questions about data by calling tools and reporting the results conversationally.';
 
   try {
     var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -7859,12 +7890,28 @@ async function sendAPAI() {
       } else if (result && result.total !== undefined) {
         addAPAIMsg('Stats: ' + result.total + ' total | ' + result.published + ' published | ' + result.scheduled + ' scheduled. Platforms: '
           + Object.entries(result.by_platform).map(function(e){return e[0]+': '+e[1];}).join(', '), 'bot');
+      } else if (result && result.configured !== undefined) {
+        if (!result.configured) {
+          addAPAIMsg('⚠️ AI AutoPoster is not configured yet. Go to AI AutoPoster page to set it up!', 'bot');
+        } else if (result.enabled) {
+          var apMsg = '✅ AI AutoPoster is ACTIVE\n'
+            + '• Business: ' + (result.bizname||'not set') + '\n'
+            + '• Frequency: ' + (result.frequency||'not set') + '\n'
+            + '• Posts so far: ' + (result.post_count||0);
+          if (result.last_posted_at) apMsg += '\n• Last posted: ' + new Date(result.last_posted_at).toLocaleString();
+          addAPAIMsg(apMsg, 'bot');
+        } else {
+          addAPAIMsg('⏸️ AI AutoPoster is configured but currently PAUSED. Go to AI AutoPoster page to enable it.', 'bot');
+        }
       } else if (result && result.navigated) {
         addAPAIMsg('Opened the ' + result.page + ' page!', 'bot');
-      } else if (result && result.platforms !== undefined) {
-        addAPAIMsg(result.platforms.length
-          ? 'Connected: ' + result.platforms.join(', ')
-          : 'No platforms connected. Go to Connections to link your accounts!', 'bot');
+      } else if (result && result.count !== undefined) {
+        if (!result.count) {
+          addAPAIMsg('No platforms connected yet. Go to Connections to link your accounts!', 'bot');
+        } else {
+          addAPAIMsg('🔗 You have ' + result.count + ' platforms connected:\n'
+            + result.platforms.map(function(p){ return '• ' + p.platform + (p.name && p.name !== p.platform ? ' (' + p.name + ')' : ''); }).join('\n'), 'bot');
+        }
       } else if (result && result.error) {
         addAPAIMsg('Sorry: ' + result.error, 'bot');
       }
