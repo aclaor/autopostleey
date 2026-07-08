@@ -7377,7 +7377,7 @@ async function generateAndShowImage(promptText, thenPost, postTopic) {
     var imgEl = document.createElement('img');
     imgEl.src = imageUrl;
     imgEl.alt = promptText;
-    imgEl.style.cssText = 'width:100%;display:block;';
+    imgEl.style.cssText = 'width:100%;max-height:200px;object-fit:cover;display:block;border-radius:8px 8px 0 0;';
 
     var actions = document.createElement('div');
     actions.style.cssText = 'padding:8px;display:flex;gap:6px;background:#fafafa;border-top:1px solid #f0f0f0;flex-wrap:wrap;';
