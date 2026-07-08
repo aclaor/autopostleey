@@ -7266,6 +7266,20 @@ async function confirmAPAI(yes) {
       try {
         var session = await _db.auth.getSession();
         var token = session.data.session ? session.data.session.access_token : '';
+        // Upload pollinations image to R2 first (LinkedIn needs a proper hosted URL)
+        var finalImageUrl = _lastImageUrl || '';
+        if (finalImageUrl && finalImageUrl.includes('pollinations.ai')) {
+          try {
+            addAPAIMsg('Uploading image...', 'bot');
+            var imgResp = await fetch(finalImageUrl);
+            var imgBlob = await imgResp.blob();
+            var imgFile = new File([imgBlob], 'ai-image-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+            var uploaded = await uploadFileToR2(imgFile, 'images');
+            if (uploaded) finalImageUrl = uploaded;
+            var uploadMsg = Array.from(document.getElementById('ap-ai-msgs').children).find(function(el){ return el.textContent === 'Uploading image...'; });
+            if (uploadMsg) uploadMsg.remove();
+          } catch(imgErr) { console.warn('Image upload failed:', imgErr); }
+        }
         var pubRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -7274,7 +7288,7 @@ async function confirmAPAI(yes) {
             content:     p.content,
             platforms:   p.platforms,
             user_id:     _user.id,
-            image_url:   _lastImageUrl || '',
+            image_url:   finalImageUrl,
             connections: _connectionsFull
           })
         });
@@ -7461,7 +7475,8 @@ var AP_AI_TOOLS = [
     parameters:{type:'object',properties:{
       topic:{type:'string',description:'What to post about'},
       post_now:{type:'boolean',description:'true=post now, false=schedule'},
-      only_platforms:{type:'array',items:{type:'string'},description:'specific platforms to post to, empty=all'}
+      only_platforms:{type:'array',items:{type:'string'},description:'Specific platforms only. Extract from user message e.g. "post to telegram" → ["telegram"]. Empty array = all platforms.'},
+      use_last_image:{type:'boolean',description:'true if user says post that image / post with this image / use that image'}
     },required:['topic']}
   }},
   {type:'function',function:{
@@ -7507,7 +7522,31 @@ async function executeAPTool(name, args) {
   }
   if (name === 'create_post') {
     var postNow = args.post_now !== false;
-    await preparePost(args.topic, postNow, null);
+    var imgUrl = (args.use_last_image && _lastImageUrl) ? _lastImageUrl : null;
+    // Override platforms if specified
+    if (args.only_platforms && args.only_platforms.length > 0) {
+      _apAIPending = null; // clear pending
+      // Set platforms to only specified ones
+      var savedConns = getConnectedPlatforms();
+      var targetPlats = args.only_platforms.filter(function(p){
+        return savedConns.some(function(c){ return c.toLowerCase() === p.toLowerCase(); });
+      });
+      if (!targetPlats.length) targetPlats = savedConns;
+      // Generate caption then show confirm with only those platforms
+      addAPAIMsg('Writing caption...', 'bot');
+      var caption = await generateCaption(args.topic, targetPlats, !!imgUrl);
+      var msgs = document.getElementById('ap-ai-msgs');
+      var writing = Array.from(msgs.children).find(function(el){ return el.textContent === 'Writing caption...'; });
+      if (writing) writing.remove();
+      var date = new Date().toISOString().split('T')[0];
+      var time = new Date().toTimeString().slice(0,5);
+      if (imgUrl) _lastImageUrl = imgUrl;
+      _apAIPending = { action:'create_post', content:caption, platforms:targetPlats, date:date, time:time, status: postNow ? 'published' : 'scheduled' };
+      showCaption(caption);
+      showConfirm((postNow ? 'POST NOW' : 'Schedule') + ' on: ' + targetPlats.join(', '));
+    } else {
+      await preparePost(args.topic, postNow, imgUrl);
+    }
     return { done: true };
   }
   if (name === 'get_scheduled_posts') {
@@ -7847,23 +7886,27 @@ async function sendAPAI() {
   msgs2.scrollTop = msgs2.scrollHeight;
 
   var todayStr = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  var sysPrompt = 'You are a smart AI assistant built into the Autopostleey social media dashboard. Today is ' + todayStr + '.'
-    + ' Business context: ' + biz + '.'
-    + (platforms.length ? ' Connected platforms: ' + platforms.join(', ') + '.' : ' No platforms connected yet.')
-    + '\n\nYou can answer ANY question — general knowledge, coding, advice, facts, etc. — just like ChatGPT.'
-    + ' You also have special TOOLS to interact with the dashboard. Use tools when appropriate:'
-    + '\n- get_analytics → user asks about post counts, stats, history, latest post, published posts'
-    + '\n- get_autoposter_status → user asks if autoposter is on, working, active, running'
-    + '\n- get_connections → user asks what platforms are connected, connection status'
-    + '\n- get_scheduled_posts → user asks about upcoming or scheduled posts'
-    + '\n- generate_image → user wants to create/generate/draw/make an image or picture'
-    + '\n- create_post → user explicitly asks to write/post/publish/schedule content to social media'
-    + '\n- navigate_to → user wants to go to a specific page in the dashboard'
-    + '\n\nIMPORTANT: NEVER respond to a question about data by generating a social media post.'
-    + ' If someone asks "what is my latest post" — call get_analytics, do NOT write a new post.'
-    + ' If someone asks for "content ideas" — give them a bullet list of ideas as a chat reply, do NOT post.'
-    + ' Only use create_post when user says "post this", "publish", "schedule a post", "create a post for me".'
-    + ' For general knowledge questions (history, science, news, facts) — just answer directly without tools.';
+  var lastImgUrl = _lastImageUrl || '';
+  var lastImgPrompt = _lastImagePrompt || '';
+  var sysPrompt = 'You are a smart AI assistant inside Autopostleey. Today is ' + todayStr + '.'
+    + ' Business: ' + biz + '.'
+    + (platforms.length ? ' Connected platforms: ' + platforms.join(', ') + '.' : ' No platforms connected.')
+    + (lastImgUrl ? ' Last generated image URL: ' + lastImgUrl + ' (prompt: ' + lastImgPrompt + ').' : '')
+    + '\n\nYou are as smart as ChatGPT — answer ANY question directly (facts, advice, coding, etc.).'
+    + '\n\nUSE TOOLS ONLY FOR THESE:'
+    + '\n• create_post — user says post/publish/share/schedule content. Extract platform from message (e.g. "post to telegram only" → only_platforms:["telegram"]). Use last image URL if user says "post that image" or "post with this image".'
+    + '\n• generate_image — user says generate/create/make/draw/show an image/picture/photo.'
+    + '\n• get_analytics — user asks about post counts, latest post, history, stats.'
+    + '\n• get_autoposter_status — user asks if autoposter is working/active/on.'
+    + '\n• get_connections — user asks what platforms are connected.'
+    + '\n• get_scheduled_posts — user asks about scheduled/upcoming posts.'
+    + '\n• navigate_to — user wants to open a dashboard page.'
+    + '\n\nCRITICAL RULES:'
+    + '\n1. "post that image to telegram" → create_post with only_platforms:["telegram"] and image_url set to last image URL'
+    + '\n2. "generate image for my last post" → generate_image only, do NOT also create a post'
+    + '\n3. "content ideas" → reply with bullet list, do NOT call create_post'
+    + '\n4. General questions (who is president, what is X) → answer directly, no tools'
+    + '\n5. NEVER create a post unless user explicitly asks to post/publish/share';
 
   try {
     var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
