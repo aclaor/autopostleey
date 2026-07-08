@@ -7515,7 +7515,7 @@ async function executeAPTool(name, args) {
     return { posts: r.data || [] };
   }
   if (name === 'get_analytics') {
-    var r = await _db.from('autopostleey_posts').select('status,platforms,created_at').eq('user_id',_user.id);
+    var r = await _db.from('autopostleey_posts').select('status,platforms,created_at,content').eq('user_id',_user.id).order('created_at',{ascending:false}).limit(100);
     var all = r.data || [];
     var byP = {}, byStatus = {};
     all.forEach(function(p){
@@ -7523,6 +7523,7 @@ async function executeAPTool(name, args) {
       (p.platforms||[]).forEach(function(pl){ byP[pl]=(byP[pl]||0)+1; });
     });
     var thisMonth = all.filter(function(p){ return new Date(p.created_at).getMonth() === new Date().getMonth(); });
+    var latest = all.filter(function(p){ return p.status==='published'; })[0];
     return {
       total: all.length,
       published: all.filter(function(p){return p.status==='published';}).length,
@@ -7530,7 +7531,7 @@ async function executeAPTool(name, args) {
       draft: all.filter(function(p){return p.status==='draft';}).length,
       this_month: thisMonth.length,
       by_platform: byP,
-      by_status: byStatus
+      latest_post: latest ? { content: (latest.content||'').slice(0,120), date: latest.created_at, platforms: latest.platforms } : null
     };
   }
   if (name === 'get_autoposter_status') {
@@ -7845,31 +7846,36 @@ async function sendAPAI() {
   msgs2.appendChild(typing2);
   msgs2.scrollTop = msgs2.scrollHeight;
 
-  var sysPrompt = 'You are the AI assistant inside the Autopostleey social media dashboard. '
-    + 'Business: ' + biz + '. '
-    + (platforms.length ? 'Connected platforms: ' + platforms.join(', ') + '. ' : 'No platforms connected yet. ')
-    + 'STRICT RULES — always call a tool, NEVER generate a post as a text reply: '
-    + '1. User asks about counts/stats/analytics/how many posts → call get_analytics '
-    + '2. User asks if autoposter is working/enabled/active → call get_autoposter_status '
-    + '3. User asks what platforms are connected → call get_connections '
-    + '4. User asks about scheduled posts → call get_scheduled_posts '
-    + '5. User wants to go to a page → call navigate_to '
-    + '6. User asks to generate/create/draw an image → call generate_image '
-    + '7. User explicitly asks to CREATE or POST content → call create_post '
-    + 'NEVER write a social media post as a chat reply — always use create_post tool instead. '
-    + 'Answer questions about data by calling tools and reporting the results conversationally.';
+  var todayStr = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var sysPrompt = 'You are a smart AI assistant built into the Autopostleey social media dashboard. Today is ' + todayStr + '.'
+    + ' Business context: ' + biz + '.'
+    + (platforms.length ? ' Connected platforms: ' + platforms.join(', ') + '.' : ' No platforms connected yet.')
+    + '\n\nYou can answer ANY question — general knowledge, coding, advice, facts, etc. — just like ChatGPT.'
+    + ' You also have special TOOLS to interact with the dashboard. Use tools when appropriate:'
+    + '\n- get_analytics → user asks about post counts, stats, history, latest post, published posts'
+    + '\n- get_autoposter_status → user asks if autoposter is on, working, active, running'
+    + '\n- get_connections → user asks what platforms are connected, connection status'
+    + '\n- get_scheduled_posts → user asks about upcoming or scheduled posts'
+    + '\n- generate_image → user wants to create/generate/draw/make an image or picture'
+    + '\n- create_post → user explicitly asks to write/post/publish/schedule content to social media'
+    + '\n- navigate_to → user wants to go to a specific page in the dashboard'
+    + '\n\nIMPORTANT: NEVER respond to a question about data by generating a social media post.'
+    + ' If someone asks "what is my latest post" — call get_analytics, do NOT write a new post.'
+    + ' If someone asks for "content ideas" — give them a bullet list of ideas as a chat reply, do NOT post.'
+    + ' Only use create_post when user says "post this", "publish", "schedule a post", "create a post for me".'
+    + ' For general knowledge questions (history, science, news, facts) — just answer directly without tools.';
 
   try {
     var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.3-70b-specdec',
         messages: [{ role: 'system', content: sysPrompt }, ..._apAIHistory],
         tools: AP_AI_TOOLS,
         tool_choice: 'auto',
-        max_tokens: 400,
-        temperature: 0.2
+        max_tokens: 600,
+        temperature: 0.1
       })
     });
 
