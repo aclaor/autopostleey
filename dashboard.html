@@ -1319,8 +1319,15 @@
 
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">SOCIAL MEDIA IMAGE URL <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
-            <input id="ap-og-image" placeholder="https://yourwebsite.com/social-image.jpg" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">This image will be included in your auto-posts. Use your logo, banner, or product photo. <a href="https://ogp.me/" target="_blank" style="color:var(--accent);">What is this?</a></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input id="ap-og-image" placeholder="https://yourwebsite.com/social-image.jpg" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+              <button onclick="document.getElementById('ap-og-upload').click()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📸 Upload</button>
+              <input type="file" id="ap-og-upload" accept="image/*" style="display:none" onchange="uploadAPOgImage(this)">
+            </div>
+            <div id="ap-og-preview" style="display:none;margin-top:8px;">
+              <img id="ap-og-img" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">This image will be included in every auto-post. Upload your logo, banner or product photo.</div>
           </div>
 
           <div style="margin-bottom:14px;">
@@ -6735,6 +6742,23 @@ function applyAutoConfig() {
   if (_autoConfig.enabled) { _autoEnabled=true; updateAutoToggleUI(true); }
 }
 
+async function uploadAPOgImage(input) {
+  var file = input.files[0];
+  if (!file) return;
+  showToast('Uploading image...', 'success');
+  try {
+    var url = await uploadFileToR2(file, 'autoposter');
+    if (url) {
+      var field = document.getElementById('ap-og-image');
+      if (field) field.value = url;
+      var preview = document.getElementById('ap-og-preview');
+      var img = document.getElementById('ap-og-img');
+      if (preview && img) { img.src = url; preview.style.display = 'block'; }
+      showToast('✅ Image uploaded!', 'success');
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
 async function saveAutoConfig() {
   if (!_user) { showToast('Please sign in first', 'error'); return; }
   var biz = document.getElementById('ap-bizname') ? document.getElementById('ap-bizname').value.trim() : '';
@@ -6973,6 +6997,10 @@ async function approveAndPost() {
   var res = await _db.from('autopostleey_connections').select('platform').eq('user_id', _user.id);
   var platforms = (res.data||[]).map(function(c){return c.platform;});
   if (!platforms.length) { showToast('No platforms connected!', 'error'); showPage('connections'); return; }
+  // Use og_image from autoconfig if no image already set
+  if (!window._composerImageUrl && _autoConfig && _autoConfig.og_image) {
+    window._composerImageUrl = _autoConfig.og_image;
+  }
   showToast('Posting to all platforms...', 'success');
   try {
     var sess = await _db.auth.getSession();
