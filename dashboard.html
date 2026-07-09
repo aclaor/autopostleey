@@ -2417,7 +2417,7 @@ async function initDashboard() {
   var plan = meta.plan || 'free';
   updatePlanUI(plan);
   if(plan === 'free') {
-    var trialEnd = meta.trial_end ? new Date(meta.trial_end) : new Date(Date.now() + 3*24*60*60*1000);
+    var trialEnd = meta.trial_end ? new Date(meta.trial_end) : new Date(Date.now() + 6*60*60*1000);
     var daysLeft = Math.max(0, Math.ceil((trialEnd - new Date()) / (24*60*60*1000)));
     var banner = document.getElementById('trial-banner');
     var trialText = document.getElementById('trial-text');
@@ -3679,22 +3679,14 @@ async function generateVideoCaption() {
     var bizname     = _bizProfile ? _bizProfile.name        : '';
     var description = _bizProfile ? _bizProfile.description : '';
 
-    var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + frameBase64 } },
-            { type: 'text', text: 'Write an engaging social media caption for this video.'
-              + (bizname ? ' Business: ' + bizname + '.' : '')
-              + (description ? ' About: ' + description + '.' : '')
-              + ' Keep it under 150 words. Max 3 hashtags. Do not mention finance.' }
-          ]
-        }]
+        image_base64: frameBase64,
+        media_type: 'image/jpeg',
+        business_name: bizname,
+        description: description
       })
     });
     var data = await resp.json();
@@ -7186,7 +7178,7 @@ var _apAIHistory = [];
 var _apAIPending = null;
 var _lastImageUrl = null;
 var _lastImagePrompt = null;
-var GROQ_KEY = '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';
+// Groq key moved to worker for security
 
 function getConnectedPlatforms() {
   if (typeof _connections === 'object' && Object.keys(_connections).length > 0) {
@@ -7224,21 +7216,13 @@ async function generateCaption(topic, platforms, withImage) {
     + ' Output ONLY the caption text, nothing else.';
 
   try {
-    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: 'You are a social media copywriter. Output ONLY the caption. No preamble, no explanation.' },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 150,
-        temperature: 0.75
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt })
     });
     var d = await r.json();
-    if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+    if (d.post) return d.post;
   } catch(e) { console.error('Caption error:', e); }
   return 'Check out our latest update! #Business #Growth';
 }
@@ -7777,31 +7761,17 @@ async function analyzeAndCaptionImage(imageDataUrl, userText) {
       ? userText
       : 'Write an engaging social media caption for this image for my business.';
 
-    var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer ' + GROQ_KEY},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: 'data:' + mime + ';base64,' + base64 }
-            },
-            {
-              type: 'text',
-              text: 'Business context: ' + biz + '. Platforms: ' + (platforms.join(', ') || 'social media') + '. '
-                + userInstruction
-                + ' Write ONE concise caption (max 150 words). Do NOT write separate versions per platform. Max 3 hashtags. Do NOT mention finance.'
-            }
-          ]
-        }],
-        max_tokens: 200,
-        temperature: 0.8
+        image_base64: base64,
+        media_type: mime,
+        business_name: biz,
+        description: '',
+        prompt: 'Business context: ' + biz + '. ' + userInstruction + ' Write ONE concise caption (max 100 words). No preamble. No bullet points. Output ONLY the caption text. Max 3 hashtags.'
       })
     });
-
     var data = await res.json();
 
     // Remove "Analyzing..." message
@@ -7991,16 +7961,13 @@ async function sendAPAI() {
     + '\n5. NEVER create a post unless user explicitly asks to post/publish/share';
 
   try {
-    var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-specdec',
-        messages: [{ role: 'system', content: sysPrompt }, ..._apAIHistory],
-        tools: AP_AI_TOOLS,
-        tool_choice: 'auto',
-        max_tokens: 600,
-        temperature: 0.1
+        system: sysPrompt,
+        messages: _apAIHistory,
+        tools: AP_AI_TOOLS
       })
     });
 
