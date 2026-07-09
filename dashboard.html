@@ -7210,24 +7210,37 @@ async function getBizContext() {
 
 async function generateCaption(topic, platforms, withImage) {
   var biz = await getBizContext();
-  var prompt = 'Write ONE short social media post (max 150 words) about: ' + topic + '.'
-    + ' For business: ' + biz + '.'
-    + ' RULES: (1) ONE unified post — NOT separate versions per platform. (2) Do NOT write about finance or investing. (3) Stay on topic. (4) Max 3 hashtags.'
-    + (withImage ? ' (5) Mention there is an image/visual included.' : '')
-    + ' Platforms: ' + platforms.join(', ') + '.';
+  var prompt = 'You are a social media copywriter. Write a READY-TO-POST social media caption.'
+    + ' Business: ' + biz + '.'
+    + ' Topic: ' + topic + '.'
+    + ' STRICT RULES:'
+    + ' (1) Output ONLY the caption — no intro, no explanation, no "here is", no "feel free to adjust".'
+    + ' (2) Max 100 words. Short and punchy.'
+    + ' (3) No bullet points or numbered lists.'
+    + ' (4) End with 2-3 hashtags on the last line.'
+    + ' (5) Write in first person as the business owner.'
+    + ' (6) No finance content.'
+    + (withImage ? ' (7) The post includes an image.' : '')
+    + ' Output ONLY the caption text, nothing else.';
 
-  var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 180,
-      temperature: 0.7
-    })
-  });
-  var d = await r.json();
-  return d.choices && d.choices[0] ? d.choices[0].message.content.trim() : 'Check out our latest update!';
+  try {
+    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are a social media copywriter. Output ONLY the caption. No preamble, no explanation.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 150,
+        temperature: 0.75
+      })
+    });
+    var d = await r.json();
+    if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+  } catch(e) { console.error('Caption error:', e); }
+  return 'Check out our latest update! #Business #Growth';
 }
 
 function showCaption(caption) {
