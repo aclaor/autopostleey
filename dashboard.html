@@ -7512,6 +7512,18 @@ var AP_AI_TOOLS = [
     name:'navigate_to',
     description:'Navigate to a dashboard page.',
     parameters:{type:'object',properties:{page:{type:'string',enum:['compose','scheduled','history','autoposter','calendar','analytics','bulk','reels','connections','business','billing','support','overview']}},required:['page']}
+  }},
+  {type:'function',function:{
+    name:'schedule_recurring',
+    description:'Schedule a post to repeat daily or weekly at a specific time. Use when user says: every day, every morning, daily at X, post every X, recurring, repeat daily.',
+    parameters:{type:'object',properties:{
+      topic:{type:'string',description:'What to post about'},
+      time:{type:'string',description:'Time in HH:MM format e.g. 08:00'},
+      frequency:{type:'string',enum:['daily','weekly'],description:'How often'},
+      days:{type:'number',description:'How many days ahead to schedule, default 30'},
+      only_platforms:{type:'array',items:{type:'string'},description:'Specific platforms only'},
+      use_last_image:{type:'boolean',description:'true if user wants to use the last generated image'}
+    },required:['topic','time']}
   }}
 ];
 
@@ -7583,6 +7595,35 @@ async function executeAPTool(name, args) {
   if (name === 'navigate_to') {
     if (typeof showPage === 'function') showPage(args.page);
     return { navigated: true, page: args.page };
+  }
+  if (name === 'schedule_recurring') {
+    var platforms = (args.only_platforms && args.only_platforms.length > 0) ? args.only_platforms : getConnectedPlatforms();
+    var schedTime = args.time || '08:00';
+    var schedDays = args.days || 30;
+    var schedFreq = args.frequency || 'daily';
+    var schedImg  = (args.use_last_image && _lastImageUrl) ? _lastImageUrl : '';
+    addAPAIMsg('Generating caption...', 'bot');
+    var caption = await generateCaption(args.topic, platforms, !!schedImg);
+    var msgEl = Array.from(document.getElementById('ap-ai-msgs').children).find(function(el){return el.textContent==='Generating caption...';});
+    if (msgEl) msgEl.remove();
+    var scheduled = 0;
+    var base = new Date();
+    for (var si = 0; si < schedDays; si++) {
+      var sd = new Date(base);
+      sd.setDate(sd.getDate() + (schedFreq === 'weekly' ? si*7 : si));
+      var tp = schedTime.split(':');
+      sd.setHours(parseInt(tp[0]), parseInt(tp[1]), 0, 0);
+      if (sd <= new Date()) continue;
+      try {
+        await _db.from('autopostleey_posts').insert([{
+          user_id:_user.id, content:caption, platforms:platforms,
+          status:'scheduled', scheduled_at:sd.toISOString(),
+          image_url:schedImg, mode:'manual', created_at:new Date().toISOString()
+        }]);
+        scheduled++;
+      } catch(e) { console.error('Schedule error:', e); }
+    }
+    return { scheduled:scheduled, time:schedTime, frequency:schedFreq, platforms:platforms };
   }
   if (name === 'get_connections') {
     var conns = _connectionsFull || {};
@@ -7952,6 +7993,11 @@ async function sendAPAI() {
         } else {
           addAPAIMsg('⏸️ AI AutoPoster is configured but currently PAUSED. Go to AI AutoPoster page to enable it.', 'bot');
         }
+      } else if (result && result.scheduled !== undefined) {
+        addAPAIMsg('✅ Done! Scheduled ' + result.scheduled + ' posts — '
+          + result.frequency + ' at ' + result.time
+          + '\nPlatforms: ' + result.platforms.join(', ')
+          + '\n\nGo to Scheduled page to see them all! 📅', 'bot');
       } else if (result && result.navigated) {
         addAPAIMsg('Opened the ' + result.page + ' page!', 'bot');
       } else if (result && result.count !== undefined) {
