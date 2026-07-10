@@ -2236,22 +2236,88 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
 
           <div class="card">
             <div class="card-title">🎨 Ad Theme</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <div class="vad-theme selected" id="theme-luxury" onclick="selectVadTheme('luxury')" style="padding:12px;border:2px solid var(--accent);border-radius:8px;cursor:pointer;text-align:center;background:rgba(109,94,248,0.08);">
-                <div style="font-size:20px;margin-bottom:4px;">🌑</div>
-                <div style="font-size:11px;font-weight:700;color:var(--accent);">LUXURY DARK</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+
+                <!-- MIDNIGHT AURORA -->
+                <div class="vad-theme selected" id="theme-aurora" onclick="selectVadTheme('aurora')"
+                  style="padding:0;border:2px solid var(--accent);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:radial-gradient(#a855f7,transparent);opacity:.7;"></div>
+                    <div style="position:absolute;bottom:4px;right:8px;width:24px;height:24px;border-radius:50%;background:radial-gradient(#06b6d4,transparent);opacity:.6;"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">✨</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#0f0c29;">
+                    <div style="font-size:9px;font-weight:800;color:#a855f7;letter-spacing:1px;">MIDNIGHT AURORA</div>
+                  </div>
+                </div>
+
+                <!-- GOLDEN HOUR -->
+                <div class="vad-theme" id="theme-golden" onclick="selectVadTheme('golden')"
+                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:linear-gradient(135deg,#1a0a00,#3d1f00,#7c3a00);position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(251,191,36,0.3),transparent 60%);"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">🌅</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#1a0a00;">
+                    <div style="font-size:9px;font-weight:800;color:#f59e0b;letter-spacing:1px;">GOLDEN HOUR</div>
+                  </div>
+                </div>
+
+                <!-- OCEAN DEPTH -->
+                <div class="vad-theme" id="theme-ocean" onclick="selectVadTheme('ocean')"
+                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:linear-gradient(135deg,#0a0f2e,#0c1f4a,#0a3060);position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(6,182,212,0.25),transparent 55%);"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">🌊</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#0a0f2e;">
+                    <div style="font-size:9px;font-weight:800;color:#06b6d4;letter-spacing:1px;">OCEAN DEPTH</div>
+                  </div>
+                </div>
+
+                <!-- ROSE GOLD -->
+                <div class="vad-theme" id="theme-rose" onclick="selectVadTheme('rose')"
+                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:linear-gradient(135deg,#1a0510,#3d0e24,#6b1a3a);position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(244,114,182,0.3),transparent 55%);"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">🌸</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#1a0510;">
+                    <div style="font-size:9px;font-weight:800;color:#f472b6;letter-spacing:1px;">ROSE GOLD</div>
+                  </div>
+                </div>
+
+                <!-- NEON CITY -->
+                <div class="vad-theme" id="theme-neon" onclick="selectVadTheme('neon')"
+                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:#030306;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;background:radial-gradient(#00ff88,transparent);opacity:.5;"></div>
+                    <div style="position:absolute;bottom:4px;right:6px;width:22px;height:22px;border-radius:50%;background:radial-gradient(#ff0080,transparent);opacity:.5;"></div>
+                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,255,136,0.08),transparent 60%);"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">⚡</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#030306;">
+                    <div style="font-size:9px;font-weight:800;color:#00ff88;letter-spacing:1px;">NEON CITY</div>
+                  </div>
+                </div>
+
+                <!-- CLEAN WHITE -->
+                <div class="vad-theme" id="theme-clean" onclick="selectVadTheme('clean')"
+                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
+                  <div style="height:52px;background:linear-gradient(135deg,#f8fafc,#f1f5f9,#e2e8f0);position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:4px;background:#6366f1;opacity:.15;"></div>
+                    <div style="position:absolute;bottom:6px;right:8px;width:18px;height:18px;border-radius:50%;background:#6366f1;opacity:.1;"></div>
+                    <span style="font-size:16px;position:relative;z-index:1;">🤍</span>
+                  </div>
+                  <div style="padding:6px;text-align:center;background:#fff;">
+                    <div style="font-size:9px;font-weight:800;color:#6366f1;letter-spacing:1px;">CLEAN WHITE</div>
+                  </div>
+                </div>
+
               </div>
-              <div class="vad-theme" id="theme-vibrant" onclick="selectVadTheme('vibrant')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
-                <div style="font-size:20px;margin-bottom:4px;">🌈</div>
-                <div style="font-size:11px;font-weight:700;color:var(--text2);">VIBRANT</div>
-              </div>
-              <div class="vad-theme" id="theme-minimal" onclick="selectVadTheme('minimal')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
-                <div style="font-size:20px;margin-bottom:4px;">⬜</div>
-                <div style="font-size:11px;font-weight:700;color:var(--text2);">MINIMAL</div>
-              </div>
-              <div class="vad-theme" id="theme-bold" onclick="selectVadTheme('bold')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
-                <div style="font-size:20px;margin-bottom:4px;">🔥</div>
-                <div style="font-size:11px;font-weight:700;color:var(--text2);">BOLD</div>
+              <div id="vad-theme-label" style="font-size:11px;color:var(--text2);text-align:center;padding:6px;background:var(--bg3);border-radius:6px;">
+                ✨ Selected: <span id="vad-theme-name" style="color:var(--accent);font-weight:700;">Midnight Aurora</span>
               </div>
             </div>
           </div>
@@ -8985,7 +9051,7 @@ document.addEventListener('click', function(e) {
 
 <script>
 // ── VIDEO AD MAKER ──────────────────────────────────────────
-var _vadTheme = 'luxury';
+var _vadTheme = 'aurora';
 var _vadFormat = 'square';
 var _vadBlob = null;
 var _vadRecorder = null;
@@ -8995,15 +9061,12 @@ function selectVadTheme(t) {
   _vadTheme = t;
   document.querySelectorAll('.vad-theme').forEach(function(el) {
     el.style.border = '1px solid var(--border)';
-    el.style.background = 'transparent';
-    el.querySelector('div:last-child').style.color = 'var(--text2)';
   });
   var sel = document.getElementById('theme-' + t);
-  if (sel) {
-    sel.style.border = '2px solid var(--accent)';
-    sel.style.background = 'rgba(109,94,248,0.08)';
-    sel.querySelector('div:last-child').style.color = 'var(--accent)';
-  }
+  if (sel) sel.style.border = '2px solid var(--accent)';
+  var c = getVadThemeColors(t);
+  var lbl = document.getElementById('vad-theme-name');
+  if (lbl) lbl.textContent = c.name || t;
 }
 
 function selectVadFormat(f) {
@@ -9021,12 +9084,38 @@ function selectVadFormat(f) {
 
 function getVadThemeColors(theme) {
   var themes = {
-    luxury: { bg:'#080808', bg2:'#0d1117', accent:'#c8a84a', accent2:'#8a6020', text:'#fff', sub:'#6a5a2a', card:'#111', border:'#1e1e1e' },
-    vibrant:{ bg:'#0a0520', bg2:'#10062a', accent:'#a855f7', accent2:'#7c3aed', text:'#fff', sub:'#7c3aed', card:'#130828', border:'#2a1060' },
-    minimal:{ bg:'#fafafa', bg2:'#fff', accent:'#111', accent2:'#333', text:'#111', sub:'#888', card:'#f5f5f5', border:'#e5e5e5' },
-    bold:   { bg:'#0a0000', bg2:'#150505', accent:'#ef4444', accent2:'#dc2626', text:'#fff', sub:'#7f1d1d', card:'#1a0505', border:'#3a1010' }
+    aurora: {
+      bg:'#0f0c29', bg2:'#1a1640', accent:'#a855f7', accent2:'#7c3aed',
+      text:'#fff', sub:'#7c5cbf', card:'rgba(255,255,255,0.05)', border:'rgba(168,85,247,0.2)',
+      mesh1:'rgba(168,85,247,0.25)', mesh2:'rgba(6,182,212,0.2)', name:'Midnight Aurora'
+    },
+    golden: {
+      bg:'#1a0a00', bg2:'#2a1200', accent:'#f59e0b', accent2:'#d97706',
+      text:'#fff', sub:'#92400e', card:'rgba(245,158,11,0.06)', border:'rgba(245,158,11,0.15)',
+      mesh1:'rgba(251,191,36,0.2)', mesh2:'rgba(220,38,38,0.1)', name:'Golden Hour'
+    },
+    ocean: {
+      bg:'#0a0f2e', bg2:'#0c1845', accent:'#06b6d4', accent2:'#0891b2',
+      text:'#fff', sub:'#164e63', card:'rgba(6,182,212,0.06)', border:'rgba(6,182,212,0.15)',
+      mesh1:'rgba(6,182,212,0.2)', mesh2:'rgba(99,102,241,0.15)', name:'Ocean Depth'
+    },
+    rose: {
+      bg:'#1a0510', bg2:'#2d0a1e', accent:'#f472b6', accent2:'#ec4899',
+      text:'#fff', sub:'#831843', card:'rgba(244,114,182,0.06)', border:'rgba(244,114,182,0.15)',
+      mesh1:'rgba(244,114,182,0.25)', mesh2:'rgba(251,191,36,0.1)', name:'Rose Gold'
+    },
+    neon: {
+      bg:'#030306', bg2:'#05050a', accent:'#00ff88', accent2:'#00cc6a',
+      text:'#fff', sub:'#065f46', card:'rgba(0,255,136,0.04)', border:'rgba(0,255,136,0.12)',
+      mesh1:'rgba(0,255,136,0.15)', mesh2:'rgba(255,0,128,0.12)', name:'Neon City'
+    },
+    clean: {
+      bg:'#f8fafc', bg2:'#fff', accent:'#6366f1', accent2:'#4f46e5',
+      text:'#0f172a', sub:'#64748b', card:'#fff', border:'#e2e8f0',
+      mesh1:'rgba(99,102,241,0.08)', mesh2:'rgba(236,72,153,0.05)', name:'Clean White'
+    }
   };
-  return themes[theme] || themes.luxury;
+  return themes[theme] || themes.aurora;
 }
 
 function generateVideoAd() {
@@ -9126,16 +9215,19 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     + '</style></head><body>'
 
     // S1: Hero
-    + '<div class="scene active" id="s1" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">'
+    + '<div class="scene active" id="s1" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;">'
+    + '<div style="position:absolute;top:20%;left:20%;width:300px;height:300px;border-radius:50%;background:radial-gradient(ellipse,' + c.mesh1 + ',transparent 65%);pointer-events:none;"></div>'
+    + '<div style="position:absolute;bottom:15%;right:15%;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,' + c.mesh2 + ',transparent 65%);pointer-events:none;"></div>'
+    + '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:20px;">'
     + (productImageUrl
       ? '<img src="' + productImageUrl + '" style="width:' + (w>500?'260':'180') + 'px;height:' + (w>500?'260':'180') + 'px;object-fit:cover;border-radius:' + (w>500?'24':'16') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;border:3px solid ' + c.accent + ';">'
       : '<div style="font-size:' + (w>500?'120':'80') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;">' + emoji + '</div>')
-    + '<div style="font-size:11px;letter-spacing:4px;color:' + c.sub + ';font-weight:700;opacity:0;animation:up .5s .8s forwards;">' + biz.toUpperCase() + '</div>'
+    + '<div style="font-size:11px;letter-spacing:4px;color:' + c.accent + ';font-weight:700;opacity:0;animation:up .5s .8s forwards;opacity:.8;">' + biz.toUpperCase() + '</div>'
     + '<div style="font-size:' + (w>500?'52':'36') + 'px;font-weight:900;color:' + c.text + ';text-align:center;line-height:1.1;max-width:90%;opacity:0;animation:up .7s 1s forwards;">'
     + (tagline || product) + '</div>'
     + '<div style="width:60px;height:3px;background:' + c.accent + ';border-radius:2px;opacity:0;animation:up .4s 1.4s forwards;"></div>'
     + '<div style="font-size:14px;color:' + c.sub + ';text-align:center;opacity:0;animation:up .5s 1.6s forwards;">Post everywhere. In one click.</div>'
-    + '</div>'
+    + '</div></div>'
 
     // S2: Problem  
     + '<div class="scene" id="s2" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;">'
@@ -9174,7 +9266,8 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     + '</div></div>'
 
     // S5: CTA
-    + '<div class="scene" id="s5" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
+    + '<div class="scene" id="s5" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;position:relative;">'
+    + '<div style="position:absolute;top:10%;left:50%;transform:translateX(-50%);width:500px;height:300px;background:radial-gradient(ellipse,' + c.mesh1 + ',transparent 60%);pointer-events:none;"></div>'
     + '<div style="font-size:' + (w>500?'56':'36') + 'px;font-weight:900;color:' + c.text + ';line-height:1.1;opacity:0;animation:up .7s .2s forwards;">One click.<br><span style="color:' + c.accent + '">8 platforms.</span></div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;width:100%;max-width:400px;">'
     + [['🤖','AI Captions','AI writes for you'],['⚡','8 Platforms','All at once'],['📅','Auto-Schedule','Posts daily, 24/7'],['🎬','Video + Reels','One upload']].map(function(f) {
