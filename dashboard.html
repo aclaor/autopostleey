@@ -2186,18 +2186,50 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <div style="font-size:10px;color:var(--text3);margin-top:4px;">AI generates from your business profile — edit freely after</div>
               </div>
               <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT EMOJI</label>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <input id="vad-emoji" placeholder="⭐" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:24px;outline:none;text-align:center;">
-                  <button onclick="suggestVadEmoji()" id="vad-emoji-btn" title="Suggest from business profile"
-                    style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;flex-shrink:0;transition:all .2s;"
-                    onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
-                    🎯 Auto-Pick
+                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT VISUAL</label>
+                <!-- Toggle: Emoji or Image -->
+                <div style="display:flex;gap:6px;margin-bottom:10px;" id="vad-visual-toggle">
+                  <button id="vad-toggle-emoji" onclick="setVadVisualMode('emoji')"
+                    style="flex:1;padding:7px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:2px solid var(--accent);background:rgba(109,94,248,0.1);color:var(--accent);">
+                    😀 Use Emoji
+                  </button>
+                  <button id="vad-toggle-image" onclick="setVadVisualMode('image')"
+                    style="flex:1;padding:7px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);">
+                    📸 Upload Photo
                   </button>
                 </div>
-                <div id="vad-emoji-suggestions" style="display:none;margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
-                <div style="font-size:10px;color:var(--text3);margin-top:4px;">Auto-picked from your business category — tap any to select</div>
+
+                <!-- Emoji mode -->
+                <div id="vad-emoji-mode">
+                  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                    <input id="vad-emoji" placeholder="✨" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:28px;outline:none;text-align:center;">
+                    <button onclick="suggestVadEmoji()"
+                      style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);transition:all .2s;"
+                      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+                      🎯 Match to Product
+                    </button>
+                  </div>
+                  <div id="vad-emoji-suggestions" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
+                  <div style="font-size:10px;color:var(--text3);">Type your product name above first, then tap Match to Product</div>
+                </div>
+
+                <!-- Image mode -->
+                <div id="vad-image-mode" style="display:none;">
+                  <div id="vad-img-drop" onclick="document.getElementById('vad-product-img').click()"
+                    style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);"
+                    onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                    <div style="font-size:32px;margin-bottom:8px;">📸</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text);">Upload product photo</div>
+                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG · max 10MB</div>
+                  </div>
+                  <input type="file" id="vad-product-img" accept="image/*" style="display:none" onchange="uploadVadProductImage(this)">
+                  <div id="vad-img-preview" style="display:none;margin-top:10px;position:relative;">
+                    <img id="vad-img-thumb" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+                    <button onclick="clearVadProductImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">✕</button>
+                    <div style="position:absolute;bottom:6px;left:6px;background:rgba(109,94,248,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;">✓ Product photo ready</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -9029,7 +9061,7 @@ function generateVideoAd() {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var caption = (data.post || '').trim() || (tagline || ('Check out our ' + product + '! #' + biz.replace(/\s+/g,'') + ' #shopnow'));
-    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH);
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl);
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   })
   .catch(function() {
@@ -9039,7 +9071,7 @@ function generateVideoAd() {
   });
 }
 
-function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH) {
+function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl) {
   var ph = document.getElementById('vad-placeholder');
   var iframe = document.getElementById('vad-iframe');
   var wrap = document.getElementById('vad-preview-wrap');
@@ -9057,7 +9089,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
-  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms);
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '');
   var blob = new Blob([adHTML], {type:'text/html'});
   var url = URL.createObjectURL(blob);
   _vadIframeDoc = adHTML;
@@ -9073,7 +9105,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
-function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms) {
+function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl) {
   var isMinimal = c.bg === '#fafafa';
   var textOnAccent = isMinimal ? '#fff' : '#000';
   if (_vadTheme === 'luxury' || _vadTheme === 'vibrant' || _vadTheme === 'bold') textOnAccent = '#000';
@@ -9095,7 +9127,9 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms) 
 
     // S1: Hero
     + '<div class="scene active" id="s1" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">'
-    + '<div style="font-size:' + (w>500?'120':'80') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;">' + emoji + '</div>'
+    + (productImageUrl
+      ? '<img src="' + productImageUrl + '" style="width:' + (w>500?'260':'180') + 'px;height:' + (w>500?'260':'180') + 'px;object-fit:cover;border-radius:' + (w>500?'24':'16') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;border:3px solid ' + c.accent + ';">'
+      : '<div style="font-size:' + (w>500?'120':'80') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;">' + emoji + '</div>')
     + '<div style="font-size:11px;letter-spacing:4px;color:' + c.sub + ';font-weight:700;opacity:0;animation:up .5s .8s forwards;">' + biz.toUpperCase() + '</div>'
     + '<div style="font-size:' + (w>500?'52':'36') + 'px;font-weight:900;color:' + c.text + ';text-align:center;line-height:1.1;max-width:90%;opacity:0;animation:up .7s 1s forwards;">'
     + (tagline || product) + '</div>'
@@ -9451,74 +9485,152 @@ async function generateVadTagline() {
 }
 
 // ── EMOJI AUTO-PICKER ─────────────────────────────────────
-var EMOJI_MAP = {
-  watch:     ['⌚','🕐','✨','💎','🏆'],
-  jewelry:   ['💍','💎','✨','👑','🪙'],
-  food:      ['🍔','🍕','🍜','🥗','🍱'],
-  restaurant:['🍽️','🍜','🥘','🍱','☕'],
-  cafe:      ['☕','🧁','🍰','🥐','🫖'],
-  fashion:   ['👗','👠','👒','🛍️','✨'],
-  clothes:   ['👗','👕','👔','🧥','🛍️'],
-  shoes:     ['👟','👠','👞','🥿','✨'],
-  bag:       ['👜','👛','🎒','💼','✨'],
-  beauty:    ['💄','💅','🌸','✨','🪞'],
-  salon:     ['💇','💆','✂️','💅','🌸'],
-  tech:      ['💻','📱','⚡','🔧','🚀'],
-  gadget:    ['📱','💻','🎮','⌨️','🖥️'],
-  fitness:   ['💪','🏋️','🏃','⚡','🥊'],
-  gym:       ['💪','🏋️','⚡','🥊','🏆'],
-  'real estate':['🏠','🏡','🔑','🏢','🌟'],
-  property:  ['🏠','🔑','🏡','🏢','💼'],
-  travel:    ['✈️','🌍','🧳','🗺️','🌅'],
-  photography:['📸','🎨','✨','🖼️','🌟'],
-  art:       ['🎨','🖼️','✏️','🖌️','✨'],
-  music:     ['🎵','🎸','🎤','🎧','🎶'],
-  education: ['📚','🎓','✏️','🧠','💡'],
-  health:    ['💊','🏥','❤️','🩺','🌿'],
-  pet:       ['🐾','🐕','🐈','❤️','🦮'],
-  plant:     ['🌿','🌱','🌺','🪴','🌸'],
-  cleaning:  ['🧹','✨','🫧','🪣','🌟'],
-  auto:      ['🚗','🔧','⚙️','🏎️','🚘'],
-  default:   ['✨','⭐','🚀','💫','🌟']
-};
+// Emoji map — keyed by PRODUCT keywords only (not business name)
+var EMOJI_MAP = [
+  { words:['watch','timepiece','chronograph','rolex','omega','seiko','clock'], emojis:['⌚','🕐','💎','🏆','✨'] },
+  { words:['ring','necklace','bracelet','earring','jewelry','jewel','diamond','gold','silver'], emojis:['💍','💎','✨','👑','🪙'] },
+  { words:['burger','pizza','rice','food','meal','dish','recipe','restaurant','dining','eat'], emojis:['🍔','🍕','🍜','🥗','🍽️'] },
+  { words:['coffee','cafe','latte','espresso','cappuccino','milk tea','boba'], emojis:['☕','🧁','🫖','🥐','🍰'] },
+  { words:['dress','shirt','blouse','pants','fashion','clothing','clothes','apparel','wear','outfit'], emojis:['👗','👕','👔','🛍️','✨'] },
+  { words:['shoes','sneakers','heels','boots','sandals','footwear'], emojis:['👟','👠','👞','🥿','✨'] },
+  { words:['bag','handbag','purse','backpack','wallet','tote'], emojis:['👜','👛','🎒','✨','💼'] },
+  { words:['makeup','lipstick','skincare','beauty','cosmetic','perfume','lotion','serum'], emojis:['💄','💅','🌸','✨','🪞'] },
+  { words:['haircut','salon','hair','spa','massage','nail'], emojis:['💇','💆','✂️','💅','🌸'] },
+  { words:['laptop','computer','software','app','website','digital','tech','gadget','device','phone','mobile'], emojis:['💻','📱','⚡','🚀','🔧'] },
+  { words:['gym','fitness','workout','exercise','training','protein','supplement'], emojis:['💪','🏋️','⚡','🥊','🏆'] },
+  { words:['house','condo','apartment','property','rent','lease','realty'], emojis:['🏠','🏡','🔑','🏢','🌟'] },
+  { words:['flight','hotel','tour','travel','vacation','trip','booking'], emojis:['✈️','🌍','🧳','🗺️','🌅'] },
+  { words:['photo','camera','photography','portrait','shoot','studio'], emojis:['📸','🎨','✨','🖼️','🌟'] },
+  { words:['painting','drawing','art','design','creative','illustration'], emojis:['🎨','🖼️','✏️','🖌️','✨'] },
+  { words:['guitar','piano','music','song','beat','album','concert'], emojis:['🎵','🎸','🎤','🎧','🎶'] },
+  { words:['course','tutoring','class','school','lesson','education','training'], emojis:['📚','🎓','✏️','🧠','💡'] },
+  { words:['medicine','vitamin','supplement','health','wellness','clinic','doctor'], emojis:['💊','❤️','🌿','🩺','🏥'] },
+  { words:['dog','cat','pet','fish','bird','animal','fur'], emojis:['🐾','🐕','🐈','❤️','🦮'] },
+  { words:['plant','flower','succulent','garden','herb','indoor plant'], emojis:['🌿','🌱','🌺','🪴','🌸'] },
+  { words:['cleaning','laundry','detergent','sanitizer','mop','broom'], emojis:['🧹','✨','🫧','🪣','🌟'] },
+  { words:['car','motorcycle','vehicle','truck','auto repair','auto parts'], emojis:['🚗','🔧','⚙️','🏎️','🚘'] },
+  { words:['social media','posting','automation','scheduling','marketing','content'], emojis:['📱','🚀','⚡','📊','✨'] },
+];
 
 function suggestVadEmoji() {
-  var biz = (document.getElementById('vad-bizname') || {}).value || '';
-  var product = (document.getElementById('vad-product') || {}).value || '';
-  var desc = (_autoConfig && _autoConfig.description) || (_bizProfile && _bizProfile.description) || '';
-  var combined = (biz + ' ' + product + ' ' + desc).toLowerCase();
+  // Match ONLY against the product field — never the business name
+  var product = ((document.getElementById('vad-product') || {}).value || '').toLowerCase().trim();
+
+  if (!product) {
+    showToast('Enter your product name first, then tap Auto-Pick', 'error');
+    return;
+  }
 
   var matched = null;
-  for (var key in EMOJI_MAP) {
-    if (key !== 'default' && combined.indexOf(key) !== -1) {
-      matched = key;
-      break;
+  for (var i = 0; i < EMOJI_MAP.length; i++) {
+    var entry = EMOJI_MAP[i];
+    for (var j = 0; j < entry.words.length; j++) {
+      if (product.indexOf(entry.words[j]) !== -1) {
+        matched = entry;
+        break;
+      }
     }
+    if (matched) break;
   }
-  var emojis = EMOJI_MAP[matched || 'default'];
 
-  // Show suggestions
+  // If no keyword match, ask AI
+  if (!matched) {
+    var defaultEmojis = ['✨','⭐','🚀','💫','🌟'];
+    showVadEmojiOptions(defaultEmojis);
+    // Also try AI for unknown products
+    fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt: 'What single emoji best represents "' + product + '"? Reply with ONLY 5 emojis separated by spaces, most relevant first. No text.' })
+    }).then(function(r){return r.json();})
+    .then(function(d){
+      var text = (d.post||'').trim();
+      var aiEmojis = text.match(/\p{Emoji}/gu) || text.split(/\s+/).filter(function(e){return e.length<=2;});
+      if (aiEmojis && aiEmojis.length >= 3) showVadEmojiOptions(aiEmojis.slice(0,5));
+    }).catch(function(){});
+    return;
+  }
+
+  showVadEmojiOptions(matched.emojis);
+}
+
+function showVadEmojiOptions(emojis) {
   var sugEl = document.getElementById('vad-emoji-suggestions');
   if (!sugEl) return;
   sugEl.style.display = 'flex';
-  sugEl.innerHTML = emojis.map(function(e) {
-    return '<button onclick="document.getElementById(\'vad-emoji\').value=\''+e+'\';'
-      + 'this.parentElement.querySelectorAll(\'button\').forEach(function(b){b.style.background=\'var(--bg3)\';});'
-      + 'this.style.background=\'rgba(109,94,248,0.15)\';return false;" '
-      + 'style="width:44px;height:44px;font-size:22px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;">'
-      + e + '</button>';
+  sugEl.innerHTML = emojis.map(function(e, i) {
+    var s = 'width:48px;height:48px;font-size:24px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;';
+    if (i===0) s += 'border-color:var(--accent);background:rgba(109,94,248,0.1);';
+    return '<button data-e="' + encodeURIComponent(e) + '" onclick="selectVadEmoji(this,decodeURIComponent(this.dataset.e))" style="' + s + '">' + e + '</button>';
   }).join('');
-
-  // Auto-select first one
+  // Auto-select first
   var emojiField = document.getElementById('vad-emoji');
-  if (emojiField && !emojiField.value) emojiField.value = emojis[0];
+  if (emojiField) emojiField.value = emojis[0];
+  showToast('Tap an emoji to select it', 'success');
+}
 
-  // Also auto-fill if field is empty or default
-  if (emojiField && (emojiField.value === '⌚' || !emojiField.value)) {
-    emojiField.value = emojis[0];
+function selectVadEmoji(btn, emoji) {
+  var emojiField = document.getElementById('vad-emoji');
+  if (emojiField) emojiField.value = emoji;
+  var sugEl = document.getElementById('vad-emoji-suggestions');
+  if (sugEl) sugEl.querySelectorAll('button').forEach(function(b){
+    b.style.borderColor = 'var(--border)';
+    b.style.background = 'var(--bg3)';
+  });
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.background = 'rgba(109,94,248,0.1)';
+}
+
+var _vadVisualMode = 'emoji';
+var _vadProductImageUrl = '';
+
+function setVadVisualMode(mode) {
+  _vadVisualMode = mode;
+  var emojiDiv = document.getElementById('vad-emoji-mode');
+  var imageDiv = document.getElementById('vad-image-mode');
+  var btnEmoji = document.getElementById('vad-toggle-emoji');
+  var btnImage = document.getElementById('vad-toggle-image');
+  if (mode === 'emoji') {
+    if (emojiDiv) emojiDiv.style.display = 'block';
+    if (imageDiv) imageDiv.style.display = 'none';
+    if (btnEmoji) { btnEmoji.style.border = '2px solid var(--accent)'; btnEmoji.style.background = 'rgba(109,94,248,0.1)'; btnEmoji.style.color = 'var(--accent)'; }
+    if (btnImage) { btnImage.style.border = '1px solid var(--border)'; btnImage.style.background = 'var(--bg3)'; btnImage.style.color = 'var(--text2)'; }
+  } else {
+    if (emojiDiv) emojiDiv.style.display = 'none';
+    if (imageDiv) imageDiv.style.display = 'block';
+    if (btnEmoji) { btnEmoji.style.border = '1px solid var(--border)'; btnEmoji.style.background = 'var(--bg3)'; btnEmoji.style.color = 'var(--text2)'; }
+    if (btnImage) { btnImage.style.border = '2px solid var(--accent)'; btnImage.style.background = 'rgba(109,94,248,0.1)'; btnImage.style.color = 'var(--accent)'; }
   }
+}
 
-  showToast('Emoji suggestions ready — tap to select!', 'success');
+async function uploadVadProductImage(input) {
+  var file = input.files[0];
+  if (!file) return;
+  showToast('Uploading product photo...', 'success');
+  try {
+    var url = await uploadFileToR2(file, 'video-ads');
+    if (url) {
+      _vadProductImageUrl = url;
+      var thumb = document.getElementById('vad-img-thumb');
+      var preview = document.getElementById('vad-img-preview');
+      var drop = document.getElementById('vad-img-drop');
+      if (thumb) thumb.src = url;
+      if (preview) preview.style.display = 'block';
+      if (drop) drop.style.display = 'none';
+      showToast('✅ Product photo uploaded!', 'success');
+    }
+  } catch(e) {
+    showToast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+function clearVadProductImage() {
+  _vadProductImageUrl = '';
+  var thumb = document.getElementById('vad-img-thumb');
+  var preview = document.getElementById('vad-img-preview');
+  var drop = document.getElementById('vad-img-drop');
+  if (thumb) thumb.src = '';
+  if (preview) preview.style.display = 'none';
+  if (drop) drop.style.display = 'block';
 }
 
 // Auto-fill from business profile when Video Ad page opens
