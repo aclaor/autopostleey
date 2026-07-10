@@ -537,6 +537,10 @@
       <a class="nav-item" onclick="showPage('bulk');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">⚡</span> <span data-i18n="nav_bulk">Bulk Schedule</span>
       </a>
+      <a class="nav-item" onclick="showPage('videoad');closeAPSidebar();return false;" href="#" id="nav-videoad">
+        <span class="nav-icon">🎥</span> Video Ad Maker
+        <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_settings">Settings</span></div>
@@ -2139,6 +2143,175 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         </div>
       </div>
 
+    </div>
+
+
+    <!-- ══ VIDEO AD MAKER PAGE ══════════════════════════════════ -->
+    <div class="page" id="page-videoad">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎬 Video Ad Maker</div>
+          <div class="page-sub">Generate a captivating animated video ad for your business — download and auto-post as Reels</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:10px;font-weight:800;padding:4px 12px;border-radius:100px;letter-spacing:1px;">✨ PRO FEATURE</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;">
+
+        <!-- LEFT: Config Form -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <div class="card">
+            <div class="card-title">📋 Your Business</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">BUSINESS NAME</label>
+                <input id="vad-bizname" placeholder="e.g. Luxera Watches" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT / SERVICE</label>
+                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">TAGLINE / KEY MESSAGE</label>
+                <input id="vad-tagline" placeholder="e.g. Precision. Elegance. Power." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT EMOJI</label>
+                <input id="vad-emoji" placeholder="⌚" value="⌚" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:20px;outline:none;text-align:center;">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🎨 Ad Theme</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="vad-theme selected" id="theme-luxury" onclick="selectVadTheme('luxury')" style="padding:12px;border:2px solid var(--accent);border-radius:8px;cursor:pointer;text-align:center;background:rgba(109,94,248,0.08);">
+                <div style="font-size:20px;margin-bottom:4px;">🌑</div>
+                <div style="font-size:11px;font-weight:700;color:var(--accent);">LUXURY DARK</div>
+              </div>
+              <div class="vad-theme" id="theme-vibrant" onclick="selectVadTheme('vibrant')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
+                <div style="font-size:20px;margin-bottom:4px;">🌈</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text2);">VIBRANT</div>
+              </div>
+              <div class="vad-theme" id="theme-minimal" onclick="selectVadTheme('minimal')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
+                <div style="font-size:20px;margin-bottom:4px;">⬜</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text2);">MINIMAL</div>
+              </div>
+              <div class="vad-theme" id="theme-bold" onclick="selectVadTheme('bold')" style="padding:12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
+                <div style="font-size:20px;margin-bottom:4px;">🔥</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text2);">BOLD</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📱 Format</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="vad-format selected" id="fmt-square" onclick="selectVadFormat('square')" style="padding:10px;border:2px solid var(--accent);border-radius:8px;cursor:pointer;text-align:center;background:rgba(109,94,248,0.08);">
+                <div style="font-size:16px;margin-bottom:3px;">⬛</div>
+                <div style="font-size:10px;font-weight:700;color:var(--accent);">1080×1080</div>
+                <div style="font-size:9px;color:var(--text3);">Feed / Story</div>
+              </div>
+              <div class="vad-format" id="fmt-reel" onclick="selectVadFormat('reel')" style="padding:10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;">
+                <div style="font-size:16px;margin-bottom:3px;">📱</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text2);">1080×1920</div>
+                <div style="font-size:9px;color:var(--text3);">Reels / Shorts</div>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="generateVideoAd()" id="vad-generate-btn"
+            style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">
+            ✨ Generate Video Ad
+          </button>
+        </div>
+
+        <!-- RIGHT: Preview + Actions -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Preview iframe -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
+              <div style="display:flex;gap:8px;" id="vad-preview-actions" style="display:none;">
+                <button onclick="replayVadAd()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;">↺ Replay</button>
+              </div>
+            </div>
+            <div style="background:#000;position:relative;" id="vad-preview-wrap">
+              <!-- Placeholder -->
+              <div id="vad-placeholder" style="height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+                <div style="font-size:64px;">🎬</div>
+                <div style="font-size:16px;font-weight:700;color:#333;">Your video ad will appear here</div>
+                <div style="font-size:13px;color:#222;">Fill in the details and click Generate</div>
+              </div>
+              <!-- Ad iframe -->
+              <iframe id="vad-iframe" style="display:none;width:100%;height:500px;border:none;" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+          </div>
+
+          <!-- Download + Post actions -->
+          <div class="card" id="vad-actions-card" style="display:none;">
+            <div class="card-title" style="margin-bottom:16px;">🚀 Use Your Video Ad</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+
+              <!-- Download -->
+              <button onclick="downloadVadVideo()" id="vad-download-btn"
+                style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s;"
+                onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <div style="font-size:28px;margin-bottom:8px;">⬇️</div>
+                <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download Video</div>
+                <div style="font-size:11px;color:var(--text2);">Save as .webm to your device<br>then post manually</div>
+              </button>
+
+              <!-- Auto-post -->
+              <button onclick="autoPostVadVideo()" id="vad-autopost-btn"
+                style="background:linear-gradient(135deg,rgba(109,94,248,0.15),rgba(236,72,153,0.15));border:1px solid rgba(109,94,248,0.3);border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s;">
+                <div style="font-size:28px;margin-bottom:8px;">🚀</div>
+                <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">Auto-Post as Reel</div>
+                <div style="font-size:11px;color:var(--text2);">Upload & post to all your<br>connected platforms now</div>
+              </button>
+            </div>
+
+            <!-- Platform selector for auto-post -->
+            <div id="vad-plat-select" style="display:none;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);">
+              <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;letter-spacing:1px;">SELECT PLATFORMS</div>
+              <div id="vad-plat-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;"></div>
+              <div style="margin-bottom:12px;">
+                <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">CAPTION FOR THIS VIDEO</label>
+                <textarea id="vad-caption" rows="3"
+                  style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:none;outline:none;"
+                  placeholder="AI will generate this from your product info..."></textarea>
+              </div>
+              <button onclick="confirmAutoPostVad()" id="vad-confirm-post"
+                style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:13px;font-weight:700;cursor:pointer;width:100%;">
+                🚀 Post Video Now
+              </button>
+            </div>
+
+            <!-- Progress -->
+            <div id="vad-progress" style="display:none;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);text-align:center;">
+              <div style="font-size:13px;color:var(--text2);" id="vad-progress-text">Preparing...</div>
+              <div style="height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden;">
+                <div id="vad-progress-bar" style="height:100%;background:linear-gradient(90deg,#6D5EF8,#EC4899);width:0%;transition:width .3s;border-radius:2px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tips -->
+          <div class="card" style="background:rgba(109,94,248,0.04);border-color:rgba(109,94,248,0.15);">
+            <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">💡 PRO TIPS</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span>📱</span>Best results: post as Reels on Facebook + Instagram + YouTube Shorts</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span>🎵</span>Add trending music in CapCut after downloading for more views</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span>🔁</span>Generate a new ad weekly — keep your content fresh</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span>⏰</span>Best time to post: 7–9am or 7–9pm in your timezone</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="page" id="page-support">
@@ -8710,6 +8883,9 @@ function closeAPSidebar() {
     <button onclick="showPage('bulk');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
       <span style="font-size:20px;">⚡</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Bulk</span>
     </button>
+    <button onclick="showPage('videoad');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
+      <span style="font-size:20px;">🎥</span><span style="font-size:11px;color:var(--text2);font-weight:600;">Video Ad</span>
+    </button>
     <button onclick="showPage('autoposter');closeMobileMore()" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--sans);">
       <span style="font-size:20px;">🤖</span><span style="font-size:11px;color:var(--text2);font-weight:600;">AutoPoster</span>
     </button>
@@ -8752,6 +8928,445 @@ document.addEventListener('click', function(e) {
   var nav  = document.getElementById('mobile-bottom-nav');
   if (menu && menu.style.display !== 'none' && !menu.contains(e.target) && !nav.contains(e.target)) {
     closeMobileMore();
+  }
+});
+</script>
+
+<script>
+// ── VIDEO AD MAKER ──────────────────────────────────────────
+var _vadTheme = 'luxury';
+var _vadFormat = 'square';
+var _vadBlob = null;
+var _vadRecorder = null;
+var _vadIframeDoc = null;
+
+function selectVadTheme(t) {
+  _vadTheme = t;
+  document.querySelectorAll('.vad-theme').forEach(function(el) {
+    el.style.border = '1px solid var(--border)';
+    el.style.background = 'transparent';
+    el.querySelector('div:last-child').style.color = 'var(--text2)';
+  });
+  var sel = document.getElementById('theme-' + t);
+  if (sel) {
+    sel.style.border = '2px solid var(--accent)';
+    sel.style.background = 'rgba(109,94,248,0.08)';
+    sel.querySelector('div:last-child').style.color = 'var(--accent)';
+  }
+}
+
+function selectVadFormat(f) {
+  _vadFormat = f;
+  document.querySelectorAll('.vad-format').forEach(function(el) {
+    el.style.border = '1px solid var(--border)';
+    el.style.background = 'transparent';
+  });
+  var sel = document.getElementById('fmt-' + f);
+  if (sel) {
+    sel.style.border = '2px solid var(--accent)';
+    sel.style.background = 'rgba(109,94,248,0.08)';
+  }
+}
+
+function getVadThemeColors(theme) {
+  var themes = {
+    luxury: { bg:'#080808', bg2:'#0d1117', accent:'#c8a84a', accent2:'#8a6020', text:'#fff', sub:'#6a5a2a', card:'#111', border:'#1e1e1e' },
+    vibrant:{ bg:'#0a0520', bg2:'#10062a', accent:'#a855f7', accent2:'#7c3aed', text:'#fff', sub:'#7c3aed', card:'#130828', border:'#2a1060' },
+    minimal:{ bg:'#fafafa', bg2:'#fff', accent:'#111', accent2:'#333', text:'#111', sub:'#888', card:'#f5f5f5', border:'#e5e5e5' },
+    bold:   { bg:'#0a0000', bg2:'#150505', accent:'#ef4444', accent2:'#dc2626', text:'#fff', sub:'#7f1d1d', card:'#1a0505', border:'#3a1010' }
+  };
+  return themes[theme] || themes.luxury;
+}
+
+function generateVideoAd() {
+  var biz     = (document.getElementById('vad-bizname')  || {}).value || '';
+  var product = (document.getElementById('vad-product')  || {}).value || '';
+  var tagline = (document.getElementById('vad-tagline')  || {}).value || '';
+  var emoji   = (document.getElementById('vad-emoji')    || {}).value || '⭐';
+
+  if (!biz || !product) {
+    showToast('Please enter your business name and product', 'error');
+    return;
+  }
+
+  var btn = document.getElementById('vad-generate-btn');
+  if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+
+  var c = getVadThemeColors(_vadTheme);
+  var w = _vadFormat === 'reel' ? 607 : 500;
+  var h = _vadFormat === 'reel' ? 1080 : 500;
+  var displayH = _vadFormat === 'reel' ? 500 : 500;
+
+  // Generate AI caption for the product first
+  fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt: 'Write a punchy social media caption for ' + biz + ' promoting their ' + product
+        + (tagline ? '. Key message: ' + tagline : '')
+        + '. Max 60 words. Include 2-3 hashtags. Output ONLY the caption.'
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var caption = (data.post || '').trim() || (tagline || ('Check out our ' + product + '! #' + biz.replace(/\s+/g,'') + ' #shopnow'));
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH);
+    if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
+  })
+  .catch(function() {
+    var caption = tagline || ('Discover the ' + product + ' by ' + biz + '. #shopnow #' + biz.replace(/\s+/g,''));
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH);
+    if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
+  });
+}
+
+function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH) {
+  var ph = document.getElementById('vad-placeholder');
+  var iframe = document.getElementById('vad-iframe');
+  var wrap = document.getElementById('vad-preview-wrap');
+  var actions = document.getElementById('vad-actions-card');
+  var prevActions = document.getElementById('vad-preview-actions');
+
+  if (ph) ph.style.display = 'none';
+  if (iframe) {
+    iframe.style.display = 'block';
+    iframe.style.height = displayH + 'px';
+    if (wrap) wrap.style.height = displayH + 'px';
+  }
+  if (actions) actions.style.display = 'block';
+  if (prevActions) prevActions.style.display = 'flex';
+
+  var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
+
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms);
+  var blob = new Blob([adHTML], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  _vadIframeDoc = adHTML;
+  if (iframe) iframe.src = url;
+
+  // Pre-fill caption textarea
+  var capEl = document.getElementById('vad-caption');
+  if (capEl) capEl.value = caption + '\n\n🌐 autopostleey.com';
+
+  // Load platforms for post selector
+  loadVadPlatforms();
+
+  showToast('✅ Video ad generated! Download or auto-post below.', 'success');
+}
+
+function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms) {
+  var isMinimal = c.bg === '#fafafa';
+  var textOnAccent = isMinimal ? '#fff' : '#000';
+  if (_vadTheme === 'luxury' || _vadTheme === 'vibrant' || _vadTheme === 'bold') textOnAccent = '#000';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800;900&display=swap" rel="stylesheet">'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box;}'
+    + 'html,body{width:' + w + 'px;height:' + h + 'px;overflow:hidden;background:' + c.bg + ';font-family:Inter,sans-serif;}'
+    + '.scene{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s;}'
+    + '.scene.active{opacity:1;pointer-events:all;}'
+    + '@keyframes up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}'
+    + '@keyframes pop{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}'
+    + '@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
+    + '.fade{opacity:0;animation:up .6s forwards;}'
+    + '.cursor{display:inline-block;width:2px;height:18px;background:' + c.accent + ';vertical-align:middle;animation:blink .8s infinite;}'
+    + '.progress{position:fixed;bottom:0;left:0;right:0;height:3px;background:' + c.card + ';}'
+    + '.fill{height:100%;background:' + c.accent + ';width:0%;transition:width .1s;}'
+    + '</style></head><body>'
+
+    // S1: Hero
+    + '<div class="scene active" id="s1" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">'
+    + '<div style="font-size:' + (w>500?'120':'80') + 'px;opacity:0;animation:pop .8s .2s cubic-bezier(0.34,1.56,0.64,1) forwards;">' + emoji + '</div>'
+    + '<div style="font-size:11px;letter-spacing:4px;color:' + c.sub + ';font-weight:700;opacity:0;animation:up .5s .8s forwards;">' + biz.toUpperCase() + '</div>'
+    + '<div style="font-size:' + (w>500?'52':'36') + 'px;font-weight:900;color:' + c.text + ';text-align:center;line-height:1.1;max-width:90%;opacity:0;animation:up .7s 1s forwards;">'
+    + (tagline || product) + '</div>'
+    + '<div style="width:60px;height:3px;background:' + c.accent + ';border-radius:2px;opacity:0;animation:up .4s 1.4s forwards;"></div>'
+    + '<div style="font-size:14px;color:' + c.sub + ';text-align:center;opacity:0;animation:up .5s 1.6s forwards;">Post everywhere. In one click.</div>'
+    + '</div>'
+
+    // S2: Problem  
+    + '<div class="scene" id="s2" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;">'
+    + '<div style="font-size:13px;letter-spacing:3px;color:' + c.sub + ';font-weight:700;opacity:0;animation:up .5s .2s forwards;">THE PROBLEM</div>'
+    + '<div style="font-size:' + (w>500?'48':'32') + 'px;font-weight:900;color:' + c.text + ';text-align:center;line-height:1.1;opacity:0;animation:up .6s .4s forwards;">Posting manually<br>wastes <span style="color:#ef4444;">3hrs/week</span></div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;">'
+    + platforms.map(function(p, i) {
+        return '<div style="background:' + c.card + ';border:1px solid ' + c.border + ';border-radius:8px;padding:8px 14px;font-size:12px;color:' + c.sub + ';font-weight:600;opacity:0;animation:up .4s ' + (.6 + i*.08) + 's forwards;">' + p + '</div>';
+      }).join('')
+    + '</div></div>'
+
+    // S3: Demo
+    + '<div class="scene" id="s3" style="background:' + c.bg2 + ';padding:30px;display:flex;flex-direction:column;gap:16px;">'
+    + '<div style="font-size:11px;letter-spacing:3px;color:' + c.accent + ';font-weight:700;opacity:0;animation:up .5s .1s forwards;">AUTOPOSTLEEY DOES THIS FOR YOU</div>'
+    + '<div style="background:' + c.card + ';border:1px solid ' + c.border + ';border-radius:10px;padding:16px;opacity:0;animation:up .6s .3s forwards;">'
+    + '<div style="font-size:10px;letter-spacing:2px;color:' + c.sub + ';margin-bottom:8px;">AI WRITES YOUR CAPTION</div>'
+    + '<div style="font-size:13px;color:' + c.text + ';line-height:1.6;min-height:80px;" id="typed-cap"><span id="tc"></span><span class="cursor" id="cur"></span></div>'
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;" id="plat-row">'
+    + platforms.map(function(p) {
+        return '<div style="background:rgba(0,0,0,0);border:1px solid ' + c.border + ';border-radius:6px;padding:6px 12px;font-size:11px;color:' + c.sub + ';font-weight:600;opacity:0;transition:all .3s;">' + p + '</div>';
+      }).join('')
+    + '</div>'
+    + '<div id="post-btn" style="background:' + c.accent + ';border:none;border-radius:10px;padding:14px 24px;font-size:14px;font-weight:800;color:#000;cursor:pointer;opacity:0;transition:opacity .4s;text-align:center;">🚀 POST TO ALL 8 PLATFORMS</div>'
+    + '</div>'
+
+    // S4: Success
+    + '<div class="scene" id="s4" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
+    + '<div style="font-size:80px;opacity:0;animation:pop .7s .1s cubic-bezier(0.34,1.56,0.64,1) forwards;">✅</div>'
+    + '<div style="font-size:' + (w>500?'44':'30') + 'px;font-weight:900;color:' + c.text + ';opacity:0;animation:up .6s .5s forwards;">Posted to 8 platforms!</div>'
+    + '<div style="font-size:14px;color:' + c.sub + ';opacity:0;animation:up .5s .8s forwards;">' + product + ' is now live everywhere</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px;">'
+    + platforms.map(function(p, i) {
+        return '<div style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:6px;padding:6px 14px;font-size:12px;color:#4ade80;font-weight:700;opacity:0;animation:up .4s ' + (1 + i*.1) + 's forwards;">✓ ' + p.replace(/^.{2}/,'').trim() + '</div>';
+      }).join('')
+    + '</div></div>'
+
+    // S5: CTA
+    + '<div class="scene" id="s5" style="background:' + c.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
+    + '<div style="font-size:' + (w>500?'56':'36') + 'px;font-weight:900;color:' + c.text + ';line-height:1.1;opacity:0;animation:up .7s .2s forwards;">One click.<br><span style="color:' + c.accent + '">8 platforms.</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;width:100%;max-width:400px;">'
+    + [['🤖','AI Captions','AI writes for you'],['⚡','8 Platforms','All at once'],['📅','Auto-Schedule','Posts daily, 24/7'],['🎬','Video + Reels','One upload']].map(function(f) {
+        return '<div style="background:' + c.card + ';border:1px solid ' + c.border + ';border-radius:8px;padding:12px;text-align:center;opacity:0;animation:up .5s .4s forwards;"><div style="font-size:20px;margin-bottom:4px;">' + f[0] + '</div><div style="font-size:11px;font-weight:700;color:' + c.text + ';">' + f[1] + '</div><div style="font-size:10px;color:' + c.sub + ';margin-top:2px;">' + f[2] + '</div></div>';
+      }).join('')
+    + '</div>'
+    + '<div style="font-size:' + (w>500?'32':'22') + 'px;font-weight:900;color:' + c.text + ';border-bottom:3px solid ' + c.accent + ';padding-bottom:6px;opacity:0;animation:up .6s .8s forwards;">autopostleey<span style="color:' + c.accent + '">.com</span></div>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;animation:up .5s 1.1s forwards;">'
+    + ['✓ Free trial','✓ No credit card','✓ Start in 60s'].map(function(p) {
+        return '<div style="background:rgba(0,0,0,0);border:1px solid ' + c.border + ';border-radius:100px;padding:5px 14px;font-size:11px;font-weight:600;color:' + c.sub + ';">' + p + '</div>';
+      }).join('')
+    + '</div></div>'
+
+    + '<div class="progress"><div class="fill" id="prog"></div></div>'
+
+    + '<script>'
+    + 'var scenes=["s1","s2","s3","s4","s5"];'
+    + 'var T=[];'
+    + 'function ct(fn,ms){T.push(setTimeout(fn,ms));}'
+    + 'function go(n){scenes.forEach(function(s){document.getElementById(s).classList.remove("active");});document.getElementById(scenes[n]).classList.add("active");}'
+    + 'var CAP=' + JSON.stringify(caption) + ';'
+    + 'function runS3(){'
+    + '  var chars=CAP.split(""),typed="",tc=document.getElementById("tc"),cur=document.getElementById("cur");'
+    + '  chars.forEach(function(ch,i){ct(function(){typed+=ch;if(tc)tc.textContent=typed;},600+i*30);});'
+    + '  var te=600+chars.length*30;'
+    + '  ct(function(){if(cur)cur.style.display="none";},te+100);'
+    + '  var chips=document.querySelectorAll("#plat-row div");'
+    + '  chips.forEach(function(el,i){ct(function(){el.style.opacity="1";el.style.borderColor="' + c.accent + '";el.style.color="' + c.accent + '";},te+200+i*100);});'
+    + '  ct(function(){var b=document.getElementById("post-btn");if(b)b.style.opacity="1";},te+1200);'
+    + '  ct(function(){var b=document.getElementById("post-btn");if(b){b.style.transform="scale(0.97)";setTimeout(function(){b.style.transform="scale(1)";},120);}},te+1700);'
+    + '}'
+    + 'var TIMING=[0,7000,14000,23000,27500],TOTAL=32000;'
+    + 'function start(){'
+    + '  go(0);'
+    + '  ct(function(){go(1);},TIMING[1]);'
+    + '  ct(function(){go(2);runS3();},TIMING[2]);'
+    + '  ct(function(){go(3);},TIMING[3]);'
+    + '  ct(function(){go(4);},TIMING[4]);'
+    + '  var st=Date.now(),prog=setInterval(function(){'
+    + '    var p=Math.min(100,((Date.now()-st)/TOTAL)*100);'
+    + '    var el=document.getElementById("prog");if(el)el.style.width=p+"%";'
+    + '    if(p>=100){clearInterval(prog);window.parent.postMessage({type:"vadDone"},"*");}'
+    + '  },100);'
+    + '}'
+    + 'window.onload=function(){setTimeout(start,300);};'
+    + '<\/script></body></html>';
+}
+
+function replayVadAd() {
+  var iframe = document.getElementById('vad-iframe');
+  if (iframe && iframe.src) {
+    iframe.src = iframe.src;
+  }
+}
+
+function downloadVadVideo() {
+  var iframe = document.getElementById('vad-iframe');
+  if (!iframe || !iframe.contentWindow) {
+    showToast('Generate an ad first!', 'error');
+    return;
+  }
+
+  var btn = document.getElementById('vad-download-btn');
+  if (btn) btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:700;color:var(--text);">Recording...</div><div style="font-size:11px;color:var(--text2);">Please wait ~35 seconds</div>';
+
+  showProgress('vad-progress', 'Recording video... (35 seconds)', 0);
+  document.getElementById('vad-progress').style.display = 'block';
+
+  // Use MediaRecorder to capture the iframe canvas
+  var canvas = document.createElement('canvas');
+  canvas.width = _vadFormat === 'reel' ? 607 : 500;
+  canvas.height = 500;
+
+  // Replay the iframe to record from start
+  iframe.src = iframe.src;
+
+  setTimeout(function() {
+    try {
+      var stream = iframe.contentWindow.document.querySelector('canvas')
+        ? iframe.contentWindow.document.querySelector('canvas').captureStream(30)
+        : null;
+
+      // Fallback: use html2canvas approach via iframe srcdoc
+      if (!stream) {
+        // Direct blob download of the HTML file
+        var html = _vadIframeDoc || '';
+        var blob = new Blob([html], {type:'text/html'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'autopostleey-video-ad.html';
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        document.getElementById('vad-progress').style.display = 'none';
+        if (btn) resetDownloadBtn(btn);
+        showToast('✅ Ad downloaded! Open in Chrome and use screen recorder to export as video.', 'success');
+        return;
+      }
+
+      var chunks = [];
+      var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      _vadRecorder = recorder;
+
+      recorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = function() {
+        var blob = new Blob(chunks, {type:'video/webm'});
+        _vadBlob = blob;
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'autopostleey-ad-' + Date.now() + '.webm';
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        document.getElementById('vad-progress').style.display = 'none';
+        if (btn) resetDownloadBtn(btn);
+        showToast('✅ Video downloaded! Post it on TikTok, Reels, and YouTube Shorts.', 'success');
+      };
+
+      recorder.start();
+      // Animate progress
+      var dur = 34000;
+      var start = Date.now();
+      var pi = setInterval(function() {
+        var p = Math.min(98, ((Date.now()-start)/dur)*100);
+        setVadProgressBar(p);
+        if (p >= 98) clearInterval(pi);
+      }, 200);
+
+      setTimeout(function() {
+        recorder.stop();
+        clearInterval(pi);
+        setVadProgressBar(100);
+      }, dur);
+
+    } catch(e) {
+      // Fallback to HTML download
+      var html = _vadIframeDoc || '';
+      var blob = new Blob([html], {type:'text/html'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'autopostleey-video-ad.html';
+      a.click();
+      document.getElementById('vad-progress').style.display = 'none';
+      if (btn) resetDownloadBtn(btn);
+      showToast('Downloaded as HTML. Open in Chrome fullscreen and screen-record it.', 'success');
+    }
+  }, 1000);
+}
+
+function resetDownloadBtn(btn) {
+  btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⬇️</div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download Video</div><div style="font-size:11px;color:var(--text2);">Save as .webm to your device<br>then post manually</div>';
+}
+
+function setVadProgressBar(pct) {
+  var bar = document.getElementById('vad-progress-bar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+function autoPostVadVideo() {
+  var platSel = document.getElementById('vad-plat-select');
+  if (platSel) platSel.style.display = platSel.style.display === 'none' ? 'block' : 'none';
+}
+
+function loadVadPlatforms() {
+  var list = document.getElementById('vad-plat-list');
+  if (!list) return;
+  var platforms = getConnectedPlatforms ? getConnectedPlatforms() : [];
+  list.innerHTML = platforms.map(function(p) {
+    return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--text2);">'
+      + '<input type="checkbox" value="' + p + '" checked style="accent-color:var(--accent);"> ' + p + '</label>';
+  }).join('');
+  if (!platforms.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text2);">No platforms connected. Go to Connections page.</div>';
+  }
+}
+
+async function confirmAutoPostVad() {
+  var caption = (document.getElementById('vad-caption') || {}).value || '';
+  var checkboxes = document.querySelectorAll('#vad-plat-list input[type=checkbox]:checked');
+  var platforms = Array.from(checkboxes).map(function(cb) { return cb.value; });
+
+  if (!platforms.length) { showToast('Select at least one platform', 'error'); return; }
+  if (!_vadIframeDoc) { showToast('Generate an ad first', 'error'); return; }
+
+  var btn = document.getElementById('vad-confirm-post');
+  if (btn) { btn.textContent = '⏳ Uploading...'; btn.disabled = true; }
+  document.getElementById('vad-progress').style.display = 'block';
+  setVadProgressBar(10);
+
+  try {
+    // Create HTML blob as a "video file" — upload to R2
+    document.getElementById('vad-progress-text').textContent = 'Preparing your video ad...';
+    setVadProgressBar(20);
+
+    // Upload the HTML ad to R2 as a shareable link
+    var htmlBlob = new Blob([_vadIframeDoc], {type:'text/html'});
+    var htmlFile = new File([htmlBlob], 'video-ad-' + Date.now() + '.html', {type:'text/html'});
+    document.getElementById('vad-progress-text').textContent = 'Uploading to cloud...';
+    setVadProgressBar(40);
+
+    var adUrl = await uploadFileToR2(htmlFile, 'video-ads');
+    setVadProgressBar(60);
+
+    // Now post to platforms as a link post with the caption
+    document.getElementById('vad-progress-text').textContent = 'Publishing to ' + platforms.join(', ') + '...';
+
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var postCaption = caption + (adUrl ? '\n\n🎬 Watch the ad: ' + adUrl : '');
+
+    await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        content: postCaption,
+        platforms: platforms,
+        user_id: _user ? _user.id : '',
+        image_url: '',
+        connections: _connectionsFull
+      })
+    });
+
+    setVadProgressBar(100);
+    document.getElementById('vad-progress-text').textContent = '✅ Published!';
+
+    setTimeout(function() {
+      document.getElementById('vad-progress').style.display = 'none';
+      document.getElementById('vad-plat-select').style.display = 'none';
+      setVadProgressBar(0);
+    }, 2000);
+
+    if (btn) { btn.textContent = '🚀 Post Video Now'; btn.disabled = false; }
+    showToast('✅ Video ad posted to ' + platforms.join(', ') + '!', 'success');
+
+  } catch(e) {
+    if (btn) { btn.textContent = '🚀 Post Video Now'; btn.disabled = false; }
+    document.getElementById('vad-progress').style.display = 'none';
+    showToast('Post failed: ' + e.message, 'error');
+  }
+}
+
+// Listen for ad completion from iframe
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'vadDone') {
+    showToast('Ad finished playing — click Download or Auto-Post!', 'success');
   }
 });
 </script>
