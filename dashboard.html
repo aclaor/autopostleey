@@ -1327,7 +1327,25 @@
             <div id="ap-og-preview" style="display:none;margin-top:8px;">
               <img id="ap-og-img" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
             </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">This image will be included in every auto-post. Upload your logo, banner or product photo.</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Default image included in every auto-post. Upload your logo, banner or product photo.</div>
+          </div>
+
+          <!-- NEXT POST IMAGE -->
+          <div style="margin-bottom:16px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:8px;">📌 Queue Image for NEXT Post</label>
+            <div style="background:rgba(109,94,248,0.06);border:1px solid rgba(109,94,248,0.2);border-radius:10px;padding:12px;">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Upload an image here and it will be used in the <strong>very next auto-post</strong>, then cleared automatically.</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input id="ap-next-image" placeholder="Or paste image URL here..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;" oninput="updateNextImagePreview()">
+                <button onclick="document.getElementById('ap-next-upload').click()" style="padding:10px 14px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📸 Upload</button>
+                <input type="file" id="ap-next-upload" accept="image/*" style="display:none" onchange="uploadNextImage(this)">
+              </div>
+              <div id="ap-next-preview" style="display:none;margin-top:10px;position:relative;">
+                <img id="ap-next-img" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;border:2px solid rgba(109,94,248,0.4);">
+                <div style="position:absolute;top:8px;left:8px;background:rgba(109,94,248,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;">📌 QUEUED FOR NEXT POST</div>
+                <button onclick="clearNextImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;">✕ Remove</button>
+              </div>
+            </div>
           </div>
 
           <div style="margin-bottom:14px;">
@@ -6674,6 +6692,7 @@ async function loadAutoConfig() {
         description:   dbRes.data.description  || '',
         website:       dbRes.data.website       || '',
         og_image:      dbRes.data.og_image      || '',
+        next_image:    dbRes.data.next_image    || '',
         audience:      dbRes.data.audience      || '',
         frequency:     dbRes.data.frequency     || 'daily',
         time:          dbRes.data.posting_time  || '09:00',
@@ -6749,9 +6768,44 @@ async function uploadAPOgImage(input) {
       var preview = document.getElementById('ap-og-preview');
       var img = document.getElementById('ap-og-img');
       if (preview && img) { img.src = url; preview.style.display = 'block'; }
-      showToast('✅ Image uploaded!', 'success');
+      showToast('✅ Default image uploaded!', 'success');
     }
   } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
+async function uploadNextImage(input) {
+  var file = input.files[0];
+  if (!file) return;
+  showToast('Uploading next post image...', 'success');
+  try {
+    var url = await uploadFileToR2(file, 'autoposter');
+    if (url) {
+      var field = document.getElementById('ap-next-image');
+      if (field) field.value = url;
+      updateNextImagePreview(url);
+      if (_autoConfig) _autoConfig.next_image = url;
+      showToast('✅ Image queued for next post!', 'success');
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
+function updateNextImagePreview(url) {
+  var val = url || (document.getElementById('ap-next-image') ? document.getElementById('ap-next-image').value.trim() : '');
+  var preview = document.getElementById('ap-next-preview');
+  var img = document.getElementById('ap-next-img');
+  if (preview && img) {
+    if (val) { img.src = val; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+  }
+}
+
+function clearNextImage() {
+  var field = document.getElementById('ap-next-image');
+  if (field) field.value = '';
+  var preview = document.getElementById('ap-next-preview');
+  if (preview) preview.style.display = 'none';
+  if (_autoConfig) _autoConfig.next_image = '';
+  showToast('Next post image cleared', 'success');
 }
 
 async function saveAutoConfig() {
@@ -6792,6 +6846,7 @@ async function saveAutoConfig() {
       description:   _autoConfig.description   || '',
       website:       _autoConfig.website        || '',
       og_image:      _autoConfig.og_image       || '',
+      next_image:    _autoConfig.next_image     || '',
       email:         (_bizProfile && _bizProfile.email) ? _bizProfile.email : '',
       phone:         (_bizProfile && _bizProfile.phone) ? _bizProfile.phone : '',
       audience:      _autoConfig.audience       || '',
@@ -6948,6 +7003,12 @@ async function generatePreview() {
       data = await resp.json();
       text = (data.post || '').trim();
     }
+    // Use next_image (queued) first, then og_image as fallback
+    var nextImg = (_autoConfig && _autoConfig.next_image) ? _autoConfig.next_image : '';
+    var ogImg   = (_autoConfig && _autoConfig.og_image)   ? _autoConfig.og_image   : '';
+    if (!window._composerImageUrl) {
+      window._composerImageUrl = nextImg || ogImg || '';
+    }
     console.log('Worker response:', data);
     if (!text) throw new Error(data.error || 'Worker returned empty response');
 
@@ -7007,6 +7068,17 @@ async function approveAndPost() {
   } catch(e) { console.error(e); }
   addToAPHistory(_previewPost, _previewType, 'posted');
   window._composerImageUrl = '';
+  // Clear next_image after it's been used
+  if (_autoConfig && _autoConfig.next_image) {
+    _autoConfig.next_image = '';
+    var nextFld = document.getElementById('ap-next-image');
+    if (nextFld) nextFld.value = '';
+    updateNextImagePreview('');
+    // Save cleared state to DB
+    try {
+      await _db.from('autopostleey_autoposter').update({ next_image: '' }).eq('user_id', _user.id);
+    } catch(e) {}
+  }
   showToast('AI post published to all platforms!', 'success');
 }
 
