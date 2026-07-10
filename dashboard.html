@@ -9333,8 +9333,11 @@ function downloadVadVideo() {
   var btn = document.getElementById('vad-download-btn');
   if (btn) btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:700;color:var(--text);">Recording...</div><div style="font-size:11px;color:var(--text2);">Please wait ~35 seconds</div>';
 
-  showProgress('vad-progress', 'Recording video... (35 seconds)', 0);
-  document.getElementById('vad-progress').style.display = 'block';
+  var progEl = document.getElementById('vad-progress');
+  var progText = document.getElementById('vad-progress-text');
+  if (progEl) progEl.style.display = 'block';
+  if (progText) progText.textContent = 'Recording video... (35 seconds)';
+  setVadProgressBar(0);
 
   // Use MediaRecorder to capture the iframe canvas
   var canvas = document.createElement('canvas');
