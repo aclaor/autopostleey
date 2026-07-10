@@ -2176,11 +2176,28 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">TAGLINE / KEY MESSAGE</label>
-                <input id="vad-tagline" placeholder="e.g. Precision. Elegance. Power." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                  <textarea id="vad-tagline" rows="2" placeholder="e.g. Precision. Elegance. Power." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;resize:none;font-family:var(--sans);"></textarea>
+                  <button onclick="generateVadTagline()" id="vad-tagline-btn" title="Generate from business profile"
+                    style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;">
+                    ✨ Generate
+                  </button>
+                </div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px;">AI generates from your business profile — edit freely after</div>
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT EMOJI</label>
-                <input id="vad-emoji" placeholder="⌚" value="⌚" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:20px;outline:none;text-align:center;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input id="vad-emoji" placeholder="⭐" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:24px;outline:none;text-align:center;">
+                  <button onclick="suggestVadEmoji()" id="vad-emoji-btn" title="Suggest from business profile"
+                    style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;flex-shrink:0;transition:all .2s;"
+                    onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+                    🎯 Auto-Pick
+                  </button>
+                </div>
+                <div id="vad-emoji-suggestions" style="display:none;margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px;">Auto-picked from your business category — tap any to select</div>
               </div>
             </div>
           </div>
@@ -4233,6 +4250,8 @@ function showPage(name) {
   var main = document.querySelector('.main');
   if(main) main.scrollTop = 0;
   if(name === 'autoposter' && typeof loadAutoConfig === 'function' && !_autoConfigLoaded) { loadAutoConfig(); _autoConfigLoaded = true; }
+  if(name === 'videoad' && typeof initVideoAdPage === 'function') { initVideoAdPage(); }
+  if(name === 'videoad' && typeof initVideoAdPage === 'function') { initVideoAdPage(); }
   if(name === 'compose' && typeof loadConnectedPlatformsForAP === 'function') loadConnectedPlatformsForAP();
 }
 
@@ -9369,6 +9388,171 @@ window.addEventListener('message', function(e) {
     showToast('Ad finished playing — click Download or Auto-Post!', 'success');
   }
 });
+
+// ── TAGLINE GENERATOR ─────────────────────────────────────
+async function generateVadTagline() {
+  var btn = document.getElementById('vad-tagline-btn');
+  var field = document.getElementById('vad-tagline');
+  var biz = (document.getElementById('vad-bizname') || {}).value
+    || (_autoConfig && _autoConfig.bizname)
+    || (_bizProfile && _bizProfile.name) || '';
+  var product = (document.getElementById('vad-product') || {}).value || '';
+  var desc = (_autoConfig && _autoConfig.description)
+    || (_bizProfile && _bizProfile.description) || '';
+
+  if (!biz && !product) {
+    showToast('Enter your business name and product first', 'error');
+    return;
+  }
+
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'Create 3 short punchy taglines (max 6 words each) for '
+          + biz + (product ? ' selling ' + product : '')
+          + (desc ? '. About: ' + desc : '')
+          + '. Format: just the 3 taglines, one per line, no numbers or bullets. Make them bold and memorable.'
+      })
+    });
+    var data = await resp.json();
+    var lines = (data.post || '').trim().split('\n').filter(function(l){ return l.trim(); });
+
+    if (!lines.length) throw new Error('empty');
+
+    // Show as clickable options
+    if (field) {
+      field.value = lines[0].replace(/^["']|["']$/g, '').trim();
+    }
+
+    // Show all options as clickable pills below the field
+    var container = document.getElementById('vad-tagline-options');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'vad-tagline-options';
+      container.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;';
+      field && field.parentElement && field.parentElement.parentElement.appendChild(container);
+    }
+    container.innerHTML = lines.map(function(l) {
+      var clean = l.replace(/^["']|["']$/g, '').trim();
+      return '<button onclick="document.getElementById(\'vad-tagline\').value=\''+clean.replace(/'/g,"\\'")+'\';this.parentElement.querySelectorAll(\'button\').forEach(function(b){b.style.borderColor=\'var(--border)\';b.style.color=\'var(--text2)\';});this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent)\';return false;" '
+        + 'style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .2s;font-family:var(--sans);">'
+        + clean + '</button>';
+    }).join('');
+
+    showToast('✅ ' + lines.length + ' taglines generated — pick one or edit!', 'success');
+  } catch(e) {
+    showToast('Could not generate tagline', 'error');
+  }
+  if (btn) { btn.textContent = '✨ Generate'; btn.disabled = false; }
+}
+
+// ── EMOJI AUTO-PICKER ─────────────────────────────────────
+var EMOJI_MAP = {
+  watch:     ['⌚','🕐','✨','💎','🏆'],
+  jewelry:   ['💍','💎','✨','👑','🪙'],
+  food:      ['🍔','🍕','🍜','🥗','🍱'],
+  restaurant:['🍽️','🍜','🥘','🍱','☕'],
+  cafe:      ['☕','🧁','🍰','🥐','🫖'],
+  fashion:   ['👗','👠','👒','🛍️','✨'],
+  clothes:   ['👗','👕','👔','🧥','🛍️'],
+  shoes:     ['👟','👠','👞','🥿','✨'],
+  bag:       ['👜','👛','🎒','💼','✨'],
+  beauty:    ['💄','💅','🌸','✨','🪞'],
+  salon:     ['💇','💆','✂️','💅','🌸'],
+  tech:      ['💻','📱','⚡','🔧','🚀'],
+  gadget:    ['📱','💻','🎮','⌨️','🖥️'],
+  fitness:   ['💪','🏋️','🏃','⚡','🥊'],
+  gym:       ['💪','🏋️','⚡','🥊','🏆'],
+  'real estate':['🏠','🏡','🔑','🏢','🌟'],
+  property:  ['🏠','🔑','🏡','🏢','💼'],
+  travel:    ['✈️','🌍','🧳','🗺️','🌅'],
+  photography:['📸','🎨','✨','🖼️','🌟'],
+  art:       ['🎨','🖼️','✏️','🖌️','✨'],
+  music:     ['🎵','🎸','🎤','🎧','🎶'],
+  education: ['📚','🎓','✏️','🧠','💡'],
+  health:    ['💊','🏥','❤️','🩺','🌿'],
+  pet:       ['🐾','🐕','🐈','❤️','🦮'],
+  plant:     ['🌿','🌱','🌺','🪴','🌸'],
+  cleaning:  ['🧹','✨','🫧','🪣','🌟'],
+  auto:      ['🚗','🔧','⚙️','🏎️','🚘'],
+  default:   ['✨','⭐','🚀','💫','🌟']
+};
+
+function suggestVadEmoji() {
+  var biz = (document.getElementById('vad-bizname') || {}).value || '';
+  var product = (document.getElementById('vad-product') || {}).value || '';
+  var desc = (_autoConfig && _autoConfig.description) || (_bizProfile && _bizProfile.description) || '';
+  var combined = (biz + ' ' + product + ' ' + desc).toLowerCase();
+
+  var matched = null;
+  for (var key in EMOJI_MAP) {
+    if (key !== 'default' && combined.indexOf(key) !== -1) {
+      matched = key;
+      break;
+    }
+  }
+  var emojis = EMOJI_MAP[matched || 'default'];
+
+  // Show suggestions
+  var sugEl = document.getElementById('vad-emoji-suggestions');
+  if (!sugEl) return;
+  sugEl.style.display = 'flex';
+  sugEl.innerHTML = emojis.map(function(e) {
+    return '<button onclick="document.getElementById(\'vad-emoji\').value=\''+e+'\';'
+      + 'this.parentElement.querySelectorAll(\'button\').forEach(function(b){b.style.background=\'var(--bg3)\';});'
+      + 'this.style.background=\'rgba(109,94,248,0.15)\';return false;" '
+      + 'style="width:44px;height:44px;font-size:22px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;">'
+      + e + '</button>';
+  }).join('');
+
+  // Auto-select first one
+  var emojiField = document.getElementById('vad-emoji');
+  if (emojiField && !emojiField.value) emojiField.value = emojis[0];
+
+  // Also auto-fill if field is empty or default
+  if (emojiField && (emojiField.value === '⌚' || !emojiField.value)) {
+    emojiField.value = emojis[0];
+  }
+
+  showToast('Emoji suggestions ready — tap to select!', 'success');
+}
+
+// Auto-fill from business profile when Video Ad page opens
+var _vadProfileLoaded = false;
+function initVideoAdPage() {
+  if (_vadProfileLoaded) return;
+  _vadProfileLoaded = true;
+
+  var bizField    = document.getElementById('vad-bizname');
+  var productField = document.getElementById('vad-product');
+  var emojiField  = document.getElementById('vad-emoji');
+
+  // Fill from _autoConfig first
+  if (_autoConfig) {
+    if (bizField && !bizField.value) bizField.value = _autoConfig.bizname || '';
+    if (productField && !productField.value) productField.value = _autoConfig.description ? _autoConfig.description.split('.')[0] : '';
+  }
+  // Then _bizProfile
+  if (_bizProfile) {
+    if (bizField && !bizField.value) bizField.value = _bizProfile.name || '';
+  }
+
+  // Auto-suggest emoji based on profile
+  if (emojiField && !emojiField.value) {
+    var combined = ((bizField && bizField.value) + ' ' + (productField && productField.value)).toLowerCase();
+    for (var key in EMOJI_MAP) {
+      if (key !== 'default' && combined.indexOf(key) !== -1) {
+        emojiField.value = EMOJI_MAP[key][0];
+        break;
+      }
+    }
+    if (!emojiField.value) emojiField.value = '✨';
+  }
+}
 </script>
 </body>
 </html>
