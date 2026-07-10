@@ -3972,7 +3972,10 @@ async function generateComposePost() {
     var data = await resp.json();
     console.log('Compose worker response:', data);
     var text = (data.post || '').trim();
+    // Strip and validate — reject if only contact/hashtags/dashes
     if (!text) throw new Error(data.error || 'No post generated');
+    var stripped = text.replace(/[\-—#🌐📧\s]/g,'').replace(/autopostleey\.com/gi,'').replace(/hello@[\w.]+/gi,'').trim();
+    if (stripped.length < 20) throw new Error('Caption too short — try again');
 
     var enrichedText = appendContactToPost(text);
     var postText = document.getElementById('post-content') || document.getElementById('post-text');
