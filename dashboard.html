@@ -3686,20 +3686,39 @@ async function generateVideoCaption() {
   try {
     // Extract first frame from video as image for AI analysis
     var vid = document.getElementById('video-preview-el');
+
+    // Wait for video to be ready
+    if (vid.readyState < 2) {
+      await new Promise(function(res, rej) {
+        var t = setTimeout(function(){ rej(new Error('Video not ready')); }, 8000);
+        vid.onloadeddata = function(){ clearTimeout(t); res(); };
+      });
+    }
+
     var canvas = document.createElement('canvas');
     canvas.width = 640; canvas.height = 360;
     var ctx = canvas.getContext('2d');
-    vid.currentTime = 1; // Go to 1 second
-    await new Promise(function(res){ vid.onseeked = res; });
+
+    // Seek to 1 second with timeout fallback
+    vid.currentTime = Math.min(1, vid.duration * 0.1 || 1);
+    await new Promise(function(res){
+      var t = setTimeout(res, 3000); // fallback after 3s
+      vid.onseeked = function(){ clearTimeout(t); res(); };
+    });
     ctx.drawImage(vid, 0, 0, 640, 360);
-    var frameBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+    var frameBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
     var bizname     = _bizProfile ? _bizProfile.name        : '';
     var description = _bizProfile ? _bizProfile.description : '';
 
+    // Add timeout to worker call
+    var controller = new AbortController();
+    var timeout = setTimeout(function(){ controller.abort(); }, 30000);
+
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         image_base64: frameBase64,
         media_type: 'image/jpeg',
@@ -3707,15 +3726,29 @@ async function generateVideoCaption() {
         description: description
       })
     });
+    clearTimeout(timeout);
+
     var data = await resp.json();
-    var post = data.choices && data.choices[0] ? data.choices[0].message.content.trim() : null;
-    if (cap && post) {
-      cap.value = appendContactToPost(post);
-      showToast('✨ Caption generated from your video!', 'success');
+    console.log('[VideoCaption] Worker response:', JSON.stringify(data).slice(0, 200));
+
+    // Worker returns data.post — not data.choices
+    var post = data.post || (data.choices && data.choices[0] ? data.choices[0].message.content : '') || '';
+    post = post.trim();
+
+    if (cap) {
+      if (post) {
+        cap.value = appendContactToPost(post);
+        showToast('✨ Caption generated from your video!', 'success');
+      } else {
+        cap.value = '';
+        showToast('Could not generate caption: ' + (data.error || 'empty response'), 'error');
+      }
     }
   } catch(e) {
     if (cap) cap.value = '';
-    showToast('Analysis failed: ' + e.message, 'error');
+    var msg = e.name === 'AbortError' ? 'Timed out — try a shorter video or check connection' : e.message;
+    showToast('Analysis failed: ' + msg, 'error');
+    console.error('[VideoCaption] Error:', e);
   }
 }
 
