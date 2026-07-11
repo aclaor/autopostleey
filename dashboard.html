@@ -486,6 +486,53 @@
     display:flex !important;flex-direction:column !important;
   }
 }
+}
+
+/* ── VIDEO AD MAKER RESPONSIVE ──────────────────────────── */
+@media(max-width:1024px){
+  #vad-main-grid{
+    grid-template-columns:300px 1fr !important;
+    gap:16px !important;
+  }
+}
+@media(max-width:768px){
+  #vad-main-grid{
+    grid-template-columns:1fr !important;
+    gap:16px !important;
+  }
+  #page-videoad .page-header{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+  }
+  /* Theme grid — 2 cols on mobile */
+  #vad-main-grid .card div[style*="grid-template-columns:repeat(3,1fr)"]{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+  /* Format picker — full width */
+  #fmt-square, #fmt-reel{
+    padding:8px 6px !important;
+  }
+  /* Generate button full width */
+  #vad-generate-btn{
+    font-size:13px !important;
+    padding:12px !important;
+  }
+  /* Action buttons stack */
+  #vad-actions-card div[style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr !important;
+  }
+}
+@media(max-width:480px){
+  #vad-main-grid{
+    gap:12px !important;
+  }
+  /* Theme grid — 2 cols even on small phones */
+  #vad-main-grid .card{
+    padding:12px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2158,7 +2205,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;">
+      <div style="display:grid;grid-template-columns:minmax(280px,340px) 1fr;gap:24px;align-items:start;" id="vad-main-grid">
 
         <!-- LEFT: Config Form -->
         <div style="display:flex;flex-direction:column;gap:16px;">
@@ -2241,7 +2288,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 🎯 Auto-Detect from Product
               </button>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;overflow-x:hidden;">
 <div class="vad-theme" id="theme-ecommerce" onclick="selectVadTheme('ecommerce')"
                   style="padding:8px 6px;border:2px solid var(--accent);background:rgba(109,94,248,0.1);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
                   <div style="font-size:18px;margin-bottom:3px;">🛍️</div>
@@ -2379,14 +2426,14 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         <div style="display:flex;flex-direction:column;gap:16px;">
 
           <!-- Preview iframe -->
-          <div class="card" style="padding:0;overflow:hidden;">
+          <div class="card" style="padding:0;overflow:hidden;min-width:0;">
             <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
               <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
               <div style="display:flex;gap:8px;" id="vad-preview-actions" style="display:none;">
                 <button onclick="replayVadAd()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;">↺ Replay</button>
               </div>
             </div>
-            <div style="background:#000;position:relative;overflow:hidden;" id="vad-preview-wrap">
+            <div style="background:#000;position:relative;overflow:hidden;width:100%;min-height:200px;" id="vad-preview-wrap">
               <!-- Placeholder -->
               <div id="vad-placeholder" style="height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
                 <div style="font-size:64px;">🎬</div>
@@ -2394,7 +2441,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <div style="font-size:13px;color:#222;">Fill in the details and click Generate</div>
               </div>
               <!-- Ad iframe -->
-              <iframe id="vad-iframe" style="display:none;width:500px;height:500px;border:none;transform-origin:top left;" allow="autoplay"></iframe>
+              <iframe id="vad-iframe" style="display:none;width:500px;height:500px;border:none;transform-origin:top left;position:absolute;top:0;left:0;" allow="autoplay"></iframe>
             </div>
           </div>
 
@@ -4379,7 +4426,22 @@ function showPage(name) {
   var main = document.querySelector('.main');
   if(main) main.scrollTop = 0;
   if(name === 'autoposter' && typeof loadAutoConfig === 'function' && !_autoConfigLoaded) { loadAutoConfig(); _autoConfigLoaded = true; }
-  if(name === 'videoad' && typeof initVideoAdPage === 'function') { initVideoAdPage(); }
+  if(name === 'videoad' && typeof initVideoAdPage === 'function') {
+    initVideoAdPage();
+    // Rescale iframe if ad already generated
+    setTimeout(function(){
+      var iframe = document.getElementById('vad-iframe');
+      var wrap = document.getElementById('vad-preview-wrap');
+      if (iframe && wrap && iframe.style.display !== 'none') {
+        var cw = wrap.offsetWidth || 600;
+        var iw = parseInt(iframe.style.width) || 500;
+        var ih = parseInt(iframe.style.height) || 500;
+        var s = cw / iw;
+        iframe.style.transform = 'scale(' + s + ')';
+        wrap.style.height = Math.round(ih * s) + 'px';
+      }
+    }, 100);
+  }
   if(name === 'videoad' && typeof initVideoAdPage === 'function') { initVideoAdPage(); }
   if(name === 'compose' && typeof loadConnectedPlatformsForAP === 'function') loadConnectedPlatformsForAP();
 }
@@ -9380,21 +9442,33 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   if (ph) ph.style.display = 'none';
   if (iframe) {
+    var adW = w || 500;
+    var adH = h || 500;
     iframe.style.display = 'block';
-    var adW = (w || 500);
-    var adH = (h || 500);
-    var containerW = wrap ? (wrap.offsetWidth || 600) : 600;
-    var scale = containerW / adW;
-    // Center the scaled iframe — offset left by half the difference
-    var scaledW = adW * scale;
-    var offsetX = (containerW - scaledW) / 2;
     iframe.style.width = adW + 'px';
     iframe.style.height = adH + 'px';
-    iframe.style.transform = 'scale(' + scale + ')';
     iframe.style.transformOrigin = 'top left';
-    iframe.style.marginLeft = offsetX + 'px';
-    iframe.style.display = 'block';
-    if (wrap) wrap.style.height = Math.round(adH * scale) + 'px';
+    iframe.style.position = 'absolute';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+
+    // Scale function — recalculate on any resize
+    function scaleVadIframe() {
+      if (!wrap || !iframe) return;
+      var cw = wrap.offsetWidth || 600;
+      var scale = cw / adW;
+      iframe.style.transform = 'scale(' + scale + ')';
+      wrap.style.height = Math.round(adH * scale) + 'px';
+    }
+    scaleVadIframe();
+
+    // Watch for resize (sidebar toggle, window resize, etc)
+    if (window._vadResizeObs) window._vadResizeObs.disconnect();
+    if (window.ResizeObserver) {
+      window._vadResizeObs = new ResizeObserver(function() { scaleVadIframe(); });
+      window._vadResizeObs.observe(wrap);
+    }
+    window.addEventListener('resize', scaleVadIframe);
   }
   if (actions) actions.style.display = 'block';
   if (prevActions) prevActions.style.display = 'flex';
@@ -9451,8 +9525,8 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet"><style>'
    +'*{margin:0;padding:0;box-sizing:border-box;}'
-   +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;}'
-   +'.sc-wrap{position:absolute;top:0;left:0;width:'+w+'px;height:'+h+'px;overflow:hidden;display:none;}'
+   +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;-webkit-text-size-adjust:100%;}'
+   +'.sc-wrap{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;display:none;}'
    +'.sc-wrap.on{display:block;}'
    +'@keyframes sU{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}'
    +'@keyframes fI{from{opacity:0}to{opacity:1}}'
@@ -9602,9 +9676,22 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
 
 function replayVadAd() {
   var iframe = document.getElementById('vad-iframe');
+  var wrap = document.getElementById('vad-preview-wrap');
   if (iframe && _vadIframeDoc) {
     iframe.srcdoc = '';
-    setTimeout(function(){ iframe.srcdoc = _vadIframeDoc; }, 50);
+    setTimeout(function(){
+      iframe.srcdoc = _vadIframeDoc;
+      setTimeout(function(){
+        if (wrap && iframe) {
+          var cw = wrap.offsetWidth || 600;
+          var iw = parseInt(iframe.style.width) || 500;
+          var ih = parseInt(iframe.style.height) || 500;
+          var s = cw / iw;
+          iframe.style.transform = 'scale(' + s + ')';
+          wrap.style.height = Math.round(ih * s) + 'px';
+        }
+      }, 300);
+    }, 50);
   }
 }
 
