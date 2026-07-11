@@ -10013,6 +10013,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     var loaded = 0, toLoad = 0;
 
     function startRender() {
+      // Crisp rendering — critical for sharp downloaded video
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.textRendering = 'geometricPrecision';
       var frame = 0;
       var totalFrames = Math.ceil((TOTAL_MS/1000)*FPS);
       // Scene timing
@@ -10066,9 +10070,36 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       }
 
       function glass(x,y,w,h,r){
-        ctx.beginPath(); ctx.roundRect(x,y,w,h,r||10);
-        ctx.fillStyle=c.glass||'rgba(255,255,255,0.07)'; ctx.fill();
-        ctx.strokeStyle=c.glassBorder||'rgba(255,255,255,0.12)'; ctx.lineWidth=1; ctx.stroke();
+        var rad = r||10;
+        ctx.beginPath();
+        // Manual rounded rect for max browser compat
+        ctx.moveTo(x+rad,y);
+        ctx.lineTo(x+w-rad,y); ctx.arcTo(x+w,y,x+w,y+rad,rad);
+        ctx.lineTo(x+w,y+h-rad); ctx.arcTo(x+w,y+h,x+w-rad,y+h,rad);
+        ctx.lineTo(x+rad,y+h); ctx.arcTo(x,y+h,x,y+h-rad,rad);
+        ctx.lineTo(x,y+rad); ctx.arcTo(x,y,x+rad,y,rad);
+        ctx.closePath();
+        // Solid fill — more opaque so it reads clearly in video
+        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.10)';
+        ctx.fill();
+        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.18)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      // Draw a row: icon on left, text on right — perfectly aligned
+      function row(ico, txt, x, y, w, h, textColor, fontSize) {
+        var fs = fontSize || 13;
+        var mid = y + h/2;
+        // Icon
+        ctx.font = (fs+4) + 'px serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ico, x+10, mid);
+        // Text — same middle baseline
+        ctx.font = 'bold ' + fs + 'px Inter,sans-serif';
+        ctx.fillStyle = textColor || c.text;
+        ctx.fillText(txt, x+36, mid);
+        ctx.textBaseline = 'alphabetic';
       }
 
       function text(str,x,y,font,color,a,oy){
@@ -10143,7 +10174,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         su=slideUp(f-FPS*1.15,FPS*.6);
         ctx.globalAlpha=clamp(su.a,0,1);
         ctx.fillStyle=c.text; ctx.textAlign='center';
-        ctx.font='bold '+(W>500?44:30)+'px Inter,sans-serif';
+        ctx.font='bold '+(W>500?48:34)+'px Inter,sans-serif';
         var tl=tagline||product||biz;
         if(ctx.measureText(tl).width>W*.85){
           var ws=tl.split(' '), mid=Math.ceil(ws.length/2);
@@ -10190,34 +10221,20 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha=clamp(su.a,0,1);
         ctx.fillStyle=c.text; ctx.font='bold '+(W>500?34:24)+'px Inter,sans-serif';
         ctx.textAlign='center';
-        ctx.fillText('You deserve better.',W/2,H*.36+su.y);
+        ctx.fillText('You deserve better.',W/2,H*.34+su.y);
         ctx.globalAlpha=1;
 
-        // 4 pain points as cards
-        var cpW=(W-32)/2, cpH=54, cpX0=12, cpY0=H*.44;
+        // Pain points — full width rows, icon+text aligned via row()
+        var cpH=52, cpY0=H*.42;
         displayProblems.slice(0,4).forEach(function(pt,i){
-          var ia=clamp((f-FPS*.65-i*FPS*.15)/(FPS*.45),0,1);
+          var ia=clamp((f-FPS*.65-i*FPS*.15)/(FPS*.4),0,1);
           if(ia<=0)return;
-          var col=i%2, row=Math.floor(i/2);
-          var cx2=cpX0+col*(cpW+8), cy2=cpY0+row*(cpH+8);
+          var cy2=cpY0+i*(cpH+6);
           ctx.globalAlpha=ia;
-          glass(cx2,cy2,cpW,cpH,10);
-          // Split icon and text
-          var parts=pt.match(/^(\S+)\s(.+)$/);
-          if(parts){
-            ctx.font='20px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-            ctx.fillText(parts[1],cx2+10,cy2+cpH/2);
-            ctx.textBaseline='alphabetic';
-            ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
-            var ptext=parts[2];
-            if(ctx.measureText(ptext).width>cpW-48){
-              var ws2=ptext.split(' '), mid2=Math.ceil(ws2.length/2);
-              ctx.fillText(ws2.slice(0,mid2).join(' '),cx2+36,cy2+18);
-              ctx.fillText(ws2.slice(mid2).join(' '),cx2+36,cy2+32);
-            } else {
-              ctx.fillText(ptext,cx2+36,cy2+cpH/2-5);
-            }
-          }
+          glass(12,cy2,W-24,cpH,10);
+          var pp=pt.match(/^(\S+)\s(.+)$/);
+          if(pp){ row(pp[1], pp[2], 12, cy2, W-24, cpH, c.text, 13); }
+          else { row('', pt, 12, cy2, W-24, cpH, c.text, 13); }
           ctx.globalAlpha=1;
         });
 
@@ -10249,7 +10266,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillText('that.',W/2,H*.19+(W>500?38:28)+su.y);
         ctx.globalAlpha=1;
 
-        // Problems solved list
+        // Problems solved — full width, icon+text perfectly aligned
         var rowH=50, listY=H*.33;
         displayProblems.slice(0,4).forEach(function(pt,i){
           var ia=clamp((f-FPS*.42-i*FPS*.16)/(FPS*.4),0,1);
@@ -10257,12 +10274,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           var ry=listY+i*(rowH+6);
           ctx.globalAlpha=ia;
           glass(12,ry,W-24,rowH,10);
-          ctx.font='18px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-          ctx.fillText('✅',22,ry+rowH/2);
-          ctx.textBaseline='alphabetic';
           var solved=pt.replace(/^[^a-zA-Z]+/,'').trim();
-          ctx.fillStyle=c.text; ctx.font='bold 12px Inter,sans-serif'; ctx.textAlign='left';
-          ctx.fillText(solved,46,ry+rowH/2-4);
+          row('✅', solved, 12, ry, W-24, rowH, c.text, 13);
           ctx.globalAlpha=1;
         });
 
@@ -10307,26 +10320,17 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillText(biz+' special',W/2,H*.19+(W>500?36:28)+su.y);
         ctx.globalAlpha=1;
 
-        // 2x2 benefit grid
-        var cw=(W-32)/2, ch=58, cx0=12, cy0=H*.33;
+        // 2x2 benefit grid — row() keeps icon+text aligned
+        var cw=(W-32)/2, ch=62, cx0=12, cy0=H*.33;
         displayBenefits.slice(0,4).forEach(function(sol,i){
           var ia=clamp((f-FPS*.45-i*FPS*.14)/(FPS*.4),0,1);
           if(ia<=0)return;
-          var col=i%2, row=Math.floor(i/2);
-          var cx=cx0+col*(cw+8), cy=cy0+row*(ch+8);
+          var col=i%2, r4=Math.floor(i/2);
+          var cx=cx0+col*(cw+8), cy=cy0+r4*(ch+8);
           ctx.globalAlpha=ia;
           glass(cx,cy,cw,ch,10);
           var ico=displayBenefitIcons[i]||'⭐';
-          ctx.font='18px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-          ctx.fillText(ico,cx+10,cy+ch/2);
-          ctx.textBaseline='alphabetic';
-          ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
-          var bt=sol;
-          if(ctx.measureText(bt).width>cw-38){
-            var bws=bt.split(' '),bm=Math.ceil(bws.length/2);
-            ctx.fillText(bws.slice(0,bm).join(' '),cx+30,cy+16);
-            ctx.fillText(bws.slice(bm).join(' '),cx+30,cy+32);
-          } else { ctx.fillText(bt,cx+30,cy+ch/2-4); }
+          row(ico, sol, cx, cy, cw, ch, c.text, 12);
           ctx.globalAlpha=1;
         });
 
@@ -10371,25 +10375,15 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha=1;
 
         // 4 benefits quick-fire
-        var bfw=(W-32)/2, bfh=50, bfx0=12, bfy0=H*.38;
+        var bfw=(W-32)/2, bfh=56, bfx0=12, bfy0=H*.38;
         displayBenefits.slice(0,4).forEach(function(b,i){
           var ia=clamp((f-FPS*.52-i*FPS*.1)/(FPS*.38),0,1);
           if(ia<=0)return;
-          var col=i%2,row=Math.floor(i/2);
+          var col=i%2, r5=Math.floor(i/2);
+          var bfx=bfx0+col*(bfw+8), bfy=bfy0+r5*(bfh+6);
           ctx.globalAlpha=ia;
-          glass(bfx0+col*(bfw+8),bfy0+row*(bfh+6),bfw,bfh,10);
-          ctx.fillStyle=c.accent; ctx.font='14px serif'; ctx.textAlign='center';
-          ctx.textBaseline='middle';
-          ctx.fillText(displayBenefitIcons[i]||'✅',bfx0+col*(bfw+8)+16,bfy0+row*(bfh+6)+bfh/2);
-          ctx.textBaseline='alphabetic';
-          ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
-          var bt=b; if(ctx.measureText(bt).width>bfw-36){
-            var bws=bt.split(' '),bm=Math.ceil(bws.length/2);
-            ctx.fillText(bws.slice(0,bm).join(' '),bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+18);
-            ctx.fillText(bws.slice(bm).join(' '),bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+34);
-          } else {
-            ctx.fillText(bt,bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+bfh/2-4);
-          }
+          glass(bfx,bfy,bfw,bfh,10);
+          row(displayBenefitIcons[i]||'✅', b, bfx, bfy, bfw, bfh, c.text, 12);
           ctx.globalAlpha=1;
         });
 
@@ -10517,7 +10511,7 @@ async function downloadVadVideo() {
     var chunks = [];
     var recorder = new MediaRecorder(stream, {
       mimeType: mimeType,
-      videoBitsPerSecond: 8000000 // higher bitrate = sharper video
+      videoBitsPerSecond: 12000000 // 12Mbps for crisp text
     });
     recorder.ondataavailable = function(e) {
       if (e.data && e.data.size > 0) chunks.push(e.data);
