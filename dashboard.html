@@ -10016,18 +10016,35 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       function slideUp(fr,dur){ var t=easeOut(clamp(fr/dur,0,1)); return {a:t,y:(1-t)*22}; }
 
       function drawMesh(alpha) {
+        // Solid base — crisp, never blurry
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0,0,W,H);
+
         ctx.globalAlpha = alpha||1;
-        (c.meshes||[]).forEach(function(m){
+        // Small, tight accent blobs — accent only, no blur needed
+        (c.meshes||[]).forEach(function(m,mi){
           var gx=(m.x/100)*W, gy=(m.y/100)*H;
-          var gr=Math.max((m.w/100)*W,(m.h/100)*H)*0.55;
-          var g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
-          g.addColorStop(0,m.color); g.addColorStop(1,'rgba(0,0,0,0)');
-          ctx.fillStyle=g;
+          // Smaller radius = crisper, less muddy
+          var gr = Math.min((m.w/100)*W,(m.h/100)*H) * 0.38;
+          var g = ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+          var col = m.color.replace('rgba(','').replace(')','').split(',');
+          var r=col[0],g2=col[1],b=col[2];
+          var a = parseFloat(col[3]||0.3) * 0.7; // reduce opacity for subtlety
+          g.addColorStop(0, 'rgba('+r+','+g2+','+b+','+a+')');
+          g.addColorStop(0.5,'rgba('+r+','+g2+','+b+','+(a*0.4)+')');
+          g.addColorStop(1, 'rgba('+r+','+g2+','+b+',0)');
+          ctx.fillStyle = g;
           ctx.beginPath();
-          ctx.ellipse(gx,gy,(m.w/100)*W*0.5,(m.h/100)*H*0.5,0,0,Math.PI*2);
+          ctx.ellipse(gx,gy,gr*0.9,gr*0.75,mi*0.5,0,Math.PI*2);
           ctx.fill();
         });
-        ctx.globalAlpha=1;
+        // Very subtle vignette — just a hint of depth
+        var vig = ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.75);
+        vig.addColorStop(0,'rgba(0,0,0,0)');
+        vig.addColorStop(1,'rgba(0,0,0,0.15)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0,0,W,H);
+        ctx.globalAlpha = 1;
       }
 
       function drawFloatIcons(a, foff) {
@@ -10079,15 +10096,17 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       function drawS1(f) {
         ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
         // Photo bg
+        drawMesh(1); // solid base + blobs
         if(bgImg){
-          ctx.globalAlpha=clamp(f/(FPS*1.2),0,0.3);
+          // Photo very subtle, on top of solid base
+          ctx.globalAlpha=clamp(f/(FPS*1.5),0,0.15);
           ctx.drawImage(bgImg,0,0,W,H);
           ctx.globalAlpha=1;
+          // Strong overlay to keep it clean
           var g=ctx.createLinearGradient(0,0,0,H);
-          g.addColorStop(0,c.bg+'cc');g.addColorStop(.5,c.bg+'55');g.addColorStop(1,c.bg+'cc');
+          g.addColorStop(0,c.bg+'ee');g.addColorStop(.4,c.bg+'99');g.addColorStop(1,c.bg+'ee');
           ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
         }
-        drawMesh(1);
         drawFloatIcons(clamp(f/(FPS*.6),0,1),f);
 
         // Hero product image or emoji
@@ -10098,6 +10117,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           if(heroImageUrl && (productImg || thumbUrl)){
             var sz=W>500?180:140;
             ctx.beginPath(); ctx.roundRect(-sz/2,-sz/2,sz,sz,18); ctx.clip();
+            ctx.imageSmoothingEnabled=true;
+            ctx.imageSmoothingQuality='high';
             ctx.drawImage(productImg,-sz/2,-sz/2,sz,sz);
           } else {
             ctx.font=(W>500?90:68)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -10140,7 +10161,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
       // ── SCENE 2: CUSTOMER PAIN / PROBLEM ─────────────────
       function drawS2(f) {
-        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
+        drawMesh(1); // fills solid bg + accent blobs
 
         var su=slideUp(f-FPS*.05,FPS*.55);
         // "FEELING THIS?" eyebrow
@@ -10203,7 +10224,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
       // ── SCENE 3: YOUR SOLUTION ────────────────────────────
       function drawS3(f) {
-        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
+        drawMesh(1); // fills solid bg + accent blobs
         drawFloatIcons(0.15,f+S2e);
 
         // Eyebrow
@@ -10269,7 +10290,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
       // ── SCENE 4: SUCCESS / SOCIAL PROOF ──────────────────
       function drawS4(f) {
-        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
+        drawMesh(1); // fills solid bg + accent blobs
 
         // Burst icons
         icons.slice(0,6).forEach(function(ic,i){
@@ -10324,7 +10345,6 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       // ── SCENE 5: CTA — CONTACT YOUR BUSINESS ─────────────
       function drawS5(f) {
         ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
-        if(bgImg){ ctx.globalAlpha=.1; ctx.drawImage(bgImg,0,0,W,H); ctx.globalAlpha=1; }
         drawMesh(1);
         drawFloatIcons(.2,f+S4e);
 
@@ -10422,7 +10442,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     // Load images
     if(thumbUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=thumbUrl; }
     else if(productImageUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=productImageUrl; }
-    if(c.photoUrl){ toLoad++; bgImg=new Image(); bgImg.crossOrigin='anonymous'; bgImg.onload=bgImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; bgImg.src=c.photoUrl; }
+    // Skip Unsplash photo in canvas (CORS blocks it) - use gradient mesh instead
+    // bgImg stays null, mesh gradients provide the background
     if(toLoad===0) startRender();
   });
 }
@@ -10496,7 +10517,7 @@ async function downloadVadVideo() {
     var chunks = [];
     var recorder = new MediaRecorder(stream, {
       mimeType: mimeType,
-      videoBitsPerSecond: 4000000
+      videoBitsPerSecond: 8000000 // higher bitrate = sharper video
     });
     recorder.ondataavailable = function(e) {
       if (e.data && e.data.size > 0) chunks.push(e.data);
