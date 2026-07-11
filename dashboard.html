@@ -2422,6 +2422,69 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             </div>
           </div>
 
+          <!-- Problem / Pain Points -->
+          <div class="card">
+            <div class="card-title">😩 What Problem Do You Solve?</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">What pain does your customer feel before finding you? Shown in Scene 2 of your ad.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <input id="vad-p1" placeholder="e.g. Hard to find affordable rentals" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              <input id="vad-p2" placeholder="e.g. Agents don't respond quickly" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              <input id="vad-p3" placeholder="e.g. Overpriced listings everywhere" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              <input id="vad-p4" placeholder="e.g. Wasted weekends viewing wrong homes" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              <button onclick="generateVadProblems()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;width:100%;transition:all .15s;"
+                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+                ✨ Auto-Generate from Business Profile
+              </button>
+            </div>
+          </div>
+
+          <!-- Thumbnail -->
+          <div class="card">
+            <div class="card-title">🖼️ Video Thumbnail</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Optional — add a custom thumbnail shown at the start of your video.</div>
+            <div id="vad-thumb-drop" onclick="document.getElementById('vad-thumb-input').click()"
+              style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);"
+              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Upload thumbnail image</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG or PNG · Appears as video cover</div>
+            </div>
+            <input type="file" id="vad-thumb-input" accept="image/*" style="display:none" onchange="uploadVadThumbnail(this)">
+            <div id="vad-thumb-preview" style="display:none;margin-top:10px;position:relative;">
+              <img id="vad-thumb-img" style="width:100%;max-height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+              <button onclick="clearVadThumbnail()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">✕</button>
+              <div style="position:absolute;bottom:6px;left:6px;background:rgba(109,94,248,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;">✓ Thumbnail set</div>
+            </div>
+          </div>
+
+          <!-- Background Music -->
+          <div class="card">
+            <div class="card-title">🎵 Background Music</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Free royalty-free music for your video ad. No copyright issues.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <select id="vad-music" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;cursor:pointer;">
+                <option value="">🔇 No music</option>
+                <option value="upbeat">⚡ Upbeat & Energetic</option>
+                <option value="corporate">💼 Corporate & Professional</option>
+                <option value="inspiring">🌟 Inspiring & Motivational</option>
+                <option value="relaxed">☀️ Relaxed & Friendly</option>
+                <option value="luxury">💎 Luxury & Elegant</option>
+                <option value="tech">🚀 Tech & Modern</option>
+              </select>
+              <div id="vad-music-preview" style="display:none;align-items:center;gap:10px;">
+                <button onclick="previewVadMusic()" id="vad-music-play-btn"
+                  style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0;transition:all .15s;"
+                  onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                  onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+                  ▶ Preview
+                </button>
+                <div style="font-size:11px;color:var(--text3);">Click to hear a sample</div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);">All tracks are royalty-free via Mixkit — safe for commercial use</div>
+            </div>
+          </div>
+
           <!-- Key Benefits -->
           <div class="card">
             <div class="card-title">🏆 Key Benefits / Features</div>
@@ -9484,11 +9547,18 @@ function generateVideoAd() {
       { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
       { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
     ].filter(function(b){ return b.text.trim(); });
+    var previewProblems = [
+      (document.getElementById('vad-p1')||{}).value||'',
+      (document.getElementById('vad-p2')||{}).value||'',
+      (document.getElementById('vad-p3')||{}).value||'',
+      (document.getElementById('vad-p4')||{}).value||'',
+    ].filter(function(p){ return p.trim(); });
     var previewWebsite = (document.getElementById('vad-website')||{}).value
       || (_bizProfile && _bizProfile.website)
       || (_autoConfig && _autoConfig.website)
       || '';
-    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite);
+    var previewMusic = (document.getElementById('vad-music')||{}).value || '';
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, _vadThumbnailUrl);
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   })
   .catch(function() {
@@ -9499,7 +9569,7 @@ function generateVideoAd() {
   });
 }
 
-function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl, previewBenefits, previewWebsite) {
+function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, previewThumb) {
   var ph = document.getElementById('vad-placeholder');
   var iframe = document.getElementById('vad-iframe');
   var wrap = document.getElementById('vad-preview-wrap');
@@ -9541,7 +9611,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
-  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '');
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '', previewProblems || [], previewMusic || '', previewThumb || _vadThumbnailUrl || '');
   _vadIframeDoc = adHTML;
   if (iframe) {
     iframe.srcdoc = adHTML;
@@ -9561,7 +9631,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
-function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite) {
+function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite, adProblems, adMusic, adThumb) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
   var W = w;
@@ -9612,7 +9682,9 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows and delays','😤 Sloppy workmanship'],
     default:['😩 Hard to find quality','💸 Overpriced everywhere','⏰ Wasting time searching','😤 Disappointed before']
   };
-  var painPts = PAIN[_vadTheme] || PAIN.default;
+  var painPts = (adProblems && adProblems.length >= 2)
+    ? adProblems.slice(0,4)
+    : (PAIN[_vadTheme] || PAIN.default);
 
   // Solutions per industry
   var SOL = {
@@ -9640,8 +9712,9 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   var siteName = dotIdx > -1 ? _rw.slice(0, dotIdx) : _rw;
   var siteDot  = dotIdx > -1 ? _rw.slice(dotIdx) : '.com';
 
-  var heroHTML = productImageUrl
-    ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?190:150)+'px;height:'+(w>500?190:150)+'px;object-fit:cover;border-radius:20px;border:3px solid '+gbd+';opacity:0;">'
+  var _heroImg = adThumb || productImageUrl;
+  var heroHTML = _heroImg
+    ? '<img id="hi" src="'+_heroImg+'" style="width:'+(w>500?190:150)+'px;height:'+(w>500?190:150)+'px;object-fit:cover;border-radius:20px;border:3px solid '+gbd+';opacity:0;">'
     : '<div id="hi" style="font-size:'+(w>500?96:72)+'px;line-height:1;opacity:0;">'+emoji+'</div>';
 
   var platChips = platforms.map(function(p){
@@ -9754,10 +9827,13 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'<div id="s5btn" style="background:'+c.accent+';border-radius:12px;padding:14px 28px;font-size:14px;font-weight:800;color:#000;width:100%;max-width:360px;opacity:0;cursor:pointer;">📞 Contact Us Today</div>'
     +'</div></div>'
 
+    +(adMusic ? '<audio id="bg-music" loop style="display:none"><source src="'+(({upbeat:"https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",corporate:"https://assets.mixkit.co/music/preview/mixkit-corporate-business-show-574.mp3",inspiring:"https://assets.mixkit.co/music/preview/mixkit-inspiring-ambiance-529.mp3",relaxed:"https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3",luxury:"https://assets.mixkit.co/music/preview/mixkit-cinematic-mystery-528.mp3",tech:"https://assets.mixkit.co/music/preview/mixkit-future-bass-vibes-959.mp3"})[adMusic]||'')+'" type="audio/mp3"></audio>' : '')
     +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
 
     +'<script>'
     +'var TM=[];'
+    +'var _bgm=document.getElementById("bg-music");'
+    +'if(_bgm){_bgm.volume=0.18;_bgm.play().catch(function(){});}'
     +'function q(id){return document.getElementById(id);}'
     +'function show(id,ms,kf,dur){TM.push(setTimeout(function(){var e=q(id);if(!e)return;e.style.opacity="1";e.style.animation=(kf||"sU")+" "+(dur||".55s")+" ease both";},ms));}'
     +'function showAll(sel,base,step,kf){document.querySelectorAll(sel).forEach(function(e,i){TM.push(setTimeout(function(){e.style.opacity="1";e.style.animation=(kf||"sU")+" .45s ease both";},base+i*(step||80)));});}'
@@ -9850,7 +9926,7 @@ function resetDownloadBtn(btn) {
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
-function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, onProgress) {
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, thumbUrl, onProgress) {
   return new Promise(function(resolve, reject) {
     var W = canvas.width, H = canvas.height;
     var ctx = canvas.getContext('2d');
@@ -9913,6 +9989,11 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     var displayBenefits = (benefits && benefits.length >= 2)
       ? benefits.map(function(b){ return b.text; })
       : solutions;
+    var displayBenefitIcons = (benefits && benefits.length >= 2)
+      ? benefits.map(function(b){ return b.icon; })
+      : ['✅','✅','✅','✅'];
+    var displayProblems = (problems && problems.length >= 2) ? problems : painPoints;
+    var heroImageUrl = thumbUrl || productImageUrl;
 
     var displayBenefitIcons = (benefits && benefits.length >= 2)
       ? benefits.map(function(b){ return b.icon; })
@@ -10014,7 +10095,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         var hs=0.4+easeOut(clamp((f-3)/(FPS*.9),0,1))*0.6;
         if(ha>0){
           ctx.globalAlpha=ha; ctx.save(); ctx.translate(W/2,H*.25); ctx.scale(hs,hs);
-          if(productImg){
+          if(heroImageUrl && (productImg || thumbUrl)){
             var sz=W>500?180:140;
             ctx.beginPath(); ctx.roundRect(-sz/2,-sz/2,sz,sz,18); ctx.clip();
             ctx.drawImage(productImg,-sz/2,-sz/2,sz,sz);
@@ -10086,7 +10167,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
         // 4 pain points as cards
         var cpW=(W-32)/2, cpH=54, cpX0=12, cpY0=H*.44;
-        painPoints.slice(0,4).forEach(function(pt,i){
+        displayProblems.slice(0,4).forEach(function(pt,i){
           var ia=clamp((f-FPS*.65-i*FPS*.15)/(FPS*.45),0,1);
           if(ia<=0)return;
           var col=i%2, row=Math.floor(i/2);
@@ -10339,7 +10420,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     }
 
     // Load images
-    if(productImageUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=productImageUrl; }
+    if(thumbUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=thumbUrl; }
+    else if(productImageUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=productImageUrl; }
     if(c.photoUrl){ toLoad++; bgImg=new Image(); bgImg.crossOrigin='anonymous'; bgImg.onload=bgImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; bgImg.src=c.photoUrl; }
     if(toLoad===0) startRender();
   });
@@ -10384,6 +10466,14 @@ async function downloadVadVideo() {
       { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
       { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
     ].filter(function(b){ return b.text.trim(); });
+    var problems = [
+      (document.getElementById('vad-p1')||{}).value||'',
+      (document.getElementById('vad-p2')||{}).value||'',
+      (document.getElementById('vad-p3')||{}).value||'',
+      (document.getElementById('vad-p4')||{}).value||'',
+    ].filter(function(p){ return p.trim(); });
+    var music = (document.getElementById('vad-music')||{}).value || '';
+    var thumbUrl = _vadThumbnailUrl || '';
     var website = (document.getElementById('vad-website')||{}).value || (_bizProfile && _bizProfile.website) || (_autoConfig && _autoConfig.website) || '';
     if (!website && biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
     if (website && !website.includes('.')) website = website + '.com';
@@ -10416,7 +10506,7 @@ async function downloadVadVideo() {
     // Render the ad onto the canvas
     await renderAdToCanvas(
       canvas, c, biz, product, tagline, emojiVal, cap, plats, _vadProductImageUrl || '',
-      benefits, website,
+      benefits, website, problems, music, thumbUrl,
       function(progress, frame, total) {
         var pct = 5 + Math.round(progress * 78);
         setVadProgressBar(pct);
@@ -10737,6 +10827,132 @@ async function generateVadBenefits() {
     btns.forEach(function(b){ b.disabled = false; b.placeholder = b.placeholder.replace('✨ Generating...',''); });
     showToast('Could not generate benefits: ' + e.message, 'error');
   }
+}
+
+// ── PROBLEM GENERATOR ────────────────────────────────────
+async function generateVadProblems() {
+  var biz     = (document.getElementById('vad-bizname')  ||{}).value || (_bizProfile&&_bizProfile.name) || '';
+  var product = (document.getElementById('vad-product')  ||{}).value || '';
+  var desc    = (_bizProfile&&_bizProfile.description)   || (_autoConfig&&_autoConfig.description) || '';
+
+  if (!biz && !desc) { showToast('Fill in business name first', 'error'); return; }
+
+  ['vad-p1','vad-p2','vad-p3','vad-p4'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) { el.placeholder = '✨ Generating...'; el.disabled = true; }
+  });
+
+  try {
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        prompt: 'What are 4 problems or pain points that customers of this business face BEFORE finding them?'
+          + ' Business: ' + biz
+          + (product ? '. Product/Service: ' + product : '')
+          + (desc ? '. Description: ' + desc : '')
+          + '. Output ONLY 4 lines, one problem per line, max 6 words each, start with a relevant emoji. No numbers, no explanation.'
+      })
+    });
+    var data = await resp.json();
+    var lines = (data.post||'').split('\n')
+      .map(function(l){ return l.replace(/^[-•*\d.]+\s*/,'').trim(); })
+      .filter(function(l){ return l.length > 3; })
+      .slice(0,4);
+
+    ['vad-p1','vad-p2','vad-p3','vad-p4'].forEach(function(id, i){
+      var el = document.getElementById(id);
+      if (el) { el.value = lines[i]||''; el.disabled = false; el.placeholder = ''; }
+    });
+    showToast('✅ Problems generated from your business profile!', 'success');
+  } catch(e) {
+    ['vad-p1','vad-p2','vad-p3','vad-p4'].forEach(function(id){
+      var el = document.getElementById(id); if(el){ el.disabled=false; el.placeholder=''; }
+    });
+    showToast('Could not generate problems', 'error');
+  }
+}
+
+// ── THUMBNAIL ─────────────────────────────────────────────
+var _vadThumbnailUrl = '';
+
+async function uploadVadThumbnail(input) {
+  var file = input.files[0];
+  if (!file) return;
+  showToast('Uploading thumbnail...', 'success');
+  try {
+    var url = await uploadFileToR2(file, 'video-ads');
+    if (url) {
+      _vadThumbnailUrl = url;
+      var img = document.getElementById('vad-thumb-img');
+      var preview = document.getElementById('vad-thumb-preview');
+      var drop = document.getElementById('vad-thumb-drop');
+      if (img) img.src = url;
+      if (preview) preview.style.display = 'block';
+      if (drop) drop.style.display = 'none';
+      showToast('✅ Thumbnail uploaded!', 'success');
+    }
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+}
+
+function clearVadThumbnail() {
+  _vadThumbnailUrl = '';
+  var img = document.getElementById('vad-thumb-img');
+  var preview = document.getElementById('vad-thumb-preview');
+  var drop = document.getElementById('vad-thumb-drop');
+  if (img) img.src = '';
+  if (preview) preview.style.display = 'none';
+  if (drop) drop.style.display = 'block';
+  var input = document.getElementById('vad-thumb-input');
+  if (input) input.value = '';
+}
+
+// ── BACKGROUND MUSIC ──────────────────────────────────────
+// Curated Mixkit tracks — free for commercial use, load in browser
+var VAD_MUSIC_TRACKS = {
+  upbeat:    'https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3',
+  corporate: 'https://assets.mixkit.co/music/preview/mixkit-corporate-business-show-574.mp3',
+  inspiring: 'https://assets.mixkit.co/music/preview/mixkit-inspiring-ambiance-529.mp3',
+  relaxed:   'https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3',
+  luxury:    'https://assets.mixkit.co/music/preview/mixkit-cinematic-mystery-528.mp3',
+  tech:      'https://assets.mixkit.co/music/preview/mixkit-future-bass-vibes-959.mp3'
+};
+
+var _vadMusicAudio = null;
+
+// Show/hide preview button when music is selected
+document.addEventListener('DOMContentLoaded', function(){
+  var sel = document.getElementById('vad-music');
+  if (sel) sel.addEventListener('change', function(){
+    var preview = document.getElementById('vad-music-preview');
+    if (preview) preview.style.display = this.value ? 'flex' : 'none';
+    // Stop any playing audio
+    if (_vadMusicAudio) { _vadMusicAudio.pause(); _vadMusicAudio = null; }
+    var btn = document.getElementById('vad-music-play-btn');
+    if (btn) btn.textContent = '▶ Preview';
+  });
+});
+
+function previewVadMusic() {
+  var sel = document.getElementById('vad-music');
+  var btn = document.getElementById('vad-music-play-btn');
+  if (!sel || !sel.value) return;
+
+  if (_vadMusicAudio && !_vadMusicAudio.paused) {
+    _vadMusicAudio.pause();
+    if (btn) btn.textContent = '▶ Preview';
+    return;
+  }
+
+  var url = VAD_MUSIC_TRACKS[sel.value];
+  if (!url) return;
+
+  _vadMusicAudio = new Audio(url);
+  _vadMusicAudio.volume = 0.4;
+  _vadMusicAudio.play().catch(function(){ showToast('Could not play preview — try generating the ad', 'error'); });
+  if (btn) btn.textContent = '⏸ Stop';
+  _vadMusicAudio.onended = function(){
+    if (btn) btn.textContent = '▶ Preview';
+  };
 }
 
 // ── TAGLINE GENERATOR ─────────────────────────────────────
@@ -11079,6 +11295,10 @@ async function autoFillVadFromProfile() {
       });
 
       showToast('✅ Business profile loaded! Review and generate your ad.', 'success');
+
+      // Also generate problems if fields are empty
+      var p1 = document.getElementById('vad-p1');
+      if (p1 && !p1.value) generateVadProblems();
     } catch(e) {
       // Silent fail — fields already filled from profile
       console.log('Auto-generate failed:', e.message);
