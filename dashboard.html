@@ -9131,6 +9131,30 @@ function selectVadFormat(f) {
 }
 
 function getVadThemeColors(theme) {
+  // Curated Unsplash photos per industry — loaded in browser iframe (not server-side)
+  var PHOTOS = {
+    ecommerce:    'photo-1483985988355-763728e1935b', // fashion shopping
+    realestate:   'photo-1560518883-ce09059eeffa', // luxury house
+    automotive:   'photo-1492144534655-ae79c964c9d7', // sleek car
+    food:         'photo-1504674900247-0877df9cc836', // beautiful food
+    fitness:      'photo-1534438327276-14e5300c3a48', // gym weights
+    beauty:       'photo-1522337360788-8b13dee7a37e', // makeup beauty
+    medical:      'photo-1519494026892-80bbd2d6fd0d', // hospital clean
+    education:    'photo-1523050854058-8df90110c9f1', // university campus
+    professional: 'photo-1497366216548-37526070297c', // office meeting
+    homeservices: 'photo-1558618666-fcd25c85cd64', // beautiful home
+    technology:   'photo-1518770660439-4636190af475', // circuit neon
+    travel:       'photo-1488646953014-85cb44e25828', // travel adventure
+    events:       'photo-1530103862676-de8c9debad1d', // wedding celebration
+    pets:         'photo-1548199973-03cce0bbc87b',   // cute dogs playing
+    finance:      'photo-1611974789855-9c2a0a7236a3', // stock charts
+    marketing:    'photo-1460925895917-afdab827c52f', // digital marketing
+    manufacturing:'photo-1565043589221-1a6fd9ae45c7', // factory floor
+    agriculture:  'photo-1500937386664-56d1dfef3854', // golden wheat farm
+    family:       'photo-1536640712-4d4c36ff0e4e', // happy family kids
+    entertainment:'photo-1511512578047-dfb367046420', // gaming setup neon
+    nonprofit:    'photo-1559027615-cd4628902d4a', // community helping
+  };
   var T = {
     // ─── E-COMMERCE ──────────────────────────────────
     ecommerce:{
@@ -9259,7 +9283,11 @@ function getVadThemeColors(theme) {
       accent:'#f9a8d4',accentSolid:'#ec4899',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(249,168,212,0.22)'
     }
   };
-  return T[theme] || T.ecommerce;
+  var t = T[theme] || T.ecommerce;
+  // Attach photo URL (fetched in browser, not server)
+  var photoId = PHOTOS[theme] || PHOTOS.ecommerce;
+  t.photoUrl = 'https://images.unsplash.com/' + photoId + '?auto=format&fit=crop&w=1080&q=80';
+  return t;
 }
 
 // Map product keywords → theme key
@@ -9480,6 +9508,11 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
 
     // ── S1: HERO ─────────────────────────────────────────
     +'<div class="scene active" id="s1" style="position:relative;">'
+    // Photo background
+    +'<div style="position:absolute;inset:0;z-index:0;">'
+    +'<img src="'+c.photoUrl+'" style="width:100%;height:100%;object-fit:cover;opacity:0;" id="bg-img" onload="this.style.opacity=\'0.35\'">'
+    +'<div style="position:absolute;inset:0;background:linear-gradient(to bottom,'+c.bg+'aa 0%,'+c.bg+'66 40%,'+c.bg+'cc 100%);"></div>'
+    +'</div>'
     +'<div class="mesh">'+meshHTML+'</div>'
     // Floating theme icons
     +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;">'+floatingIcons(icons)+'</div>'
@@ -9552,6 +9585,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
 
     // ── S5: CTA ───────────────────────────────────────────
     +'<div class="scene" id="s5" style="position:relative;">'
+    +'<div style="position:absolute;inset:0;z-index:0;">'
+    +'<img src="'+c.photoUrl+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(2px);">'
+    +'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>'
+    +'</div>'
     +'<div class="mesh">'+meshHTML+'</div>'
     +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;">'+floatingIcons(icons.slice(4).concat(icons.slice(0,4)))+'</div>'
     +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
