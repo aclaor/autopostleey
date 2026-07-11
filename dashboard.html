@@ -2198,9 +2198,15 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
       <div class="page-header">
         <div>
           <div class="page-title">🎬 Video Ad Maker</div>
-          <div class="page-sub">Generate a captivating animated video ad for your business — download and auto-post as Reels</div>
+          <div class="page-sub">Auto-fills from your Business Profile — generate a captivating ad in seconds</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="_vadProfileLoaded=false;autoFillVadFromProfile();"
+            style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;transition:all .2s;"
+            onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+            🔄 Reload Profile
+          </button>
           <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:10px;font-weight:800;padding:4px 12px;border-radius:100px;letter-spacing:1px;">✨ PRO FEATURE</span>
         </div>
       </div>
@@ -10844,51 +10850,140 @@ function clearVadProductImage() {
   if (drop) drop.style.display = 'block';
 }
 
-// Auto-fill from business profile when Video Ad page opens
+// ── SMART AUTO-FILL FROM BUSINESS PROFILE ───────────────
 var _vadProfileLoaded = false;
+
 function initVideoAdPage() {
   if (_vadProfileLoaded) return;
   _vadProfileLoaded = true;
+  autoFillVadFromProfile();
+}
 
-  var bizField    = document.getElementById('vad-bizname');
-  var productField = document.getElementById('vad-product');
-  var emojiField  = document.getElementById('vad-emoji');
+async function autoFillVadFromProfile() {
+  // Pull from _bizProfile (business profile page) or _autoConfig (autoposter config)
+  var profile = _bizProfile || {};
+  var config  = _autoConfig  || {};
 
-  // Fill from _autoConfig first
-  if (_autoConfig) {
-    if (bizField && !bizField.value) bizField.value = _autoConfig.bizname || '';
-    if (productField && !productField.value) productField.value = _autoConfig.description ? _autoConfig.description.split('.')[0] : '';
+  var bizname  = profile.name        || config.bizname     || '';
+  var desc     = profile.description || config.description || '';
+  var industry = profile.industry    || '';
+  var website  = profile.website     || config.website     || '';
+  var audience = profile.audience    || '';
+  var location = profile.location    || '';
+  var phone    = profile.phone       || '';
+  var email    = profile.email       || '';
+
+  // ── Step 1: Fill basic fields ─────────────────────────
+  var f = function(id, val) {
+    var el = document.getElementById(id);
+    if (el && val) el.value = val;
+  };
+
+  f('vad-bizname', bizname);
+
+  // Product = first sentence of description, or full description if short
+  if (desc) {
+    var prod = desc.split(/[.!?]/)[0].trim();
+    if (prod.length > 60) prod = prod.slice(0, 57) + '...';
+    f('vad-product', prod);
   }
-  // Then _bizProfile
-  if (_bizProfile) {
-    if (bizField && !bizField.value) bizField.value = _bizProfile.name || '';
-  }
 
-  // Auto-fill website from biz profile
-  var websiteField = document.getElementById('vad-website');
-  if (websiteField && !websiteField.value) {
-    var profileWebsite = (_bizProfile && _bizProfile.website) || (_autoConfig && _autoConfig.website) || '';
-    if (profileWebsite) websiteField.value = profileWebsite.replace(/^https?:\/\//,'');
-  }
+  // Website — strip protocol
+  if (website) f('vad-website', website.replace(/^https?:\/\//,'').replace(/\/$/,''));
 
-  // Auto-detect industry theme (silent — no scroll on page open)
+  // ── Step 2: Auto-detect industry theme ───────────────
+  var combined = (bizname + ' ' + desc + ' ' + industry).toLowerCase();
   var autoTheme = detectIndustryTheme(
-    (productField && productField.value) || '',
-    (bizField && bizField.value) || '',
-    (_autoConfig && _autoConfig.description) || ''
+    (document.getElementById('vad-product')||{}).value || '',
+    bizname,
+    desc + ' ' + industry
   );
-  selectVadTheme(autoTheme, true);
+  selectVadTheme(autoTheme, true); // silent
 
-  // Auto-suggest emoji based on profile
+  // ── Step 3: Pick emoji from industry/description ──────
+  var emojiField = document.getElementById('vad-emoji');
   if (emojiField && !emojiField.value) {
-    var combined = ((bizField && bizField.value) + ' ' + (productField && productField.value)).toLowerCase();
+    // Try EMOJI_MAP first
+    var emojiFound = false;
     for (var key in EMOJI_MAP) {
       if (key !== 'default' && combined.indexOf(key) !== -1) {
         emojiField.value = EMOJI_MAP[key][0];
+        emojiFound = true;
         break;
       }
     }
-    if (!emojiField.value) emojiField.value = '✨';
+    // Fallback: pick from theme icons
+    if (!emojiFound) {
+      var themeIcons = ({
+        ecommerce:'🛍️',realestate:'🏠',automotive:'🚗',food:'🍔',fitness:'💪',
+        beauty:'💄',medical:'🏥',education:'📚',professional:'💼',homeservices:'🔨',
+        technology:'💻',travel:'✈️',events:'🎉',pets:'🐶',finance:'💰',
+        marketing:'📱',manufacturing:'🏭',agriculture:'🌾',family:'👶',
+        entertainment:'🎮',nonprofit:'❤️'
+      })[autoTheme] || '✨';
+      emojiField.value = themeIcons;
+    }
+  }
+
+  // ── Step 4: AI-generate tagline + benefits in background
+  if (bizname && desc) {
+    showToast('✨ Auto-filling from your business profile...', 'success');
+    try {
+      var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: 'For this business, generate: 1. ONE punchy tagline max 5 words. 2. FOUR key benefits max 4 words each.'
+            + ' Business: ' + bizname
+            + '. Description: ' + desc
+            + (industry ? '. Industry: ' + industry : '')
+            + (audience ? '. Audience: ' + audience : '')
+            + '. Output FORMAT: TAGLINE: [tagline] BENEFIT1: [b1] BENEFIT2: [b2] BENEFIT3: [b3] BENEFIT4: [b4]. Nothing else.'
+        })
+      });
+      var data = await resp.json();
+      var text = (data.post || '').trim();
+
+      // Parse structured output
+      var taglineMatch = text.match(/TAGLINE:\s*(.+)/i);
+      var b1Match = text.match(/BENEFIT1:\s*(.+)/i);
+      var b2Match = text.match(/BENEFIT2:\s*(.+)/i);
+      var b3Match = text.match(/BENEFIT3:\s*(.+)/i);
+      var b4Match = text.match(/BENEFIT4:\s*(.+)/i);
+
+      if (taglineMatch) {
+        var tagEl = document.getElementById('vad-tagline');
+        if (tagEl && !tagEl.value) tagEl.value = taglineMatch[1].trim().replace(/^["']|["']$/g,'');
+      }
+
+      // Industry-specific benefit icons
+      var ICONS_FOR_THEME = {
+        realestate:['🏠','✅','🔑','💡'],food:['🍽️','⭐','🔥','✅'],
+        fitness:['💪','🏆','⚡','✅'],beauty:['✨','💄','⭐','🌸'],
+        medical:['❤️','✅','🏥','🔬'],education:['📚','🎓','✅','💡'],
+        technology:['⚡','🚀','✅','🔮'],travel:['✈️','⭐','🌍','✅'],
+        pets:['🐾','❤️','✅','🏆'],automotive:['🚗','✅','🔧','⭐'],
+        events:['🎉','✅','📸','⭐'],finance:['💰','📈','✅','🏆'],
+        homeservices:['🏠','✅','🔨','⭐'],marketing:['🎯','📊','✅','🚀'],
+        nonprofit:['❤️','🤝','✅','⭐'],default:['⭐','✅','🏆','💡']
+      };
+      var bIcons = ICONS_FOR_THEME[autoTheme] || ICONS_FOR_THEME.default;
+
+      [[b1Match,'vad-b1','vad-b1-ico'],[b2Match,'vad-b2','vad-b2-ico'],
+       [b3Match,'vad-b3','vad-b3-ico'],[b4Match,'vad-b4','vad-b4-ico']].forEach(function(arr,i){
+        if (arr[0]) {
+          var el = document.getElementById(arr[1]);
+          var ico = document.getElementById(arr[2]);
+          if (el) el.value = arr[0][1].trim().replace(/^["']|["']$/g,'');
+          if (ico) ico.textContent = bIcons[i] || '✅';
+        }
+      });
+
+      showToast('✅ Business profile loaded! Review and generate your ad.', 'success');
+    } catch(e) {
+      // Silent fail — fields already filled from profile
+      console.log('Auto-generate failed:', e.message);
+    }
   }
 }
 </script>
