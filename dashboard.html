@@ -2455,8 +2455,8 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s;"
                 onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="font-size:28px;margin-bottom:8px;">⬇️</div>
-                <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download Video</div>
-                <div style="font-size:11px;color:var(--text2);">Save as .webm to your device<br>then post manually</div>
+                <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download MP4</div>
+                <div style="font-size:11px;color:var(--text2);">Works on WhatsApp, TikTok,<br>Instagram & iPhone</div>
               </button>
 
               <!-- Auto-post -->
@@ -9708,113 +9708,253 @@ function replayVadAd() {
   }
 }
 
-function downloadVadVideo() {
-  var iframe = document.getElementById('vad-iframe');
-  if (!iframe || !iframe.contentWindow) {
+// ── VIDEO AD DOWNLOAD — Screen Capture + FFmpeg MP4 ─────────
+var _vadFFmpegLoaded = false;
+var _vadFFmpeg = null;
+
+function setVadProgressBar(pct) {
+  var bar = document.getElementById('vad-progress-bar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+function setVadProgressText(txt) {
+  var el = document.getElementById('vad-progress-text');
+  if (el) el.textContent = txt;
+}
+
+function resetDownloadBtn(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⬇️</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download MP4</div>'
+    + '<div style="font-size:11px;color:var(--text2);">Save to your device<br>Share anywhere instantly</div>';
+}
+
+function showVadProgress(show) {
+  var el = document.getElementById('vad-progress');
+  if (el) el.style.display = show ? 'block' : 'none';
+  if (!show) setVadProgressBar(0);
+}
+
+async function downloadVadVideo() {
+  if (!_vadIframeDoc) {
     showToast('Generate an ad first!', 'error');
     return;
   }
 
   var btn = document.getElementById('vad-download-btn');
-  if (btn) btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:700;color:var(--text);">Recording...</div><div style="font-size:11px;color:var(--text2);">Please wait ~35 seconds</div>';
-
-  var progEl = document.getElementById('vad-progress');
-  var progText = document.getElementById('vad-progress-text');
-  if (progEl) progEl.style.display = 'block';
-  if (progText) progText.textContent = 'Recording video... (35 seconds)';
-  setVadProgressBar(0);
-
-  // Use MediaRecorder to capture the iframe canvas
-  var canvas = document.createElement('canvas');
-  canvas.width = _vadFormat === 'reel' ? 607 : 500;
-  canvas.height = 500;
-
-  // Replay the iframe to record from start
-  if (_vadIframeDoc) {
-    iframe.srcdoc = '';
-    setTimeout(function(){ iframe.srcdoc = _vadIframeDoc; }, 100);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div>'
+      + '<div style="font-size:13px;font-weight:700;color:var(--text);">Starting...</div>';
   }
 
-  setTimeout(function() {
+  showVadProgress(true);
+  setVadProgressBar(2);
+  setVadProgressText('Preparing recording...');
+
+  var adW = _vadFormat === 'reel' ? 607 : 500;
+  var adH = _vadFormat === 'reel' ? 1080 : 500;
+  var AD_DURATION = 33500; // ms
+
+  try {
+    // ── Step 1: Open ad in a popup window for recording ──────
+    setVadProgressText('Opening ad window...');
+    setVadProgressBar(5);
+
+    var popup = window.open('', '_blank',
+      'width=' + adW + ',height=' + adH + ',toolbar=no,menubar=no,scrollbars=no,resizable=no');
+
+    if (!popup) {
+      // Popup blocked — fallback to HTML download
+      throw new Error('popup_blocked');
+    }
+
+    popup.document.open();
+    popup.document.write(_vadIframeDoc);
+    popup.document.close();
+
+    await new Promise(function(res){ setTimeout(res, 800); });
+
+    // ── Step 2: Capture display stream ───────────────────────
+    setVadProgressText('Starting screen capture...');
+    setVadProgressBar(10);
+
+    var stream;
     try {
-      var stream = iframe.contentWindow.document.querySelector('canvas')
-        ? iframe.contentWindow.document.querySelector('canvas').captureStream(30)
-        : null;
-
-      // Fallback: use html2canvas approach via iframe srcdoc
-      if (!stream) {
-        // Direct blob download of the HTML file
-        var html = _vadIframeDoc || '';
-        var blob = new Blob([html], {type:'text/html'});
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'autopostleey-video-ad.html';
-        a.click();
-        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-        document.getElementById('vad-progress').style.display = 'none';
-        if (btn) resetDownloadBtn(btn);
-        showToast('✅ Ad downloaded! Open in Chrome and use screen recorder to export as video.', 'success');
-        return;
-      }
-
-      var chunks = [];
-      var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-      _vadRecorder = recorder;
-
-      recorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
-      recorder.onstop = function() {
-        var blob = new Blob(chunks, {type:'video/webm'});
-        _vadBlob = blob;
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'autopostleey-ad-' + Date.now() + '.webm';
-        a.click();
-        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-        document.getElementById('vad-progress').style.display = 'none';
-        if (btn) resetDownloadBtn(btn);
-        showToast('✅ Video downloaded! Post it on TikTok, Reels, and YouTube Shorts.', 'success');
-      };
-
-      recorder.start();
-      // Animate progress
-      var dur = 34000;
-      var start = Date.now();
-      var pi = setInterval(function() {
-        var p = Math.min(98, ((Date.now()-start)/dur)*100);
-        setVadProgressBar(p);
-        if (p >= 98) clearInterval(pi);
-      }, 200);
-
-      setTimeout(function() {
-        recorder.stop();
-        clearInterval(pi);
-        setVadProgressBar(100);
-      }, dur);
-
+      // Try to capture the popup window directly
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30, width: adW, height: adH },
+        audio: false,
+        preferCurrentTab: false
+      });
     } catch(e) {
-      // Fallback to HTML download
+      popup.close();
+      throw new Error('capture_cancelled');
+    }
+
+    setVadProgressText('Recording... (' + Math.round(AD_DURATION/1000) + 's)');
+    setVadProgressBar(15);
+
+    // ── Step 3: Record with MediaRecorder (WebM) ─────────────
+    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+
+    var chunks = [];
+    var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 4000000 });
+    recorder.ondataavailable = function(e) { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+    recorder.start(100);
+
+    // Progress during recording
+    var recStart = Date.now();
+    var recPI = setInterval(function() {
+      var pct = 15 + Math.min(60, ((Date.now() - recStart) / AD_DURATION) * 60);
+      setVadProgressBar(Math.round(pct));
+      setVadProgressText('Recording... ' + Math.round((Date.now()-recStart)/1000) + 's / ' + Math.round(AD_DURATION/1000) + 's');
+    }, 500);
+
+    // Wait for ad to finish
+    await new Promise(function(res){ setTimeout(res, AD_DURATION); });
+
+    clearInterval(recPI);
+    recorder.stop();
+    stream.getTracks().forEach(function(t){ t.stop(); });
+    popup.close();
+
+    // Collect chunks
+    var webmBlob = await new Promise(function(res){
+      recorder.onstop = function() {
+        res(new Blob(chunks, { type: mimeType }));
+      };
+    });
+
+    setVadProgressBar(78);
+    setVadProgressText('Converting to MP4...');
+
+    // ── Step 4: Convert WebM → MP4 with FFmpeg.wasm ──────────
+    try {
+      var mp4Blob = await convertWebmToMp4(webmBlob, function(progress) {
+        setVadProgressBar(78 + Math.round(progress * 20));
+        setVadProgressText('Converting to MP4... ' + Math.round(progress * 100) + '%');
+      });
+
+      setVadProgressBar(100);
+      setVadProgressText('✅ Done! Downloading MP4...');
+
+      // Download MP4
+      var mp4Url = URL.createObjectURL(mp4Blob);
+      var a = document.createElement('a');
+      a.href = mp4Url;
+      a.download = 'autopostleey-ad-' + Date.now() + '.mp4';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(mp4Url); }, 3000);
+
+      showToast('✅ MP4 downloaded! Share on WhatsApp, TikTok, Facebook, Instagram!', 'success');
+
+    } catch(ffErr) {
+      // FFmpeg failed — download WebM as fallback
+      console.warn('FFmpeg conversion failed, downloading WebM:', ffErr);
+      setVadProgressBar(100);
+      setVadProgressText('Downloading...');
+
+      var wUrl = URL.createObjectURL(webmBlob);
+      var a = document.createElement('a');
+      a.href = wUrl;
+      a.download = 'autopostleey-ad-' + Date.now() + '.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(wUrl); }, 3000);
+
+      showToast('Downloaded as .webm (Chrome/Android compatible). For iPhone, open in Chrome.', 'success');
+    }
+
+  } catch(err) {
+    console.error('Download error:', err);
+
+    if (err.message === 'popup_blocked') {
+      // Fallback: HTML file download
       var html = _vadIframeDoc || '';
       var blob = new Blob([html], {type:'text/html'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'autopostleey-video-ad.html';
+      document.body.appendChild(a);
       a.click();
-      document.getElementById('vad-progress').style.display = 'none';
-      if (btn) resetDownloadBtn(btn);
-      showToast('Downloaded as HTML. Open in Chrome fullscreen and screen-record it.', 'success');
+      document.body.removeChild(a);
+      showToast('Downloaded as HTML. Allow popups for video recording, or open in Chrome fullscreen to screen-record.', 'success');
+    } else if (err.message === 'capture_cancelled') {
+      showToast('Screen capture cancelled. Click Download and select the ad window.', 'error');
+    } else {
+      showToast('Download failed: ' + err.message, 'error');
     }
-  }, 1000);
+  }
+
+  showVadProgress(false);
+  if (btn) resetDownloadBtn(btn);
 }
 
-function resetDownloadBtn(btn) {
-  btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⬇️</div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download Video</div><div style="font-size:11px;color:var(--text2);">Save as .webm to your device<br>then post manually</div>';
-}
+// ── FFmpeg.wasm MP4 Converter ─────────────────────────────
+async function convertWebmToMp4(webmBlob, onProgress) {
+  // Load FFmpeg.wasm from CDN (only once)
+  if (!window._ffmpegLoaded) {
+    setVadProgressText('Loading MP4 converter (one-time, ~10MB)...');
+    await new Promise(function(res, rej) {
+      if (window.FFmpeg) { res(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg.wasm/0.12.6/ffmpeg.min.js';
+      s.onload = res;
+      s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    window._ffmpegLoaded = true;
+  }
 
-function setVadProgressBar(pct) {
-  var bar = document.getElementById('vad-progress-bar');
-  if (bar) bar.style.width = pct + '%';
+  var { FFmpeg } = window.FFmpeg || window;
+  if (!FFmpeg) throw new Error('FFmpeg not available');
+
+  var ffmpeg = new FFmpeg();
+
+  ffmpeg.on('progress', function(e) {
+    if (onProgress && e.progress) onProgress(e.progress);
+  });
+
+  // Load FFmpeg core
+  setVadProgressText('Loading FFmpeg core...');
+  await ffmpeg.load({
+    coreURL: 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg.wasm/0.12.6/ffmpeg-core.js',
+    wasmURL: 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg.wasm/0.12.6/ffmpeg-core.wasm',
+  });
+
+  // Write input file
+  var inputData = new Uint8Array(await webmBlob.arrayBuffer());
+  await ffmpeg.writeFile('input.webm', inputData);
+
+  // Convert: WebM → MP4 (H.264 + AAC, compatible with all devices)
+  await ffmpeg.exec([
+    '-i', 'input.webm',
+    '-c:v', 'libx264',      // H.264 video — plays on every device
+    '-preset', 'fast',       // Fast encoding
+    '-crf', '23',            // Quality (lower = better, 18-28 is good range)
+    '-c:a', 'aac',           // AAC audio (no audio in our ad, still needed)
+    '-movflags', '+faststart', // Makes MP4 streamable (plays before fully downloaded)
+    '-pix_fmt', 'yuv420p',   // Maximum device compatibility
+    'output.mp4'
+  ]);
+
+  // Read output
+  var outputData = await ffmpeg.readFile('output.mp4');
+  var mp4Blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+
+  // Cleanup
+  await ffmpeg.deleteFile('input.webm');
+  await ffmpeg.deleteFile('output.mp4');
+
+  return mp4Blob;
 }
 
 function autoPostVadVideo() {
