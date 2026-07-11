@@ -9556,6 +9556,11 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
+  // glass() returns inline style string for glassmorphism cards
+  function glass(extra) {
+    return 'background:' + (c.glass||'rgba(255,255,255,0.07)') + ';border:1px solid ' + (c.glassBorder||'rgba(255,255,255,0.12)') + ';border-radius:' + (extra||'10px;');
+  }
+  var W = w; // alias so both W and w work
   var THEME_VISUALS = {
     ecommerce:['🛍️','👗','👟','💳','🏷️','✨','💎','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳','🏗️','💼'],
     automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽','🚘','🔩'],food:['🍔','🍕','☕','🍜','🥗','🍰','🍣','🥤'],
