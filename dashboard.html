@@ -2172,7 +2172,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT / SERVICE</label>
-                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" oninput="autoDetectTheme()">
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">TAGLINE / KEY MESSAGE</label>
@@ -2235,90 +2235,121 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           </div>
 
           <div class="card">
-            <div class="card-title">🎨 Ad Theme</div>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-
-                <!-- MIDNIGHT AURORA -->
-                <div class="vad-theme selected" id="theme-aurora" onclick="selectVadTheme('aurora')"
-                  style="padding:0;border:2px solid var(--accent);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:radial-gradient(#a855f7,transparent);opacity:.7;"></div>
-                    <div style="position:absolute;bottom:4px;right:8px;width:24px;height:24px;border-radius:50%;background:radial-gradient(#06b6d4,transparent);opacity:.6;"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">✨</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#0f0c29;">
-                    <div style="font-size:9px;font-weight:800;color:#a855f7;letter-spacing:1px;">MIDNIGHT AURORA</div>
-                  </div>
+            <div class="card-title">🎨 Industry Theme</div>
+            <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+              <button onclick="autoDetectTheme()" style="flex:1;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;">
+                🎯 Auto-Detect from Product
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;">
+<div class="vad-theme" id="theme-ecommerce" onclick="selectVadTheme('ecommerce')"
+                  style="padding:8px 6px;border:2px solid var(--accent);background:rgba(109,94,248,0.1);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🛍️</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--accent);">E-Commerce</div>
                 </div>
-
-                <!-- GOLDEN HOUR -->
-                <div class="vad-theme" id="theme-golden" onclick="selectVadTheme('golden')"
-                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:linear-gradient(135deg,#1a0a00,#3d1f00,#7c3a00);position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(251,191,36,0.3),transparent 60%);"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">🌅</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#1a0a00;">
-                    <div style="font-size:9px;font-weight:800;color:#f59e0b;letter-spacing:1px;">GOLDEN HOUR</div>
-                  </div>
+<div class="vad-theme" id="theme-realestate" onclick="selectVadTheme('realestate')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🏡</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Real Estate</div>
                 </div>
-
-                <!-- OCEAN DEPTH -->
-                <div class="vad-theme" id="theme-ocean" onclick="selectVadTheme('ocean')"
-                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:linear-gradient(135deg,#0a0f2e,#0c1f4a,#0a3060);position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(6,182,212,0.25),transparent 55%);"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">🌊</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#0a0f2e;">
-                    <div style="font-size:9px;font-weight:800;color:#06b6d4;letter-spacing:1px;">OCEAN DEPTH</div>
-                  </div>
+<div class="vad-theme" id="theme-automotive" onclick="selectVadTheme('automotive')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🚗</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Automotive</div>
                 </div>
-
-                <!-- ROSE GOLD -->
-                <div class="vad-theme" id="theme-rose" onclick="selectVadTheme('rose')"
-                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:linear-gradient(135deg,#1a0510,#3d0e24,#6b1a3a);position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(244,114,182,0.3),transparent 55%);"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">🌸</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#1a0510;">
-                    <div style="font-size:9px;font-weight:800;color:#f472b6;letter-spacing:1px;">ROSE GOLD</div>
-                  </div>
+<div class="vad-theme" id="theme-food" onclick="selectVadTheme('food')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🍔</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Food & Bev</div>
                 </div>
-
-                <!-- NEON CITY -->
-                <div class="vad-theme" id="theme-neon" onclick="selectVadTheme('neon')"
-                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:#030306;position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;background:radial-gradient(#00ff88,transparent);opacity:.5;"></div>
-                    <div style="position:absolute;bottom:4px;right:6px;width:22px;height:22px;border-radius:50%;background:radial-gradient(#ff0080,transparent);opacity:.5;"></div>
-                    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,255,136,0.08),transparent 60%);"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">⚡</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#030306;">
-                    <div style="font-size:9px;font-weight:800;color:#00ff88;letter-spacing:1px;">NEON CITY</div>
-                  </div>
+<div class="vad-theme" id="theme-fitness" onclick="selectVadTheme('fitness')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">💪</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Fitness</div>
                 </div>
-
-                <!-- CLEAN WHITE -->
-                <div class="vad-theme" id="theme-clean" onclick="selectVadTheme('clean')"
-                  style="padding:0;border:1px solid var(--border);border-radius:10px;cursor:pointer;overflow:hidden;">
-                  <div style="height:52px;background:linear-gradient(135deg,#f8fafc,#f1f5f9,#e2e8f0);position:relative;display:flex;align-items:center;justify-content:center;">
-                    <div style="position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:4px;background:#6366f1;opacity:.15;"></div>
-                    <div style="position:absolute;bottom:6px;right:8px;width:18px;height:18px;border-radius:50%;background:#6366f1;opacity:.1;"></div>
-                    <span style="font-size:16px;position:relative;z-index:1;">🤍</span>
-                  </div>
-                  <div style="padding:6px;text-align:center;background:#fff;">
-                    <div style="font-size:9px;font-weight:800;color:#6366f1;letter-spacing:1px;">CLEAN WHITE</div>
-                  </div>
+<div class="vad-theme" id="theme-beauty" onclick="selectVadTheme('beauty')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">💄</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Beauty</div>
                 </div>
-
-              </div>
-              <div id="vad-theme-label" style="font-size:11px;color:var(--text2);text-align:center;padding:6px;background:var(--bg3);border-radius:6px;">
-                ✨ Selected: <span id="vad-theme-name" style="color:var(--accent);font-weight:700;">Midnight Aurora</span>
-              </div>
+<div class="vad-theme" id="theme-medical" onclick="selectVadTheme('medical')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🏥</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Medical</div>
+                </div>
+<div class="vad-theme" id="theme-education" onclick="selectVadTheme('education')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🎓</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Education</div>
+                </div>
+<div class="vad-theme" id="theme-professional" onclick="selectVadTheme('professional')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">💼</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Professional</div>
+                </div>
+<div class="vad-theme" id="theme-homeservices" onclick="selectVadTheme('homeservices')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🏠</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Home Services</div>
+                </div>
+<div class="vad-theme" id="theme-technology" onclick="selectVadTheme('technology')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">💻</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Technology</div>
+                </div>
+<div class="vad-theme" id="theme-travel" onclick="selectVadTheme('travel')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">✈️</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Travel</div>
+                </div>
+<div class="vad-theme" id="theme-events" onclick="selectVadTheme('events')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🎉</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Events</div>
+                </div>
+<div class="vad-theme" id="theme-pets" onclick="selectVadTheme('pets')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🐶</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Pets</div>
+                </div>
+<div class="vad-theme" id="theme-finance" onclick="selectVadTheme('finance')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">💰</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Finance</div>
+                </div>
+<div class="vad-theme" id="theme-marketing" onclick="selectVadTheme('marketing')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">📱</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Marketing</div>
+                </div>
+<div class="vad-theme" id="theme-manufacturing" onclick="selectVadTheme('manufacturing')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🏭</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Manufacturing</div>
+                </div>
+<div class="vad-theme" id="theme-agriculture" onclick="selectVadTheme('agriculture')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🌾</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Agriculture</div>
+                </div>
+<div class="vad-theme" id="theme-family" onclick="selectVadTheme('family')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">👶</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Family</div>
+                </div>
+<div class="vad-theme" id="theme-entertainment" onclick="selectVadTheme('entertainment')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🎮</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Entertainment</div>
+                </div>
+<div class="vad-theme" id="theme-nonprofit" onclick="selectVadTheme('nonprofit')"
+                  style="padding:8px 6px;border:1px solid var(--border);background:var(--bg3);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
+                  <div style="font-size:18px;margin-bottom:3px;">🕌</div>
+                  <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Non-Profit</div>
+                </div>
+            </div>
+            <div id="vad-theme-label" style="font-size:11px;color:var(--text2);text-align:center;padding:7px;background:var(--bg3);border-radius:6px;margin-top:8px;">
+              ✨ Selected: <span id="vad-theme-name" style="color:var(--accent);font-weight:700;">E-Commerce</span>
             </div>
           </div>
 
@@ -9061,12 +9092,29 @@ function selectVadTheme(t) {
   _vadTheme = t;
   document.querySelectorAll('.vad-theme').forEach(function(el) {
     el.style.border = '1px solid var(--border)';
+    el.style.background = 'var(--bg3)';
+    if (el.querySelector('div:last-child')) el.querySelector('div:last-child').style.color = 'var(--text2)';
   });
   var sel = document.getElementById('theme-' + t);
-  if (sel) sel.style.border = '2px solid var(--accent)';
+  if (sel) {
+    sel.style.border = '2px solid var(--accent)';
+    sel.style.background = 'rgba(109,94,248,0.1)';
+    if (sel.querySelector('div:last-child')) sel.querySelector('div:last-child').style.color = 'var(--accent)';
+    sel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
   var c = getVadThemeColors(t);
   var lbl = document.getElementById('vad-theme-name');
-  if (lbl) lbl.textContent = c.name || t;
+  if (lbl && c.name) lbl.textContent = c.name;
+}
+
+function autoDetectTheme() {
+  var product = (document.getElementById('vad-product')||{}).value || '';
+  var biz     = (document.getElementById('vad-bizname')||{}).value || '';
+  var desc    = (_autoConfig && _autoConfig.description) || (_bizProfile && _bizProfile.description) || '';
+  var detected = detectIndustryTheme(product, biz, desc);
+  selectVadTheme(detected);
+  var c = getVadThemeColors(detected);
+  showToast('🎨 Theme set to ' + (c.name||detected) + ' based on your product!', 'success');
 }
 
 function selectVadFormat(f) {
@@ -9083,98 +9131,175 @@ function selectVadFormat(f) {
 }
 
 function getVadThemeColors(theme) {
-  var themes = {
-    aurora: {
-      bg:'#08061a',
-      meshes:[
-        {x:15,y:20,w:60,h:55,color:'rgba(120,40,220,0.55)',blur:80},
-        {x:60,y:55,w:50,h:45,color:'rgba(0,180,220,0.40)',blur:70},
-        {x:40,y:10,w:35,h:35,color:'rgba(180,60,255,0.30)',blur:60}
-      ],
-      accent:'#c084fc', accentSolid:'#9333ea',
-      text:'#ffffff', sub:'rgba(255,255,255,0.55)',
-      glass:'rgba(255,255,255,0.07)', glassBorder:'rgba(255,255,255,0.12)',
-      name:'Midnight Aurora'
+  var T = {
+    // ─── E-COMMERCE ──────────────────────────────────
+    ecommerce:{
+      name:'E-Commerce Spark', bg:'#0a0014',
+      meshes:[{x:20,y:25,w:60,h:55,color:'rgba(168,85,247,0.50)',blur:80},{x:70,y:60,w:50,h:45,color:'rgba(236,72,153,0.35)',blur:70},{x:50,y:5,w:35,h:35,color:'rgba(99,102,241,0.25)',blur:60}],
+      accent:'#c084fc',accentSolid:'#9333ea',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(192,132,252,0.2)'
     },
-    golden: {
-      bg:'#0d0800',
-      meshes:[
-        {x:50,y:15,w:65,h:55,color:'rgba(220,140,0,0.50)',blur:80},
-        {x:10,y:50,w:45,h:50,color:'rgba(180,40,20,0.35)',blur:70},
-        {x:70,y:60,w:35,h:40,color:'rgba(255,200,50,0.25)',blur:60}
-      ],
-      accent:'#fbbf24', accentSolid:'#d97706',
-      text:'#ffffff', sub:'rgba(255,255,255,0.55)',
-      glass:'rgba(255,255,255,0.06)', glassBorder:'rgba(251,191,36,0.2)',
-      name:'Golden Hour'
+    // ─── REAL ESTATE ─────────────────────────────────
+    realestate:{
+      name:'Real Estate Gold', bg:'#0d0900',
+      meshes:[{x:55,y:15,w:65,h:60,color:'rgba(234,179,8,0.45)',blur:85},{x:10,y:60,w:50,h:45,color:'rgba(180,83,9,0.35)',blur:70},{x:75,y:65,w:35,h:35,color:'rgba(251,191,36,0.20)',blur:60}],
+      accent:'#fbbf24',accentSolid:'#d97706',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(251,191,36,0.22)'
     },
-    ocean: {
-      bg:'#020d1f',
-      meshes:[
-        {x:20,y:25,w:60,h:55,color:'rgba(0,100,200,0.55)',blur:80},
-        {x:65,y:50,w:50,h:50,color:'rgba(0,200,220,0.35)',blur:70},
-        {x:45,y:5,w:40,h:35,color:'rgba(80,40,200,0.30)',blur:60}
-      ],
-      accent:'#22d3ee', accentSolid:'#0891b2',
-      text:'#ffffff', sub:'rgba(255,255,255,0.55)',
-      glass:'rgba(255,255,255,0.06)', glassBorder:'rgba(34,211,238,0.18)',
-      name:'Ocean Depth'
+    // ─── AUTOMOTIVE ──────────────────────────────────
+    automotive:{
+      name:'Automotive Steel', bg:'#050810',
+      meshes:[{x:25,y:30,w:55,h:50,color:'rgba(14,165,233,0.40)',blur:80},{x:70,y:55,w:45,h:45,color:'rgba(100,116,139,0.35)',blur:70},{x:45,y:5,w:30,h:35,color:'rgba(56,189,248,0.20)',blur:60}],
+      accent:'#38bdf8',accentSolid:'#0284c7',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(56,189,248,0.2)'
     },
-    rose: {
-      bg:'#120008',
-      meshes:[
-        {x:60,y:20,w:55,h:55,color:'rgba(200,20,120,0.50)',blur:80},
-        {x:10,y:55,w:50,h:45,color:'rgba(150,0,80,0.40)',blur:70},
-        {x:40,y:65,w:40,h:35,color:'rgba(255,150,50,0.20)',blur:60}
-      ],
-      accent:'#f472b6', accentSolid:'#db2777',
-      text:'#ffffff', sub:'rgba(255,255,255,0.55)',
-      glass:'rgba(255,255,255,0.07)', glassBorder:'rgba(244,114,182,0.2)',
-      name:'Rose Gold'
+    // ─── FOOD & BEVERAGE ─────────────────────────────
+    food:{
+      name:'Food & Flavor', bg:'#0d0500',
+      meshes:[{x:60,y:20,w:60,h:55,color:'rgba(234,88,12,0.50)',blur:80},{x:15,y:55,w:50,h:50,color:'rgba(220,38,38,0.35)',blur:70},{x:45,y:70,w:35,h:35,color:'rgba(251,191,36,0.25)',blur:60}],
+      accent:'#fb923c',accentSolid:'#ea580c',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(251,146,60,0.22)'
     },
-    neon: {
-      bg:'#010103',
-      meshes:[
-        {x:20,y:30,w:55,h:50,color:'rgba(0,220,100,0.40)',blur:80},
-        {x:65,y:40,w:45,h:50,color:'rgba(200,0,120,0.35)',blur:70},
-        {x:45,y:70,w:40,h:35,color:'rgba(0,150,255,0.25)',blur:60}
-      ],
-      accent:'#00ff88', accentSolid:'#00cc6a',
-      text:'#ffffff', sub:'rgba(255,255,255,0.50)',
-      glass:'rgba(0,255,136,0.05)', glassBorder:'rgba(0,255,136,0.15)',
-      name:'Neon City'
+    // ─── FITNESS & HEALTH ────────────────────────────
+    fitness:{
+      name:'Fitness Energy', bg:'#020d02',
+      meshes:[{x:20,y:20,w:60,h:55,color:'rgba(34,197,94,0.45)',blur:80},{x:70,y:55,w:45,h:50,color:'rgba(16,185,129,0.30)',blur:70},{x:45,y:70,w:35,h:35,color:'rgba(132,204,22,0.25)',blur:60}],
+      accent:'#4ade80',accentSolid:'#16a34a',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(74,222,128,0.2)'
     },
-    clean: {
-      bg:'#f0f4ff',
-      meshes:[
-        {x:60,y:10,w:55,h:55,color:'rgba(99,102,241,0.18)',blur:80},
-        {x:5,y:50,w:50,h:50,color:'rgba(236,72,153,0.12)',blur:70},
-        {x:40,y:70,w:40,h:35,color:'rgba(6,182,212,0.12)',blur:60}
-      ],
-      accent:'#6366f1', accentSolid:'#4f46e5',
-      text:'#0f172a', sub:'rgba(15,23,42,0.55)',
-      glass:'rgba(255,255,255,0.70)', glassBorder:'rgba(99,102,241,0.2)',
-      name:'Clean White'
+    // ─── BEAUTY ──────────────────────────────────────
+    beauty:{
+      name:'Beauty Bloom', bg:'#120008',
+      meshes:[{x:60,y:15,w:60,h:55,color:'rgba(244,114,182,0.50)',blur:80},{x:10,y:55,w:50,h:50,color:'rgba(192,38,211,0.35)',blur:70},{x:45,y:72,w:35,h:35,color:'rgba(251,191,36,0.18)',blur:55}],
+      accent:'#f472b6',accentSolid:'#db2777',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(244,114,182,0.22)'
+    },
+    // ─── MEDICAL ─────────────────────────────────────
+    medical:{
+      name:'Medical Trust', bg:'#020d14',
+      meshes:[{x:25,y:20,w:55,h:55,color:'rgba(6,182,212,0.40)',blur:80},{x:70,y:55,w:50,h:45,color:'rgba(59,130,246,0.30)',blur:70},{x:45,y:75,w:35,h:30,color:'rgba(14,165,233,0.20)',blur:55}],
+      accent:'#22d3ee',accentSolid:'#0891b2',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(34,211,238,0.2)'
+    },
+    // ─── EDUCATION ───────────────────────────────────
+    education:{
+      name:'Education Bright', bg:'#020b1a',
+      meshes:[{x:55,y:20,w:60,h:55,color:'rgba(99,102,241,0.45)',blur:80},{x:10,y:55,w:50,h:50,color:'rgba(139,92,246,0.30)',blur:70},{x:40,y:75,w:35,h:30,color:'rgba(59,130,246,0.22)',blur:55}],
+      accent:'#818cf8',accentSolid:'#6366f1',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(129,140,248,0.22)'
+    },
+    // ─── PROFESSIONAL SERVICES ───────────────────────
+    professional:{
+      name:'Professional Navy', bg:'#020814',
+      meshes:[{x:20,y:25,w:55,h:50,color:'rgba(30,64,175,0.55)',blur:80},{x:70,y:55,w:45,h:45,color:'rgba(71,85,105,0.40)',blur:70},{x:45,y:5,w:30,h:35,color:'rgba(96,165,250,0.20)',blur:55}],
+      accent:'#60a5fa',accentSolid:'#2563eb',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(96,165,250,0.2)'
+    },
+    // ─── HOME SERVICES ───────────────────────────────
+    homeservices:{
+      name:'Home & Living', bg:'#080d00',
+      meshes:[{x:60,y:20,w:55,h:55,color:'rgba(101,163,13,0.45)',blur:80},{x:10,y:55,w:50,h:50,color:'rgba(180,83,9,0.30)',blur:70},{x:40,y:70,w:35,h:35,color:'rgba(134,239,172,0.20)',blur:55}],
+      accent:'#a3e635',accentSolid:'#65a30d',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(163,230,53,0.2)'
+    },
+    // ─── TECHNOLOGY ──────────────────────────────────
+    technology:{
+      name:'Tech Neon', bg:'#010103',
+      meshes:[{x:20,y:25,w:55,h:50,color:'rgba(0,220,100,0.40)',blur:80},{x:68,y:50,w:45,h:50,color:'rgba(200,0,255,0.25)',blur:70},{x:45,y:72,w:35,h:35,color:'rgba(0,180,255,0.22)',blur:55}],
+      accent:'#00ff88',accentSolid:'#00cc6a',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(0,255,136,0.05)',glassBorder:'rgba(0,255,136,0.18)'
+    },
+    // ─── TRAVEL ──────────────────────────────────────
+    travel:{
+      name:'Travel Horizon', bg:'#020d1a',
+      meshes:[{x:55,y:15,w:65,h:55,color:'rgba(6,182,212,0.40)',blur:85},{x:10,y:55,w:50,h:50,color:'rgba(14,165,233,0.30)',blur:70},{x:75,y:68,w:35,h:35,color:'rgba(99,102,241,0.20)',blur:55}],
+      accent:'#06b6d4',accentSolid:'#0891b2',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(6,182,212,0.2)'
+    },
+    // ─── EVENTS ──────────────────────────────────────
+    events:{
+      name:'Events & Celebration', bg:'#0d0020',
+      meshes:[{x:25,y:20,w:60,h:55,color:'rgba(139,92,246,0.50)',blur:80},{x:70,y:55,w:50,h:50,color:'rgba(236,72,153,0.35)',blur:70},{x:45,y:75,w:35,h:30,color:'rgba(251,191,36,0.22)',blur:55}],
+      accent:'#c084fc',accentSolid:'#9333ea',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(192,132,252,0.22)'
+    },
+    // ─── PETS ────────────────────────────────────────
+    pets:{
+      name:'Pets & Animals', bg:'#080d00',
+      meshes:[{x:55,y:20,w:55,h:55,color:'rgba(251,146,60,0.45)',blur:80},{x:10,y:60,w:45,h:45,color:'rgba(34,197,94,0.30)',blur:70},{x:40,y:72,w:35,h:35,color:'rgba(250,204,21,0.22)',blur:55}],
+      accent:'#fb923c',accentSolid:'#ea580c',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(251,146,60,0.22)'
+    },
+    // ─── FINANCE ─────────────────────────────────────
+    finance:{
+      name:'Finance Premium', bg:'#020810',
+      meshes:[{x:20,y:20,w:60,h:55,color:'rgba(16,185,129,0.40)',blur:80},{x:68,y:58,w:45,h:45,color:'rgba(6,182,212,0.28)',blur:70},{x:45,y:5,w:30,h:35,color:'rgba(99,102,241,0.20)',blur:55}],
+      accent:'#34d399',accentSolid:'#059669',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(52,211,153,0.2)'
+    },
+    // ─── DIGITAL MARKETING ───────────────────────────
+    marketing:{
+      name:'Digital Marketing', bg:'#08001a',
+      meshes:[{x:60,y:15,w:60,h:55,color:'rgba(99,102,241,0.50)',blur:80},{x:10,y:58,w:50,h:50,color:'rgba(236,72,153,0.35)',blur:70},{x:45,y:72,w:35,h:30,color:'rgba(6,182,212,0.20)',blur:55}],
+      accent:'#818cf8',accentSolid:'#6366f1',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(129,140,248,0.22)'
+    },
+    // ─── MANUFACTURING ───────────────────────────────
+    manufacturing:{
+      name:'Industrial Power', bg:'#080a08',
+      meshes:[{x:25,y:25,w:55,h:50,color:'rgba(100,116,139,0.50)',blur:80},{x:68,y:55,w:45,h:45,color:'rgba(71,85,105,0.35)',blur:70},{x:45,y:5,w:30,h:35,color:'rgba(148,163,184,0.20)',blur:55}],
+      accent:'#94a3b8',accentSolid:'#64748b',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(148,163,184,0.2)'
+    },
+    // ─── AGRICULTURE ─────────────────────────────────
+    agriculture:{
+      name:'Agriculture & Nature', bg:'#030d02',
+      meshes:[{x:55,y:20,w:60,h:55,color:'rgba(34,197,94,0.45)',blur:80},{x:10,y:60,w:50,h:50,color:'rgba(101,163,13,0.35)',blur:70},{x:40,y:72,w:35,h:35,color:'rgba(251,191,36,0.22)',blur:55}],
+      accent:'#86efac',accentSolid:'#16a34a',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(134,239,172,0.2)'
+    },
+    // ─── ENTERTAINMENT ───────────────────────────────
+    entertainment:{
+      name:'Entertainment & Gaming', bg:'#050008',
+      meshes:[{x:20,y:20,w:60,h:55,color:'rgba(168,85,247,0.50)',blur:80},{x:70,y:55,w:50,h:50,color:'rgba(239,68,68,0.30)',blur:70},{x:45,y:5,w:35,h:35,color:'rgba(251,191,36,0.20)',blur:55}],
+      accent:'#d946ef',accentSolid:'#a21caf',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(217,70,239,0.22)'
+    },
+    // ─── NON-PROFIT ──────────────────────────────────
+    nonprofit:{
+      name:'Community & Hope', bg:'#020a14',
+      meshes:[{x:55,y:20,w:60,h:55,color:'rgba(59,130,246,0.40)',blur:80},{x:10,y:60,w:50,h:50,color:'rgba(16,185,129,0.30)',blur:70},{x:40,y:72,w:35,h:35,color:'rgba(251,191,36,0.20)',blur:55}],
+      accent:'#60a5fa',accentSolid:'#2563eb',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.06)',glassBorder:'rgba(96,165,250,0.2)'
+    },
+    // ─── FAMILY ──────────────────────────────────────
+    family:{
+      name:'Family & Kids', bg:'#0a0214',
+      meshes:[{x:60,y:15,w:55,h:55,color:'rgba(244,114,182,0.45)',blur:80},{x:10,y:55,w:50,h:50,color:'rgba(139,92,246,0.30)',blur:70},{x:45,y:72,w:35,h:35,color:'rgba(251,191,36,0.22)',blur:55}],
+      accent:'#f9a8d4',accentSolid:'#ec4899',text:'#fff',sub:'rgba(255,255,255,0.5)',glass:'rgba(255,255,255,0.07)',glassBorder:'rgba(249,168,212,0.22)'
     }
   };
-  return themes[theme] || themes.aurora;
+  return T[theme] || T.ecommerce;
 }
 
-function buildMeshBg(c, w, h) {
-  var meshDiv = '<div style="position:absolute;inset:0;overflow:hidden;">';
-  c.meshes.forEach(function(m) {
-    meshDiv += '<div style="position:absolute;'
-      + 'left:' + m.x + '%;top:' + m.y + '%;'
-      + 'width:' + m.w + '%;height:' + m.h + '%;'
-      + 'background:' + m.color + ';'
-      + 'border-radius:50%;'
-      + 'filter:blur(' + m.blur + 'px);'
-      + 'transform:translate(-50%,-50%);">'
-      + '</div>';
-  });
-  meshDiv += '</div>';
-  return meshDiv;
+// Map product keywords → theme key
+var INDUSTRY_KEYWORD_MAP = [
+  {theme:'ecommerce',    words:['clothing','shirt','dress','shoes','sneakers','bag','handbag','jewelry','watch','cosmetics','skincare','makeup','perfume','toy','baby','home decor','furniture','kitchenware','electronics','gadget','phone','laptop','computer','accessory','accessories']},
+  {theme:'realestate',   words:['house','condo','apartment','lot','building','warehouse','office','airbnb','vacation rental','property','real estate','rent','lease']},
+  {theme:'automotive',   words:['car','vehicle','truck','motorcycle','auto','tire','car wash','car rental','dealership','repair shop','auto repair']},
+  {theme:'food',         words:['restaurant','cafe','bakery','fast food','food truck','catering','coffee','bubble tea','ice cream','pizza','sushi','seafood','bar','dining','meal','dish','food','beverage','drink']},
+  {theme:'fitness',      words:['gym','fitness','workout','yoga','pilates','crossfit','martial arts','nutrition','supplement','sports','trainer','exercise','muscle']},
+  {theme:'beauty',       words:['salon','nail','barbershop','spa','massage','facial','lash','tattoo','hair','beauty','grooming','waxing']},
+  {theme:'medical',      words:['hospital','clinic','dentist','eye','pharmacy','veterinary','therapy','mental health','doctor','medical','health','dental','orthopedic']},
+  {theme:'education',    words:['school','college','university','course','tutor','language','music lesson','coding','driving school','education','class','learning','training']},
+  {theme:'professional', words:['lawyer','accountant','consultant','insurance','financial advisor','recruitment','hr','virtual assistant','bookkeeping','legal','audit','tax','advisory']},
+  {theme:'homeservices', words:['plumbing','electrical','roofing','hvac','cleaning','landscaping','pest control','painting','interior design','renovation','repair','home service']},
+  {theme:'technology',   words:['saas','software','app','web development','cybersecurity','cloud','it support','hosting','ai tool','tech','developer','digital','platform','autopostleey','automation','posting','social media tool']},
+  {theme:'travel',       words:['hotel','resort','airline','cruise','travel','tour','camping','adventure','booking','vacation','flight','tourism']},
+  {theme:'events',       words:['wedding','photographer','videographer','dj','event','venue','florist','party','celebration','photography','catering']},
+  {theme:'pets',         words:['pet','dog','cat','fish','bird','animal','grooming','veterinary','pet food','pet shop','fur']},
+  {theme:'finance',      words:['bank','credit','loan','mortgage','investment','crypto','stock','trading','tax','finance','fund','insurance broker']},
+  {theme:'marketing',    words:['seo','social media marketing','facebook ads','google ads','email marketing','branding','graphic design','content creation','digital marketing','advertising','agency']},
+  {theme:'manufacturing',words:['industrial','packaging','printing','chemicals','construction','machinery','equipment','factory','manufacturing','supply']},
+  {theme:'agriculture',  words:['farm','fertilizer','seeds','livestock','aquaculture','farm equipment','agriculture','crop','harvest','plant nursery']},
+  {theme:'family',       words:['daycare','maternity','children','kids','baby','family','parenting','toddler','infant']},
+  {theme:'entertainment',words:['gaming','streaming','movie','music','podcast','esports','arcade','game','entertainment','youtube','content creator']},
+  {theme:'nonprofit',    words:['charity','church','foundation','community','volunteer','fundraising','ngo','non-profit','nonprofit','donation']}
+];
+
+function detectIndustryTheme(product, biz, desc) {
+  var combined = ((product||'') + ' ' + (biz||'') + ' ' + (desc||'')).toLowerCase();
+  for (var i = 0; i < INDUSTRY_KEYWORD_MAP.length; i++) {
+    var entry = INDUSTRY_KEYWORD_MAP[i];
+    for (var j = 0; j < entry.words.length; j++) {
+      if (combined.indexOf(entry.words[j]) !== -1) return entry.theme;
+    }
+  }
+  return 'ecommerce'; // default
 }
+
+
+
 
 function generateVideoAd() {
   var biz     = (document.getElementById('vad-bizname')  || {}).value || '';
@@ -9894,6 +10019,14 @@ function initVideoAdPage() {
   if (_bizProfile) {
     if (bizField && !bizField.value) bizField.value = _bizProfile.name || '';
   }
+
+  // Auto-detect industry theme
+  var autoTheme = detectIndustryTheme(
+    (productField && productField.value) || '',
+    (bizField && bizField.value) || '',
+    (_autoConfig && _autoConfig.description) || ''
+  );
+  selectVadTheme(autoTheme);
 
   // Auto-suggest emoji based on profile
   if (emojiField && !emojiField.value) {
