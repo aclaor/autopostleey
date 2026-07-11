@@ -9556,176 +9556,238 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
-  // glass() returns inline style string for glassmorphism cards
-  function glass(extra) {
-    return 'background:' + (c.glass||'rgba(255,255,255,0.07)') + ';border:1px solid ' + (c.glassBorder||'rgba(255,255,255,0.12)') + ';border-radius:' + (extra||'10px;');
+  var W = w;
+
+  // Glass style helper — defined here so all IIFEs inherit via closure
+  var gbg = c.glass       || 'rgba(255,255,255,0.07)';
+  var gbd = c.glassBorder || 'rgba(255,255,255,0.12)';
+  function gs(extra) { // gs = glass style
+    return 'background:'+gbg+';border:1px solid '+gbd+';border-radius:'+(extra||'10px;');
   }
-  var W = w; // alias so both W and w work
-  var THEME_VISUALS = {
-    ecommerce:['🛍️','👗','👟','💳','🏷️','✨','💎','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳','🏗️','💼'],
-    automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽','🚘','🔩'],food:['🍔','🍕','☕','🍜','🥗','🍰','🍣','🥤'],
-    fitness:['💪','🏋️','🥊','⚡','🏃','🎯','🏆','🔥'],beauty:['💄','💅','🌸','✨','💋','🪞','👑','🌺'],
-    medical:['🏥','💊','🩺','❤️','🧬','💉','🩹','🔬'],education:['📚','🎓','✏️','🧠','💡','🔭','📐','🎒'],
-    professional:['💼','📊','🤝','⚖️','📋','🏛️','📈','🖊️'],homeservices:['🔨','🪴','🧹','🔌','🏠','🪟','🛁','🌿'],
-    technology:['💻','📱','⚡','🚀','🤖','🔮','⌨️','🛸'],travel:['✈️','🌍','🏖️','🗺️','🌅','🧳','🏝️','⛵'],
-    events:['🎉','🎊','📸','🎵','🥂','💐','🎂','🎭'],pets:['🐶','🐱','🐾','🦮','🐩','😺','🦴','🐕'],
-    finance:['💰','📈','🏦','💳','🪙','📊','💵','🔐'],marketing:['📱','🎯','📊','✨','🚀','📣','💡','🌐'],
-    manufacturing:['🏭','⚙️','🔩','🔧','🏗️','📦','🛠️','⚡'],agriculture:['🌾','🚜','🌱','🌻','🐄','🍅','🌽','🌿'],
-    family:['👶','🧸','🍼','💕','🎠','🌈','🎡','🦄'],entertainment:['🎮','🎬','🎵','🕹️','🏆','⚡','🎭','🌟'],
-    nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏','💙','🌟']
+
+  var ICONS = {
+    ecommerce:['🛍️','👗','👟','💎','✨','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
+    automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽'],food:['🍔','🍕','☕','🍜','🍰','🥤'],
+    fitness:['💪','🏋️','🥊','⚡','🏃','🏆'],beauty:['💄','💅','🌸','✨','👑','🌺'],
+    medical:['🏥','💊','🩺','❤️','🩹','🔬'],education:['📚','🎓','✏️','🧠','💡','🔭'],
+    professional:['💼','📊','🤝','⚖️','📈','🏛️'],homeservices:['🔨','🪴','🧹','🔌','🏠','🌿'],
+    technology:['💻','📱','⚡','🚀','🤖','🔮'],travel:['✈️','🌍','🏖️','🗺️','🌅','🧳'],
+    events:['🎉','🎊','📸','🎵','🥂','💐'],pets:['🐶','🐱','🐾','🦮','😺','🦴'],
+    finance:['💰','📈','🏦','💳','🪙','📊'],marketing:['📱','🎯','📊','🚀','📣','💡'],
+    manufacturing:['🏭','⚙️','🔩','🔧','📦','🛠️'],agriculture:['🌾','🚜','🌱','🌻','🐄','🌽'],
+    family:['👶','🧸','🍼','💕','🌈','🦄'],entertainment:['🎮','🎬','🎵','🕹️','🏆','🌟'],
+    nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏']
   };
-  var icons = THEME_VISUALS[_vadTheme] || THEME_VISUALS.ecommerce;
-  var pos = [{t:'8%',l:'5%',s:26},{t:'15%',r:'6%',s:22},{t:'38%',l:'3%',s:20},{t:'42%',r:'4%',s:22},{t:'62%',l:'5%',s:24},{t:'68%',r:'5%',s:20},{t:'82%',l:'14%',s:18},{t:'78%',r:'12%',s:20}];
-  var meshHTML = '';
-  (c.meshes||[]).forEach(function(m){meshHTML+='<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h+'%;background:'+m.color+';border-radius:50%;filter:blur('+m.blur+'px);transform:translate(-50%,-50%);"></div>';});
-  var floatHTML = icons.slice(0,8).map(function(ic,i){var p=pos[i];return '<div class="fi" data-i="'+i+'" style="position:absolute;top:'+p.t+';'+(p.r?'right:'+p.r:'left:'+p.l)+';font-size:'+p.s+'px;opacity:0;">'+ic+'</div>';}).join('');
-  var platChips = platforms.map(function(p){return '<div class="pc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:6px 12px;font-size:11px;color:'+c.sub+';font-weight:600;display:inline-block;">'+p+'</div>';}).join('');
-  var heroHTML = productImageUrl
-    ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?200:160)+'px;height:'+(w>500?200:160)+'px;object-fit:cover;border-radius:20px;border:3px solid '+c.glassBorder+';opacity:0;">'
-    : '<div id="hi" style="font-size:'+(w>500?96:72)+'px;line-height:1;opacity:0;filter:drop-shadow(0 0 30px '+c.accent+'88);">'+emoji+'</div>';
-  var succChips = platforms.map(function(p){return '<div class="sc" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;display:inline-block;opacity:0;">&#10003; '+p.replace(/^../,'').trim()+'</div>';}).join('');
-  var defaultFeats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
-  var featSource = (adBenefits && adBenefits.length > 0)
-    ? adBenefits.slice(0,4).map(function(b){ return [b.icon, b.text]; })
-    : defaultFeats;
-  var featCards = featSource.map(function(f){return '<div class="fc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;"><span style="font-size:20px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';}).join('');
-  var pillTexts = biz
-    ? [biz.length<22?biz:biz.slice(0,20)+'…', 'Contact us today', product||'Quality guaranteed']
-    : ['Best quality','Contact us today','Satisfaction guaranteed'];
-  var freePills = pillTexts.map(function(p){return '<div class="pl" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;">✓ '+p+'</div>';}).join('');
+  var icons = ICONS[_vadTheme] || ICONS.ecommerce;
+
   var photo = c.photoUrl || '';
-  var mesh2 = '<div style="position:absolute;inset:0;overflow:hidden;">'+meshHTML+'</div>';
-  var glass = 'background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:';
+  var mesh2 = '<div style="position:absolute;inset:0;overflow:hidden;">'
+    + (c.meshes||[]).map(function(m){
+        return '<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h
+          +'%;background:'+m.color+';border-radius:50%;filter:blur('+m.blur+'px);transform:translate(-50%,-50%);"></div>';
+      }).join('')
+    + '</div>';
 
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet"><style>'
-   +'*{margin:0;padding:0;box-sizing:border-box;}'
-   +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;-webkit-text-size-adjust:100%;}'
-   +'.sc-wrap{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;display:none;}'
-   +'.sc-wrap.on{display:block;}'
-   +'@keyframes sU{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}'
-   +'@keyframes fI{from{opacity:0}to{opacity:1}}'
-   +'@keyframes pI{from{opacity:0;transform:scale(0.4)}to{opacity:1;transform:scale(1)}}'
-   +'@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}'
-   +'@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
-   +'@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}'
-   +'.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:blink .85s infinite;}'
-   +'.dot{width:6px;height:6px;border-radius:50%;background:'+c.accent+';display:inline-block;animation:pulse 2s infinite;}'
-   +'.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.07);}'
-   +'.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
-   +'</style></head><body>'
+  // Pain points per industry
+  var PAIN = {
+    realestate:['🔍 Hard to find right home','💸 Overpriced listings','😰 Agents don\'t respond','⏰ Wasted weekends'],
+    food:['😩 No good food nearby','🚗 Long drives to eat','📵 No online ordering','😤 Inconsistent quality'],
+    fitness:['😓 No motivation to start','❓ Where to even begin','💸 Fees too expensive','⏰ No time to workout'],
+    beauty:['😩 Hard to find trusted salon','📵 Booking is a hassle','💸 Overpriced services','😤 Bad results before'],
+    medical:['😟 Long waiting times','❓ Hard to find right doctor','💸 Expensive consultations','😰 Unsure who to trust'],
+    automotive:['😩 Unreliable mechanics','💸 Hidden extra charges','⏰ Long repair wait','😰 Can\'t trust anyone'],
+    technology:['😤 Slow outdated systems','💸 Software too expensive','😩 No tech support','⏰ Manual tasks waste time'],
+    travel:['😤 Expensive packages','😩 Generic experiences','⏰ Wasted vacation','❓ Unsure what to book'],
+    pets:['😟 No trusted groomer','💸 Vet bills are costly','😩 Pet boarding anxiety','⏰ Pet care hard to find'],
+    finance:['😰 Money not working for you','❓ Confusing advice','💸 Hidden fees','😤 Debt keeps growing'],
+    events:['😓 Planning is stressful','💸 Always over budget','⏰ Too many vendors','😩 Vision never realized'],
+    homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows and delays','😤 Sloppy workmanship'],
+    default:['😩 Hard to find quality','💸 Overpriced everywhere','⏰ Wasting time searching','😤 Disappointed before']
+  };
+  var painPts = PAIN[_vadTheme] || PAIN.default;
 
-   // S1
-   +'<div class="sc-wrap on" id="s1"><div style="position:absolute;inset:0;overflow:hidden;">'+(photo?'<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s;" onload="this.style.opacity=\'0.28\'">':'')+'<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'cc 0%,'+c.bg+'44 50%,'+c.bg+'dd 100%);"></div></div>'
-   +mesh2+'<div style="position:absolute;inset:0;">'+floatHTML+'</div>'
-   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;z-index:2;">'
-   +heroHTML
-   +'<div id="s1b" style="'+glass+'100px;padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span class="dot"></span><span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
-   +'<div id="s1t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
-   +'<div id="s1s" style="font-size:14px;color:'+c.sub+';opacity:0;">Post everywhere. In one click.</div>'
-   +'<div id="s1u" style="'+glass+'10px;padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">🚀</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">autopostleey.com</span></div>'
-   +'</div></div>'
+  // Solutions per industry
+  var SOL = {
+    realestate:['Find your dream home fast','Verified affordable listings','Dedicated agent support','Stress-free process'],
+    food:['Delicious food always ready','Fresh ingredients daily','Easy online ordering','Delivered to your door'],
+    fitness:['Expert coaches guide you','Flexible schedules','Affordable memberships','Real results guaranteed'],
+    beauty:['Trusted certified artists','Easy online booking','Premium products used','Look & feel amazing'],
+    medical:['Same-day appointments','Expert specialists','Transparent pricing','Caring professional team'],
+    automotive:['Certified mechanics only','Transparent pricing','Fast turnaround','Quality guaranteed'],
+    technology:['Modern tech solutions','Budget-friendly plans','24/7 support','Fast implementation'],
+    travel:['Curated experiences','Best price guarantee','Expert local guides','Stress-free planning'],
+    pets:['Certified pet care','Affordable packages','Treated like family','Peace of mind always'],
+    finance:['Grow your money smartly','Clear honest advice','Low fees high returns','Financial freedom awaits'],
+    events:['Full event management','On budget every time','Single point of contact','Your vision realized'],
+    homeservices:['Licensed insured team','Upfront transparent price','On time every time','Quality workmanship'],
+    default:['Premium quality service','Best price guaranteed','Expert team ready','Your satisfaction first']
+  };
+  var solList = (adBenefits && adBenefits.length >= 2)
+    ? adBenefits.slice(0,4).map(function(b){ return {ico:b.icon, txt:b.text}; })
+    : (SOL[_vadTheme]||SOL.default).map(function(s,i){ return {ico:['✅','🏆','⭐','💡'][i], txt:s}; });
 
-   // S2 — Customer pain points
-   +(function(){
-     var PP={
-       realestate:['🔍 Hard to find right home','💸 Overpriced listings','😰 Agents don\'t respond','⏰ Wasted weekends viewing'],
-       food:['😩 No good food nearby','🚗 Long drives to eat','📵 No online ordering','😤 Inconsistent quality'],
-       fitness:['😓 No motivation to start','❓ Where to even begin','💸 Gym fees too expensive','⏰ No time to workout'],
-       beauty:['😩 Hard to find trusted salon','📵 Booking is a hassle','💸 Overpriced services','😤 Bad results before'],
-       medical:['😟 Long waiting times','❓ Hard to find right doctor','💸 Expensive consultations','😰 Unsure who to trust'],
-       automotive:['😩 Unreliable mechanics','💸 Hidden extra charges','⏰ Long repair wait','😰 Can\'t trust anyone'],
-       technology:['😤 Slow outdated systems','💸 Software too expensive','😩 No tech support','⏰ Manual tasks waste time'],
-       travel:['😤 Expensive tour packages','😩 Generic experiences','⏰ Wasted vacation time','❓ Unsure what to book'],
-       pets:['😟 No trusted groomer nearby','💸 Vet bills are costly','😩 Pet boarding anxiety','⏰ Pet care hard to find'],
-       finance:['😰 Money not working for you','❓ Confusing advice','💸 Hidden bank fees','😤 Debt keeps growing'],
-       events:['😓 Event planning is stressful','💸 Always over budget','⏰ Too many vendors','😩 Vision never realized'],
-       homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows and delays','😤 Sloppy workmanship'],
-       default:['😩 Hard to find quality','💸 Overpriced everywhere','⏰ Wasting time searching','😤 Disappointed before']
-     };
-     var pts=PP[_vadTheme]||PP.default;
-     return '<div class="sc-wrap" id="s2">'+mesh2
-       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
-       +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
-       +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
-       +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style=\'color:'+c.accent+'\'>this.</span></div>'
-       +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
-       +pts.map(function(t){return '<div style="'+glass('10px;padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;')+'">'+t+'</div>';}).join('')
-       +'</div>'
-       +'<div id="s2p" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">There is a better way →</div>'
-       +'</div></div>';
-   })()
-   // S3 — Business solutions
-   +(function(){
-     var SOL={
-       realestate:['Find your dream home fast','Verified affordable listings','Dedicated agent support','Stress-free process'],
-       food:['Delicious food always ready','Fresh ingredients daily','Easy online ordering','Delivered to your door'],
-       fitness:['Expert coaches guide you','Flexible class schedules','Affordable memberships','Real results guaranteed'],
-       beauty:['Trusted certified artists','Easy online booking','Premium products used','Look & feel amazing'],
-       medical:['Same-day appointments','Expert specialists','Transparent pricing','Caring professional team'],
-       automotive:['Certified mechanics only','Transparent pricing','Fast turnaround time','Quality guaranteed'],
-       technology:['Modern tech solutions','Budget-friendly plans','24/7 support included','Fast implementation'],
-       travel:['Curated unique experiences','Best price guarantee','Expert local guides','Stress-free planning'],
-       pets:['Certified pet care experts','Affordable packages','Treated like family','Peace of mind always'],
-       finance:['Grow your money smartly','Clear honest advice','Low fees high returns','Financial freedom awaits'],
-       events:['Full event management','On budget every time','Single point of contact','Your vision realized'],
-       homeservices:['Licensed insured team','Upfront transparent price','On time every time','Quality workmanship'],
-       default:['Premium quality service','Best price guaranteed','Expert team ready','Your satisfaction first']
-     };
-     var sols=(adBenefits&&adBenefits.length>=2)
-       ?adBenefits.slice(0,4).map(function(b){return {ico:b.icon,txt:b.text};})
-       :(SOL[_vadTheme]||SOL.default).map(function(s,i){return {ico:['✅','🏆','⭐','💡'][i],txt:s};});
-     return '<div class="sc-wrap" id="s3">'+mesh2
-       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;z-index:1;">'
-       +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
-       +'<div id="s3t" style="font-size:'+(w>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style=\'color:'+c.accent+'\'>solved.</span></div>'
-       +'<div id="s3g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'
-       +sols.map(function(s){return '<div style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'"><span style=\'font-size:20px;\'>'
-         +s.ico+'</span><span style=\'font-size:11px;font-weight:700;color:'+c.text+';\'>'+(s.txt||'')+'</span></div>';}).join('')
-       +'</div>'
-       +'<div id="s3cap" style="'+glass('12px;padding:12px;width:100%;')+'opacity:0;">'
-       +'<div style=\'font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:6px;\'>YOUR CAPTION</div>'
-       +'<div style=\'font-size:11px;color:'+c.text+';line-height:1.6;min-height:44px;\'><span id="tc"></span><span class="cur"></span></div>'
-       +'</div>'
-       +'</div></div>';
-   })()
-   // S4 — Social proof
-   +'<div class="sc-wrap" id="s4">'+mesh2+'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
-   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center;z-index:1;">'
-   +'<div id="s4i" style="font-size:62px;opacity:0;">🎉</div>'
-   +'<div id="s4t" style="font-size:'+(w>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style=\'color:'+c.accent+'\'>Real results.</span></div>'
-   +'<div id="s4box" style="'+glass('14px;padding:18px;width:100%;text-align:left;')+'opacity:0;">'
-   +'<div style=\'color:#fbbf24;font-size:15px;margin-bottom:8px;text-align:center;\'>★★★★★</div>'
-   +'<div style=\'font-size:11px;color:'+c.text+';font-style:italic;line-height:1.65;margin-bottom:8px;\'>\u201c'+biz+' completely changed things for us. Professional, fast, and the results speak for themselves. Highly recommended!\u201d</div>'
-   +'<div style=\'font-size:10px;color:'+c.sub+'\'>— A satisfied '+(product||biz)+' client</div>'
-   +'</div>'
-   +'<div id="s4cta" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">Ready for yours? →</div>'
-   +'</div></div>'
-   // S5 — Customer CTA
-   +(function(){
-     var site=(adWebsite||biz.toLowerCase().replace(/\s+/g,'')+'.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
-     var di=site.indexOf('.'),sn=di>-1?site.slice(0,di):site,sd=di>-1?site.slice(di):'.com';
-     var bens=(adBenefits&&adBenefits.length>=2)?adBenefits.slice(0,4)
-       :[{icon:'✅',text:'Premium quality'},{icon:'🏆',text:'Trusted service'},{icon:'⭐',text:'Best in class'},{icon:'💡',text:'Smart solutions'}];
-     var ph2=photo||'';
-     var ph2str=ph2?'<img src="'+ph2+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">':'';
-     return '<div class="sc-wrap" id="s5">'
-       +'<div style="position:absolute;inset:0;overflow:hidden;">'+ph2str+'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div></div>'
-       +mesh2
-       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;z-index:1;">'
-       +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
-       +'<div id="s5biz" style="opacity:0;">'
-       +'<div style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
-       +'<div style="font-size:'+(w>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
-       +'</div>'
-       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">'
-       +bens.map(function(b){return '<div class="s5f" style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'opacity:0;"><span style="font-size:18px;">'+(b.icon||'✅')+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+(b.text||'')+'</span></div>';}).join('')
-       +'</div>'
-       +'<div id="s5u" style="font-size:'+(w>500?28:20)+'px;font-weight:900;border-bottom:3px solid '+c.accent+';padding-bottom:5px;opacity:0;">'
-       +'<span style="color:'+c.text+';">'+sn+'</span><span style="color:'+c.accent+';">'+sd+'</span></div>'
-       +'<div id="s5btn" style="background:'+c.accent+';border-radius:12px;padding:14px 28px;font-size:14px;font-weight:800;color:#000;width:100%;max-width:360px;opacity:0;cursor:pointer;">📞 Contact Us Today</div>'
-       +'</div></div>';
-   })()
+  var siteRaw = (adWebsite||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
+  var dotIdx  = siteRaw.indexOf('.');
+  var siteName = dotIdx > -1 ? siteRaw.slice(0,dotIdx) : (siteRaw || biz.toLowerCase().replace(/\s+/g,''));
+  var siteDot  = dotIdx > -1 ? siteRaw.slice(dotIdx) : '.com';
+
+  var heroHTML = productImageUrl
+    ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?190:150)+'px;height:'+(w>500?190:150)+'px;object-fit:cover;border-radius:20px;border:3px solid '+gbd+';opacity:0;">'
+    : '<div id="hi" style="font-size:'+(w>500?96:72)+'px;line-height:1;opacity:0;">'+emoji+'</div>';
+
+  var platChips = platforms.map(function(p){
+    return '<div class="pc" style="'+gs('8px;')+'padding:6px 12px;font-size:11px;color:'+c.sub+';font-weight:600;">'+p+'</div>';
+  }).join('');
+
+  var s4Chips = platforms.map(function(p){
+    return '<div class="sc" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;opacity:0;">&#10003; '+p.replace(/^../,'').trim()+'</div>';
+  }).join('');
+
+  var benefitCards = solList.map(function(s){
+    return '<div class="fc" style="'+gs('10px;')+'padding:12px;display:flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">'+s.ico+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+s.txt+'</span></div>';
+  }).join('');
+
+  var s5BenCards = solList.map(function(s){
+    return '<div class="s5f" style="'+gs('10px;')+'padding:12px;display:flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">'+s.ico+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+s.txt+'</span></div>';
+  }).join('');
+
+  var photoBg = photo
+    ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s;" onload="this.style.opacity=\'0.28\'">'
+      + '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'cc 0%,'+c.bg+'44 50%,'+c.bg+'cc 100%);"></div>'
+    : '';
+
+  var photoBgDim = photo
+    ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">'
+      + '<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>'
+    : '';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'*{margin:0;padding:0;box-sizing:border-box;}'
+    +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;}'
+    +'.sc-wrap{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;display:none;}'
+    +'.sc-wrap.on{display:block;}'
+    +'@keyframes sU{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}'
+    +'@keyframes fI{from{opacity:0}to{opacity:1}}'
+    +'@keyframes pI{from{opacity:0;transform:scale(0.4)}to{opacity:1;transform:scale(1)}}'
+    +'@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}'
+    +'@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
+    +'@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}'
+    +'.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:blink .85s infinite;}'
+    +'.dot{width:6px;height:6px;border-radius:50%;background:'+c.accent+';display:inline-block;animation:pulse 2s infinite;}'
+    +'.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.07);}'
+    +'.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
+    +'</style></head><body>'
+
+    // S1 — Business Hero
+    +'<div class="sc-wrap on" id="s1">'
+    +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBg+'</div>'
+    +mesh2
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;z-index:2;">'
+    +heroHTML
+    +'<div id="s1b" style="'+gs('100px;')+'padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span class="dot"></span><span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
+    +'<div id="s1t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
+    +'<div id="s1s" style="font-size:14px;color:'+c.sub+';opacity:0;">'+(product||biz)+'</div>'
+    +'<div id="s1u" style="'+gs('10px;')+'padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">🌐</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">'+siteName+siteDot+'</span></div>'
+    +'</div></div>'
+
+    // S2 — Customer Pain
+    +'<div class="sc-wrap" id="s2">'+mesh2
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
+    +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
+    +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
+    +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style="color:'+c.accent+';">this.</span></div>'
+    +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
+    +painPts.map(function(t){ return '<div style="'+gs('10px;')+'padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>'; }).join('')
+    +'</div>'
+    +'<div id="s2p" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">There is a better way →</div>'
+    +'</div></div>'
+
+    // S3 — Solution
+    +'<div class="sc-wrap" id="s3">'+mesh2
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;z-index:1;">'
+    +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
+    +'<div id="s3t" style="font-size:'+(w>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style="color:'+c.accent+';">solved.</span></div>'
+    +'<div id="s3g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'+benefitCards+'</div>'
+    +'<div id="s3cap" style="'+gs('12px;')+'padding:12px;width:100%;opacity:0;">'
+    +'<div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:6px;">YOUR CAPTION</div>'
+    +'<div style="font-size:11px;color:'+c.text+';line-height:1.6;min-height:44px;"><span id="tc"></span><span class="cur"></span></div>'
+    +'</div></div></div>'
+
+    // S4 — Social Proof
+    +'<div class="sc-wrap" id="s4">'+mesh2
+    +'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center;z-index:1;">'
+    +'<div id="s4i" style="font-size:62px;opacity:0;">🎉</div>'
+    +'<div id="s4t" style="font-size:'+(w>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style="color:'+c.accent+';">Real results.</span></div>'
+    +'<div id="s4box" style="'+gs('14px;')+'padding:18px;width:100%;text-align:left;opacity:0;">'
+    +'<div style="color:#fbbf24;font-size:15px;margin-bottom:8px;text-align:center;">★★★★★</div>'
+    +'<div style="font-size:11px;color:'+c.text+';font-style:italic;line-height:1.65;margin-bottom:8px;">\u201c'+biz+' completely changed things for us. Professional, fast, and the results speak for themselves!\u201d</div>'
+    +'<div style="font-size:10px;color:'+c.sub+';">— A satisfied '+(product||biz)+' client</div>'
+    +'</div>'
+    +'<div id="s4cta" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">Ready for yours? →</div>'
+    +'</div></div>'
+
+    // S5 — CTA
+    +'<div class="sc-wrap" id="s5">'
+    +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDim+'</div>'
+    +mesh2
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;z-index:1;">'
+    +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
+    +'<div id="s5biz" style="opacity:0;">'
+    +'<div style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
+    +'<div style="font-size:'+(w>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">'+s5BenCards+'</div>'
+    +'<div id="s5u" style="font-size:'+(w>500?28:20)+'px;font-weight:900;border-bottom:3px solid '+c.accent+';padding-bottom:5px;opacity:0;">'
+    +'<span style="color:'+c.text+';">'+siteName+'</span><span style="color:'+c.accent+';">'+siteDot+'</span></div>'
+    +'<div id="s5btn" style="background:'+c.accent+';border-radius:12px;padding:14px 28px;font-size:14px;font-weight:800;color:#000;width:100%;max-width:360px;opacity:0;cursor:pointer;">📞 Contact Us Today</div>'
+    +'</div></div>'
+
+    +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
+
+    +'<script>'
+    +'var TM=[];'
+    +'function q(id){return document.getElementById(id);}'
+    +'function show(id,ms,kf,dur){TM.push(setTimeout(function(){var e=q(id);if(!e)return;e.style.opacity="1";e.style.animation=(kf||"sU")+" "+(dur||".55s")+" ease both";},ms));}'
+    +'function showAll(sel,base,step,kf){document.querySelectorAll(sel).forEach(function(e,i){TM.push(setTimeout(function(){e.style.opacity="1";e.style.animation=(kf||"sU")+" .45s ease both";},base+i*(step||80)));});}'
+    +'function go(n){["s1","s2","s3","s4","s5"].forEach(function(s){var e=q(s);if(e)e.classList.remove("on");});var e=q("s"+n);if(e)e.classList.add("on");}'
+    // S1
+    +'(function(){'
+    +'  var ic=document.querySelectorAll(".fi");ic.forEach(function(e,i){TM.push(setTimeout(function(){e.style.opacity="0.3";e.style.animation="bob "+(3+i*.3)+"s "+(i*.1)+"s ease-in-out infinite";},200+i*100));});'
+    +'  var hr=q("hi");if(hr){TM.push(setTimeout(function(){hr.style.opacity="1";hr.style.animation="pI .9s cubic-bezier(0.34,1.56,0.64,1) both";},100));}'
+    +'  show("s1b",900);show("s1t",1150);show("s1s",1450);show("s1u",1750);'
+    +'})();'
+    // S2
+    +'TM.push(setTimeout(function(){go(2);show("s2e",100);show("s2i",300,"pI",".7s");show("s2t",580);show("s2g",820,"sU");show("s2p",1100,"sU");},7000));'
+    // S3
+    +'TM.push(setTimeout(function(){go(3);show("s3e",80);show("s3t",300);show("s3g",600,"sU");show("s3cap",980);'
+    +'  var CAP='+JSON.stringify(caption)+';'
+    +'  var ch=CAP.split(""),typed="",tc=q("tc");'
+    +'  ch.forEach(function(c2,i){TM.push(setTimeout(function(){typed+=c2;if(tc)tc.textContent=typed;},1100+i*24));});'
+    +'},14000));'
+    // S4
+    +'TM.push(setTimeout(function(){go(4);'
+    +'  var ICONS='+JSON.stringify(icons.slice(0,6))+';'
+    +'  var burst=q("s4burst");'
+    +'  ICONS.forEach(function(ic,i){TM.push(setTimeout(function(){'
+    +'    var d=document.createElement("div");var angle=i*(360/ICONS.length);var dist=110+Math.random()*70;'
+    +'    var x=Math.cos(angle*Math.PI/180)*dist;var y=Math.sin(angle*Math.PI/180)*dist;'
+    +'    d.style.cssText="position:absolute;left:50%;top:40%;font-size:28px;opacity:0;transform:translate(-50%,-50%);transition:all .9s cubic-bezier(0.34,1.56,0.64,1);";'
+    +'    d.textContent=ic;if(burst)burst.appendChild(d);'
+    +'    setTimeout(function(){d.style.opacity="0.6";d.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))";},30);'
+    +'    setTimeout(function(){d.style.opacity="0";d.style.transition="opacity .5s";},2800);'
+    +'  },i*80));});'
+    +'  show("s4i",350,"pI");show("s4t",680);show("s4box",950,"sU");show("s4cta",1900,"fI");'
+    +'},23000));'
+    // S5
+    +'TM.push(setTimeout(function(){go(5);show("s5e",100);show("s5biz",300);showAll(".s5f",520,100);show("s5u",1000);show("s5btn",1280,"fI");},27500));'
+    // Progress
+    +'var st=Date.now();var pi=setInterval(function(){var p=Math.min(100,((Date.now()-st)/33000)*100);var e=q("prog");if(e)e.style.width=p+"%";if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}},100);'
+    +'<\/script></body></html>';
 }
+
 
 function replayVadAd() {
   var iframe = document.getElementById('vad-iframe');
