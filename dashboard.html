@@ -2219,7 +2219,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT / SERVICE</label>
-                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" oninput="autoDetectTheme()">
+                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" oninput="debouncedAutoDetect()">
               </div>
               <div>
                 <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">TAGLINE / KEY MESSAGE</label>
@@ -2284,7 +2284,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <div class="card">
             <div class="card-title">🎨 Industry Theme</div>
             <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
-              <button onclick="autoDetectTheme()" style="flex:1;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;">
+              <button onclick="autoDetectTheme(true)" style="flex:1;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;">
                 🎯 Auto-Detect from Product
               </button>
             </div>
@@ -9150,7 +9150,7 @@ var _vadBlob = null;
 var _vadRecorder = null;
 var _vadIframeDoc = null;
 
-function selectVadTheme(t) {
+function selectVadTheme(t, silent) {
   _vadTheme = t;
   document.querySelectorAll('.vad-theme').forEach(function(el) {
     el.style.border = '1px solid var(--border)';
@@ -9162,21 +9162,34 @@ function selectVadTheme(t) {
     sel.style.border = '2px solid var(--accent)';
     sel.style.background = 'rgba(109,94,248,0.1)';
     if (sel.querySelector('div:last-child')) sel.querySelector('div:last-child').style.color = 'var(--accent)';
-    sel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    // Only scroll into view when user manually clicks a theme, not on auto-detect
+    if (!silent) sel.scrollIntoView({behavior:'smooth', block:'nearest'});
   }
   var c = getVadThemeColors(t);
   var lbl = document.getElementById('vad-theme-name');
   if (lbl && c.name) lbl.textContent = c.name;
 }
 
-function autoDetectTheme() {
+function autoDetectTheme(showNotification) {
   var product = (document.getElementById('vad-product')||{}).value || '';
   var biz     = (document.getElementById('vad-bizname')||{}).value || '';
   var desc    = (_autoConfig && _autoConfig.description) || (_bizProfile && _bizProfile.description) || '';
   var detected = detectIndustryTheme(product, biz, desc);
-  selectVadTheme(detected);
-  var c = getVadThemeColors(detected);
-  showToast('🎨 Theme set to ' + (c.name||detected) + ' based on your product!', 'success');
+  // silent=true prevents scrollIntoView when called from debounce
+  selectVadTheme(detected, !showNotification);
+  if (showNotification) {
+    var c = getVadThemeColors(detected);
+    showToast('🎨 Theme set to ' + (c.name||detected) + '!', 'success');
+  }
+}
+
+// Debounced version — waits 600ms after user stops typing before detecting
+var _vadDetectTimer = null;
+function debouncedAutoDetect() {
+  if (_vadDetectTimer) clearTimeout(_vadDetectTimer);
+  _vadDetectTimer = setTimeout(function() {
+    autoDetectTheme(false); // silent — no toast, no scroll
+  }, 600);
 }
 
 function selectVadFormat(f) {
@@ -10124,13 +10137,13 @@ function initVideoAdPage() {
     if (bizField && !bizField.value) bizField.value = _bizProfile.name || '';
   }
 
-  // Auto-detect industry theme
+  // Auto-detect industry theme (silent — no scroll on page open)
   var autoTheme = detectIndustryTheme(
     (productField && productField.value) || '',
     (bizField && bizField.value) || '',
     (_autoConfig && _autoConfig.description) || ''
   );
-  selectVadTheme(autoTheme);
+  selectVadTheme(autoTheme, true);
 
   // Auto-suggest emoji based on profile
   if (emojiField && !emojiField.value) {
