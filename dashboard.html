@@ -9642,7 +9642,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
        +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
        +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
-       +'<div id="s2t" style="font-size:'+(W>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style=\'color:'+c.accent+'\'>this.</span></div>'
+       +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style=\'color:'+c.accent+'\'>this.</span></div>'
        +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
        +pts.map(function(t){return '<div style="'+glass('10px;padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;')+'">'+t+'</div>';}).join('')
        +'</div>'
@@ -9672,7 +9672,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
      return '<div class="sc-wrap" id="s3">'+mesh2
        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;z-index:1;">'
        +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
-       +'<div id="s3t" style="font-size:'+(W>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style=\'color:'+c.accent+'\'>solved.</span></div>'
+       +'<div id="s3t" style="font-size:'+(w>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style=\'color:'+c.accent+'\'>solved.</span></div>'
        +'<div id="s3g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'
        +sols.map(function(s){return '<div style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'"><span style=\'font-size:20px;\'>'
          +s.ico+'</span><span style=\'font-size:11px;font-weight:700;color:'+c.text+';\'>'+(s.txt||'')+'</span></div>';}).join('')
@@ -9687,7 +9687,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
    +'<div class="sc-wrap" id="s4">'+mesh2+'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center;z-index:1;">'
    +'<div id="s4i" style="font-size:62px;opacity:0;">🎉</div>'
-   +'<div id="s4t" style="font-size:'+(W>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style=\'color:'+c.accent+'\'>Real results.</span></div>'
+   +'<div id="s4t" style="font-size:'+(w>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style=\'color:'+c.accent+'\'>Real results.</span></div>'
    +'<div id="s4box" style="'+glass('14px;padding:18px;width:100%;text-align:left;')+'opacity:0;">'
    +'<div style=\'color:#fbbf24;font-size:15px;margin-bottom:8px;text-align:center;\'>★★★★★</div>'
    +'<div style=\'font-size:11px;color:'+c.text+';font-style:italic;line-height:1.65;margin-bottom:8px;\'>\u201c'+biz+' completely changed things for us. Professional, fast, and the results speak for themselves. Highly recommended!\u201d</div>'
@@ -9709,13 +9709,13 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;z-index:1;">'
        +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
        +'<div id="s5biz" style="opacity:0;">'
-       +'<div style="font-size:'+(W>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
-       +'<div style="font-size:'+(W>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
+       +'<div style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
+       +'<div style="font-size:'+(w>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
        +'</div>'
        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">'
        +bens.map(function(b){return '<div class="s5f" style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'opacity:0;"><span style="font-size:18px;">'+(b.icon||'✅')+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+(b.text||'')+'</span></div>';}).join('')
        +'</div>'
-       +'<div id="s5u" style="font-size:'+(W>500?28:20)+'px;font-weight:900;border-bottom:3px solid '+c.accent+';padding-bottom:5px;opacity:0;">'
+       +'<div id="s5u" style="font-size:'+(w>500?28:20)+'px;font-weight:900;border-bottom:3px solid '+c.accent+';padding-bottom:5px;opacity:0;">'
        +'<span style="color:'+c.text+';">'+sn+'</span><span style="color:'+c.accent+';">'+sd+'</span></div>'
        +'<div id="s5btn" style="background:'+c.accent+';border-radius:12px;padding:14px 28px;font-size:14px;font-weight:800;color:#000;width:100%;max-width:360px;opacity:0;cursor:pointer;">📞 Contact Us Today</div>'
        +'</div></div>';
