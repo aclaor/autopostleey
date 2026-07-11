@@ -2416,6 +2416,42 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             </div>
           </div>
 
+          <!-- Key Benefits -->
+          <div class="card">
+            <div class="card-title">🏆 Key Benefits / Features</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">What makes your business special? These appear in the final scene of your ad.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:18px;width:24px;text-align:center;" id="vad-b1-ico">⭐</span>
+                <input id="vad-b1" placeholder="e.g. Free Viewing Anytime" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:18px;width:24px;text-align:center;" id="vad-b2-ico">✅</span>
+                <input id="vad-b2" placeholder="e.g. Verified Listings Only" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:18px;width:24px;text-align:center;" id="vad-b3-ico">🏆</span>
+                <input id="vad-b3" placeholder="e.g. 500+ Happy Clients" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:18px;width:24px;text-align:center;" id="vad-b4-ico">💡</span>
+                <input id="vad-b4" placeholder="e.g. No Hidden Fees" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+              </div>
+              <button onclick="generateVadBenefits()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;width:100%;transition:all .15s;"
+                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+                ✨ Auto-Generate from Business Profile
+              </button>
+            </div>
+          </div>
+
+          <!-- Website URL -->
+          <div class="card">
+            <div class="card-title">🌐 Your Website / Link</div>
+            <input id="vad-website" placeholder="e.g. rentleeys.com" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+            <div style="font-size:10px;color:var(--text3);margin-top:6px;">Shown in the last scene of your video ad</div>
+          </div>
+
           <button onclick="generateVideoAd()" id="vad-generate-btn"
             style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">
             ✨ Generate Video Ad
@@ -9436,7 +9472,14 @@ function generateVideoAd() {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var caption = (data.post || '').trim() || (tagline || ('Check out our ' + product + '! #' + biz.replace(/\s+/g,'') + ' #shopnow'));
-    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl);
+    var previewBenefits = [
+      { icon: (document.getElementById('vad-b1-ico')||{}).textContent||'⭐', text: (document.getElementById('vad-b1')||{}).value||'' },
+      { icon: (document.getElementById('vad-b2-ico')||{}).textContent||'✅', text: (document.getElementById('vad-b2')||{}).value||'' },
+      { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
+      { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
+    ].filter(function(b){ return b.text.trim(); });
+    var previewWebsite = (document.getElementById('vad-website')||{}).value || 'autopostleey.com';
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite);
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   })
   .catch(function() {
@@ -9446,7 +9489,7 @@ function generateVideoAd() {
   });
 }
 
-function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl) {
+function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl, previewBenefits, previewWebsite) {
   var ph = document.getElementById('vad-placeholder');
   var iframe = document.getElementById('vad-iframe');
   var wrap = document.getElementById('vad-preview-wrap');
@@ -9488,7 +9531,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
-  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '');
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || 'autopostleey.com');
   _vadIframeDoc = adHTML;
   if (iframe) {
     iframe.srcdoc = adHTML;
@@ -9504,7 +9547,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
-function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl) {
+function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
   var THEME_VISUALS = {
@@ -9530,8 +9573,15 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?200:160)+'px;height:'+(w>500?200:160)+'px;object-fit:cover;border-radius:20px;border:3px solid '+c.glassBorder+';opacity:0;">'
     : '<div id="hi" style="font-size:'+(w>500?96:72)+'px;line-height:1;opacity:0;filter:drop-shadow(0 0 30px '+c.accent+'88);">'+emoji+'</div>';
   var succChips = platforms.map(function(p){return '<div class="sc" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;display:inline-block;opacity:0;">&#10003; '+p.replace(/^../,'').trim()+'</div>';}).join('');
-  var featCards = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']].map(function(f){return '<div class="fc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;"><span style="font-size:20px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';}).join('');
-  var freePills = ['Free trial','No credit card','60 sec setup'].map(function(p){return '<div class="pl" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;">✓ '+p+'</div>';}).join('');
+  var defaultFeats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
+  var featSource = (adBenefits && adBenefits.length > 0)
+    ? adBenefits.slice(0,4).map(function(b){ return [b.icon, b.text]; })
+    : defaultFeats;
+  var featCards = featSource.map(function(f){return '<div class="fc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;"><span style="font-size:20px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';}).join('');
+  var pillTexts = biz
+    ? [biz.length<22?biz:biz.slice(0,20)+'…', 'Contact us today', product||'Quality guaranteed']
+    : ['Best quality','Contact us today','Satisfaction guaranteed'];
+  var freePills = pillTexts.map(function(p){return '<div class="pl" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;">✓ '+p+'</div>';}).join('');
   var photo = c.photoUrl || '';
   var mesh2 = '<div style="position:absolute;inset:0;overflow:hidden;">'+meshHTML+'</div>';
   var glass = 'background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:';
@@ -9737,7 +9787,7 @@ function resetDownloadBtn(btn) {
 
 // ── CANVAS AD RENDERER ────────────────────────────────────
 // Renders the full 33s ad directly on a canvas — smooth, no flickering
-function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, onProgress) {
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, onProgress) {
   return new Promise(function(resolve, reject) {
     var W = canvas.width, H = canvas.height;
     var ctx = canvas.getContext('2d');
@@ -9941,7 +9991,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
         ctx.font = '14px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Post everywhere. In one click.', W/2, centerY + 80 + su.y);
+        ctx.fillText(product || biz || 'Quality you can trust', W/2, centerY + 80 + su.y);
         ctx.globalAlpha = 1;
 
         // URL badge
@@ -10259,7 +10309,15 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = 1;
 
         // Feature cards
-        var feats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
+        // Use customer benefits if provided, fallback to generic
+        var defaultBenefits = [
+          {icon:'⭐', text:'Premium Quality'},
+          {icon:'✅', text:'Trusted Service'},
+          {icon:'🏆', text:'Best in Class'},
+          {icon:'💡', text:'Smart Solutions'}
+        ];
+        var benefitList = (benefits && benefits.length > 0) ? benefits : defaultBenefits;
+        var feats = benefitList.slice(0,4).map(function(b){ return [b.icon, b.text]; });
         var fcW = (W-28)/2, fcH = 52;
         feats.forEach(function(ft, i) {
           var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
@@ -10278,26 +10336,39 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.globalAlpha = 1;
         });
 
-        // URL
+        // URL — use customer's website
         su = slideUp(f - FPS*1.0, FPS*0.6);
         ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        var siteUrl = (website || 'autopostleey.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
+        var dotIdx = siteUrl.indexOf('.');
+        var siteName = dotIdx > -1 ? siteUrl.slice(0, dotIdx) : siteUrl;
+        var siteDot  = dotIdx > -1 ? siteUrl.slice(dotIdx) : '.com';
+        var urlFontSize = W > 500 ? 34 : 22;
+        ctx.font = 'bold ' + urlFontSize + 'px Inter, sans-serif';
+        var nameW = ctx.measureText(siteName).width;
+        var dotW  = ctx.measureText(siteDot).width;
+        var totalW = nameW + dotW;
+        var urlX = W/2 - totalW/2;
+        var urlY = H*0.82 + su.y;
+        ctx.textAlign = 'left';
         ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?34:24) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('autopostleey', W/2 - (W>500?50:35), H*0.82 + su.y);
+        ctx.fillText(siteName, urlX, urlY);
         ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText('.com', W/2 + (W>500?64:44), H*0.82 + su.y);
+        ctx.fillText(siteDot, urlX + nameW, urlY);
+        ctx.textAlign = 'center';
         // Underline
         ctx.strokeStyle = c.accent || '#a855f7';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(W*0.15, H*0.85 + su.y);
-        ctx.lineTo(W*0.85, H*0.85 + su.y);
+        ctx.moveTo(urlX, urlY + 6);
+        ctx.lineTo(urlX + totalW, urlY + 6);
         ctx.stroke();
         ctx.globalAlpha = 1;
 
         // Pills
-        var pillLabels = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'];
+        var pillLabels = biz
+          ? ['✓ ' + (biz.length < 20 ? biz : biz.slice(0,18)+'…'), '✓ Contact us today', '✓ ' + (product || 'Quality guaranteed')]
+          : ['✓ Best quality', '✓ Contact us today', '✓ Satisfaction guaranteed'];
         var pillW = (W-24)/3;
         pillLabels.forEach(function(pl, i) {
           var pAlpha = clamp((f - FPS*1.25 - i*FPS*0.08) / (FPS*0.35), 0, 1);
@@ -10414,6 +10485,15 @@ async function downloadVadVideo() {
     var cap     = capEl ? capEl.value.split('\n\n🌐')[0].trim() : ('Check out ' + product + ' by ' + biz);
     var c = getVadThemeColors(_vadTheme);
     var plats = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
+    // Collect customer benefits + website
+    var benefits = [
+      { icon: (document.getElementById('vad-b1-ico')||{}).textContent||'⭐', text: (document.getElementById('vad-b1')||{}).value||'' },
+      { icon: (document.getElementById('vad-b2-ico')||{}).textContent||'✅', text: (document.getElementById('vad-b2')||{}).value||'' },
+      { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
+      { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
+    ].filter(function(b){ return b.text.trim(); });
+    var website = (document.getElementById('vad-website')||{}).value || 'autopostleey.com';
+    if (website && !website.includes('.')) website = 'autopostleey.com';
 
     // Create canvas
     var canvas = document.createElement('canvas');
@@ -10443,6 +10523,7 @@ async function downloadVadVideo() {
     // Render the ad onto the canvas
     await renderAdToCanvas(
       canvas, c, biz, product, tagline, emojiVal, cap, plats, _vadProductImageUrl || '',
+      benefits, website,
       function(progress, frame, total) {
         var pct = 5 + Math.round(progress * 78);
         setVadProgressBar(pct);
@@ -10630,6 +10711,75 @@ window.addEventListener('message', function(e) {
     showToast('Ad finished playing — click Download or Auto-Post!', 'success');
   }
 });
+
+// ── BENEFITS GENERATOR ───────────────────────────────────────
+async function generateVadBenefits() {
+  var biz     = (document.getElementById('vad-bizname')  || {}).value || (_bizProfile && _bizProfile.name) || '';
+  var product = (document.getElementById('vad-product')  || {}).value || '';
+  var desc    = (_bizProfile && _bizProfile.description) || (_autoConfig && _autoConfig.description) || '';
+  var industry= (_bizProfile && _bizProfile.industry)    || _vadTheme || '';
+
+  if (!biz && !desc) { showToast('Fill in business name first', 'error'); return; }
+
+  var btns = document.querySelectorAll('#vad-b1,#vad-b2,#vad-b3,#vad-b4');
+  btns.forEach(function(b){ b.placeholder = '✨ Generating...'; b.disabled = true; });
+
+  try {
+    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'Generate exactly 4 short key benefits or features for this business:\n'
+          + 'Business: ' + biz + '\n'
+          + (product ? 'Product/Service: ' + product + '\n' : '')
+          + (desc ? 'Description: ' + desc + '\n' : '')
+          + (industry ? 'Industry: ' + industry + '\n' : '')
+          + '\nRules:'
+          + '\n- Each benefit max 4 words'
+          + '\n- Be specific to THIS business, not generic'
+          + '\n- Output ONLY 4 lines, one benefit per line'
+          + '\n- No numbers, no bullets, no emojis, no explanation'
+          + '\nExample for a rental property business:'
+          + '\nFree Property Viewing'
+          + '\nVerified Listings Only'
+          + '\n500+ Happy Clients'
+          + '\nNo Hidden Fees'
+      })
+    });
+    var data = await resp.json();
+    var lines = (data.post || '').split('\n')
+      .map(function(l){ return l.replace(/^[-•*\d.]+\s*/,'').trim(); })
+      .filter(function(l){ return l.length > 2 && l.length < 40; })
+      .slice(0, 4);
+
+    // Assign icons based on industry
+    var BENEFIT_ICONS = {
+      realestate: ['🏠','✅','🏆','💡'], food: ['🍽️','⭐','🔥','✅'],
+      fitness: ['💪','🏆','⚡','✅'], beauty: ['✨','💄','⭐','🌸'],
+      medical: ['❤️','✅','🏥','🔬'], education: ['📚','🎓','✅','💡'],
+      technology: ['⚡','🚀','✅','🔮'], travel: ['✈️','⭐','🌍','✅'],
+      pets: ['🐾','❤️','✅','🏆'], automotive: ['🚗','✅','🔧','⭐'],
+      default: ['⭐','✅','🏆','💡']
+    };
+    var themeIcons = BENEFIT_ICONS[_vadTheme] || BENEFIT_ICONS.default;
+
+    ['vad-b1','vad-b2','vad-b3','vad-b4'].forEach(function(id, i) {
+      var el = document.getElementById(id);
+      var ico = document.getElementById(id + '-ico');
+      if (el && lines[i]) {
+        el.value = lines[i];
+        el.disabled = false;
+        el.placeholder = '';
+      }
+      if (ico) ico.textContent = themeIcons[i] || '⭐';
+    });
+
+    showToast('✅ Benefits generated from your business profile!', 'success');
+  } catch(e) {
+    btns.forEach(function(b){ b.disabled = false; b.placeholder = b.placeholder.replace('✨ Generating...',''); });
+    showToast('Could not generate benefits: ' + e.message, 'error');
+  }
+}
 
 // ── TAGLINE GENERATOR ─────────────────────────────────────
 async function generateVadTagline() {
@@ -10859,6 +11009,13 @@ function initVideoAdPage() {
   // Then _bizProfile
   if (_bizProfile) {
     if (bizField && !bizField.value) bizField.value = _bizProfile.name || '';
+  }
+
+  // Auto-fill website from biz profile
+  var websiteField = document.getElementById('vad-website');
+  if (websiteField && !websiteField.value) {
+    var profileWebsite = (_bizProfile && _bizProfile.website) || (_autoConfig && _autoConfig.website) || '';
+    if (profileWebsite) websiteField.value = profileWebsite.replace(/^https?:\/\//,'');
   }
 
   // Auto-detect industry theme (silent — no scroll on page open)
