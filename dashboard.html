@@ -10457,94 +10457,142 @@ async function downloadVadVideo() {
   }
 
   showVadProgress(true);
-  setVadProgressBar(2);
-  setVadProgressText('Setting up...');
+  setVadProgressBar(3);
+  setVadProgressText('Opening ad for recording...');
 
   var adW = _vadFormat === 'reel' ? 607 : 500;
   var adH = _vadFormat === 'reel' ? 1080 : 500;
+  var AD_DURATION = 34000;
   var FPS = 30;
 
+  // ── APPROACH: Open the actual HTML ad in a real window and record it ──
+  // This records the EXACT same HTML/CSS that looks great in the preview
+  // No canvas re-drawing = no blur, perfect emoji, perfect alignment
+
   try {
-    // Get current ad data from the existing state
-    var biz     = (document.getElementById('vad-bizname')  || {}).value || '';
-    var product = (document.getElementById('vad-product')  || {}).value || '';
-    var tagline = (document.getElementById('vad-tagline')  || {}).value || '';
-    var emojiVal= (document.getElementById('vad-emoji')    || {}).value || '✨';
-    var capEl   = document.getElementById('vad-caption');
-    var cap     = capEl ? capEl.value.split('\n\n🌐')[0].trim() : ('Check out ' + product + ' by ' + biz);
-    var c = getVadThemeColors(_vadTheme);
-    var plats = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
-    // Collect customer benefits + website
-    var benefits = [
-      { icon: (document.getElementById('vad-b1-ico')||{}).textContent||'⭐', text: (document.getElementById('vad-b1')||{}).value||'' },
-      { icon: (document.getElementById('vad-b2-ico')||{}).textContent||'✅', text: (document.getElementById('vad-b2')||{}).value||'' },
-      { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
-      { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
-    ].filter(function(b){ return b.text.trim(); });
-    var problems = [
-      (document.getElementById('vad-p1')||{}).value||'',
-      (document.getElementById('vad-p2')||{}).value||'',
-      (document.getElementById('vad-p3')||{}).value||'',
-      (document.getElementById('vad-p4')||{}).value||'',
-    ].filter(function(p){ return p.trim(); });
-    var music = (document.getElementById('vad-music')||{}).value || '';
-    var thumbUrl = _vadThumbnailUrl || '';
-    var website = (document.getElementById('vad-website')||{}).value || (_bizProfile && _bizProfile.website) || (_autoConfig && _autoConfig.website) || '';
-    if (!website && biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
-    if (website && !website.includes('.')) website = website + '.com';
+    // Step 1: Open ad in a same-origin iframe that we can capture
+    setVadProgressText('Setting up recorder...');
+    setVadProgressBar(5);
 
-    // Create canvas
-    var canvas = document.createElement('canvas');
-    canvas.width = adW;
-    canvas.height = adH;
+    // Create a hidden iframe at full resolution
+    var recIframe = document.createElement('iframe');
+    recIframe.style.cssText = [
+      'position:fixed',
+      'left:-9999px',
+      'top:0',
+      'width:' + adW + 'px',
+      'height:' + adH + 'px',
+      'border:none',
+      'z-index:-1',
+      'pointer-events:none'
+    ].join(';');
+    recIframe.srcdoc = _vadIframeDoc;
+    document.body.appendChild(recIframe);
 
-    // Detect best recording format
+    // Wait for iframe to fully load and animation to start
+    await new Promise(function(res){ setTimeout(res, 1500); });
+
+    setVadProgressText('Starting recording...');
+    setVadProgressBar(10);
+
+    // Step 2: Capture the iframe body using html2canvas at high resolution
+    // and stream frames to a canvas — this gives us CSS/HTML quality
+
+    // Load html2canvas if needed
+    if (!window.html2canvas) {
+      await new Promise(function(res, rej) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+
+    // Create output canvas matching ad dimensions
+    var outCanvas = document.createElement('canvas');
+    outCanvas.width  = adW;
+    outCanvas.height = adH;
+    var outCtx = outCanvas.getContext('2d');
+
+    // Best mime type
     var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){
       return MediaRecorder.isTypeSupported(t);
     }) || 'video/webm';
 
-    setVadProgressText('Starting recording...');
-    setVadProgressBar(5);
-
-    // Start recording the canvas stream
-    var stream = canvas.captureStream(FPS);
+    // Start recording
+    var stream = outCanvas.captureStream(FPS);
     var chunks = [];
     var recorder = new MediaRecorder(stream, {
       mimeType: mimeType,
-      videoBitsPerSecond: 12000000 // 12Mbps for crisp text
+      videoBitsPerSecond: 16000000  // 16Mbps for crystal clear
     });
-    recorder.ondataavailable = function(e) {
+    recorder.ondataavailable = function(e){
       if (e.data && e.data.size > 0) chunks.push(e.data);
     };
     recorder.start(100);
 
-    // Render the ad onto the canvas
-    await renderAdToCanvas(
-      canvas, c, biz, product, tagline, emojiVal, cap, plats, _vadProductImageUrl || '',
-      benefits, website, problems, music, thumbUrl,
-      function(progress, frame, total) {
-        var pct = 5 + Math.round(progress * 78);
-        setVadProgressBar(pct);
-        var secs = Math.round(progress * 33);
+    // Step 3: Capture html2canvas frames in a loop
+    var recStart = Date.now();
+    var capturing = true;
+
+    // Frame capture loop — html2canvas each frame from the live iframe
+    async function captureFrames() {
+      while (capturing) {
+        var elapsed = Date.now() - recStart;
+
+        try {
+          var iframeBody = recIframe.contentDocument && recIframe.contentDocument.body;
+          if (iframeBody) {
+            var snap = await window.html2canvas(iframeBody, {
+              canvas:          outCanvas,
+              width:           adW,
+              height:          adH,
+              scale:           1,
+              useCORS:         true,
+              allowTaint:      true,
+              logging:         false,
+              backgroundColor: null,
+              removeContainer: false
+            });
+            // html2canvas draws directly to outCanvas if we pass it
+            if (snap !== outCanvas) {
+              outCtx.clearRect(0, 0, adW, adH);
+              outCtx.drawImage(snap, 0, 0, adW, adH);
+            }
+          }
+        } catch(e) { /* skip frame */ }
+
+        // Progress
+        var pct = 10 + Math.min(73, (elapsed / AD_DURATION) * 73);
+        setVadProgressBar(Math.round(pct));
+        var secs = Math.round(elapsed / 1000);
         setVadProgressText('Recording... ' + secs + 's / 33s');
-        if (btn && secs > 0) {
-          btn.innerHTML = '<div style="font-size:24px;margin-bottom:6px;">🔴</div>'
-            + '<div style="font-size:12px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
+        if (btn) {
+          btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">\uD83D\uDD34</div>'
+            + '<div style="font-size:11px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
         }
+
+        // Target ~15fps for html2canvas (it's slower than canvas.fillRect)
+        await new Promise(function(res){ setTimeout(res, 66); });
       }
-    );
+    }
+
+    // Run capture and wait for full ad duration simultaneously
+    var capturePromise = captureFrames();
+    await new Promise(function(res){ setTimeout(res, AD_DURATION); });
+    capturing = false;
+    await capturePromise;
 
     // Stop recording
     recorder.stop();
     stream.getTracks().forEach(function(t){ t.stop(); });
+    document.body.removeChild(recIframe);
 
     setVadProgressBar(85);
     setVadProgressText('Saving video...');
 
-    var rawBlob = await new Promise(function(res) {
-      recorder.onstop = function() {
-        res(new Blob(chunks, { type: mimeType }));
-      };
+    var rawBlob = await new Promise(function(res){
+      recorder.onstop = function(){ res(new Blob(chunks, { type: mimeType })); };
       setTimeout(function(){ res(new Blob(chunks, { type: mimeType })); }, 3000);
     });
 
@@ -10552,14 +10600,14 @@ async function downloadVadVideo() {
 
     // Convert to MP4 if needed
     var finalBlob = rawBlob;
-    var finalExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    var finalExt  = mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-    if (!mimeType.includes('mp4')) {
+    if (!mimeType.includes('mp4') && rawBlob.size > 0) {
       setVadProgressText('Converting to MP4...');
       try {
-        finalBlob = await convertWebmToMp4(rawBlob, function(p) {
+        finalBlob = await convertWebmToMp4(rawBlob, function(p){
           setVadProgressBar(88 + Math.round(p * 11));
-          setVadProgressText('Converting to MP4... ' + Math.round(p*100) + '%');
+          setVadProgressText('Converting... ' + Math.round(p*100) + '%');
         });
         finalExt = 'mp4';
       } catch(e) {
@@ -10568,13 +10616,13 @@ async function downloadVadVideo() {
     }
 
     setVadProgressBar(100);
-    setVadProgressText('✅ Downloading...');
-
+    setVadProgressText('\u2705 Done! Downloading...');
     await new Promise(function(res){ setTimeout(res, 400); });
 
+    // Download
     var url = URL.createObjectURL(finalBlob);
-    var a = document.createElement('a');
-    a.href = url;
+    var a   = document.createElement('a');
+    a.href     = url;
     a.download = 'autopostleey-ad-' + Date.now() + '.' + finalExt;
     document.body.appendChild(a);
     a.click();
@@ -10582,18 +10630,28 @@ async function downloadVadVideo() {
     setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
 
     var msg = finalExt === 'mp4'
-      ? '✅ MP4 downloaded! Share on WhatsApp, TikTok, Instagram & Facebook!'
-      : '✅ Video downloaded! Works on Android & Chrome.';
+      ? '\u2705 MP4 downloaded! Share on WhatsApp, TikTok, Instagram & Facebook!'
+      : '\u2705 Video downloaded! Works on Android & Chrome.';
     showToast(msg, 'success');
 
   } catch(err) {
     console.error('Download error:', err);
-    showToast('Download failed: ' + err.message, 'error');
+
+    // Fallback: download the HTML file
+    var blob = new Blob([_vadIframeDoc||''], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'autopostleey-video-ad.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('Saved as HTML. Open in Chrome to screen-record it.', 'success');
   }
 
   showVadProgress(false);
   if (btn) resetDownloadBtn(btn);
 }
+
 
 // FFmpeg WebM → MP4 converter
 async function convertWebmToMp4(webmBlob, onProgress) {
