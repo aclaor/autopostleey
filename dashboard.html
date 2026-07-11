@@ -9415,283 +9415,183 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
-
-  // ── Theme visual elements (floating icons per industry) ──
   var THEME_VISUALS = {
-    ecommerce:    {icons:['🛍️','👗','👟','💳','🏷️','✨','💎','🛒'],    scene2Icon:'😤',  scene4Icon:'🎉'},
-    realestate:   {icons:['🏠','🔑','🏡','🏢','📍','🌳','🏗️','💼'],   scene2Icon:'😰',  scene4Icon:'🎊'},
-    automotive:   {icons:['🚗','🔧','⚙️','🏎️','🛞','⛽','🚘','🔩'],   scene2Icon:'😤',  scene4Icon:'🏆'},
-    food:         {icons:['🍔','🍕','☕','🍜','🥗','🍰','🍣','🥤'],    scene2Icon:'😫',  scene4Icon:'🍽️'},
-    fitness:      {icons:['💪','🏋️','🥊','⚡','🏃','🎯','🏆','🔥'],   scene2Icon:'😓',  scene4Icon:'💪'},
-    beauty:       {icons:['💄','💅','🌸','✨','💋','🪞','👑','🌺'],    scene2Icon:'😩',  scene4Icon:'✨'},
-    medical:      {icons:['🏥','💊','🩺','❤️','🧬','💉','🩹','🔬'],   scene2Icon:'😟',  scene4Icon:'❤️'},
-    education:    {icons:['📚','🎓','✏️','🧠','💡','🔭','📐','🎒'],   scene2Icon:'😤',  scene4Icon:'🎓'},
-    professional: {icons:['💼','📊','🤝','⚖️','📋','🏛️','📈','🖊️'],  scene2Icon:'😰',  scene4Icon:'🏆'},
-    homeservices: {icons:['🔨','🪴','🧹','🔌','🏠','🪟','🛁','🌿'],   scene2Icon:'😤',  scene4Icon:'🏠'},
-    technology:   {icons:['💻','📱','⚡','🚀','🤖','🔮','⌨️','🛸'],   scene2Icon:'😓',  scene4Icon:'🚀'},
-    travel:       {icons:['✈️','🌍','🏖️','🗺️','🌅','🧳','🏝️','⛵'],  scene2Icon:'😩',  scene4Icon:'🌟'},
-    events:       {icons:['🎉','🎊','📸','🎵','🥂','💐','🎂','🎭'],   scene2Icon:'😤',  scene4Icon:'🎊'},
-    pets:         {icons:['🐶','🐱','🐾','🦮','🐩','😺','🦴','🐕'],   scene2Icon:'😿',  scene4Icon:'🐾'},
-    finance:      {icons:['💰','📈','🏦','💳','🪙','📊','💵','🔐'],   scene2Icon:'😰',  scene4Icon:'📈'},
-    marketing:    {icons:['📱','🎯','📊','✨','🚀','📣','💡','🌐'],   scene2Icon:'😤',  scene4Icon:'🎯'},
-    manufacturing:{icons:['🏭','⚙️','🔩','🔧','🏗️','📦','🛠️','⚡'],  scene2Icon:'😓',  scene4Icon:'🏆'},
-    agriculture:  {icons:['🌾','🚜','🌱','🌻','🐄','🍅','🌽','🌿'],  scene2Icon:'😤',  scene4Icon:'🌾'},
-    family:       {icons:['👶','🧸','🍼','💕','🎠','🌈','🎡','🦄'],   scene2Icon:'😩',  scene4Icon:'💕'},
-    entertainment:{icons:['🎮','🎬','🎵','🕹️','🏆','⚡','🎭','🌟'],  scene2Icon:'😤',  scene4Icon:'🎉'},
-    nonprofit:    {icons:['❤️','🤝','🌍','🕊️','⭐','🙏','💙','🌟'],  scene2Icon:'😢',  scene4Icon:'❤️'},
+    ecommerce:['🛍️','👗','👟','💳','🏷️','✨','💎','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳','🏗️','💼'],
+    automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽','🚘','🔩'],food:['🍔','🍕','☕','🍜','🥗','🍰','🍣','🥤'],
+    fitness:['💪','🏋️','🥊','⚡','🏃','🎯','🏆','🔥'],beauty:['💄','💅','🌸','✨','💋','🪞','👑','🌺'],
+    medical:['🏥','💊','🩺','❤️','🧬','💉','🩹','🔬'],education:['📚','🎓','✏️','🧠','💡','🔭','📐','🎒'],
+    professional:['💼','📊','🤝','⚖️','📋','🏛️','📈','🖊️'],homeservices:['🔨','🪴','🧹','🔌','🏠','🪟','🛁','🌿'],
+    technology:['💻','📱','⚡','🚀','🤖','🔮','⌨️','🛸'],travel:['✈️','🌍','🏖️','🗺️','🌅','🧳','🏝️','⛵'],
+    events:['🎉','🎊','📸','🎵','🥂','💐','🎂','🎭'],pets:['🐶','🐱','🐾','🦮','🐩','😺','🦴','🐕'],
+    finance:['💰','📈','🏦','💳','🪙','📊','💵','🔐'],marketing:['📱','🎯','📊','✨','🚀','📣','💡','🌐'],
+    manufacturing:['🏭','⚙️','🔩','🔧','🏗️','📦','🛠️','⚡'],agriculture:['🌾','🚜','🌱','🌻','🐄','🍅','🌽','🌿'],
+    family:['👶','🧸','🍼','💕','🎠','🌈','🎡','🦄'],entertainment:['🎮','🎬','🎵','🕹️','🏆','⚡','🎭','🌟'],
+    nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏','💙','🌟']
   };
-  var tv = THEME_VISUALS[_vadTheme] || THEME_VISUALS.ecommerce;
-  var icons = tv.icons;
-
-  // Build mesh blobs
+  var icons = THEME_VISUALS[_vadTheme] || THEME_VISUALS.ecommerce;
+  var pos = [{t:'8%',l:'5%',s:26},{t:'15%',r:'6%',s:22},{t:'38%',l:'3%',s:20},{t:'42%',r:'4%',s:22},{t:'62%',l:'5%',s:24},{t:'68%',r:'5%',s:20},{t:'82%',l:'14%',s:18},{t:'78%',r:'12%',s:20}];
   var meshHTML = '';
-  (c.meshes||[]).forEach(function(m){
-    meshHTML += '<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h+'%;background:'+m.color+';border-radius:50%;filter:blur('+m.blur+'px);transform:translate(-50%,-50%);"></div>';
-  });
-
-  // Floating icons HTML (positioned around the scene)
-  var positions = [
-    {top:'8%',left:'5%',size:28,delay:.3,rot:'-12deg'},
-    {top:'12%',right:'6%',size:24,delay:.5,rot:'8deg'},
-    {top:'35%',left:'3%',size:20,delay:.7,rot:'-6deg'},
-    {top:'40%',right:'4%',size:22,delay:.4,rot:'10deg'},
-    {top:'65%',left:'6%',size:26,delay:.6,rot:'-8deg'},
-    {top:'70%',right:'5%',size:22,delay:.8,rot:'5deg'},
-    {top:'85%',left:'15%',size:18,delay:.9,rot:'-10deg'},
-    {top:'80%',right:'12%',size:20,delay:1.0,rot:'12deg'},
-  ];
-  function floatingIcons(icns) {
-    return icns.slice(0,8).map(function(ic,i){
-      var p = positions[i];
-      var pos = 'position:absolute;top:'+p.top+';'+(p.right?'right:'+p.right:'left:'+p.left)+';';
-      return '<div style="'+pos+'font-size:'+p.size+'px;opacity:0;transform:rotate('+p.rot+');'
-        +'animation:floatIn .6s '+p.delay+'s ease forwards,floatBob '+(3+i*.4)+'s '+(p.delay+.6)+'s ease-in-out infinite;">'
-        +ic+'</div>';
-    }).join('');
-  }
-
-  // Platform chips
-  var platChips = platforms.map(function(p){
-    return '<div class="plat-chip" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:6px 12px;font-size:11px;color:'+c.sub+';font-weight:600;opacity:0;">'+p+'</div>';
-  }).join('');
-
+  (c.meshes||[]).forEach(function(m){meshHTML+='<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h+'%;background:'+m.color+';border-radius:50%;filter:blur('+m.blur+'px);transform:translate(-50%,-50%);"></div>';});
+  var floatHTML = icons.slice(0,8).map(function(ic,i){var p=pos[i];return '<div class="fi" data-i="'+i+'" style="position:absolute;top:'+p.t+';'+(p.r?'right:'+p.r:'left:'+p.l)+';font-size:'+p.s+'px;opacity:0;">'+ic+'</div>';}).join('');
+  var platChips = platforms.map(function(p){return '<div class="pc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:6px 12px;font-size:11px;color:'+c.sub+';font-weight:600;display:inline-block;">'+p+'</div>';}).join('');
   var heroHTML = productImageUrl
-    ? '<img id="hero-img" src="'+productImageUrl+'" style="width:'+(w>500?200:150)+'px;height:'+(w>500?200:150)+'px;object-fit:cover;border-radius:20px;border:3px solid '+c.glassBorder+';opacity:0;box-shadow:0 20px 60px rgba(0,0,0,0.4);">'
-    : '<div id="hero-emoji" style="font-size:'+(w>500?96:70)+'px;line-height:1;opacity:0;filter:drop-shadow(0 0 30px '+c.accent+'88);">'+emoji+'</div>';
+    ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?200:160)+'px;height:'+(w>500?200:160)+'px;object-fit:cover;border-radius:20px;border:3px solid '+c.glassBorder+';opacity:0;">'
+    : '<div id="hi" style="font-size:'+(w>500?96:72)+'px;line-height:1;opacity:0;filter:drop-shadow(0 0 30px '+c.accent+'88);">'+emoji+'</div>';
+  var succChips = platforms.map(function(p){return '<div class="sc" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;display:inline-block;opacity:0;">&#10003; '+p.replace(/^../,'').trim()+'</div>';}).join('');
+  var featCards = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']].map(function(f){return '<div class="fc" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;"><span style="font-size:20px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';}).join('');
+  var freePills = ['Free trial','No credit card','60 sec setup'].map(function(p){return '<div class="pl" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;">✓ '+p+'</div>';}).join('');
+  var photo = c.photoUrl || '';
+  var mesh2 = '<div style="position:absolute;inset:0;overflow:hidden;">'+meshHTML+'</div>';
+  var glass = 'background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:';
 
-  var successChips = platforms.map(function(p,i){
-    return '<div class="s4-chip" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;opacity:0;">&#10003; '+p.replace(/^../,'').trim()+'</div>';
-  }).join('');
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet"><style>'
+   +'*{margin:0;padding:0;box-sizing:border-box;}'
+   +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;}'
+   +'.sc-wrap{position:absolute;top:0;left:0;width:'+w+'px;height:'+h+'px;overflow:hidden;display:none;}'
+   +'.sc-wrap.on{display:block;}'
+   +'@keyframes sU{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}'
+   +'@keyframes fI{from{opacity:0}to{opacity:1}}'
+   +'@keyframes pI{from{opacity:0;transform:scale(0.4)}to{opacity:1;transform:scale(1)}}'
+   +'@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}'
+   +'@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
+   +'@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}'
+   +'.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:blink .85s infinite;}'
+   +'.dot{width:6px;height:6px;border-radius:50%;background:'+c.accent+';display:inline-block;animation:pulse 2s infinite;}'
+   +'.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.07);}'
+   +'.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
+   +'</style></head><body>'
 
-  var featCards = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video + Reels']].map(function(f){
-    return '<div class="feat-card" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;"><span style="font-size:22px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';
-  }).join('');
+   // S1
+   +'<div class="sc-wrap on" id="s1"><div style="position:absolute;inset:0;overflow:hidden;">'+(photo?'<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s;" onload="this.style.opacity=\'0.28\'">':'')+'<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'cc 0%,'+c.bg+'44 50%,'+c.bg+'dd 100%);"></div></div>'
+   +mesh2+'<div style="position:absolute;inset:0;">'+floatHTML+'</div>'
+   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;z-index:2;">'
+   +heroHTML
+   +'<div id="s1b" style="'+glass+'100px;padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span class="dot"></span><span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
+   +'<div id="s1t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
+   +'<div id="s1s" style="font-size:14px;color:'+c.sub+';opacity:0;">Post everywhere. In one click.</div>'
+   +'<div id="s1u" style="'+glass+'10px;padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">🚀</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">autopostleey.com</span></div>'
+   +'</div></div>'
 
-  var freePills = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'].map(function(p){
-    return '<div class="pill" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;">'+p+'</div>';
-  }).join('');
+   // S2
+   +'<div class="sc-wrap" id="s2">'+mesh2
+   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px;text-align:center;z-index:1;">'
+   +'<div id="s2i" style="font-size:52px;opacity:0;">😓</div>'
+   +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">THE PROBLEM</div>'
+   +'<div id="s2t" style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1.1;opacity:0;">Posting manually<br>wastes <span style="color:'+c.accent+';">3hrs/week</span></div>'
+   +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
+   +['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'].map(function(t){return '<div style="'+glass+'10px;padding:10px 12px;font-size:12px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>';}).join('')
+   +'</div>'
+   +'<div id="s2p" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px;opacity:0;">'
+   +platforms.map(function(p){return '<div style="'+glass+'8px;padding:5px 10px;font-size:10px;color:'+c.sub+';font-weight:600;">'+p+'</div>';}).join('')
+   +'</div></div></div>'
 
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">'
-    +'<style>'
-    +'*{margin:0;padding:0;box-sizing:border-box;}'
-    +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;position:relative;}'
-    +'.scene{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;pointer-events:none;overflow:hidden;}'
-    +'.scene.active{opacity:1;pointer-events:all;}'
-    +'.mesh{position:absolute;inset:0;overflow:hidden;z-index:0;}'
-    +'.inner{position:relative;z-index:1;}'
-    +'@keyframes popIn{0%{opacity:0;transform:scale(0.4)}100%{opacity:1;transform:scale(1)}}'
-    +'@keyframes slideUp{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}'
-    +'@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}'
-    +'@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}'
-    +'@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
-    +'@keyframes floatIn{0%{opacity:0;transform:translateY(20px) rotate(var(--rot,0deg))}100%{opacity:0.35;transform:translateY(0) rotate(var(--rot,0deg))}}'
-    +'@keyframes floatBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}'
-    +'@keyframes countUp{0%{opacity:0;transform:scale(0.5)}60%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}'
-    +'.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:blink .85s infinite;}'
-    +'.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.06);}'
-    +'.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
-    +'</style></head><body>'
+   // S3
+   +'<div class="sc-wrap" id="s3">'+mesh2
+   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:32px;gap:12px;z-index:1;">'
+   +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">AI WRITES YOUR CAPTION</div>'
+   +'<div id="s3b" style="'+glass+'12px;padding:16px;opacity:0;"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:8px;">CAPTION</div><div style="font-size:13px;color:'+c.text+';line-height:1.65;min-height:72px;"><span id="tc"></span><span class="cur"></span></div></div>'
+   +'<div id="s3l" style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';opacity:0;">PUBLISHING TO</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+platChips+'</div>'
+   +'<div id="s3btn" style="background:'+c.accent+';border-radius:12px;padding:15px 28px;font-size:15px;font-weight:800;color:'+btnColor+';text-align:center;letter-spacing:.5px;cursor:pointer;opacity:0;box-shadow:0 8px 30px '+c.accent+'44;">🚀 POST TO ALL '+platforms.length+' PLATFORMS</div>'
+   +'</div></div>'
 
-    // ── S1: HERO ─────────────────────────────────────────
-    +'<div class="scene active" id="s1" style="position:relative;">'
-    // Photo background
-    +'<div style="position:absolute;inset:0;z-index:0;">'
-    +'<img src="'+c.photoUrl+'" style="width:100%;height:100%;object-fit:cover;opacity:0;" id="bg-img" onload="this.style.opacity=\'0.35\'">'
-    +'<div style="position:absolute;inset:0;background:linear-gradient(to bottom,'+c.bg+'aa 0%,'+c.bg+'66 40%,'+c.bg+'cc 100%);"></div>'
-    +'</div>'
-    +'<div class="mesh">'+meshHTML+'</div>'
-    // Floating theme icons
-    +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;">'+floatingIcons(icons)+'</div>'
-    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;">'
-    +heroHTML
-    +'<div id="s1-badge" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;">'
-    +'<div style="width:6px;height:6px;border-radius:50%;background:'+c.accent+';animation:pulse 2s infinite;"></div>'
-    +'<span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span>'
-    +'</div>'
-    +'<div id="s1-title" style="font-size:'+(w>500?50:34)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
-    +'<div id="s1-sub" style="font-size:14px;color:'+c.sub+';opacity:0;">Post everywhere. In one click.</div>'
-    +'<div id="s1-url" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;">'
-    +'<span style="font-size:18px;">🚀</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">autopostleey.com</span>'
-    +'</div>'
-    +'</div></div>'
+   // S4
+   +'<div class="sc-wrap" id="s4">'+mesh2+'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
+   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;z-index:1;">'
+   +'<div id="s4i" style="font-size:64px;opacity:0;">✅</div>'
+   +'<div id="s4t" style="font-size:'+(w>500?46:32)+'px;font-weight:900;color:'+c.text+';opacity:0;">Published!</div>'
+   +'<div id="s4s" style="font-size:14px;color:'+c.sub+';opacity:0;">'+product+' is now live on all platforms</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:480px;">'+succChips+'</div>'
+   +'<div id="s4d" style="font-size:12px;color:'+c.sub+';opacity:0;">Done in under 10 seconds ⚡</div>'
+   +'</div></div>'
 
-    // ── S2: PROBLEM (with theme icons showing pain) ───────
-    +'<div class="scene" id="s2" style="position:relative;">'
-    +'<div class="mesh">'+meshHTML+'</div>'
-    +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;opacity:0.15;">'
-    // Scattered icons with red tint overlay feel
-    +icons.slice(0,6).map(function(ic,i){
-        var p = positions[i];
-        return '<div style="position:absolute;top:'+p.top+';'+(p.right?'right:'+p.right:'left:'+p.left)+';font-size:'+(p.size+2)+'px;filter:grayscale(0.5);opacity:0.4;">'+ic+'</div>';
-      }).join('')
-    +'</div>'
-    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:48px;text-align:center;">'
-    +'<div id="s2-bigicon" style="font-size:56px;opacity:0;">'+tv.scene2Icon+'</div>'
-    +'<div id="s2-eye" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">THE PROBLEM</div>'
-    +'<div id="s2-title" style="font-size:'+(w>500?42:28)+'px;font-weight:900;color:'+c.text+';line-height:1.1;opacity:0;">Posting manually<br>wastes <span style="color:'+c.accent+';">3hrs/week</span></div>'
-    +'<div id="s2-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:460px;opacity:0;">'
-    +['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'].map(function(t){
-        return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:10px 12px;font-size:12px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>';
-      }).join('')
-    +'</div>'
-    +'<div id="s2-plats" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:460px;opacity:0;">'
-    +platforms.map(function(p){
-        return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:5px 10px;font-size:10px;color:'+c.sub+';font-weight:600;">'+p+'</div>';
-      }).join('')
-    +'</div>'
-    +'</div></div>'
+   // S5
+   +'<div class="sc-wrap" id="s5"><div style="position:absolute;inset:0;overflow:hidden;">'+(photo?'<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">':'')+'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div></div>'
+   +mesh2+'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;z-index:1;">'
+   +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">FOR SMALL BUSINESSES</div>'
+   +'<div id="s5t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">One post.<br><span style="color:'+c.accent+';">'+platforms.length+' platforms.</span></div>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;">'+featCards+'</div>'
+   +'<div id="s5u" style="font-size:'+(w>500?34:24)+'px;font-weight:900;color:'+c.text+';border-bottom:3px solid '+c.accent+';padding-bottom:6px;opacity:0;">autopostleey<span style="color:'+c.accent+'">.com</span></div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+freePills+'</div>'
+   +'</div></div>'
 
-    // ── S3: DEMO ──────────────────────────────────────────
-    +'<div class="scene" id="s3" style="position:relative;">'
-    +'<div class="mesh">'+meshHTML+'</div>'
-    +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;opacity:0.08;">'+floatingIcons(icons)+'</div>'
-    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:32px;gap:12px;">'
-    +'<div id="s3-eye" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">AUTOPOSTLEEY — AI WRITES FOR YOU</div>'
-    +'<div id="s3-box" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:12px;padding:16px;opacity:0;">'
-    +'<div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:8px;">AI CAPTION</div>'
-    +'<div style="font-size:13px;color:'+c.text+';line-height:1.65;min-height:72px;" id="tc-wrap"><span id="tc"></span><span class="cur"></span></div>'
-    +'</div>'
-    +'<div id="s3-plat-label" style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';opacity:0;">PUBLISHING TO</div>'
-    +'<div id="plat-row" style="display:flex;flex-wrap:wrap;gap:6px;">'+platChips+'</div>'
-    +'<div id="post-btn" style="background:'+c.accent+';border-radius:12px;padding:15px 28px;font-size:15px;font-weight:800;color:'+btnColor+';text-align:center;opacity:0;transition:transform .15s;letter-spacing:.5px;cursor:pointer;box-shadow:0 8px 30px '+c.accent+'44;">🚀 POST TO ALL '+platforms.length+' PLATFORMS</div>'
-    +'</div></div>'
+   +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
 
-    // ── S4: SUCCESS ───────────────────────────────────────
-    +'<div class="scene" id="s4" style="position:relative;">'
-    +'<div class="mesh">'+meshHTML+'</div>'
-    // Celebratory floating icons
-    +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;" id="s4-float"></div>'
-    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;">'
-    +'<div id="s4-icon" style="font-size:64px;opacity:0;">'+tv.scene4Icon+'</div>'
-    +'<div id="s4-title" style="font-size:'+(w>500?46:32)+'px;font-weight:900;color:'+c.text+';opacity:0;">Published!</div>'
-    +'<div id="s4-sub" style="font-size:14px;color:'+c.sub+';opacity:0;">'+product+' is now live on all platforms</div>'
-    +'<div id="s4-chips" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:480px;">'+successChips+'</div>'
-    +'<div id="s4-done" style="font-size:12px;color:'+c.sub+';opacity:0;margin-top:4px;">Done in under 10 seconds ⚡</div>'
-    +'</div></div>'
-
-    // ── S5: CTA ───────────────────────────────────────────
-    +'<div class="scene" id="s5" style="position:relative;">'
-    +'<div style="position:absolute;inset:0;z-index:0;">'
-    +'<img src="'+c.photoUrl+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(2px);">'
-    +'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>'
-    +'</div>'
-    +'<div class="mesh">'+meshHTML+'</div>'
-    +'<div class="inner" style="position:absolute;inset:0;pointer-events:none;">'+floatingIcons(icons.slice(4).concat(icons.slice(0,4)))+'</div>'
-    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
-    +'<div id="s5-eye" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">FOR SMALL BUSINESSES</div>'
-    +'<div id="s5-title" style="font-size:'+(w>500?50:34)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">One post.<br><span style="color:'+c.accent+';">'+platforms.length+' platforms.</span></div>'
-    +'<div id="s5-feats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:460px;">'+featCards+'</div>'
-    +'<div id="s5-url" style="font-size:'+(w>500?36:26)+'px;font-weight:900;color:'+c.text+';border-bottom:3px solid '+c.accent+';padding-bottom:6px;opacity:0;">autopostleey<span style="color:'+c.accent+'">.com</span></div>'
-    +'<div id="s5-pills" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+freePills+'</div>'
-    +'</div></div>'
-
-    +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
-
-    +'<script>'
-    +'var SC=["s1","s2","s3","s4","s5"],TM=[];'
-    +'function ct(fn,ms){TM.push(setTimeout(fn,ms));}'
-    +'function el(id){return document.getElementById(id);}'
-    +'function show(id,delay,anim,dur){'
-    +'  ct(function(){'
-    +'    var e=el(id);if(!e)return;'
-    +'    e.style.animation=(anim||"slideUp")+" "+(dur||".55s")+" ease forwards";'
-    +'  },delay);'
-    +'}'
-    +'function go(n){SC.forEach(function(s){el(s).classList.remove("active");});el(SC[n]).classList.add("active");}'
-
-    +'function runS1(){'
-    +'  var h=el("hero-img")||el("hero-emoji");'
-    +'  if(h)ct(function(){h.style.animation="popIn .9s .2s cubic-bezier(0.34,1.56,0.64,1) forwards";},50);'
-    +'  show("s1-badge",900);show("s1-title",1200);show("s1-sub",1550);show("s1-url",1900);'
-    +'}'
-
-    +'function runS2(){'
-    +'  show("s2-bigicon",100,"popIn",".7s");'
-    +'  show("s2-eye",400);show("s2-title",600);show("s2-grid",900);show("s2-plats",1200);'
-    +'}'
-
-    +'function runS3(){'
-    +'  show("s3-eye",100);show("s3-box",350);'
-    +'  var CAP='+JSON.stringify(caption)+';'
-    +'  var chars=CAP.split(""),typed="",tc=el("tc");'
-    +'  chars.forEach(function(ch,i){ct(function(){typed+=ch;if(tc)tc.textContent=typed;},600+i*26);});'
-    +'  var te=600+chars.length*26;'
-    +'  show("s3-plat-label",te+100,"fadeIn");'
-    +'  var chips=document.querySelectorAll(".plat-chip");'
-    +'  chips.forEach(function(e,i){ct(function(){'
-    +'    e.style.animation="slideUp .4s ease forwards";'
-    +'    ct(function(){e.style.color="'+c.accent+'";e.style.borderColor="'+c.accent+'55";},100);'
-    +'  },te+200+i*80);});'
-    +'  ct(function(){var b=el("post-btn");if(b)b.style.animation="fadeIn .4s ease forwards";},te+1000);'
-    +'  ct(function(){var b=el("post-btn");if(b){b.style.transform="scale(0.96)";setTimeout(function(){b.style.transform="scale(1)";},130);}},te+1550);'
-    +'}'
-
-    +'function runS4(){'
-    // Burst celebration icons
-    +'  var ICONS='+JSON.stringify(icons.slice(0,6))+';'
-    +'  var burst=el("s4-float");'
-    +'  if(burst){ICONS.forEach(function(ic,i){'
-    +'    ct(function(){'
-    +'      var d=document.createElement("div");'
-    +'      var angle=i*(360/ICONS.length);'
-    +'      var dist=120+Math.random()*80;'
-    +'      var x=Math.cos(angle*Math.PI/180)*dist;'
-    +'      var y=Math.sin(angle*Math.PI/180)*dist;'
-    +'      d.style.cssText="position:absolute;left:50%;top:50%;font-size:28px;opacity:0;transform:translate(-50%,-50%);transition:all 1s cubic-bezier(0.34,1.56,0.64,1);";'
-    +'      d.textContent=ic;burst.appendChild(d);'
-    +'      setTimeout(function(){d.style.opacity="0.7";d.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))";},50);'
-    +'      setTimeout(function(){d.style.opacity="0";},2500);'
-    +'    },i*100);'
-    +'  });}'
-    +'  ct(function(){var e=el("s4-icon");if(e)e.style.animation="countUp .7s cubic-bezier(0.34,1.56,0.64,1) forwards";},300);'
-    +'  show("s4-title",700);show("s4-sub",950);'
-    +'  var chips=document.querySelectorAll(".s4-chip");'
-    +'  chips.forEach(function(e,i){ct(function(){e.style.animation="slideUp .35s ease forwards";},1100+i*90);});'
-    +'  show("s4-done",1900,"fadeIn");'
-    +'}'
-
-    +'function runS5(){'
-    +'  show("s5-eye",100);show("s5-title",300);'
-    +'  var feats=document.querySelectorAll(".feat-card");'
-    +'  feats.forEach(function(e,i){ct(function(){e.style.animation="slideUp .4s ease forwards";},550+i*100);});'
-    +'  show("s5-url",1000);'
-    +'  var pills=document.querySelectorAll(".pill");'
-    +'  pills.forEach(function(e,i){ct(function(){e.style.animation="slideUp .35s ease forwards";},1300+i*80);});'
-    +'}'
-
-    +'var TIMING=[0,7000,14000,23000,27500],TOTAL=33000;'
-    +'runS1();'
-    +'ct(function(){go(1);runS2();},TIMING[1]);'
-    +'ct(function(){go(2);runS3();},TIMING[2]);'
-    +'ct(function(){go(3);runS4();},TIMING[3]);'
-    +'ct(function(){go(4);runS5();},TIMING[4]);'
-    +'var st=Date.now(),pi=setInterval(function(){'
-    +'  var p=Math.min(100,((Date.now()-st)/TOTAL)*100);'
-    +'  var e=el("prog");if(e)e.style.width=p+"%";'
-    +'  if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}'
-    +'},100);'
-    +'<\/script></body></html>';
+   // JS — key fix: use display:none/block for scenes, not opacity
+   +'<script>'
+   +'var TM=[];'
+   +'function q(id){return document.getElementById(id);}'
+   +'function anim(id,ms,kf,dur){'
+   +'  TM.push(setTimeout(function(){'
+   +'    var e=q(id);if(!e)return;'
+   +'    e.style.opacity="1";'
+   +'    e.style.animation=(kf||"sU")+" "+(dur||".55s")+" ease both";'
+   +'  },ms));'
+   +'}'
+   +'function animAll(sel,base,step,kf){'
+   +'  document.querySelectorAll(sel).forEach(function(e,i){'
+   +'    TM.push(setTimeout(function(){'
+   +'      e.style.opacity="1";'
+   +'      e.style.animation=(kf||"sU")+" .45s ease both";'
+   +'    },base+i*(step||80)));'
+   +'  });'
+   +'}'
+   +'function go(n){'
+   +'  ["s1","s2","s3","s4","s5"].forEach(function(s){var e=q(s);if(e)e.classList.remove("on");});'
+   +'  var e=q("s"+n);if(e)e.classList.add("on");'
+   +'}'
+   // S1
+   +'(function(){'
+   +'  document.querySelectorAll(".fi").forEach(function(e,i){'
+   +'    TM.push(setTimeout(function(){e.style.opacity="0.3";e.style.animation="bob "+(3+i*.3)+"s "+(i*.1)+"s ease-in-out infinite";},200+i*100));'
+   +'  });'
+   +'  var hr=q("hi");'
+   +'  if(hr){TM.push(setTimeout(function(){hr.style.opacity="1";hr.style.animation="pI .9s cubic-bezier(0.34,1.56,0.64,1) both";},100));}'
+   +'  anim("s1b",900);anim("s1t",1150);anim("s1s",1450);anim("s1u",1750);'
+   +'})();'
+   // Scene transitions
+   +'TM.push(setTimeout(function(){go(2);'
+   +'  anim("s2i",100,"pI",".7s");anim("s2e",350);anim("s2t",580);anim("s2g",820,"sU");anim("s2p",1100,"sU");'
+   +'},7000));'
+   +'TM.push(setTimeout(function(){go(3);'
+   +'  anim("s3e",80);anim("s3b",320);'
+   +'  var CAP='+JSON.stringify(caption)+';'
+   +'  var ch=CAP.split(""),typed="",tc=q("tc");'
+   +'  ch.forEach(function(c2,i){TM.push(setTimeout(function(){typed+=c2;if(tc)tc.textContent=typed;},550+i*26));});'
+   +'  var te=550+ch.length*26;'
+   +'  anim("s3l",te+80,"fI");'
+   +'  animAll(".pc",te+180,80);'
+   +'  TM.push(setTimeout(function(){document.querySelectorAll(".pc").forEach(function(e){e.style.color="'+c.accent+'";e.style.borderColor="'+c.accent+'44";});},te+900));'
+   +'  anim("s3btn",te+1000,"fI");'
+   +'  TM.push(setTimeout(function(){var b=q("s3btn");if(b){b.style.transform="scale(0.96)";setTimeout(function(){b.style.transform="scale(1)";},130);}},te+1550));'
+   +'},14000));'
+   +'TM.push(setTimeout(function(){go(4);'
+   +'  var ICONS='+JSON.stringify(icons.slice(0,6))+';'
+   +'  var burst=q("s4burst");'
+   +'  ICONS.forEach(function(ic,i){TM.push(setTimeout(function(){'
+   +'    var d=document.createElement("div");'
+   +'    var angle=i*(360/ICONS.length);var dist=110+Math.random()*70;'
+   +'    var x=Math.cos(angle*Math.PI/180)*dist;var y=Math.sin(angle*Math.PI/180)*dist;'
+   +'    d.style.cssText="position:absolute;left:50%;top:45%;font-size:30px;opacity:0;transform:translate(-50%,-50%);transition:all .9s cubic-bezier(0.34,1.56,0.64,1);";'
+   +'    d.textContent=ic;if(burst)burst.appendChild(d);'
+   +'    setTimeout(function(){d.style.opacity="0.65";d.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))";},30);'
+   +'    setTimeout(function(){d.style.opacity="0";d.style.transition="opacity .5s";},2800);'
+   +'  },i*80));});'
+   +'  anim("s4i",400,"pI");anim("s4t",720);anim("s4s",980);'
+   +'  animAll(".sc",1100,90);anim("s4d",1950,"fI");'
+   +'},23000));'
+   +'TM.push(setTimeout(function(){go(5);'
+   +'  anim("s5e",100);anim("s5t",300);'
+   +'  animAll(".fc",520,100);anim("s5u",980);animAll(".pl",1220,80);'
+   +'},27500));'
+   // Progress
+   +'var st=Date.now();'
+   +'var pi=setInterval(function(){'
+   +'  var p=Math.min(100,((Date.now()-st)/33000)*100);'
+   +'  var e=q("prog");if(e)e.style.width=p+"%";'
+   +'  if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}'
+   +'},100);'
+   +'<\/script></body></html>';
 }
 
 
