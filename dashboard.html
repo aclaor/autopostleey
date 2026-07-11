@@ -9484,7 +9484,10 @@ function generateVideoAd() {
       { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
       { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
     ].filter(function(b){ return b.text.trim(); });
-    var previewWebsite = (document.getElementById('vad-website')||{}).value || 'autopostleey.com';
+    var previewWebsite = (document.getElementById('vad-website')||{}).value
+      || (_bizProfile && _bizProfile.website)
+      || (_autoConfig && _autoConfig.website)
+      || '';
     buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite);
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   })
@@ -9537,7 +9540,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
-  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || 'autopostleey.com');
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '');
   _vadIframeDoc = adHTML;
   if (iframe) {
     iframe.srcdoc = adHTML;
@@ -9545,7 +9548,11 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   // Pre-fill caption textarea
   var capEl = document.getElementById('vad-caption');
-  if (capEl) capEl.value = caption + '\n\n🌐 autopostleey.com';
+  var _capSite = (document.getElementById('vad-website')||{}).value
+    || (_bizProfile && _bizProfile.website)
+    || (_autoConfig && _autoConfig.website) || '';
+  _capSite = _capSite.replace(/^https?:\/\//,'').replace(/\/$/,'');
+  if (capEl) capEl.value = caption + (_capSite ? '\n\n🌐 ' + _capSite : '');
 
   // Load platforms for post selector
   loadVadPlatforms();
@@ -9626,10 +9633,11 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     ? adBenefits.slice(0,4).map(function(b){ return {ico:b.icon, txt:b.text}; })
     : (SOL[_vadTheme]||SOL.default).map(function(s,i){ return {ico:['✅','🏆','⭐','💡'][i], txt:s}; });
 
-  var siteRaw = (adWebsite||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
-  var dotIdx  = siteRaw.indexOf('.');
-  var siteName = dotIdx > -1 ? siteRaw.slice(0,dotIdx) : (siteRaw || biz.toLowerCase().replace(/\s+/g,''));
-  var siteDot  = dotIdx > -1 ? siteRaw.slice(dotIdx) : '.com';
+  var _rw = (adWebsite||'').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+  if (!_rw && biz) _rw = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
+  var dotIdx   = _rw.indexOf('.');
+  var siteName = dotIdx > -1 ? _rw.slice(0, dotIdx) : _rw;
+  var siteDot  = dotIdx > -1 ? _rw.slice(dotIdx) : '.com';
 
   var heroHTML = productImageUrl
     ? '<img id="hi" src="'+productImageUrl+'" style="width:'+(w>500?190:150)+'px;height:'+(w>500?190:150)+'px;object-fit:cover;border-radius:20px;border:3px solid '+gbd+';opacity:0;">'
@@ -9909,7 +9917,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       ? benefits.map(function(b){ return b.icon; })
       : ['✅','✅','✅','✅'];
 
-    var siteUrl = (website || biz + '.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
+    var _ws = (website||'').trim().replace(/^https?:\/\//,'').replace(/\/$/,''); var siteUrl = _ws || (biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com');
 
     // Image preloading
     var productImg = null, bgImg = null;
@@ -10375,8 +10383,9 @@ async function downloadVadVideo() {
       { icon: (document.getElementById('vad-b3-ico')||{}).textContent||'🏆', text: (document.getElementById('vad-b3')||{}).value||'' },
       { icon: (document.getElementById('vad-b4-ico')||{}).textContent||'💡', text: (document.getElementById('vad-b4')||{}).value||'' },
     ].filter(function(b){ return b.text.trim(); });
-    var website = (document.getElementById('vad-website')||{}).value || 'autopostleey.com';
-    if (website && !website.includes('.')) website = 'autopostleey.com';
+    var website = (document.getElementById('vad-website')||{}).value || (_bizProfile && _bizProfile.website) || (_autoConfig && _autoConfig.website) || '';
+    if (!website && biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
+    if (website && !website.includes('.')) website = website + '.com';
 
     // Create canvas
     var canvas = document.createElement('canvas');
