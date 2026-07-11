@@ -9786,32 +9786,39 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'<div id="s2p" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">There is a better way →</div>'
     +'</div></div>'
 
-    // S3 — Solution
+    // S3 — INTRODUCING + Problems Solved
     +'<div class="sc-wrap" id="s3">'+mesh2
-    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;z-index:1;">'
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px;z-index:1;">'
     +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
-    +'<div id="s3t" style="font-size:'+(w>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style="color:'+c.accent+';">solved.</span></div>'
-    +'<div id="s3g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'+benefitCards+'</div>'
+    +'<div id="s3t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">We fix exactly<br><span style="color:'+c.accent+';">that.</span></div>'
+    +'<div id="s3g" style="display:flex;flex-direction:column;gap:7px;width:100%;opacity:0;">'
+    +painPts.slice(0,4).map(function(pt){
+        var solved = pt.replace(/^[^a-zA-Z]+/, '').trim();
+        return '<div style="'+gs('10px;')+'padding:9px 12px;display:flex;align-items:center;gap:10px;">'
+          +'<span style="font-size:18px;flex-shrink:0;">\u2705</span>'
+          +'<span style="font-size:12px;font-weight:700;color:'+c.text+';">'+solved+'</span>'
+          +'</div>';
+      }).join('')
+    +'</div>'
     +'<div id="s3cap" style="'+gs('12px;')+'padding:12px;width:100%;opacity:0;">'
     +'<div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:6px;">YOUR CAPTION</div>'
     +'<div style="font-size:11px;color:'+c.text+';line-height:1.6;min-height:44px;"><span id="tc"></span><span class="cur"></span></div>'
     +'</div></div></div>'
 
-    // S4 — Social Proof
+        // S4 — Business Highlights
     +'<div class="sc-wrap" id="s4">'+mesh2
     +'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
-    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center;z-index:1;">'
-    +'<div id="s4i" style="font-size:62px;opacity:0;">🎉</div>'
-    +'<div id="s4t" style="font-size:'+(w>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style="color:'+c.accent+';">Real results.</span></div>'
-    +'<div id="s4box" style="'+gs('14px;')+'padding:18px;width:100%;text-align:left;opacity:0;">'
-    +'<div style="color:#fbbf24;font-size:15px;margin-bottom:8px;text-align:center;">★★★★★</div>'
-    +'<div style="font-size:11px;color:'+c.text+';font-style:italic;line-height:1.65;margin-bottom:8px;">\u201c'+biz+' completely changed things for us. Professional, fast, and the results speak for themselves!\u201d</div>'
-    +'<div style="font-size:10px;color:'+c.sub+';">— A satisfied '+(product||biz)+' client</div>'
+    +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;z-index:1;">'
+    +'<div id="s4e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">WHY CHOOSE US</div>'
+    +'<div id="s4t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">What makes<br><span style="color:'+c.accent+';">'+biz+'</span> special</div>'
+    +'<div id="s4g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'+benefitCards+'</div>'
+    +'<div id="s4stars" style="display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;">'
+    +'<div style="color:#fbbf24;font-size:18px;">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>'
+    +'<div style="font-size:11px;color:'+c.sub+';">Trusted by happy clients</div>'
     +'</div>'
-    +'<div id="s4cta" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">Ready for yours? →</div>'
     +'</div></div>'
 
-    // S5 — CTA
+        // S5 — CTA
     +'<div class="sc-wrap" id="s5">'
     +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDim+'</div>'
     +mesh2
@@ -10222,124 +10229,117 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha=1;
       }
 
-      // ── SCENE 3: YOUR SOLUTION ────────────────────────────
+      // ── SCENE 3: INTRODUCING + PROBLEMS SOLVED ──────────
       function drawS3(f) {
-        drawMesh(1); // fills solid bg + accent blobs
-        drawFloatIcons(0.15,f+S2e);
+        drawMesh(1);
 
-        // Eyebrow
         var su=slideUp(f-FPS*.05,FPS*.5);
         ctx.globalAlpha=clamp(su.a,0,1);
         ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
         ctx.textAlign='center'; ctx.letterSpacing='3px';
-        ctx.fillText('INTRODUCING '+biz.toUpperCase(),W/2,H*.1+su.y);
+        ctx.fillText('INTRODUCING '+biz.toUpperCase(),W/2,H*.08+su.y);
         ctx.letterSpacing='0px'; ctx.globalAlpha=1;
 
-        // Headline
-        su=slideUp(f-FPS*.25,FPS*.6);
+        su=slideUp(f-FPS*.22,FPS*.55);
         ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?36:26)+'px Inter,sans-serif';
+        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?30:22)+'px Inter,sans-serif';
         ctx.textAlign='center';
-        ctx.fillText('Your problem,',W/2,H*.22+su.y);
+        ctx.fillText('We fix exactly',W/2,H*.19+su.y);
         ctx.fillStyle=c.accent;
-        ctx.fillText('solved.',W/2,H*.22+(W>500?44:32)+su.y);
+        ctx.fillText('that.',W/2,H*.19+(W>500?38:28)+su.y);
         ctx.globalAlpha=1;
 
-        // 4 solution cards
-        var sw=(W-32)/2, sh=58, sx0=12, sy0=H*.38;
-        displayBenefits.slice(0,4).forEach(function(sol,i){
-          var ia=clamp((f-FPS*.55-i*FPS*.18)/(FPS*.45),0,1);
+        // Problems solved list
+        var rowH=50, listY=H*.33;
+        displayProblems.slice(0,4).forEach(function(pt,i){
+          var ia=clamp((f-FPS*.42-i*FPS*.16)/(FPS*.4),0,1);
           if(ia<=0)return;
-          var col=i%2, row=Math.floor(i/2);
-          var sx=sx0+col*(sw+8), sy=sy0+row*(sh+8);
+          var ry=listY+i*(rowH+6);
           ctx.globalAlpha=ia;
-          glass(sx,sy,sw,sh,10);
-          var ico=displayBenefitIcons[i]||'✅';
-          ctx.font='22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText(ico,sx+22,sy+sh/2);
+          glass(12,ry,W-24,rowH,10);
+          ctx.font='18px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+          ctx.fillText('✅',22,ry+rowH/2);
           ctx.textBaseline='alphabetic';
+          var solved=pt.replace(/^[^a-zA-Z]+/,'').trim();
           ctx.fillStyle=c.text; ctx.font='bold 12px Inter,sans-serif'; ctx.textAlign='left';
-          var st=sol; if(ctx.measureText(st).width>sw-46){
-            var ws3=st.split(' '), m3=Math.ceil(ws3.length/2);
-            ctx.fillText(ws3.slice(0,m3).join(' '),sx+40,sy+20);
-            ctx.fillText(ws3.slice(m3).join(' '),sx+40,sy+36);
-          } else { ctx.fillText(st,sx+40,sy+sh/2-5); }
+          ctx.fillText(solved,46,ry+rowH/2-4);
           ctx.globalAlpha=1;
         });
 
-        // AI-generated caption from their product
-        var capStart=FPS*1.4;
+        // Caption
+        var capStart=FPS*1.3;
         var capA=clamp((f-capStart)/(FPS*.4),0,1);
         if(capA>0){
+          var capY=H*.79;
           ctx.globalAlpha=capA;
-          glass(12,H*.78,W-24,H*.14,12);
-          ctx.fillStyle=c.sub; ctx.font='9px Inter,sans-serif'; ctx.textAlign='left';
-          ctx.fillText('YOUR AI-GENERATED CAPTION',24,H*.78+14);
+          glass(12,capY,W-24,H*.15,12);
+          ctx.fillStyle=c.sub; ctx.font='bold 8px Inter,sans-serif'; ctx.textAlign='left';
+          ctx.fillText('YOUR CAPTION',24,capY+13);
           ctx.fillStyle=c.text; ctx.font='11px Inter,sans-serif';
-          var charsToShow=Math.floor(clamp((f-capStart-FPS*.3)/(FPS*0.028),0,caption.length));
-          var shown=caption.slice(0,charsToShow);
-          ctx.textAlign='left';
-          wrapText(shown,W/2,H*.78+28,W-48,16);
-          // Cursor
-          if(charsToShow<caption.length&&Math.floor(f/(FPS*.4))%2===0){
-            ctx.fillStyle=c.accent; ctx.fillRect(24+ctx.measureText(shown.split('\n').pop()).width+2,H*.78+18,2,13);
+          var chars=Math.floor(clamp((f-capStart-FPS*.25)/(FPS*0.025),0,caption.length));
+          var shown=caption.slice(0,chars);
+          wrapText(shown,W/2,capY+28,W-48,15);
+          if(chars<caption.length&&Math.floor(f/(FPS*.4))%2===0){
+            ctx.fillStyle=c.accent;
+            ctx.fillRect(24+ctx.measureText(shown.split('\n').pop()||'').width+2,capY+17,2,12);
           }
           ctx.globalAlpha=1;
         }
       }
 
-      // ── SCENE 4: SUCCESS / SOCIAL PROOF ──────────────────
+      // ── SCENE 4: BUSINESS HIGHLIGHTS ─────────────────────
       function drawS4(f) {
-        drawMesh(1); // fills solid bg + accent blobs
+        drawMesh(1);
 
-        // Burst icons
-        icons.slice(0,6).forEach(function(ic,i){
-          var bf=f-i*(FPS*.08); if(bf<=0)return;
-          var angle=i*(Math.PI*2/6);
-          var dist=easeOut(clamp(bf/(FPS*.9),0,1))*(W*.38);
-          var a=clamp(bf/(FPS*.5),0,.65)*(1-clamp((bf-FPS*2)/(FPS*.8),0,1));
-          ctx.globalAlpha=a; ctx.font='28px serif';
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText(ic,W/2+Math.cos(angle)*dist,H*.42+Math.sin(angle)*dist);
-          ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
+        var su=slideUp(f-FPS*.05,FPS*.5);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.letterSpacing='4px';
+        ctx.fillText('WHY CHOOSE US',W/2,H*.08+su.y);
+        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
+
+        su=slideUp(f-FPS*.25,FPS*.55);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?28:20)+'px Inter,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('What makes',W/2,H*.19+su.y);
+        ctx.fillStyle=c.accent;
+        ctx.fillText(biz+' special',W/2,H*.19+(W>500?36:28)+su.y);
+        ctx.globalAlpha=1;
+
+        // 2x2 benefit grid
+        var cw=(W-32)/2, ch=58, cx0=12, cy0=H*.33;
+        displayBenefits.slice(0,4).forEach(function(sol,i){
+          var ia=clamp((f-FPS*.45-i*FPS*.14)/(FPS*.4),0,1);
+          if(ia<=0)return;
+          var col=i%2, row=Math.floor(i/2);
+          var cx=cx0+col*(cw+8), cy=cy0+row*(ch+8);
+          ctx.globalAlpha=ia;
+          glass(cx,cy,cw,ch,10);
+          var ico=displayBenefitIcons[i]||'⭐';
+          ctx.font='18px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+          ctx.fillText(ico,cx+10,cy+ch/2);
+          ctx.textBaseline='alphabetic';
+          ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
+          var bt=sol;
+          if(ctx.measureText(bt).width>cw-38){
+            var bws=bt.split(' '),bm=Math.ceil(bws.length/2);
+            ctx.fillText(bws.slice(0,bm).join(' '),cx+30,cy+16);
+            ctx.fillText(bws.slice(bm).join(' '),cx+30,cy+32);
+          } else { ctx.fillText(bt,cx+30,cy+ch/2-4); }
+          ctx.globalAlpha=1;
         });
 
-        // Big success emoji
-        var ia=easeOut(clamp((f-FPS*.35)/(FPS*.7),0,1));
-        var sc=0.4+ia*0.6;
-        ctx.globalAlpha=ia; ctx.save(); ctx.translate(W/2,H*.28); ctx.scale(sc,sc);
-        ctx.font='58px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('🎉',0,0);
-        ctx.textBaseline='alphabetic'; ctx.restore(); ctx.globalAlpha=1;
-
-        // Success message
-        var su=slideUp(f-FPS*.7,FPS*.6);
-        text('Happy clients.',W/2,H*.44,'bold '+(W>500?38:26)+'px Inter,sans-serif',c.text,su.a,su.y);
-
-        su=slideUp(f-FPS*.95,FPS*.5);
-        text('Real results.',W/2,H*.44+(W>500?46:34),'bold '+(W>500?38:26)+'px Inter,sans-serif',c.accent,su.a,su.y);
-
-        // Testimonial-style card
-        var ta=clamp((f-FPS*1.1)/(FPS*.5),0,1);
-        if(ta>0){
-          ctx.globalAlpha=ta;
-          glass(16,H*.6,W-32,H*.26,14);
-          // Stars
-          ctx.fillStyle='#fbbf24'; ctx.font='16px serif'; ctx.textAlign='center';
-          ctx.fillText('★★★★★',W/2,H*.6+24);
-          // Quote
-          ctx.fillStyle=c.text; ctx.font='italic 12px Inter,sans-serif'; ctx.textAlign='center';
-          var quote='"'+biz+' completely changed things for us. Highly recommended!"';
-          wrapText(quote,W/2,H*.6+46,W-56,18);
-          // Attribution
-          ctx.fillStyle=c.sub; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
-          ctx.fillText('— A happy '+product+' client',W/2,H*.6+H*.26-14);
+        // Stars
+        var sa=clamp((f-FPS*1.15)/(FPS*.5),0,1);
+        if(sa>0){
+          ctx.globalAlpha=sa;
+          ctx.fillStyle='#fbbf24'; ctx.font='20px serif'; ctx.textAlign='center';
+          ctx.fillText('★★★★★',W/2,H*.82);
+          ctx.fillStyle=c.sub; ctx.font='12px Inter,sans-serif';
+          ctx.fillText('Trusted by happy clients',W/2,H*.88);
           ctx.globalAlpha=1;
         }
-
-        // CTA teaser
-        su=slideUp(f-FPS*1.8,FPS*.5);
-        text('Ready for yours? →',W/2,H*.9,'bold 13px Inter,sans-serif',c.accent,su.a,su.y);
       }
 
       // ── SCENE 5: CTA — CONTACT YOUR BUSINESS ─────────────
