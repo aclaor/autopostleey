@@ -9614,128 +9614,107 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
    +'<div id="s1u" style="'+glass+'10px;padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">🚀</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">autopostleey.com</span></div>'
    +'</div></div>'
 
-   // S2
-   +'<div class="sc-wrap" id="s2">'+mesh2
-   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px;text-align:center;z-index:1;">'
-   +'<div id="s2i" style="font-size:52px;opacity:0;">😓</div>'
-   +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">THE PROBLEM</div>'
-   +'<div id="s2t" style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1.1;opacity:0;">Posting manually<br>wastes <span style="color:'+c.accent+';">3hrs/week</span></div>'
-   +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
-   +['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'].map(function(t){return '<div style="'+glass+'10px;padding:10px 12px;font-size:12px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>';}).join('')
-   +'</div>'
-   +'<div id="s2p" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px;opacity:0;">'
-   +platforms.map(function(p){return '<div style="'+glass+'8px;padding:5px 10px;font-size:10px;color:'+c.sub+';font-weight:600;">'+p+'</div>';}).join('')
-   +'</div></div></div>'
-
-   // S3
-   +'<div class="sc-wrap" id="s3">'+mesh2
-   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:32px;gap:12px;z-index:1;">'
-   +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">AI WRITES YOUR CAPTION</div>'
-   +'<div id="s3b" style="'+glass+'12px;padding:16px;opacity:0;"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:8px;">CAPTION</div><div style="font-size:13px;color:'+c.text+';line-height:1.65;min-height:72px;"><span id="tc"></span><span class="cur"></span></div></div>'
-   +'<div id="s3l" style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';opacity:0;">PUBLISHING TO</div>'
-   +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+platChips+'</div>'
-   +'<div id="s3btn" style="background:'+c.accent+';border-radius:12px;padding:15px 28px;font-size:15px;font-weight:800;color:'+btnColor+';text-align:center;letter-spacing:.5px;cursor:pointer;opacity:0;box-shadow:0 8px 30px '+c.accent+'44;">🚀 POST TO ALL '+platforms.length+' PLATFORMS</div>'
-   +'</div></div>'
-
-   // S4
+   // S2 — Customer pain points
+   +(function(){
+     var PP={
+       realestate:['🔍 Hard to find right home','💸 Overpriced listings','😰 Agents don\'t respond','⏰ Wasted weekends viewing'],
+       food:['😩 No good food nearby','🚗 Long drives to eat','📵 No online ordering','😤 Inconsistent quality'],
+       fitness:['😓 No motivation to start','❓ Where to even begin','💸 Gym fees too expensive','⏰ No time to workout'],
+       beauty:['😩 Hard to find trusted salon','📵 Booking is a hassle','💸 Overpriced services','😤 Bad results before'],
+       medical:['😟 Long waiting times','❓ Hard to find right doctor','💸 Expensive consultations','😰 Unsure who to trust'],
+       automotive:['😩 Unreliable mechanics','💸 Hidden extra charges','⏰ Long repair wait','😰 Can\'t trust anyone'],
+       technology:['😤 Slow outdated systems','💸 Software too expensive','😩 No tech support','⏰ Manual tasks waste time'],
+       travel:['😤 Expensive tour packages','😩 Generic experiences','⏰ Wasted vacation time','❓ Unsure what to book'],
+       pets:['😟 No trusted groomer nearby','💸 Vet bills are costly','😩 Pet boarding anxiety','⏰ Pet care hard to find'],
+       finance:['😰 Money not working for you','❓ Confusing advice','💸 Hidden bank fees','😤 Debt keeps growing'],
+       events:['😓 Event planning is stressful','💸 Always over budget','⏰ Too many vendors','😩 Vision never realized'],
+       homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows and delays','😤 Sloppy workmanship'],
+       default:['😩 Hard to find quality','💸 Overpriced everywhere','⏰ Wasting time searching','😤 Disappointed before']
+     };
+     var pts=PP[_vadTheme]||PP.default;
+     return '<div class="sc-wrap" id="s2">'+mesh2
+       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
+       +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
+       +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
+       +'<div id="s2t" style="font-size:'+(W>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style=\'color:'+c.accent+'\'>this.</span></div>'
+       +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
+       +pts.map(function(t){return '<div style="'+glass('10px;padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;')+'">'+t+'</div>';}).join('')
+       +'</div>'
+       +'<div id="s2p" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">There is a better way →</div>'
+       +'</div></div>';
+   })()
+   // S3 — Business solutions
+   +(function(){
+     var SOL={
+       realestate:['Find your dream home fast','Verified affordable listings','Dedicated agent support','Stress-free process'],
+       food:['Delicious food always ready','Fresh ingredients daily','Easy online ordering','Delivered to your door'],
+       fitness:['Expert coaches guide you','Flexible class schedules','Affordable memberships','Real results guaranteed'],
+       beauty:['Trusted certified artists','Easy online booking','Premium products used','Look & feel amazing'],
+       medical:['Same-day appointments','Expert specialists','Transparent pricing','Caring professional team'],
+       automotive:['Certified mechanics only','Transparent pricing','Fast turnaround time','Quality guaranteed'],
+       technology:['Modern tech solutions','Budget-friendly plans','24/7 support included','Fast implementation'],
+       travel:['Curated unique experiences','Best price guarantee','Expert local guides','Stress-free planning'],
+       pets:['Certified pet care experts','Affordable packages','Treated like family','Peace of mind always'],
+       finance:['Grow your money smartly','Clear honest advice','Low fees high returns','Financial freedom awaits'],
+       events:['Full event management','On budget every time','Single point of contact','Your vision realized'],
+       homeservices:['Licensed insured team','Upfront transparent price','On time every time','Quality workmanship'],
+       default:['Premium quality service','Best price guaranteed','Expert team ready','Your satisfaction first']
+     };
+     var sols=(adBenefits&&adBenefits.length>=2)
+       ?adBenefits.slice(0,4).map(function(b){return {ico:b.icon,txt:b.text};})
+       :(SOL[_vadTheme]||SOL.default).map(function(s,i){return {ico:['✅','🏆','⭐','💡'][i],txt:s};});
+     return '<div class="sc-wrap" id="s3">'+mesh2
+       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;z-index:1;">'
+       +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
+       +'<div id="s3t" style="font-size:'+(W>500?32:22)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">Your problem,<br><span style=\'color:'+c.accent+'\'>solved.</span></div>'
+       +'<div id="s3g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'
+       +sols.map(function(s){return '<div style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'"><span style=\'font-size:20px;\'>'
+         +s.ico+'</span><span style=\'font-size:11px;font-weight:700;color:'+c.text+';\'>'+(s.txt||'')+'</span></div>';}).join('')
+       +'</div>'
+       +'<div id="s3cap" style="'+glass('12px;padding:12px;width:100%;')+'opacity:0;">'
+       +'<div style=\'font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:6px;\'>YOUR CAPTION</div>'
+       +'<div style=\'font-size:11px;color:'+c.text+';line-height:1.6;min-height:44px;\'><span id="tc"></span><span class="cur"></span></div>'
+       +'</div>'
+       +'</div></div>';
+   })()
+   // S4 — Social proof
    +'<div class="sc-wrap" id="s4">'+mesh2+'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
-   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;z-index:1;">'
-   +'<div id="s4i" style="font-size:64px;opacity:0;">✅</div>'
-   +'<div id="s4t" style="font-size:'+(w>500?46:32)+'px;font-weight:900;color:'+c.text+';opacity:0;">Published!</div>'
-   +'<div id="s4s" style="font-size:14px;color:'+c.sub+';opacity:0;">'+product+' is now live on all platforms</div>'
-   +'<div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:480px;">'+succChips+'</div>'
-   +'<div id="s4d" style="font-size:12px;color:'+c.sub+';opacity:0;">Done in under 10 seconds ⚡</div>'
+   +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center;z-index:1;">'
+   +'<div id="s4i" style="font-size:62px;opacity:0;">🎉</div>'
+   +'<div id="s4t" style="font-size:'+(W>500?36:24)+'px;font-weight:900;color:'+c.text+';opacity:0;">Happy clients.<br><span style=\'color:'+c.accent+'\'>Real results.</span></div>'
+   +'<div id="s4box" style="'+glass('14px;padding:18px;width:100%;text-align:left;')+'opacity:0;">'
+   +'<div style=\'color:#fbbf24;font-size:15px;margin-bottom:8px;text-align:center;\'>★★★★★</div>'
+   +'<div style=\'font-size:11px;color:'+c.text+';font-style:italic;line-height:1.65;margin-bottom:8px;\'>\u201c'+biz+' completely changed things for us. Professional, fast, and the results speak for themselves. Highly recommended!\u201d</div>'
+   +'<div style=\'font-size:10px;color:'+c.sub+'\'>— A satisfied '+(product||biz)+' client</div>'
+   +'</div>'
+   +'<div id="s4cta" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">Ready for yours? →</div>'
    +'</div></div>'
-
-   // S5
-   +'<div class="sc-wrap" id="s5"><div style="position:absolute;inset:0;overflow:hidden;">'+(photo?'<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">':'')+'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div></div>'
-   +mesh2+'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;z-index:1;">'
-   +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">FOR SMALL BUSINESSES</div>'
-   +'<div id="s5t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">One post.<br><span style="color:'+c.accent+';">'+platforms.length+' platforms.</span></div>'
-   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;">'+featCards+'</div>'
-   +'<div id="s5u" style="font-size:'+(w>500?34:24)+'px;font-weight:900;color:'+c.text+';border-bottom:3px solid '+c.accent+';padding-bottom:6px;opacity:0;">autopostleey<span style="color:'+c.accent+'">.com</span></div>'
-   +'<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+freePills+'</div>'
-   +'</div></div>'
-
-   +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
-
-   // JS — key fix: use display:none/block for scenes, not opacity
-   +'<script>'
-   +'var TM=[];'
-   +'function q(id){return document.getElementById(id);}'
-   +'function anim(id,ms,kf,dur){'
-   +'  TM.push(setTimeout(function(){'
-   +'    var e=q(id);if(!e)return;'
-   +'    e.style.opacity="1";'
-   +'    e.style.animation=(kf||"sU")+" "+(dur||".55s")+" ease both";'
-   +'  },ms));'
-   +'}'
-   +'function animAll(sel,base,step,kf){'
-   +'  document.querySelectorAll(sel).forEach(function(e,i){'
-   +'    TM.push(setTimeout(function(){'
-   +'      e.style.opacity="1";'
-   +'      e.style.animation=(kf||"sU")+" .45s ease both";'
-   +'    },base+i*(step||80)));'
-   +'  });'
-   +'}'
-   +'function go(n){'
-   +'  ["s1","s2","s3","s4","s5"].forEach(function(s){var e=q(s);if(e)e.classList.remove("on");});'
-   +'  var e=q("s"+n);if(e)e.classList.add("on");'
-   +'}'
-   // S1
-   +'(function(){'
-   +'  document.querySelectorAll(".fi").forEach(function(e,i){'
-   +'    TM.push(setTimeout(function(){e.style.opacity="0.3";e.style.animation="bob "+(3+i*.3)+"s "+(i*.1)+"s ease-in-out infinite";},200+i*100));'
-   +'  });'
-   +'  var hr=q("hi");'
-   +'  if(hr){TM.push(setTimeout(function(){hr.style.opacity="1";hr.style.animation="pI .9s cubic-bezier(0.34,1.56,0.64,1) both";},100));}'
-   +'  anim("s1b",900);anim("s1t",1150);anim("s1s",1450);anim("s1u",1750);'
-   +'})();'
-   // Scene transitions
-   +'TM.push(setTimeout(function(){go(2);'
-   +'  anim("s2i",100,"pI",".7s");anim("s2e",350);anim("s2t",580);anim("s2g",820,"sU");anim("s2p",1100,"sU");'
-   +'},7000));'
-   +'TM.push(setTimeout(function(){go(3);'
-   +'  anim("s3e",80);anim("s3b",320);'
-   +'  var CAP='+JSON.stringify(caption)+';'
-   +'  var ch=CAP.split(""),typed="",tc=q("tc");'
-   +'  ch.forEach(function(c2,i){TM.push(setTimeout(function(){typed+=c2;if(tc)tc.textContent=typed;},550+i*26));});'
-   +'  var te=550+ch.length*26;'
-   +'  anim("s3l",te+80,"fI");'
-   +'  animAll(".pc",te+180,80);'
-   +'  TM.push(setTimeout(function(){document.querySelectorAll(".pc").forEach(function(e){e.style.color="'+c.accent+'";e.style.borderColor="'+c.accent+'44";});},te+900));'
-   +'  anim("s3btn",te+1000,"fI");'
-   +'  TM.push(setTimeout(function(){var b=q("s3btn");if(b){b.style.transform="scale(0.96)";setTimeout(function(){b.style.transform="scale(1)";},130);}},te+1550));'
-   +'},14000));'
-   +'TM.push(setTimeout(function(){go(4);'
-   +'  var ICONS='+JSON.stringify(icons.slice(0,6))+';'
-   +'  var burst=q("s4burst");'
-   +'  ICONS.forEach(function(ic,i){TM.push(setTimeout(function(){'
-   +'    var d=document.createElement("div");'
-   +'    var angle=i*(360/ICONS.length);var dist=110+Math.random()*70;'
-   +'    var x=Math.cos(angle*Math.PI/180)*dist;var y=Math.sin(angle*Math.PI/180)*dist;'
-   +'    d.style.cssText="position:absolute;left:50%;top:45%;font-size:30px;opacity:0;transform:translate(-50%,-50%);transition:all .9s cubic-bezier(0.34,1.56,0.64,1);";'
-   +'    d.textContent=ic;if(burst)burst.appendChild(d);'
-   +'    setTimeout(function(){d.style.opacity="0.65";d.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))";},30);'
-   +'    setTimeout(function(){d.style.opacity="0";d.style.transition="opacity .5s";},2800);'
-   +'  },i*80));});'
-   +'  anim("s4i",400,"pI");anim("s4t",720);anim("s4s",980);'
-   +'  animAll(".sc",1100,90);anim("s4d",1950,"fI");'
-   +'},23000));'
-   +'TM.push(setTimeout(function(){go(5);'
-   +'  anim("s5e",100);anim("s5t",300);'
-   +'  animAll(".fc",520,100);anim("s5u",980);animAll(".pl",1220,80);'
-   +'},27500));'
-   // Progress
-   +'var st=Date.now();'
-   +'var pi=setInterval(function(){'
-   +'  var p=Math.min(100,((Date.now()-st)/33000)*100);'
-   +'  var e=q("prog");if(e)e.style.width=p+"%";'
-   +'  if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}'
-   +'},100);'
-   +'<\/script></body></html>';
+   // S5 — Customer CTA
+   +(function(){
+     var site=(adWebsite||biz.toLowerCase().replace(/\s+/g,'')+'.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
+     var di=site.indexOf('.'),sn=di>-1?site.slice(0,di):site,sd=di>-1?site.slice(di):'.com';
+     var bens=(adBenefits&&adBenefits.length>=2)?adBenefits.slice(0,4)
+       :[{icon:'✅',text:'Premium quality'},{icon:'🏆',text:'Trusted service'},{icon:'⭐',text:'Best in class'},{icon:'💡',text:'Smart solutions'}];
+     var ph2=photo||'';
+     var ph2str=ph2?'<img src="'+ph2+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">':'';
+     return '<div class="sc-wrap" id="s5">'
+       +'<div style="position:absolute;inset:0;overflow:hidden;">'+ph2str+'<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div></div>'
+       +mesh2
+       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;z-index:1;">'
+       +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
+       +'<div id="s5biz" style="opacity:0;">'
+       +'<div style="font-size:'+(W>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
+       +'<div style="font-size:'+(W>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
+       +'</div>'
+       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">'
+       +bens.map(function(b){return '<div class="s5f" style="'+glass('10px;padding:12px;display:flex;align-items:center;gap:8px;')+'opacity:0;"><span style="font-size:18px;">'+(b.icon||'✅')+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+(b.text||'')+'</span></div>';}).join('')
+       +'</div>'
+       +'<div id="s5u" style="font-size:'+(W>500?28:20)+'px;font-weight:900;border-bottom:3px solid '+c.accent+';padding-bottom:5px;opacity:0;">'
+       +'<span style="color:'+c.text+';">'+sn+'</span><span style="color:'+c.accent+';">'+sd+'</span></div>'
+       +'<div id="s5btn" style="background:'+c.accent+';border-radius:12px;padding:14px 28px;font-size:14px;font-weight:800;color:#000;width:100%;max-width:360px;opacity:0;cursor:pointer;">📞 Contact Us Today</div>'
+       +'</div></div>';
+   })()
 }
-
 
 function replayVadAd() {
   var iframe = document.getElementById('vad-iframe');
@@ -9786,13 +9765,16 @@ function resetDownloadBtn(btn) {
 }
 
 // ── CANVAS AD RENDERER ────────────────────────────────────
-// Renders the full 33s ad directly on a canvas — smooth, no flickering
+// ── CANVAS AD RENDERER — Customer Business Story ─────────
+// ── CANVAS AD RENDERER — Customer Business Story ─────────
+// ── CANVAS AD RENDERER — Customer Business Story ─────────
 function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, onProgress) {
   return new Promise(function(resolve, reject) {
     var W = canvas.width, H = canvas.height;
     var ctx = canvas.getContext('2d');
     var FPS = 30;
     var TOTAL_MS = 33000;
+
     var icons = ({
       ecommerce:['🛍️','👗','👟','💎','✨','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
       automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽'],food:['🍔','🍕','☕','🍜','🍰','🥤'],
@@ -9807,652 +9789,480 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏']
     })[_vadTheme] || ['✨','⭐','🚀','💫','🌟','🎯'];
 
-    // Preload product image if any
-    var productImg = null;
-    var bgImg = null;
-    var imagesLoaded = 0;
-    var imagesToLoad = 0;
+    // Customer pain points per industry — what their CUSTOMERS struggle with
+    var PAIN_POINTS = {
+      realestate:  ['🔍 Hard to find the right home','💸 Overpriced listings everywhere','😰 Agents don\'t call back','⏰ Wasting weekends viewing'],
+      food:        ['😩 No good food nearby','🚗 Long drives just to eat','📵 No online ordering','😤 Inconsistent quality'],
+      fitness:     ['😓 No motivation alone','❓ Don\'t know where to start','💸 Gym fees too expensive','⏰ No time to workout'],
+      beauty:      ['😩 Hard to find trusted salon','📵 No easy booking','💸 Overpriced services','😤 Bad results before'],
+      medical:     ['😟 Long waiting times','❓ Hard to find the right doctor','💸 Expensive consultations','😰 Unsure who to trust'],
+      education:   ['😤 Boring traditional classes','❓ No personalized guidance','💸 Expensive tuition','😓 Hard to learn at own pace'],
+      automotive:  ['😩 Unreliable mechanics','💸 Hidden charges','⏰ Long repair times','😰 Don\'t know who to trust'],
+      travel:      ['😤 Expensive travel packages','😩 Generic tour experiences','⏰ Wasted vacation time','❓ Unsure what to book'],
+      events:      ['😓 Stressful event planning','💸 Over budget every time','⏰ Too many vendors to manage','😩 Results don\'t match vision'],
+      pets:        ['😟 No trusted groomer nearby','💸 Expensive vet bills','😩 Pet boarding anxiety','⏰ Hard to find pet care'],
+      technology:  ['😤 Slow outdated systems','💸 Too expensive software','😩 No tech support','⏰ Wasting time on manual tasks'],
+      homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows & delays','😤 Sloppy workmanship'],
+      finance:     ['😰 Money not working for you','❓ Confusing financial advice','💸 Hidden bank fees','😤 Debt keeps growing'],
+      default:     ['😩 Hard to find quality','💸 Overpriced options','⏰ Wasting time searching','😤 Disappointed before']
+    };
+    var painPoints = PAIN_POINTS[_vadTheme] || PAIN_POINTS.default;
+
+    // Scene 3 — how business solves it
+    var SOLUTIONS = {
+      realestate:   ['Find your dream home fast','Verified affordable listings','Dedicated agent support','Stress-free viewing process'],
+      food:         ['Delicious food, always ready','Fresh ingredients daily','Easy online ordering','Delivered to your door'],
+      fitness:      ['Expert coaches guide you','Flexible class schedules','Affordable membership plans','Real results guaranteed'],
+      beauty:       ['Trusted certified artists','Easy online booking','Premium products used','Look & feel amazing'],
+      medical:      ['Same-day appointments','Expert specialists','Transparent pricing','Caring professional team'],
+      education:    ['Personalized learning plans','Expert tutors & coaches','Flexible online classes','Proven results'],
+      automotive:   ['Certified mechanics','Transparent pricing','Fast turnaround time','Quality guaranteed'],
+      travel:       ['Curated unique experiences','Best price guarantee','Expert local guides','Stress-free planning'],
+      events:       ['Full event management','On budget every time','One point of contact','Your vision, realized'],
+      pets:         ['Certified pet care experts','Affordable packages','Your pet treated like family','Peace of mind always'],
+      technology:   ['Modern tech solutions','Budget-friendly plans','24/7 support included','Fast implementation'],
+      homeservices: ['Licensed & insured team','Upfront transparent pricing','On time every time','Quality workmanship'],
+      finance:      ['Grow your money smartly','Clear honest advice','Low fees, high returns','Financial freedom awaits'],
+      default:      ['Premium quality service','Best price guaranteed','Expert team ready','Your satisfaction first']
+    };
+    var solutions = SOLUTIONS[_vadTheme] || SOLUTIONS.default;
+
+    // Use customer benefits if they filled them in
+    var displayBenefits = (benefits && benefits.length >= 2)
+      ? benefits.map(function(b){ return b.text; })
+      : solutions;
+
+    var displayBenefitIcons = (benefits && benefits.length >= 2)
+      ? benefits.map(function(b){ return b.icon; })
+      : ['✅','✅','✅','✅'];
+
+    var siteUrl = (website || biz + '.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
+
+    // Image preloading
+    var productImg = null, bgImg = null;
+    var loaded = 0, toLoad = 0;
 
     function startRender() {
       var frame = 0;
-      var totalFrames = Math.ceil((TOTAL_MS / 1000) * FPS);
-      var startTime = performance.now();
-      var rafId = null;
+      var totalFrames = Math.ceil((TOTAL_MS/1000)*FPS);
+      // Scene timing
+      var S1e = 7*FPS, S2e = 14*FPS, S3e = 21*FPS, S4e = 27*FPS;
 
-      // Scene timing in frames
-      var S1_END = 7 * FPS;   // 0-7s
-      var S2_END = 14 * FPS;  // 7-14s
-      var S3_END = 23 * FPS;  // 14-23s
-      var S4_END = 27.5 * FPS; // 23-27.5s
-      // S5: rest
+      function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+      function easeOut(t){ return 1-Math.pow(1-clamp(t,0,1),3); }
+      function slideUp(fr,dur){ var t=easeOut(clamp(fr/dur,0,1)); return {a:t,y:(1-t)*22}; }
 
-      // Caption typing state
-      var captionChars = caption.split('');
-      var typedCaption = '';
-
-      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-      function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
-      function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
-      function fadeIn(frameInScene, durationFrames) {
-        return clamp(frameInScene / durationFrames, 0, 1);
-      }
-      function slideUp(frameInScene, durationFrames) {
-        var t = clamp(frameInScene / durationFrames, 0, 1);
-        return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
-      }
-
-      // Draw mesh blobs
-      function drawMesh() {
-        (c.meshes || []).forEach(function(m) {
-          var gx = (m.x / 100) * W;
-          var gy = (m.y / 100) * H;
-          var gr = Math.max((m.w / 100) * W, (m.h / 100) * H) * 0.6;
-          var grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-          grad.addColorStop(0, m.color);
-          grad.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = grad;
+      function drawMesh(alpha) {
+        ctx.globalAlpha = alpha||1;
+        (c.meshes||[]).forEach(function(m){
+          var gx=(m.x/100)*W, gy=(m.y/100)*H;
+          var gr=Math.max((m.w/100)*W,(m.h/100)*H)*0.55;
+          var g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+          g.addColorStop(0,m.color); g.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.fillStyle=g;
           ctx.beginPath();
-          ctx.ellipse(gx, gy, (m.w/100)*W*0.5, (m.h/100)*H*0.5, 0, 0, Math.PI*2);
+          ctx.ellipse(gx,gy,(m.w/100)*W*0.5,(m.h/100)*H*0.5,0,0,Math.PI*2);
           ctx.fill();
         });
+        ctx.globalAlpha=1;
       }
 
-      // Draw floating icons
-      function drawFloatingIcons(alpha, frameInScene) {
-        var positions = [
-          {x:0.08,y:0.12},{x:0.88,y:0.18},{x:0.05,y:0.42},{x:0.90,y:0.48},
-          {x:0.07,y:0.70},{x:0.87,y:0.72},{x:0.15,y:0.86},{x:0.82,y:0.84}
-        ];
-        ctx.globalAlpha = alpha * 0.28;
-        ctx.font = '26px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        icons.forEach(function(ic, i) {
-          if (i >= positions.length) return;
-          var p = positions[i];
-          var bobY = Math.sin((frameInScene / FPS) * (0.7 + i * 0.15) * Math.PI * 2) * 6;
-          ctx.fillText(ic, p.x * W, p.y * H + bobY);
+      function drawFloatIcons(a, foff) {
+        var pos=[{x:.07,y:.11},{x:.88,y:.17},{x:.05,y:.42},{x:.90,y:.47},{x:.07,y:.70},{x:.87,y:.73}];
+        ctx.globalAlpha=a*0.3;
+        ctx.font='24px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        icons.slice(0,6).forEach(function(ic,i){
+          var p=pos[i], bob=Math.sin((foff/FPS+i*0.4)*Math.PI*2*0.5)*7;
+          ctx.fillText(ic,p.x*W,p.y*H+bob);
         });
-        ctx.globalAlpha = 1;
-        ctx.textBaseline = 'alphabetic';
+        ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
       }
 
-      // Draw glass card
-      function drawGlass(x, y, w, h, r) {
-        r = r || 12;
-        ctx.beginPath();
-        ctx.roundRect(ctx.roundRect ? x : x, y, w, h, r);
-        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.07)';
-        ctx.fill();
-        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+      function glass(x,y,w,h,r){
+        ctx.beginPath(); ctx.roundRect(x,y,w,h,r||10);
+        ctx.fillStyle=c.glass||'rgba(255,255,255,0.07)'; ctx.fill();
+        ctx.strokeStyle=c.glassBorder||'rgba(255,255,255,0.12)'; ctx.lineWidth=1; ctx.stroke();
       }
 
-      // Draw text with slide-up
-      function drawText(text, x, y, font, color, alpha, offsetY) {
-        ctx.globalAlpha = clamp(alpha, 0, 1);
-        ctx.fillStyle = color;
-        ctx.font = font;
-        ctx.textAlign = 'center';
-        ctx.fillText(text, x, y + (offsetY || 0));
-        ctx.globalAlpha = 1;
+      function text(str,x,y,font,color,a,oy){
+        ctx.globalAlpha=clamp(a,0,1); ctx.fillStyle=color; ctx.font=font;
+        ctx.textAlign='center'; ctx.fillText(str,x,y+(oy||0)); ctx.globalAlpha=1;
       }
 
-      // Draw pill badge
-      function drawBadge(text, cx, cy, alpha) {
-        if (alpha <= 0) return;
-        ctx.globalAlpha = clamp(alpha, 0, 1);
-        var metrics = ctx.measureText(text);
-        var bw = metrics.width + 40, bh = 28;
-        var bx = cx - bw/2, by = cy - bh/2;
-        drawGlass(bx, by, bw, bh, 14);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(text, cx, cy + 4);
-        ctx.globalAlpha = 1;
+      function wrapText(str, x, y, maxW, lineH) {
+        var words=str.split(' '), line='';
+        words.forEach(function(w){
+          var test=line+(line?' ':'')+w;
+          if(ctx.measureText(test).width>maxW&&line){ ctx.fillText(line,x,y); line=w; y+=lineH; }
+          else line=test;
+        });
+        if(line) ctx.fillText(line,x,y);
+        return y;
       }
 
-      // ── SCENE RENDERERS ────────────────────────────────────
+      function badge(str,cx,cy,a){
+        if(a<=0)return;
+        ctx.globalAlpha=clamp(a,0,1);
+        var m=ctx.measureText(str); var bw=m.width+36,bh=28;
+        glass(cx-bw/2,cy-bh/2,bw,bh,14);
+        ctx.fillStyle=c.accent; ctx.font='bold 11px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.fillText(str,cx,cy+4);
+        ctx.globalAlpha=1;
+      }
+
+      function drawProg(f){ var p=f/totalFrames; ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,H-3,W,3); ctx.fillStyle=c.accent; ctx.fillRect(0,H-3,W*p,3); }
+
+      // ── SCENE 1: YOUR BUSINESS HERO ──────────────────────
       function drawS1(f) {
-        var t = f / S1_END;
-        // BG + mesh
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0, 0, W, H);
-        if (bgImg) {
-          ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
-          ctx.drawImage(bgImg, 0, 0, W, H);
-          ctx.globalAlpha = 1;
-          // Dark overlay
-          var grad = ctx.createLinearGradient(0, 0, 0, H);
-          grad.addColorStop(0, c.bg + 'cc');
-          grad.addColorStop(0.5, c.bg + '66');
-          grad.addColorStop(1, c.bg + 'cc');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
+        // Photo bg
+        if(bgImg){
+          ctx.globalAlpha=clamp(f/(FPS*1.2),0,0.3);
+          ctx.drawImage(bgImg,0,0,W,H);
+          ctx.globalAlpha=1;
+          var g=ctx.createLinearGradient(0,0,0,H);
+          g.addColorStop(0,c.bg+'cc');g.addColorStop(.5,c.bg+'55');g.addColorStop(1,c.bg+'cc');
+          ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
         }
-        drawMesh();
-        drawFloatingIcons(clamp(f / (FPS * 0.5), 0, 1), f);
+        drawMesh(1);
+        drawFloatIcons(clamp(f/(FPS*.6),0,1),f);
 
-        // Hero visual
-        var heroAlpha = easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1));
-        var heroScale = 0.5 + easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1)) * 0.5;
-        if (heroAlpha > 0) {
-          ctx.globalAlpha = heroAlpha;
-          ctx.save();
-          ctx.translate(W/2, H * 0.26);
-          ctx.scale(heroScale, heroScale);
-          if (productImg) {
-            var sz = W > 500 ? 180 : 140;
-            ctx.beginPath();
-            ctx.roundRect(-sz/2, -sz/2, sz, sz, 18);
-            ctx.clip();
-            ctx.drawImage(productImg, -sz/2, -sz/2, sz, sz);
+        // Hero product image or emoji
+        var ha=easeOut(clamp((f-3)/(FPS*.9),0,1));
+        var hs=0.4+easeOut(clamp((f-3)/(FPS*.9),0,1))*0.6;
+        if(ha>0){
+          ctx.globalAlpha=ha; ctx.save(); ctx.translate(W/2,H*.25); ctx.scale(hs,hs);
+          if(productImg){
+            var sz=W>500?180:140;
+            ctx.beginPath(); ctx.roundRect(-sz/2,-sz/2,sz,sz,18); ctx.clip();
+            ctx.drawImage(productImg,-sz/2,-sz/2,sz,sz);
           } else {
-            ctx.font = (W > 500 ? 88 : 66) + 'px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(emoji || '✨', 0, 0);
-            ctx.textBaseline = 'alphabetic';
+            ctx.font=(W>500?90:68)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText(emoji||'✨',0,0); ctx.textBaseline='alphabetic';
           }
-          ctx.restore();
-          ctx.globalAlpha = 1;
+          ctx.restore(); ctx.globalAlpha=1;
         }
 
-        var centerY = H * 0.53;
-        var su;
+        var cy=H*.56;
+        // Business name badge
+        var su=slideUp(f-FPS*.9,FPS*.55);
+        badge('● '+biz.toUpperCase(),W/2,cy-18,su.a);
 
-        // Brand badge
-        su = slideUp(f - FPS*0.9, FPS*0.55);
-        drawBadge('● ' + (biz || '').toUpperCase(), W/2, centerY - 20, su.alpha);
-
-        // Main headline
-        su = slideUp(f - FPS*1.15, FPS*0.6);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W > 500 ? 46 : 32) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        var hl = tagline || product || 'Your Product';
-        // Word wrap if too long
-        if (ctx.measureText(hl).width > W * 0.85) {
-          var words = hl.split(' ');
-          var mid = Math.ceil(words.length / 2);
-          ctx.fillText(words.slice(0, mid).join(' '), W/2, centerY + 24 + su.y);
-          ctx.fillText(words.slice(mid).join(' '), W/2, centerY + 24 + su.y + (W>500?52:38));
+        // Tagline — BIG
+        su=slideUp(f-FPS*1.15,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.text; ctx.textAlign='center';
+        ctx.font='bold '+(W>500?44:30)+'px Inter,sans-serif';
+        var tl=tagline||product||biz;
+        if(ctx.measureText(tl).width>W*.85){
+          var ws=tl.split(' '), mid=Math.ceil(ws.length/2);
+          ctx.fillText(ws.slice(0,mid).join(' '),W/2,cy+22+su.y);
+          ctx.fillText(ws.slice(mid).join(' '),W/2,cy+22+su.y+(W>500?50:36));
         } else {
-          ctx.fillText(hl, W/2, centerY + 24 + su.y);
+          ctx.fillText(tl,W/2,cy+22+su.y);
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha=1;
 
-        // Sub
-        su = slideUp(f - FPS*1.45, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-        ctx.font = '14px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(product || biz || 'Quality you can trust', W/2, centerY + 80 + su.y);
-        ctx.globalAlpha = 1;
+        // Sub — what they do
+        su=slideUp(f-FPS*1.45,FPS*.5);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.sub; ctx.font='14px Inter,sans-serif'; ctx.textAlign='center';
+        ctx.fillText(product||'Quality service you can trust',W/2,cy+78+su.y);
+        ctx.globalAlpha=1;
 
-        // URL badge
-        su = slideUp(f - FPS*1.75, FPS*0.5);
-        drawBadge('🚀  autopostleey.com', W/2, centerY + 114 + su.y, su.alpha);
+        // Website badge
+        su=slideUp(f-FPS*1.75,FPS*.5);
+        badge('🌐 '+siteUrl,W/2,cy+112+su.y,su.a);
       }
 
+      // ── SCENE 2: CUSTOMER PAIN / PROBLEM ─────────────────
       function drawS2(f) {
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0, 0, W, H);
-        drawMesh();
+        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
 
-        var su;
-        // Big emoji
-        su = slideUp(f - FPS*0.1, FPS*0.7);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.font = '52px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('😓', W/2, H*0.22 + su.y);
-        ctx.globalAlpha = 1;
+        var su=slideUp(f-FPS*.05,FPS*.55);
+        // "FEELING THIS?" eyebrow
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.letterSpacing='4px';
+        ctx.fillText('DOES THIS SOUND FAMILIAR?',W/2,H*.1+su.y);
+        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
 
-        // Eyebrow
-        su = slideUp(f - FPS*0.35, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.letterSpacing = '4px';
-        ctx.fillText('THE PROBLEM', W/2, H*0.33 + su.y);
-        ctx.letterSpacing = '0px';
-        ctx.globalAlpha = 1;
+        // Big pain emoji
+        su=slideUp(f-FPS*.2,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.font='50px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('😩',W/2,H*.22+su.y);
+        ctx.textBaseline='alphabetic'; ctx.globalAlpha=1;
 
-        // Headline
-        su = slideUp(f - FPS*0.55, FPS*0.6);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?38:26) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Posting manually', W/2, H*0.43 + su.y);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText('wastes 3hrs/week', W/2, H*0.43 + (W>500?46:34) + su.y);
-        ctx.globalAlpha = 1;
+        // Pain headline
+        su=slideUp(f-FPS*.45,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?34:24)+'px Inter,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('You deserve better.',W/2,H*.36+su.y);
+        ctx.globalAlpha=1;
 
-        // Pain points grid
-        su = slideUp(f - FPS*0.82, FPS*0.55);
-        if (su.alpha > 0) {
-          var pts = ['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'];
-          var gw = W * 0.42, gh = 36, gx0 = W*0.05, gy0 = H*0.55 + su.y;
-          ctx.globalAlpha = clamp(su.alpha, 0, 1);
-          pts.forEach(function(pt, i) {
-            var col = i % 2, row = Math.floor(i / 2);
-            var gx = gx0 + col*(gw+W*0.06), gy = gy0 + row*(gh+8);
-            drawGlass(gx, gy, gw, gh, 8);
-            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-            ctx.font = '11px Inter, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText(pt, gx+10, gy+23);
-          });
-          ctx.globalAlpha = 1;
-        }
-
-        // Platform chips
-        su = slideUp(f - FPS*1.1, FPS*0.5);
-        if (su.alpha > 0) {
-          ctx.globalAlpha = clamp(su.alpha, 0, 1);
-          var chips = platforms.slice(0,6);
-          var chipW = (W - 24) / Math.min(chips.length, 4);
-          var chipH = 24;
-          var startX = 12;
-          var chipY = H*0.78 + su.y;
-          // Row 1
-          chips.slice(0,4).forEach(function(p, i) {
-            drawGlass(startX + i*(chipW+4), chipY, chipW-4, chipH, 6);
-            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-            ctx.font = '9px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+16);
-          });
-          if (chips.length > 4) {
-            chips.slice(4).forEach(function(p, i) {
-              drawGlass(startX + i*(chipW+4), chipY+32, chipW-4, chipH, 6);
-              ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-              ctx.font = '9px Inter, sans-serif';
-              ctx.textAlign = 'center';
-              ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+48);
-            });
-          }
-          ctx.globalAlpha = 1;
-        }
-      }
-
-      function drawS3(f) {
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0, 0, W, H);
-        drawMesh();
-
-        // Eyebrow
-        var su = slideUp(f - FPS*0.08, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('AI WRITES YOUR CAPTION', W/2, H*0.08 + su.y);
-        ctx.globalAlpha = 1;
-
-        // Caption box
-        su = slideUp(f - FPS*0.35, FPS*0.55);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        var boxY = H * 0.12, boxH = H * 0.35;
-        drawGlass(12, boxY + su.y, W-24, boxH, 12);
-        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
-        ctx.font = 'bold 9px Inter, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('CAPTION', 24, boxY + 18 + su.y);
-        ctx.globalAlpha = 1;
-
-        // Typed caption text
-        var typeStart = FPS * 0.6;
-        var charsToShow = Math.floor(clamp((f - typeStart) / (FPS * 0.026), 0, captionChars.length));
-        var shown = captionChars.slice(0, charsToShow).join('');
-
-        if (su.alpha > 0.3) {
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = c.text || '#fff';
-          ctx.font = '12px Inter, sans-serif';
-          ctx.textAlign = 'left';
-          // Word wrap
-          var words = shown.split(' ');
-          var lineW = W - 48;
-          var line = '', lineY = boxY + 36 + su.y;
-          words.forEach(function(w) {
-            var test = line + (line ? ' ' : '') + w;
-            if (ctx.measureText(test).width > lineW && line) {
-              if (lineY < boxY + boxH - 10) ctx.fillText(line, 24, lineY);
-              line = w;
-              lineY += 18;
-            } else { line = test; }
-          });
-          if (line && lineY < boxY + boxH - 10) {
-            // Blinking cursor
-            ctx.fillText(line, 24, lineY);
-            if (Math.floor(f / (FPS * 0.4)) % 2 === 0) {
-              ctx.fillStyle = c.accent || '#a855f7';
-              ctx.fillRect(24 + ctx.measureText(line).width + 2, lineY - 12, 2, 14);
+        // 4 pain points as cards
+        var cpW=(W-32)/2, cpH=54, cpX0=12, cpY0=H*.44;
+        painPoints.slice(0,4).forEach(function(pt,i){
+          var ia=clamp((f-FPS*.65-i*FPS*.15)/(FPS*.45),0,1);
+          if(ia<=0)return;
+          var col=i%2, row=Math.floor(i/2);
+          var cx2=cpX0+col*(cpW+8), cy2=cpY0+row*(cpH+8);
+          ctx.globalAlpha=ia;
+          glass(cx2,cy2,cpW,cpH,10);
+          // Split icon and text
+          var parts=pt.match(/^(\S+)\s(.+)$/);
+          if(parts){
+            ctx.font='20px serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+            ctx.fillText(parts[1],cx2+10,cy2+cpH/2);
+            ctx.textBaseline='alphabetic';
+            ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
+            var ptext=parts[2];
+            if(ctx.measureText(ptext).width>cpW-48){
+              var ws2=ptext.split(' '), mid2=Math.ceil(ws2.length/2);
+              ctx.fillText(ws2.slice(0,mid2).join(' '),cx2+36,cy2+18);
+              ctx.fillText(ws2.slice(mid2).join(' '),cx2+36,cy2+32);
+            } else {
+              ctx.fillText(ptext,cx2+36,cy2+cpH/2-5);
             }
           }
-        }
+          ctx.globalAlpha=1;
+        });
 
-        // Platform chips lighting up
-        var platStart = typeStart + captionChars.length / (FPS * 0.026) + FPS * 0.2;
-        var platAlpha = clamp((f - platStart) / (FPS * 0.4), 0, 1);
-        if (platAlpha > 0) {
-          var chipW2 = (W-24) / Math.min(platforms.length, 4);
-          platforms.slice(0,8).forEach(function(p, i) {
-            var col = i % 4, row = Math.floor(i/4);
-            var cx2 = 12 + col*(chipW2+3);
-            var cy2 = H*0.54 + row*32;
-            var iAlpha = clamp((platAlpha*platforms.length - i*0.8) / 1, 0, 1);
-            ctx.globalAlpha = iAlpha;
-            drawGlass(cx2, cy2, chipW2-3, 26, 6);
-            ctx.fillStyle = iAlpha > 0.5 ? (c.accent || '#a855f7') : (c.sub || 'rgba(255,255,255,0.4)');
-            ctx.font = '9px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(p.replace(/^../,'').trim(), cx2+(chipW2-3)/2, cy2+17);
-            ctx.globalAlpha = 1;
-          });
-        }
+        // Sub line
+        su=slideUp(f-FPS*1.4,FPS*.5);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.sub; ctx.font='13px Inter,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('There is a better way →',W/2,H*.88+su.y);
+        ctx.globalAlpha=1;
+      }
 
-        // Post button
-        var btnStart = platStart + FPS * 1.0;
-        var btnAlpha = clamp((f - btnStart) / (FPS*0.4), 0, 1);
-        if (btnAlpha > 0) {
-          var btnY = H * 0.82;
-          var btnPulse = 1 + Math.sin((f - btnStart) / FPS * Math.PI * 2) * 0.02;
-          ctx.globalAlpha = btnAlpha;
-          ctx.save();
-          ctx.translate(W/2, btnY + 22);
-          ctx.scale(btnPulse, btnPulse);
-          ctx.beginPath();
-          ctx.roundRect(-(W-24)/2, -22, W-24, 44, 12);
-          ctx.fillStyle = c.accent || '#a855f7';
-          ctx.fill();
-          // Glow
-          ctx.shadowColor = c.accent || '#a855f7';
-          ctx.shadowBlur = 20;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          ctx.fillStyle = '#000';
-          ctx.font = 'bold 14px Inter, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🚀 POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
-          ctx.textBaseline = 'alphabetic';
-          ctx.restore();
-          ctx.globalAlpha = 1;
+      // ── SCENE 3: YOUR SOLUTION ────────────────────────────
+      function drawS3(f) {
+        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
+        drawFloatIcons(0.15,f+S2e);
+
+        // Eyebrow
+        var su=slideUp(f-FPS*.05,FPS*.5);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.letterSpacing='3px';
+        ctx.fillText('INTRODUCING '+biz.toUpperCase(),W/2,H*.1+su.y);
+        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
+
+        // Headline
+        su=slideUp(f-FPS*.25,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?36:26)+'px Inter,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('Your problem,',W/2,H*.22+su.y);
+        ctx.fillStyle=c.accent;
+        ctx.fillText('solved.',W/2,H*.22+(W>500?44:32)+su.y);
+        ctx.globalAlpha=1;
+
+        // 4 solution cards
+        var sw=(W-32)/2, sh=58, sx0=12, sy0=H*.38;
+        displayBenefits.slice(0,4).forEach(function(sol,i){
+          var ia=clamp((f-FPS*.55-i*FPS*.18)/(FPS*.45),0,1);
+          if(ia<=0)return;
+          var col=i%2, row=Math.floor(i/2);
+          var sx=sx0+col*(sw+8), sy=sy0+row*(sh+8);
+          ctx.globalAlpha=ia;
+          glass(sx,sy,sw,sh,10);
+          var ico=displayBenefitIcons[i]||'✅';
+          ctx.font='22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(ico,sx+22,sy+sh/2);
+          ctx.textBaseline='alphabetic';
+          ctx.fillStyle=c.text; ctx.font='bold 12px Inter,sans-serif'; ctx.textAlign='left';
+          var st=sol; if(ctx.measureText(st).width>sw-46){
+            var ws3=st.split(' '), m3=Math.ceil(ws3.length/2);
+            ctx.fillText(ws3.slice(0,m3).join(' '),sx+40,sy+20);
+            ctx.fillText(ws3.slice(m3).join(' '),sx+40,sy+36);
+          } else { ctx.fillText(st,sx+40,sy+sh/2-5); }
+          ctx.globalAlpha=1;
+        });
+
+        // AI-generated caption from their product
+        var capStart=FPS*1.4;
+        var capA=clamp((f-capStart)/(FPS*.4),0,1);
+        if(capA>0){
+          ctx.globalAlpha=capA;
+          glass(12,H*.78,W-24,H*.14,12);
+          ctx.fillStyle=c.sub; ctx.font='9px Inter,sans-serif'; ctx.textAlign='left';
+          ctx.fillText('YOUR AI-GENERATED CAPTION',24,H*.78+14);
+          ctx.fillStyle=c.text; ctx.font='11px Inter,sans-serif';
+          var charsToShow=Math.floor(clamp((f-capStart-FPS*.3)/(FPS*0.028),0,caption.length));
+          var shown=caption.slice(0,charsToShow);
+          ctx.textAlign='left';
+          wrapText(shown,W/2,H*.78+28,W-48,16);
+          // Cursor
+          if(charsToShow<caption.length&&Math.floor(f/(FPS*.4))%2===0){
+            ctx.fillStyle=c.accent; ctx.fillRect(24+ctx.measureText(shown.split('\n').pop()).width+2,H*.78+18,2,13);
+          }
+          ctx.globalAlpha=1;
         }
       }
 
+      // ── SCENE 4: SUCCESS / SOCIAL PROOF ──────────────────
       function drawS4(f) {
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0, 0, W, H);
-        drawMesh();
+        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H); drawMesh(1);
 
-        // Burst icons radiating out
-        var burstDone = f > FPS * 0.3;
-        icons.forEach(function(ic, i) {
-          var burstStart = i * (FPS * 0.08);
-          var bf = f - burstStart;
-          if (bf <= 0) return;
-          var angle = i * (Math.PI * 2 / icons.length);
-          var dist = easeOut(clamp(bf / (FPS * 0.9), 0, 1)) * (W * 0.38);
-          var alpha = clamp(bf / (FPS * 0.5), 0, 0.65) * (1 - clamp((bf - FPS*2) / (FPS*0.8), 0, 1));
-          ctx.globalAlpha = alpha;
-          ctx.font = '28px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(ic, W/2 + Math.cos(angle)*dist, H*0.45 + Math.sin(angle)*dist);
-          ctx.textBaseline = 'alphabetic';
-          ctx.globalAlpha = 1;
+        // Burst icons
+        icons.slice(0,6).forEach(function(ic,i){
+          var bf=f-i*(FPS*.08); if(bf<=0)return;
+          var angle=i*(Math.PI*2/6);
+          var dist=easeOut(clamp(bf/(FPS*.9),0,1))*(W*.38);
+          var a=clamp(bf/(FPS*.5),0,.65)*(1-clamp((bf-FPS*2)/(FPS*.8),0,1));
+          ctx.globalAlpha=a; ctx.font='28px serif';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(ic,W/2+Math.cos(angle)*dist,H*.42+Math.sin(angle)*dist);
+          ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
         });
 
-        // Big check icon
-        var iconAlpha = easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1));
-        var iconScale = 0.4 + easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1)) * 0.6;
-        ctx.globalAlpha = iconAlpha;
-        ctx.save();
-        ctx.translate(W/2, H*0.3);
-        ctx.scale(iconScale, iconScale);
-        ctx.font = '62px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('✅', 0, 0);
-        ctx.textBaseline = 'alphabetic';
-        ctx.restore();
-        ctx.globalAlpha = 1;
+        // Big success emoji
+        var ia=easeOut(clamp((f-FPS*.35)/(FPS*.7),0,1));
+        var sc=0.4+ia*0.6;
+        ctx.globalAlpha=ia; ctx.save(); ctx.translate(W/2,H*.28); ctx.scale(sc,sc);
+        ctx.font='58px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('🎉',0,0);
+        ctx.textBaseline='alphabetic'; ctx.restore(); ctx.globalAlpha=1;
 
-        // Published text
-        var su = slideUp(f - FPS*0.72, FPS*0.6);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?44:30) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Published!', W/2, H*0.48 + su.y);
-        ctx.globalAlpha = 1;
+        // Success message
+        var su=slideUp(f-FPS*.7,FPS*.6);
+        text('Happy clients.',W/2,H*.44,'bold '+(W>500?38:26)+'px Inter,sans-serif',c.text,su.a,su.y);
 
-        // Sub
-        su = slideUp(f - FPS*0.98, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-        ctx.font = '13px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText((product || 'Your post') + ' is live on all platforms', W/2, H*0.56 + su.y);
-        ctx.globalAlpha = 1;
+        su=slideUp(f-FPS*.95,FPS*.5);
+        text('Real results.',W/2,H*.44+(W>500?46:34),'bold '+(W>500?38:26)+'px Inter,sans-serif',c.accent,su.a,su.y);
 
-        // Success chips
-        var chipStart = FPS * 1.1;
-        var chipW3 = (W-24) / Math.min(platforms.length, 4);
-        platforms.slice(0,8).forEach(function(p, i) {
-          var iAlpha = clamp((f - chipStart - i * FPS*0.09) / (FPS*0.35), 0, 1);
-          if (iAlpha <= 0) return;
-          var col = i % 4, row = Math.floor(i/4);
-          var cx3 = 12 + col*(chipW3+3), cy3 = H*0.64 + row*32;
-          ctx.globalAlpha = iAlpha;
-          ctx.fillStyle = 'rgba(74,222,128,0.1)';
-          ctx.strokeStyle = 'rgba(74,222,128,0.3)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.roundRect(cx3, cy3, chipW3-3, 26, 6);
-          ctx.fill(); ctx.stroke();
-          ctx.fillStyle = '#4ade80';
-          ctx.font = 'bold 9px Inter, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('✓ ' + p.replace(/^../,'').trim(), cx3+(chipW3-3)/2, cy3+17);
-          ctx.globalAlpha = 1;
-        });
+        // Testimonial-style card
+        var ta=clamp((f-FPS*1.1)/(FPS*.5),0,1);
+        if(ta>0){
+          ctx.globalAlpha=ta;
+          glass(16,H*.6,W-32,H*.26,14);
+          // Stars
+          ctx.fillStyle='#fbbf24'; ctx.font='16px serif'; ctx.textAlign='center';
+          ctx.fillText('★★★★★',W/2,H*.6+24);
+          // Quote
+          ctx.fillStyle=c.text; ctx.font='italic 12px Inter,sans-serif'; ctx.textAlign='center';
+          var quote='"'+biz+' completely changed things for us. Highly recommended!"';
+          wrapText(quote,W/2,H*.6+46,W-56,18);
+          // Attribution
+          ctx.fillStyle=c.sub; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
+          ctx.fillText('— A happy '+product+' client',W/2,H*.6+H*.26-14);
+          ctx.globalAlpha=1;
+        }
 
-        // Done text
-        su = slideUp(f - FPS*1.9, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
-        ctx.font = '12px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Done in under 10 seconds ⚡', W/2, H*0.91 + su.y);
-        ctx.globalAlpha = 1;
+        // CTA teaser
+        su=slideUp(f-FPS*1.8,FPS*.5);
+        text('Ready for yours? →',W/2,H*.9,'bold 13px Inter,sans-serif',c.accent,su.a,su.y);
       }
 
+      // ── SCENE 5: CTA — CONTACT YOUR BUSINESS ─────────────
       function drawS5(f) {
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0, 0, W, H);
-        if (bgImg) {
-          ctx.globalAlpha = 0.10;
-          ctx.drawImage(bgImg, 0, 0, W, H);
-          ctx.globalAlpha = 1;
+        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
+        if(bgImg){ ctx.globalAlpha=.1; ctx.drawImage(bgImg,0,0,W,H); ctx.globalAlpha=1; }
+        drawMesh(1);
+        drawFloatIcons(.2,f+S4e);
+
+        // Eyebrow
+        var su=slideUp(f-FPS*.08,FPS*.5);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.letterSpacing='4px';
+        ctx.fillText('GET STARTED TODAY',W/2,H*.1+su.y);
+        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
+
+        // Business name big
+        su=slideUp(f-FPS*.28,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?46:32)+'px Inter,sans-serif';
+        ctx.textAlign='center';
+        if(ctx.measureText(biz).width>W*.85){
+          ctx.font='bold '+(W>500?34:24)+'px Inter,sans-serif';
         }
-        drawMesh();
-        drawFloatingIcons(0.2, f + S4_END);
+        ctx.fillText(biz,W/2,H*.22+su.y);
+        ctx.fillStyle=c.accent;
+        ctx.font='bold '+(W>500?20:15)+'px Inter,sans-serif';
+        ctx.fillText(tagline||product,W/2,H*.22+(W>500?36:28)+su.y);
+        ctx.globalAlpha=1;
 
-        var su;
-        su = slideUp(f - FPS*0.1, FPS*0.5);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('FOR SMALL BUSINESSES', W/2, H*0.12 + su.y);
-        ctx.globalAlpha = 1;
-
-        su = slideUp(f - FPS*0.3, FPS*0.6);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?46:32) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('One post.', W/2, H*0.24 + su.y);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText(platforms.length + ' platforms.', W/2, H*0.24 + (W>500?54:40) + su.y);
-        ctx.globalAlpha = 1;
-
-        // Feature cards
-        // Use customer benefits if provided, fallback to generic
-        var defaultBenefits = [
-          {icon:'⭐', text:'Premium Quality'},
-          {icon:'✅', text:'Trusted Service'},
-          {icon:'🏆', text:'Best in Class'},
-          {icon:'💡', text:'Smart Solutions'}
-        ];
-        var benefitList = (benefits && benefits.length > 0) ? benefits : defaultBenefits;
-        var feats = benefitList.slice(0,4).map(function(b){ return [b.icon, b.text]; });
-        var fcW = (W-28)/2, fcH = 52;
-        feats.forEach(function(ft, i) {
-          var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
-          if (iAlpha <= 0) return;
-          var col = i%2, row = Math.floor(i/2);
-          var fcX = 12 + col*(fcW+4);
-          var fcY = H*0.46 + row*(fcH+8);
-          ctx.globalAlpha = iAlpha;
-          drawGlass(fcX, fcY, fcW, fcH, 10);
-          ctx.font = '20px serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(ft[0], fcX+10, fcY+34);
-          ctx.fillStyle = c.text || '#fff';
-          ctx.font = 'bold 12px Inter, sans-serif';
-          ctx.fillText(ft[1], fcX+38, fcY+33);
-          ctx.globalAlpha = 1;
+        // 4 benefits quick-fire
+        var bfw=(W-32)/2, bfh=50, bfx0=12, bfy0=H*.38;
+        displayBenefits.slice(0,4).forEach(function(b,i){
+          var ia=clamp((f-FPS*.52-i*FPS*.1)/(FPS*.38),0,1);
+          if(ia<=0)return;
+          var col=i%2,row=Math.floor(i/2);
+          ctx.globalAlpha=ia;
+          glass(bfx0+col*(bfw+8),bfy0+row*(bfh+6),bfw,bfh,10);
+          ctx.fillStyle=c.accent; ctx.font='14px serif'; ctx.textAlign='center';
+          ctx.textBaseline='middle';
+          ctx.fillText(displayBenefitIcons[i]||'✅',bfx0+col*(bfw+8)+16,bfy0+row*(bfh+6)+bfh/2);
+          ctx.textBaseline='alphabetic';
+          ctx.fillStyle=c.text; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='left';
+          var bt=b; if(ctx.measureText(bt).width>bfw-36){
+            var bws=bt.split(' '),bm=Math.ceil(bws.length/2);
+            ctx.fillText(bws.slice(0,bm).join(' '),bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+18);
+            ctx.fillText(bws.slice(bm).join(' '),bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+34);
+          } else {
+            ctx.fillText(bt,bfx0+col*(bfw+8)+30,bfy0+row*(bfh+6)+bfh/2-4);
+          }
+          ctx.globalAlpha=1;
         });
 
-        // URL — use customer's website
-        su = slideUp(f - FPS*1.0, FPS*0.6);
-        ctx.globalAlpha = clamp(su.alpha, 0, 1);
-        var siteUrl = (website || 'autopostleey.com').replace(/^https?:\/\//,'').replace(/\/$/,'');
-        var dotIdx = siteUrl.indexOf('.');
-        var siteName = dotIdx > -1 ? siteUrl.slice(0, dotIdx) : siteUrl;
-        var siteDot  = dotIdx > -1 ? siteUrl.slice(dotIdx) : '.com';
-        var urlFontSize = W > 500 ? 34 : 22;
-        ctx.font = 'bold ' + urlFontSize + 'px Inter, sans-serif';
-        var nameW = ctx.measureText(siteName).width;
-        var dotW  = ctx.measureText(siteDot).width;
-        var totalW = nameW + dotW;
-        var urlX = W/2 - totalW/2;
-        var urlY = H*0.82 + su.y;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = c.text || '#fff';
-        ctx.fillText(siteName, urlX, urlY);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText(siteDot, urlX + nameW, urlY);
-        ctx.textAlign = 'center';
-        // Underline
-        ctx.strokeStyle = c.accent || '#a855f7';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(urlX, urlY + 6);
-        ctx.lineTo(urlX + totalW, urlY + 6);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
+        // Website URL — customer's website
+        su=slideUp(f-FPS*1.0,FPS*.6);
+        ctx.globalAlpha=clamp(su.a,0,1);
+        var di=siteUrl.indexOf('.'), sn=di>-1?siteUrl.slice(0,di):siteUrl, sd=di>-1?siteUrl.slice(di):'.com';
+        ctx.font='bold '+(W>500?32:22)+'px Inter,sans-serif'; ctx.textAlign='center';
+        var nw=ctx.measureText(sn).width, dw=ctx.measureText(sd).width;
+        var ux=W/2-( nw+dw)/2, uy=H*.81+su.y;
+        ctx.textAlign='left';
+        ctx.fillStyle=c.text; ctx.fillText(sn,ux,uy);
+        ctx.fillStyle=c.accent; ctx.fillText(sd,ux+nw,uy);
+        ctx.strokeStyle=c.accent; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.moveTo(ux,uy+5); ctx.lineTo(ux+nw+dw,uy+5); ctx.stroke();
+        ctx.globalAlpha=1;
 
-        // Pills
-        var pillLabels = biz
-          ? ['✓ ' + (biz.length < 20 ? biz : biz.slice(0,18)+'…'), '✓ Contact us today', '✓ ' + (product || 'Quality guaranteed')]
-          : ['✓ Best quality', '✓ Contact us today', '✓ Satisfaction guaranteed'];
-        var pillW = (W-24)/3;
-        pillLabels.forEach(function(pl, i) {
-          var pAlpha = clamp((f - FPS*1.25 - i*FPS*0.08) / (FPS*0.35), 0, 1);
-          if (pAlpha <= 0) return;
-          var px = 12 + i*(pillW+0);
-          ctx.globalAlpha = pAlpha;
-          drawGlass(px, H*0.89, pillW-4, 26, 13);
-          ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-          ctx.font = '9px Inter, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(pl, px+(pillW-4)/2, H*0.89+17);
-          ctx.globalAlpha = 1;
-        });
+        // CTA button
+        su=slideUp(f-FPS*1.25,FPS*.55);
+        if(su.a>0){
+          ctx.globalAlpha=clamp(su.a,0,1);
+          var btnH=44, btnY=H*.86+su.y;
+          ctx.beginPath(); ctx.roundRect(16,btnY,W-32,btnH,12);
+          ctx.fillStyle=c.accent; ctx.fill();
+          ctx.shadowColor=c.accent; ctx.shadowBlur=15; ctx.fill(); ctx.shadowBlur=0;
+          ctx.fillStyle=c.bg.startsWith('#f')?'#fff':'#000';
+          ctx.font='bold 15px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('📞 Contact Us Today',W/2,btnY+btnH/2);
+          ctx.textBaseline='alphabetic'; ctx.globalAlpha=1;
+        }
       }
 
-      // Progress bar at bottom
-      function drawProgress(elapsed) {
-        var pct = Math.min(elapsed / TOTAL_MS, 1);
-        ctx.fillStyle = 'rgba(255,255,255,0.07)';
-        ctx.fillRect(0, H-3, W, 3);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillRect(0, H-3, W*pct, 3);
-      }
-
-      // Main render loop — uses setTimeout for consistent timing
       function renderFrame() {
-        if (frame > totalFrames) {
-          resolve();
-          return;
-        }
-
-        var elapsed = frame * (1000/FPS);
-        ctx.clearRect(0, 0, W, H);
-
-        // Determine scene
-        if (frame <= S1_END) {
-          drawS1(frame);
-        } else if (frame <= S2_END) {
-          drawS2(frame - S1_END);
-        } else if (frame <= S3_END) {
-          drawS3(frame - S2_END);
-        } else if (frame <= S4_END) {
-          drawS4(frame - S3_END);
-        } else {
-          drawS5(frame - S4_END);
-        }
-
-        drawProgress(elapsed);
-
+        if(frame>totalFrames){ resolve(); return; }
+        ctx.clearRect(0,0,W,H);
+        if(frame<=S1e) drawS1(frame);
+        else if(frame<=S2e) drawS2(frame-S1e);
+        else if(frame<=S3e) drawS3(frame-S2e);
+        else if(frame<=S4e) drawS4(frame-S3e);
+        else drawS5(frame-S4e);
+        drawProg(frame);
         frame++;
-        if (onProgress) onProgress(frame / totalFrames, frame, totalFrames);
-
-        // Use setTimeout to yield to browser and allow MediaRecorder to collect frames
-        setTimeout(renderFrame, 1000/FPS);
+        if(onProgress) onProgress(frame/totalFrames,frame,totalFrames);
+        setTimeout(renderFrame,1000/FPS);
       }
 
       renderFrame();
     }
 
-    // Load images then start
-    function tryStart() {
-      imagesLoaded++;
-      if (imagesLoaded >= imagesToLoad) startRender();
-    }
-
-    if (productImageUrl) {
-      imagesToLoad++;
-      productImg = new Image();
-      productImg.crossOrigin = 'anonymous';
-      productImg.onload = tryStart;
-      productImg.onerror = tryStart;
-      productImg.src = productImageUrl;
-    }
-    if (c.photoUrl) {
-      imagesToLoad++;
-      bgImg = new Image();
-      bgImg.crossOrigin = 'anonymous';
-      bgImg.onload = tryStart;
-      bgImg.onerror = tryStart;
-      bgImg.src = c.photoUrl;
-    }
-    if (imagesToLoad === 0) startRender();
+    // Load images
+    if(productImageUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=productImageUrl; }
+    if(c.photoUrl){ toLoad++; bgImg=new Image(); bgImg.crossOrigin='anonymous'; bgImg.onload=bgImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; bgImg.src=c.photoUrl; }
+    if(toLoad===0) startRender();
   });
 }
+
 
 async function downloadVadVideo() {
   if (!_vadIframeDoc) {
@@ -10639,6 +10449,49 @@ async function convertWebmToMp4(webmBlob, onProgress) {
   return new Blob([data.buffer], { type: 'video/mp4' });
 }
 
+
+
+// FFmpeg WebM → MP4 converter
+async function convertWebmToMp4(webmBlob, onProgress) {
+  if (!window._ffmpegInstance) {
+    setVadProgressText('Loading MP4 converter (first time, ~5MB)...');
+    await new Promise(function(res, rej) {
+      if (window.FFmpegWASM) { res(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
+      s.crossOrigin = 'anonymous';
+      s.onload = res;
+      s.onerror = rej;
+      document.head.appendChild(s);
+    });
+
+    var Lib = (window.FFmpegWASM || {}).FFmpeg || (window.FFmpeg || {}).FFmpeg || window.FFmpeg;
+    if (!Lib) throw new Error('FFmpeg not available');
+
+    var ff = new Lib();
+    ff.on('progress', function(e) { if (onProgress && e.progress) onProgress(e.progress); });
+    await ff.load({
+      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+      wasmURL:  'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+    });
+    window._ffmpegInstance = ff;
+  }
+
+  var ff = window._ffmpegInstance;
+  var fetchFile = (window.FFmpegWASM || window.FFmpeg || {}).fetchFile;
+  if (!fetchFile) {
+    var ab = await webmBlob.arrayBuffer();
+    await ff.writeFile('in.webm', new Uint8Array(ab));
+  } else {
+    await ff.writeFile('in.webm', await fetchFile(webmBlob));
+  }
+
+  await ff.exec(['-i','in.webm','-c:v','libx264','-preset','ultrafast','-crf','24','-an','-movflags','+faststart','-pix_fmt','yuv420p','out.mp4']);
+  var data = await ff.readFile('out.mp4');
+  await ff.deleteFile('in.webm');
+  await ff.deleteFile('out.mp4');
+  return new Blob([data.buffer], { type: 'video/mp4' });
+}
 
 async function confirmAutoPostVad() {
   var caption = (document.getElementById('vad-caption') || {}).value || '';
