@@ -9254,171 +9254,207 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
 function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
-  var textOnAccent = isLight ? '#fff' : '#000';
+  var btnColor = isLight ? '#fff' : '#000';
 
-  // Glass style — NO backdrop-filter (breaks in sandboxed iframes), use solid semi-transparent instead
-  function glass(extra) {
-    return 'background:' + c.glass + ';border:1px solid ' + c.glassBorder + ';border-radius:12px;' + (extra||'');
-  }
-
-  // Build mesh blobs
+  // Build mesh blobs string
   var meshHTML = '';
-  (c.meshes||[]).forEach(function(m) {
-    meshHTML += '<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;'
-      + 'width:'+m.w+'%;height:'+m.h+'%;'
-      + 'background:'+m.color+';border-radius:50%;'
-      + 'filter:blur('+m.blur+'px);transform:translate(-50%,-50%);pointer-events:none;"></div>';
+  (c.meshes||[]).forEach(function(m){
+    meshHTML += '<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h+'%;background:'+m.color+';border-radius:50%;filter:blur('+m.blur+'px);transform:translate(-50%,-50%);"></div>';
   });
-  var meshWrap = '<div style="position:absolute;inset:0;overflow:hidden;z-index:0;">'+meshHTML+'</div>';
 
-  var heroVisual = productImageUrl
-    ? '<img src="'+productImageUrl+'" style="width:'+(w>500?200:150)+'px;height:'+(w>500?200:150)+'px;object-fit:cover;border-radius:20px;border:2px solid '+c.glassBorder+';opacity:0;animation:pop .9s .3s cubic-bezier(0.34,1.56,0.64,1) forwards;">'
-    : '<div style="font-size:'+(w>500?100:72)+'px;line-height:1;opacity:0;animation:pop .9s .3s cubic-bezier(0.34,1.56,0.64,1) forwards;">'+emoji+'</div>';
+  var heroHTML = productImageUrl
+    ? '<img id="hero-img" src="'+productImageUrl+'" style="width:'+(w>500?200:150)+'px;height:'+(w>500?200:150)+'px;object-fit:cover;border-radius:20px;border:2px solid '+c.glassBorder+';opacity:0;">'
+    : '<div id="hero-emoji" style="font-size:'+(w>500?100:72)+'px;line-height:1;opacity:0;">'+emoji+'</div>';
 
-  var fz = w > 500 ? {h1:48,h2:42,h3:36,body:14,sm:11,xs:10} : {h1:32,h2:28,h3:24,body:12,sm:10,xs:9};
-  var maxW = w > 500 ? 520 : 300;
+  var platChips = platforms.map(function(p,i){
+    return '<div class="plat-chip" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:6px 12px;font-size:11px;color:'+c.sub+';font-weight:600;opacity:0;">'+p+'</div>';
+  }).join('');
 
-  // Shared scene container style
-  var sceneStyle = 'position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:20px;text-align:center;';
+  var successChips = platforms.map(function(p){
+    return '<div style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:700;opacity:0;" class="s4-chip">&#10003; '+p.replace(/^../,'').trim()+'</div>';
+  }).join('');
+
+  var featCards = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video + Reels']].map(function(f){
+    return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;opacity:0;" class="feat-card"><span style="font-size:22px;">'+f[0]+'</span><span style="font-size:12px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';
+  }).join('');
+
+  var freePills = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'].map(function(p){
+    return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:6px 16px;font-size:11px;font-weight:700;color:'+c.sub+';opacity:0;" class="pill">'+p+'</div>';
+  }).join('');
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">'
-    + '<style>'
-    + '*{margin:0;padding:0;box-sizing:border-box;}'
-    + 'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;}'
-    + '.scene{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s ease;}'
-    + '.scene.active{opacity:1;pointer-events:all;}'
-    + '@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}'
-    + '@keyframes pop{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}'
-    + '@keyframes fadeIn{from{opacity:0}to{opacity:1}}'
-    + '@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}'
-    + '@keyframes cursor{0%,100%{opacity:1}50%{opacity:0}}'
-    + '.u0{opacity:0;animation:fadeIn .6s .1s forwards;}'
-    + '.u1{opacity:0;animation:up .6s .3s forwards;}'
-    + '.u2{opacity:0;animation:up .6s .55s forwards;}'
-    + '.u3{opacity:0;animation:up .55s .8s forwards;}'
-    + '.u4{opacity:0;animation:up .5s 1.05s forwards;}'
-    + '.u5{opacity:0;animation:up .5s 1.3s forwards;}'
-    + '.u6{opacity:0;animation:up .45s 1.6s forwards;}'
-    + '.dot{width:6px;height:6px;border-radius:50%;background:'+c.accent+';display:inline-block;animation:pulse 2s infinite;}'
-    + '.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:cursor .85s infinite;}'
-    + '.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.06);}'
-    + '.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
-    + '</style></head><body>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'*{margin:0;padding:0;box-sizing:border-box;}'
+    +'html,body{width:'+w+'px;height:'+h+'px;overflow:hidden;background:'+c.bg+';font-family:Inter,sans-serif;}'
+    +'.scene{position:absolute;inset:0;opacity:0;pointer-events:none;}'
+    +'.scene.active{opacity:1;pointer-events:all;}'
+    +'.mesh{position:absolute;inset:0;overflow:hidden;z-index:0;}'
+    +'.inner{position:relative;z-index:1;}'
+    +'@keyframes popIn{0%{opacity:0;transform:scale(0.5)}100%{opacity:1;transform:scale(1)}}'
+    +'@keyframes slideUp{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}'
+    +'@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}'
+    +'@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}'
+    +'@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}'
+    +'.cur{display:inline-block;width:2px;height:15px;background:'+c.accent+';vertical-align:middle;margin-left:1px;animation:blink .85s infinite;}'
+    +'.prog-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.06);}'
+    +'.prog-fill{height:100%;width:0%;background:'+c.accent+';transition:width .1s linear;}'
+    +'</style></head><body>'
 
-    // ── S1: HERO ──────────────────────────────────────────
-    + '<div class="scene active" id="s1" style="'+sceneStyle+'">'
-    + meshWrap
-    + '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:18px;">'
-    + heroVisual
-    // Brand badge
-    + '<div class="u1" style="'+glass('padding:5px 16px;display:inline-flex;align-items:center;gap:8px;')+'"><span class="dot"></span><span style="font-size:'+fz.xs+'px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
-    // Headline
-    + '<div class="u2" style="font-size:'+fz.h1+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;max-width:'+maxW+'px;">'+( tagline || product )+'</div>'
-    // Sub
-    + '<div class="u3" style="font-size:'+fz.body+'px;color:'+c.sub+';max-width:'+(maxW*0.8)+'px;line-height:1.6;">Post everywhere. In one click.</div>'
-    // URL badge
-    + '<div class="u4" style="'+glass('padding:9px 22px;display:inline-flex;align-items:center;gap:8px;')+'"><span style="font-size:18px;">🚀</span><span style="font-size:'+fz.body+'px;font-weight:700;color:'+c.text+';">autopostleey.com</span></div>'
-    + '</div></div>'
+    // S1
+    +'<div class="scene active" id="s1">'
+    +'<div class="mesh">'+meshHTML+'</div>'
+    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;">'
+    +heroHTML
+    +'<div id="s1-badge" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:100px;padding:5px 18px;display:inline-flex;align-items:center;gap:8px;opacity:0;">'
+    +'<div style="width:6px;height:6px;border-radius:50%;background:'+c.accent+';animation:pulse 2s infinite;"></div>'
+    +'<span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span>'
+    +'</div>'
+    +'<div id="s1-title" style="font-size:'+(w>500?50:34)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
+    +'<div id="s1-sub" style="font-size:14px;color:'+c.sub+';opacity:0;">Post everywhere. In one click.</div>'
+    +'<div id="s1-url" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;">'
+    +'<span style="font-size:18px;">🚀</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">autopostleey.com</span>'
+    +'</div>'
+    +'</div></div>'
 
-    // ── S2: PROBLEM ───────────────────────────────────────
-    + '<div class="scene" id="s2" style="'+sceneStyle+'">'
-    + meshWrap
-    + '<div style="position:relative;z-index:1;width:100%;max-width:'+maxW+'px;display:flex;flex-direction:column;gap:16px;">'
-    + '<div class="u1" style="font-size:'+fz.xs+'px;font-weight:800;letter-spacing:4px;color:'+c.accent+';">THE PROBLEM</div>'
-    + '<div class="u2" style="font-size:'+fz.h2+'px;font-weight:900;color:'+c.text+';line-height:1.1;">Posting manually<br>wastes <span style="color:'+c.accent+';">3hrs/week</span></div>'
-    + '<div class="u3" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
-    + ['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'].map(function(t){
-        return '<div style="'+glass('padding:10px 12px;font-size:'+fz.sm+'px;color:'+c.sub+';font-weight:600;text-align:left;')+'">'+t+'</div>';
+    // S2
+    +'<div class="scene" id="s2">'
+    +'<div class="mesh">'+meshHTML+'</div>'
+    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:48px;text-align:center;">'
+    +'<div id="s2-eye" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">THE PROBLEM</div>'
+    +'<div id="s2-title" style="font-size:'+(w>500?44:30)+'px;font-weight:900;color:'+c.text+';line-height:1.1;opacity:0;">Posting manually<br>wastes <span style="color:'+c.accent+';">3hrs/week</span></div>'
+    +'<div id="s2-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:480px;opacity:0;">'
+    +['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'].map(function(t){
+        return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:10px;padding:10px 12px;font-size:12px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>';
       }).join('')
-    + '</div>'
-    + '<div class="u4" style="display:flex;flex-wrap:wrap;gap:6px;">'
-    + platforms.map(function(p){
-        return '<div style="'+glass('padding:5px 10px;font-size:'+fz.xs+'px;color:'+c.sub+';font-weight:600;')+'">'+p+'</div>';
+    +'</div>'
+    +'<div id="s2-plats" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;opacity:0;">'
+    +platforms.map(function(p){
+        return '<div style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:8px;padding:5px 10px;font-size:10px;color:'+c.sub+';font-weight:600;">'+p+'</div>';
       }).join('')
-    + '</div>'
-    + '</div></div>'
+    +'</div>'
+    +'</div></div>'
 
-    // ── S3: DEMO ──────────────────────────────────────────
-    + '<div class="scene" id="s3" style="position:relative;display:flex;flex-direction:column;justify-content:center;padding:32px;gap:14px;">'
-    + meshWrap
-    + '<div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:12px;">'
-    + '<div class="u0" style="font-size:'+fz.xs+'px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">AI WRITES YOUR CAPTION</div>'
-    // Caption box
-    + '<div class="u1" style="'+glass('padding:16px;')+'"><div style="font-size:'+fz.xs+'px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:8px;">CAPTION</div>'
-    + '<div style="font-size:'+fz.body+'px;color:'+c.text+';line-height:1.65;min-height:75px;" id="typed-cap"><span id="tc"></span><span class="cur"></span></div></div>'
-    // Platforms
-    + '<div style="font-size:'+fz.xs+'px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:4px;">POSTING TO</div>'
-    + '<div id="plat-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">'
-    + platforms.map(function(p){
-        return '<div style="'+glass('padding:5px 10px;font-size:'+fz.xs+'px;color:'+c.sub+';font-weight:600;')+'transition:border-color .3s,color .3s;">'+p+'</div>';
-      }).join('')
-    + '</div>'
-    // Post button
-    + '<div id="post-btn" style="background:'+c.accent+';border-radius:12px;padding:'+(w>500?'15px 28px':'12px 20px')+';font-size:'+(w>500?15:13)+'px;font-weight:800;color:'+(isLight?'#fff':'#000')+';text-align:center;opacity:0;transition:opacity .4s,transform .15s;letter-spacing:.5px;cursor:pointer;">🚀 POST TO ALL '+platforms.length+' PLATFORMS</div>'
-    + '</div></div>'
+    // S3
+    +'<div class="scene" id="s3">'
+    +'<div class="mesh">'+meshHTML+'</div>'
+    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:32px;gap:12px;">'
+    +'<div id="s3-eye" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">AI WRITES YOUR CAPTION</div>'
+    +'<div id="s3-box" style="background:'+c.glass+';border:1px solid '+c.glassBorder+';border-radius:12px;padding:16px;opacity:0;">'
+    +'<div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';margin-bottom:8px;">CAPTION</div>'
+    +'<div style="font-size:13px;color:'+c.text+';line-height:1.65;min-height:72px;" id="tc-wrap"><span id="tc"></span><span class="cur"></span></div>'
+    +'</div>'
+    +'<div id="s3-plat-label" style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+c.sub+';opacity:0;">POSTING TO</div>'
+    +'<div id="plat-row" style="display:flex;flex-wrap:wrap;gap:6px;">'+platChips+'</div>'
+    +'<div id="post-btn" style="background:'+c.accent+';border-radius:12px;padding:15px 28px;font-size:15px;font-weight:800;color:'+btnColor+';text-align:center;opacity:0;transition:transform .15s;cursor:pointer;letter-spacing:.5px;">🚀 POST TO ALL '+platforms.length+' PLATFORMS</div>'
+    +'</div></div>'
 
-    // ── S4: SUCCESS ───────────────────────────────────────
-    + '<div class="scene" id="s4" style="'+sceneStyle+'">'
-    + meshWrap
-    + '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:'+maxW+'px;">'
-    + '<div style="width:80px;height:80px;border-radius:50%;background:rgba(74,222,128,0.12);border:2px solid rgba(74,222,128,0.35);display:flex;align-items:center;justify-content:center;font-size:38px;opacity:0;animation:pop .7s .1s cubic-bezier(0.34,1.56,0.64,1) forwards;">✅</div>'
-    + '<div style="font-size:'+fz.h1+'px;font-weight:900;color:'+c.text+';opacity:0;animation:up .6s .5s forwards;">Published!</div>'
-    + '<div style="font-size:'+fz.body+'px;color:'+c.sub+';opacity:0;animation:up .5s .75s forwards;">'+product+' is now live on all platforms</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;">'
-    + platforms.map(function(p,i){
-        return '<div style="'+glass('padding:6px 12px;font-size:'+fz.sm+'px;color:#4ade80;font-weight:700;')+'opacity:0;animation:up .4s '+(0.9+i*0.08)+'s forwards;">✓ '+p.replace(/^../,'').trim()+'</div>';
-      }).join('')
-    + '</div>'
-    + '<div style="font-size:'+fz.sm+'px;color:'+c.sub+';opacity:0;animation:fadeIn .5s 1.9s forwards;">Done in under 10 seconds ⚡</div>'
-    + '</div></div>'
+    // S4
+    +'<div class="scene" id="s4">'
+    +'<div class="mesh">'+meshHTML+'</div>'
+    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;">'
+    +'<div id="s4-icon" style="width:80px;height:80px;border-radius:50%;background:rgba(74,222,128,0.1);border:2px solid rgba(74,222,128,0.3);display:flex;align-items:center;justify-content:center;font-size:38px;opacity:0;">✅</div>'
+    +'<div id="s4-title" style="font-size:'+(w>500?46:32)+'px;font-weight:900;color:'+c.text+';opacity:0;">Published!</div>'
+    +'<div id="s4-sub" style="font-size:14px;color:'+c.sub+';opacity:0;">'+product+' is now live on all platforms</div>'
+    +'<div id="s4-chips" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;">'+successChips+'</div>'
+    +'<div id="s4-done" style="font-size:12px;color:'+c.sub+';opacity:0;">Done in under 10 seconds ⚡</div>'
+    +'</div></div>'
 
-    // ── S5: CTA ───────────────────────────────────────────
-    + '<div class="scene" id="s5" style="'+sceneStyle+'">'
-    + meshWrap
-    + '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:18px;max-width:'+maxW+'px;">'
-    + '<div class="u1" style="font-size:'+fz.xs+'px;font-weight:800;letter-spacing:4px;color:'+c.accent+';">FOR SMALL BUSINESSES</div>'
-    + '<div class="u2" style="font-size:'+fz.h1+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;">One post.<br><span style="color:'+c.accent+';">'+platforms.length+' platforms.</span></div>'
-    + '<div class="u3" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">'
-    + [['🤖','AI captions'],['⚡',platforms.length+' platforms'],['📅','Auto-schedule'],['🎬','Video + Reels']].map(function(f){
-        return '<div style="'+glass('padding:12px;text-align:left;display:flex;align-items:center;gap:10px;')+'"><span style="font-size:20px;">'+f[0]+'</span><span style="font-size:'+fz.sm+'px;font-weight:700;color:'+c.text+';">'+f[1]+'</span></div>';
-      }).join('')
-    + '</div>'
-    + '<div class="u4" style="font-size:'+(w>500?36:26)+'px;font-weight:900;color:'+c.text+';border-bottom:3px solid '+c.accent+';padding-bottom:6px;">autopostleey<span style="color:'+c.accent+'">.com</span></div>'
-    + '<div class="u5" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'
-    + ['✓ Free trial','✓ No credit card','✓ 60 sec setup'].map(function(p){
-        return '<div style="'+glass('padding:5px 14px;font-size:'+fz.xs+'px;font-weight:700;color:'+c.sub+';')+'">'+p+'</div>';
-      }).join('')
-    + '</div>'
-    + '</div></div>'
+    // S5
+    +'<div class="scene" id="s5">'
+    +'<div class="mesh">'+meshHTML+'</div>'
+    +'<div class="inner" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;">'
+    +'<div id="s5-eye" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">FOR SMALL BUSINESSES</div>'
+    +'<div id="s5-title" style="font-size:'+(w>500?50:34)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">One post.<br><span style="color:'+c.accent+';">'+platforms.length+' platforms.</span></div>'
+    +'<div id="s5-feats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:480px;">'+featCards+'</div>'
+    +'<div id="s5-url" style="font-size:'+(w>500?36:26)+'px;font-weight:900;color:'+c.text+';border-bottom:3px solid '+c.accent+';padding-bottom:6px;opacity:0;">autopostleey<span style="color:'+c.accent+'">.com</span></div>'
+    +'<div id="s5-pills" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+freePills+'</div>'
+    +'</div></div>'
 
-    + '<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
+    +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
 
-    + '<script>'
-    + 'var SC=["s1","s2","s3","s4","s5"],T=[];'
-    + 'function ct(fn,ms){T.push(setTimeout(fn,ms));}'
-    + 'function go(n){SC.forEach(function(s){document.getElementById(s).classList.remove("active");});document.getElementById(SC[n]).classList.add("active");}'
-    + 'var CAP='+JSON.stringify(caption)+';'
-    + 'function runS3(){'
-    + '  var chars=CAP.split(""),typed="",tc=document.getElementById("tc");'
-    + '  chars.forEach(function(ch,i){ct(function(){typed+=ch;if(tc)tc.textContent=typed;},400+i*26);});'
-    + '  var te=400+chars.length*26;'
-    + '  var chips=document.querySelectorAll("#plat-row div");'
-    + '  chips.forEach(function(el,i){ct(function(){el.style.color="'+c.accent+'";el.style.borderColor="'+c.accent+'55";},te+120+i*80);});'
-    + '  ct(function(){var b=document.getElementById("post-btn");if(b)b.style.opacity="1";},te+1000);'
-    + '  ct(function(){var b=document.getElementById("post-btn");if(b){b.style.transform="scale(0.96)";setTimeout(function(){b.style.transform="scale(1)";},130);}},te+1550);'
-    + '}'
-    + 'var TM=[0,7000,14000,23000,27500],TOTAL=33000;'
-    + 'ct(function(){go(1);},TM[1]);'
-    + 'ct(function(){go(2);runS3();},TM[2]);'
-    + 'ct(function(){go(3);},TM[3]);'
-    + 'ct(function(){go(4);},TM[4]);'
-    + 'var st=Date.now(),pi=setInterval(function(){'
-    + '  var p=Math.min(100,((Date.now()-st)/TOTAL)*100);'
-    + '  var e=document.getElementById("prog");if(e)e.style.width=p+"%";'
-    + '  if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(e){}}'
-    + '},100);'
-    + '<\/script></body></html>';
+    +'<script>'
+    // Helpers
+    +'var SC=["s1","s2","s3","s4","s5"],TM=[];'
+    +'function ct(fn,ms){TM.push(setTimeout(fn,ms));}'
+    +'function el(id){return document.getElementById(id);}'
+    +'function show(id,delay,anim,dur){'
+    +'  ct(function(){'
+    +'    var e=el(id);if(!e)return;'
+    +'    e.style.animation=(anim||"slideUp")+" "+(dur||".55s")+" ease forwards";'
+    +'  },delay);'
+    +'}'
+    +'function showAll(sel,baseDelay,step){'
+    +'  var els=document.querySelectorAll(sel);'
+    +'  els.forEach(function(e,i){ct(function(){e.style.animation="slideUp .45s ease forwards";},baseDelay+i*(step||80));});'
+    +'}'
+    +'function go(n){'
+    +'  SC.forEach(function(s){el(s).classList.remove("active");});'
+    +'  el(SC[n]).classList.add("active");'
+    +'}'
+    // S1 anims
+    +'function runS1(){'
+    +'  var heroEl=el("hero-img")||el("hero-emoji");'
+    +'  if(heroEl)ct(function(){heroEl.style.animation="popIn .9s .2s cubic-bezier(0.34,1.56,0.64,1) forwards";},50);'
+    +'  show("s1-badge",900,"slideUp");'
+    +'  show("s1-title",1200,"slideUp");'
+    +'  show("s1-sub",1550,"slideUp");'
+    +'  show("s1-url",1900,"slideUp");'
+    +'}'
+    // S2 anims
+    +'function runS2(){'
+    +'  show("s2-eye",150,"slideUp");'
+    +'  show("s2-title",400,"slideUp");'
+    +'  show("s2-grid",750,"slideUp");'
+    +'  show("s2-plats",1100,"slideUp");'
+    +'}'
+    // S3 anims
+    +'function runS3(){'
+    +'  show("s3-eye",100,"slideUp");'
+    +'  show("s3-box",350,"slideUp");'
+    +'  var CAP='+JSON.stringify(caption)+';'
+    +'  var chars=CAP.split(""),typed="",tc=el("tc");'
+    +'  chars.forEach(function(ch,i){ct(function(){typed+=ch;if(tc)tc.textContent=typed;},600+i*26);});'
+    +'  var te=600+chars.length*26;'
+    +'  show("s3-plat-label",te+100,"fadeIn");'
+    +'  var chips=document.querySelectorAll(".plat-chip");'
+    +'  chips.forEach(function(e,i){ct(function(){e.style.animation="slideUp .4s ease forwards";ct(function(){e.style.color="'+c.accent+'";e.style.borderColor="'+c.accent+'55";},100);},te+200+i*80);});'
+    +'  ct(function(){var b=el("post-btn");if(b)b.style.animation="fadeIn .4s ease forwards";},te+1000);'
+    +'  ct(function(){var b=el("post-btn");if(b){b.style.transform="scale(0.96)";setTimeout(function(){b.style.transform="scale(1)";},130);}},te+1550);'
+    +'}'
+    // S4 anims
+    +'function runS4(){'
+    +'  ct(function(){var e=el("s4-icon");if(e)e.style.animation="popIn .7s cubic-bezier(0.34,1.56,0.64,1) forwards";},100);'
+    +'  show("s4-title",550,"slideUp");'
+    +'  show("s4-sub",800,"slideUp");'
+    +'  var chips=document.querySelectorAll(".s4-chip");'
+    +'  chips.forEach(function(e,i){ct(function(){e.style.animation="slideUp .35s ease forwards";},950+i*90);});'
+    +'  show("s4-done",1900,"fadeIn");'
+    +'}'
+    // S5 anims
+    +'function runS5(){'
+    +'  show("s5-eye",100,"slideUp");'
+    +'  show("s5-title",300,"slideUp");'
+    +'  var feats=document.querySelectorAll(".feat-card");'
+    +'  feats.forEach(function(e,i){ct(function(){e.style.animation="slideUp .4s ease forwards";},550+i*100);});'
+    +'  show("s5-url",1000,"slideUp");'
+    +'  var pills=document.querySelectorAll(".pill");'
+    +'  pills.forEach(function(e,i){ct(function(){e.style.animation="slideUp .35s ease forwards";},1300+i*80);});'
+    +'}'
+    // Orchestrate
+    +'var TIMING=[0,7000,14000,23000,27500],TOTAL=33000;'
+    +'runS1();'
+    +'ct(function(){go(1);runS2();},TIMING[1]);'
+    +'ct(function(){go(2);runS3();},TIMING[2]);'
+    +'ct(function(){go(3);runS4();},TIMING[3]);'
+    +'ct(function(){go(4);runS5();},TIMING[4]);'
+    // Progress
+    +'var st=Date.now(),pi=setInterval(function(){'
+    +'  var p=Math.min(100,((Date.now()-st)/TOTAL)*100);'
+    +'  var e=el("prog");if(e)e.style.width=p+"%";'
+    +'  if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}'
+    +'},100);'
+    +'<\/script></body></html>';
 }
 
 
