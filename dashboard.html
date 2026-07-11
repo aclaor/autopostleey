@@ -9708,18 +9708,15 @@ function replayVadAd() {
   }
 }
 
-// ── VIDEO AD DOWNLOAD — Canvas Render + MP4 ──────────────
-// Works on ALL devices including iPhone and Android
-// No screen share permission needed
+// ── VIDEO AD DOWNLOAD — Native Canvas Renderer ───────────
+// Draws scenes directly on canvas — no iframe capture, no flickering
+// Works on iPhone, Android, Desktop
 
 var _vadRecorder = null;
-var _vadRenderCanvas = null;
-var _vadRenderCtx = null;
-var _vadRenderTimer = null;
 
 function setVadProgressBar(pct) {
   var bar = document.getElementById('vad-progress-bar');
-  if (bar) bar.style.width = pct + '%';
+  if (bar) bar.style.width = Math.round(pct) + '%';
 }
 function setVadProgressText(txt) {
   var el = document.getElementById('vad-progress-text');
@@ -9738,6 +9735,654 @@ function resetDownloadBtn(btn) {
     + '<div style="font-size:11px;color:var(--text2);">Works on WhatsApp, TikTok,<br>Instagram & iPhone</div>';
 }
 
+// ── CANVAS AD RENDERER ────────────────────────────────────
+// Renders the full 33s ad directly on a canvas — smooth, no flickering
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, onProgress) {
+  return new Promise(function(resolve, reject) {
+    var W = canvas.width, H = canvas.height;
+    var ctx = canvas.getContext('2d');
+    var FPS = 30;
+    var TOTAL_MS = 33000;
+    var icons = ({
+      ecommerce:['🛍️','👗','👟','💎','✨','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
+      automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽'],food:['🍔','🍕','☕','🍜','🍰','🥤'],
+      fitness:['💪','🏋️','🥊','⚡','🏃','🏆'],beauty:['💄','💅','🌸','✨','👑','🌺'],
+      medical:['🏥','💊','🩺','❤️','🩹','🔬'],education:['📚','🎓','✏️','🧠','💡','🔭'],
+      professional:['💼','📊','🤝','⚖️','📈','🏛️'],homeservices:['🔨','🪴','🧹','🔌','🏠','🌿'],
+      technology:['💻','📱','⚡','🚀','🤖','🔮'],travel:['✈️','🌍','🏖️','🗺️','🌅','🧳'],
+      events:['🎉','🎊','📸','🎵','🥂','💐'],pets:['🐶','🐱','🐾','🦮','😺','🦴'],
+      finance:['💰','📈','🏦','💳','🪙','📊'],marketing:['📱','🎯','📊','🚀','📣','💡'],
+      manufacturing:['🏭','⚙️','🔩','🔧','📦','🛠️'],agriculture:['🌾','🚜','🌱','🌻','🐄','🌽'],
+      family:['👶','🧸','🍼','💕','🌈','🦄'],entertainment:['🎮','🎬','🎵','🕹️','🏆','🌟'],
+      nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏']
+    })[_vadTheme] || ['✨','⭐','🚀','💫','🌟','🎯'];
+
+    // Preload product image if any
+    var productImg = null;
+    var bgImg = null;
+    var imagesLoaded = 0;
+    var imagesToLoad = 0;
+
+    function startRender() {
+      var frame = 0;
+      var totalFrames = Math.ceil((TOTAL_MS / 1000) * FPS);
+      var startTime = performance.now();
+      var rafId = null;
+
+      // Scene timing in frames
+      var S1_END = 7 * FPS;   // 0-7s
+      var S2_END = 14 * FPS;  // 7-14s
+      var S3_END = 23 * FPS;  // 14-23s
+      var S4_END = 27.5 * FPS; // 23-27.5s
+      // S5: rest
+
+      // Caption typing state
+      var captionChars = caption.split('');
+      var typedCaption = '';
+
+      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+      function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+      function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
+      function fadeIn(frameInScene, durationFrames) {
+        return clamp(frameInScene / durationFrames, 0, 1);
+      }
+      function slideUp(frameInScene, durationFrames) {
+        var t = clamp(frameInScene / durationFrames, 0, 1);
+        return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
+      }
+
+      // Draw mesh blobs
+      function drawMesh() {
+        (c.meshes || []).forEach(function(m) {
+          var gx = (m.x / 100) * W;
+          var gy = (m.y / 100) * H;
+          var gr = Math.max((m.w / 100) * W, (m.h / 100) * H) * 0.6;
+          var grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+          grad.addColorStop(0, m.color);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.ellipse(gx, gy, (m.w/100)*W*0.5, (m.h/100)*H*0.5, 0, 0, Math.PI*2);
+          ctx.fill();
+        });
+      }
+
+      // Draw floating icons
+      function drawFloatingIcons(alpha, frameInScene) {
+        var positions = [
+          {x:0.08,y:0.12},{x:0.88,y:0.18},{x:0.05,y:0.42},{x:0.90,y:0.48},
+          {x:0.07,y:0.70},{x:0.87,y:0.72},{x:0.15,y:0.86},{x:0.82,y:0.84}
+        ];
+        ctx.globalAlpha = alpha * 0.28;
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        icons.forEach(function(ic, i) {
+          if (i >= positions.length) return;
+          var p = positions[i];
+          var bobY = Math.sin((frameInScene / FPS) * (0.7 + i * 0.15) * Math.PI * 2) * 6;
+          ctx.fillText(ic, p.x * W, p.y * H + bobY);
+        });
+        ctx.globalAlpha = 1;
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      // Draw glass card
+      function drawGlass(x, y, w, h, r) {
+        r = r || 12;
+        ctx.beginPath();
+        ctx.roundRect(ctx.roundRect ? x : x, y, w, h, r);
+        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.07)';
+        ctx.fill();
+        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Draw text with slide-up
+      function drawText(text, x, y, font, color, alpha, offsetY) {
+        ctx.globalAlpha = clamp(alpha, 0, 1);
+        ctx.fillStyle = color;
+        ctx.font = font;
+        ctx.textAlign = 'center';
+        ctx.fillText(text, x, y + (offsetY || 0));
+        ctx.globalAlpha = 1;
+      }
+
+      // Draw pill badge
+      function drawBadge(text, cx, cy, alpha) {
+        if (alpha <= 0) return;
+        ctx.globalAlpha = clamp(alpha, 0, 1);
+        var metrics = ctx.measureText(text);
+        var bw = metrics.width + 40, bh = 28;
+        var bx = cx - bw/2, by = cy - bh/2;
+        drawGlass(bx, by, bw, bh, 14);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, cx, cy + 4);
+        ctx.globalAlpha = 1;
+      }
+
+      // ── SCENE RENDERERS ────────────────────────────────────
+      function drawS1(f) {
+        var t = f / S1_END;
+        // BG + mesh
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        if (bgImg) {
+          ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
+          ctx.drawImage(bgImg, 0, 0, W, H);
+          ctx.globalAlpha = 1;
+          // Dark overlay
+          var grad = ctx.createLinearGradient(0, 0, 0, H);
+          grad.addColorStop(0, c.bg + 'cc');
+          grad.addColorStop(0.5, c.bg + '66');
+          grad.addColorStop(1, c.bg + 'cc');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
+        }
+        drawMesh();
+        drawFloatingIcons(clamp(f / (FPS * 0.5), 0, 1), f);
+
+        // Hero visual
+        var heroAlpha = easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1));
+        var heroScale = 0.5 + easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1)) * 0.5;
+        if (heroAlpha > 0) {
+          ctx.globalAlpha = heroAlpha;
+          ctx.save();
+          ctx.translate(W/2, H * 0.26);
+          ctx.scale(heroScale, heroScale);
+          if (productImg) {
+            var sz = W > 500 ? 180 : 140;
+            ctx.beginPath();
+            ctx.roundRect(-sz/2, -sz/2, sz, sz, 18);
+            ctx.clip();
+            ctx.drawImage(productImg, -sz/2, -sz/2, sz, sz);
+          } else {
+            ctx.font = (W > 500 ? 88 : 66) + 'px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji || '✨', 0, 0);
+            ctx.textBaseline = 'alphabetic';
+          }
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+
+        var centerY = H * 0.53;
+        var su;
+
+        // Brand badge
+        su = slideUp(f - FPS*0.9, FPS*0.55);
+        drawBadge('● ' + (biz || '').toUpperCase(), W/2, centerY - 20, su.alpha);
+
+        // Main headline
+        su = slideUp(f - FPS*1.15, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W > 500 ? 46 : 32) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        var hl = tagline || product || 'Your Product';
+        // Word wrap if too long
+        if (ctx.measureText(hl).width > W * 0.85) {
+          var words = hl.split(' ');
+          var mid = Math.ceil(words.length / 2);
+          ctx.fillText(words.slice(0, mid).join(' '), W/2, centerY + 24 + su.y);
+          ctx.fillText(words.slice(mid).join(' '), W/2, centerY + 24 + su.y + (W>500?52:38));
+        } else {
+          ctx.fillText(hl, W/2, centerY + 24 + su.y);
+        }
+        ctx.globalAlpha = 1;
+
+        // Sub
+        su = slideUp(f - FPS*1.45, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Post everywhere. In one click.', W/2, centerY + 80 + su.y);
+        ctx.globalAlpha = 1;
+
+        // URL badge
+        su = slideUp(f - FPS*1.75, FPS*0.5);
+        drawBadge('🚀  autopostleey.com', W/2, centerY + 114 + su.y, su.alpha);
+      }
+
+      function drawS2(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
+
+        var su;
+        // Big emoji
+        su = slideUp(f - FPS*0.1, FPS*0.7);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.font = '52px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('😓', W/2, H*0.22 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Eyebrow
+        su = slideUp(f - FPS*0.35, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('THE PROBLEM', W/2, H*0.33 + su.y);
+        ctx.letterSpacing = '0px';
+        ctx.globalAlpha = 1;
+
+        // Headline
+        su = slideUp(f - FPS*0.55, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?38:26) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Posting manually', W/2, H*0.43 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText('wastes 3hrs/week', W/2, H*0.43 + (W>500?46:34) + su.y);
+        ctx.globalAlpha = 1;
+
+        // Pain points grid
+        su = slideUp(f - FPS*0.82, FPS*0.55);
+        if (su.alpha > 0) {
+          var pts = ['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'];
+          var gw = W * 0.42, gh = 36, gx0 = W*0.05, gy0 = H*0.55 + su.y;
+          ctx.globalAlpha = clamp(su.alpha, 0, 1);
+          pts.forEach(function(pt, i) {
+            var col = i % 2, row = Math.floor(i / 2);
+            var gx = gx0 + col*(gw+W*0.06), gy = gy0 + row*(gh+8);
+            drawGlass(gx, gy, gw, gh, 8);
+            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(pt, gx+10, gy+23);
+          });
+          ctx.globalAlpha = 1;
+        }
+
+        // Platform chips
+        su = slideUp(f - FPS*1.1, FPS*0.5);
+        if (su.alpha > 0) {
+          ctx.globalAlpha = clamp(su.alpha, 0, 1);
+          var chips = platforms.slice(0,6);
+          var chipW = (W - 24) / Math.min(chips.length, 4);
+          var chipH = 24;
+          var startX = 12;
+          var chipY = H*0.78 + su.y;
+          // Row 1
+          chips.slice(0,4).forEach(function(p, i) {
+            drawGlass(startX + i*(chipW+4), chipY, chipW-4, chipH, 6);
+            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+            ctx.font = '9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+16);
+          });
+          if (chips.length > 4) {
+            chips.slice(4).forEach(function(p, i) {
+              drawGlass(startX + i*(chipW+4), chipY+32, chipW-4, chipH, 6);
+              ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+              ctx.font = '9px Inter, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+48);
+            });
+          }
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      function drawS3(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
+
+        // Eyebrow
+        var su = slideUp(f - FPS*0.08, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('AI WRITES YOUR CAPTION', W/2, H*0.08 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Caption box
+        su = slideUp(f - FPS*0.35, FPS*0.55);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        var boxY = H * 0.12, boxH = H * 0.35;
+        drawGlass(12, boxY + su.y, W-24, boxH, 12);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('CAPTION', 24, boxY + 18 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Typed caption text
+        var typeStart = FPS * 0.6;
+        var charsToShow = Math.floor(clamp((f - typeStart) / (FPS * 0.026), 0, captionChars.length));
+        var shown = captionChars.slice(0, charsToShow).join('');
+
+        if (su.alpha > 0.3) {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = c.text || '#fff';
+          ctx.font = '12px Inter, sans-serif';
+          ctx.textAlign = 'left';
+          // Word wrap
+          var words = shown.split(' ');
+          var lineW = W - 48;
+          var line = '', lineY = boxY + 36 + su.y;
+          words.forEach(function(w) {
+            var test = line + (line ? ' ' : '') + w;
+            if (ctx.measureText(test).width > lineW && line) {
+              if (lineY < boxY + boxH - 10) ctx.fillText(line, 24, lineY);
+              line = w;
+              lineY += 18;
+            } else { line = test; }
+          });
+          if (line && lineY < boxY + boxH - 10) {
+            // Blinking cursor
+            ctx.fillText(line, 24, lineY);
+            if (Math.floor(f / (FPS * 0.4)) % 2 === 0) {
+              ctx.fillStyle = c.accent || '#a855f7';
+              ctx.fillRect(24 + ctx.measureText(line).width + 2, lineY - 12, 2, 14);
+            }
+          }
+        }
+
+        // Platform chips lighting up
+        var platStart = typeStart + captionChars.length / (FPS * 0.026) + FPS * 0.2;
+        var platAlpha = clamp((f - platStart) / (FPS * 0.4), 0, 1);
+        if (platAlpha > 0) {
+          var chipW2 = (W-24) / Math.min(platforms.length, 4);
+          platforms.slice(0,8).forEach(function(p, i) {
+            var col = i % 4, row = Math.floor(i/4);
+            var cx2 = 12 + col*(chipW2+3);
+            var cy2 = H*0.54 + row*32;
+            var iAlpha = clamp((platAlpha*platforms.length - i*0.8) / 1, 0, 1);
+            ctx.globalAlpha = iAlpha;
+            drawGlass(cx2, cy2, chipW2-3, 26, 6);
+            ctx.fillStyle = iAlpha > 0.5 ? (c.accent || '#a855f7') : (c.sub || 'rgba(255,255,255,0.4)');
+            ctx.font = '9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.replace(/^../,'').trim(), cx2+(chipW2-3)/2, cy2+17);
+            ctx.globalAlpha = 1;
+          });
+        }
+
+        // Post button
+        var btnStart = platStart + FPS * 1.0;
+        var btnAlpha = clamp((f - btnStart) / (FPS*0.4), 0, 1);
+        if (btnAlpha > 0) {
+          var btnY = H * 0.82;
+          var btnPulse = 1 + Math.sin((f - btnStart) / FPS * Math.PI * 2) * 0.02;
+          ctx.globalAlpha = btnAlpha;
+          ctx.save();
+          ctx.translate(W/2, btnY + 22);
+          ctx.scale(btnPulse, btnPulse);
+          ctx.beginPath();
+          ctx.roundRect(-(W-24)/2, -22, W-24, 44, 12);
+          ctx.fillStyle = c.accent || '#a855f7';
+          ctx.fill();
+          // Glow
+          ctx.shadowColor = c.accent || '#a855f7';
+          ctx.shadowBlur = 20;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 14px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🚀 POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
+          ctx.textBaseline = 'alphabetic';
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      function drawS4(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
+
+        // Burst icons radiating out
+        var burstDone = f > FPS * 0.3;
+        icons.forEach(function(ic, i) {
+          var burstStart = i * (FPS * 0.08);
+          var bf = f - burstStart;
+          if (bf <= 0) return;
+          var angle = i * (Math.PI * 2 / icons.length);
+          var dist = easeOut(clamp(bf / (FPS * 0.9), 0, 1)) * (W * 0.38);
+          var alpha = clamp(bf / (FPS * 0.5), 0, 0.65) * (1 - clamp((bf - FPS*2) / (FPS*0.8), 0, 1));
+          ctx.globalAlpha = alpha;
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ic, W/2 + Math.cos(angle)*dist, H*0.45 + Math.sin(angle)*dist);
+          ctx.textBaseline = 'alphabetic';
+          ctx.globalAlpha = 1;
+        });
+
+        // Big check icon
+        var iconAlpha = easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1));
+        var iconScale = 0.4 + easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1)) * 0.6;
+        ctx.globalAlpha = iconAlpha;
+        ctx.save();
+        ctx.translate(W/2, H*0.3);
+        ctx.scale(iconScale, iconScale);
+        ctx.font = '62px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✅', 0, 0);
+        ctx.textBaseline = 'alphabetic';
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        // Published text
+        var su = slideUp(f - FPS*0.72, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?44:30) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Published!', W/2, H*0.48 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Sub
+        su = slideUp(f - FPS*0.98, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText((product || 'Your post') + ' is live on all platforms', W/2, H*0.56 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Success chips
+        var chipStart = FPS * 1.1;
+        var chipW3 = (W-24) / Math.min(platforms.length, 4);
+        platforms.slice(0,8).forEach(function(p, i) {
+          var iAlpha = clamp((f - chipStart - i * FPS*0.09) / (FPS*0.35), 0, 1);
+          if (iAlpha <= 0) return;
+          var col = i % 4, row = Math.floor(i/4);
+          var cx3 = 12 + col*(chipW3+3), cy3 = H*0.64 + row*32;
+          ctx.globalAlpha = iAlpha;
+          ctx.fillStyle = 'rgba(74,222,128,0.1)';
+          ctx.strokeStyle = 'rgba(74,222,128,0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(cx3, cy3, chipW3-3, 26, 6);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#4ade80';
+          ctx.font = 'bold 9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✓ ' + p.replace(/^../,'').trim(), cx3+(chipW3-3)/2, cy3+17);
+          ctx.globalAlpha = 1;
+        });
+
+        // Done text
+        su = slideUp(f - FPS*1.9, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Done in under 10 seconds ⚡', W/2, H*0.91 + su.y);
+        ctx.globalAlpha = 1;
+      }
+
+      function drawS5(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        if (bgImg) {
+          ctx.globalAlpha = 0.10;
+          ctx.drawImage(bgImg, 0, 0, W, H);
+          ctx.globalAlpha = 1;
+        }
+        drawMesh();
+        drawFloatingIcons(0.2, f + S4_END);
+
+        var su;
+        su = slideUp(f - FPS*0.1, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('FOR SMALL BUSINESSES', W/2, H*0.12 + su.y);
+        ctx.globalAlpha = 1;
+
+        su = slideUp(f - FPS*0.3, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?46:32) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('One post.', W/2, H*0.24 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText(platforms.length + ' platforms.', W/2, H*0.24 + (W>500?54:40) + su.y);
+        ctx.globalAlpha = 1;
+
+        // Feature cards
+        var feats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
+        var fcW = (W-28)/2, fcH = 52;
+        feats.forEach(function(ft, i) {
+          var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
+          if (iAlpha <= 0) return;
+          var col = i%2, row = Math.floor(i/2);
+          var fcX = 12 + col*(fcW+4);
+          var fcY = H*0.46 + row*(fcH+8);
+          ctx.globalAlpha = iAlpha;
+          drawGlass(fcX, fcY, fcW, fcH, 10);
+          ctx.font = '20px serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(ft[0], fcX+10, fcY+34);
+          ctx.fillStyle = c.text || '#fff';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.fillText(ft[1], fcX+38, fcY+33);
+          ctx.globalAlpha = 1;
+        });
+
+        // URL
+        su = slideUp(f - FPS*1.0, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?34:24) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('autopostleey', W/2 - (W>500?50:35), H*0.82 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText('.com', W/2 + (W>500?64:44), H*0.82 + su.y);
+        // Underline
+        ctx.strokeStyle = c.accent || '#a855f7';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(W*0.15, H*0.85 + su.y);
+        ctx.lineTo(W*0.85, H*0.85 + su.y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Pills
+        var pillLabels = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'];
+        var pillW = (W-24)/3;
+        pillLabels.forEach(function(pl, i) {
+          var pAlpha = clamp((f - FPS*1.25 - i*FPS*0.08) / (FPS*0.35), 0, 1);
+          if (pAlpha <= 0) return;
+          var px = 12 + i*(pillW+0);
+          ctx.globalAlpha = pAlpha;
+          drawGlass(px, H*0.89, pillW-4, 26, 13);
+          ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+          ctx.font = '9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(pl, px+(pillW-4)/2, H*0.89+17);
+          ctx.globalAlpha = 1;
+        });
+      }
+
+      // Progress bar at bottom
+      function drawProgress(elapsed) {
+        var pct = Math.min(elapsed / TOTAL_MS, 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(0, H-3, W, 3);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillRect(0, H-3, W*pct, 3);
+      }
+
+      // Main render loop — uses setTimeout for consistent timing
+      function renderFrame() {
+        if (frame > totalFrames) {
+          resolve();
+          return;
+        }
+
+        var elapsed = frame * (1000/FPS);
+        ctx.clearRect(0, 0, W, H);
+
+        // Determine scene
+        if (frame <= S1_END) {
+          drawS1(frame);
+        } else if (frame <= S2_END) {
+          drawS2(frame - S1_END);
+        } else if (frame <= S3_END) {
+          drawS3(frame - S2_END);
+        } else if (frame <= S4_END) {
+          drawS4(frame - S3_END);
+        } else {
+          drawS5(frame - S4_END);
+        }
+
+        drawProgress(elapsed);
+
+        frame++;
+        if (onProgress) onProgress(frame / totalFrames, frame, totalFrames);
+
+        // Use setTimeout to yield to browser and allow MediaRecorder to collect frames
+        setTimeout(renderFrame, 1000/FPS);
+      }
+
+      renderFrame();
+    }
+
+    // Load images then start
+    function tryStart() {
+      imagesLoaded++;
+      if (imagesLoaded >= imagesToLoad) startRender();
+    }
+
+    if (productImageUrl) {
+      imagesToLoad++;
+      productImg = new Image();
+      productImg.crossOrigin = 'anonymous';
+      productImg.onload = tryStart;
+      productImg.onerror = tryStart;
+      productImg.src = productImageUrl;
+    }
+    if (c.photoUrl) {
+      imagesToLoad++;
+      bgImg = new Image();
+      bgImg.crossOrigin = 'anonymous';
+      bgImg.onload = tryStart;
+      bgImg.onerror = tryStart;
+      bgImg.src = c.photoUrl;
+    }
+    if (imagesToLoad === 0) startRender();
+  });
+}
+
 async function downloadVadVideo() {
   if (!_vadIframeDoc) {
     showToast('Generate an ad first!', 'error');
@@ -9752,279 +10397,164 @@ async function downloadVadVideo() {
   }
 
   showVadProgress(true);
-  setVadProgressBar(3);
-  setVadProgressText('Setting up renderer...');
+  setVadProgressBar(2);
+  setVadProgressText('Setting up...');
 
   var adW = _vadFormat === 'reel' ? 607 : 500;
   var adH = _vadFormat === 'reel' ? 1080 : 500;
-  var AD_DURATION = 34000;
   var FPS = 30;
 
   try {
-    // ── STEP 1: Create offscreen canvas ──────────────────────
+    // Get current ad data from the existing state
+    var biz     = (document.getElementById('vad-bizname')  || {}).value || '';
+    var product = (document.getElementById('vad-product')  || {}).value || '';
+    var tagline = (document.getElementById('vad-tagline')  || {}).value || '';
+    var emojiVal= (document.getElementById('vad-emoji')    || {}).value || '✨';
+    var capEl   = document.getElementById('vad-caption');
+    var cap     = capEl ? capEl.value.split('\n\n🌐')[0].trim() : ('Check out ' + product + ' by ' + biz);
+    var c = getVadThemeColors(_vadTheme);
+    var plats = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
+
+    // Create canvas
     var canvas = document.createElement('canvas');
     canvas.width = adW;
     canvas.height = adH;
-    var ctx = canvas.getContext('2d');
-    _vadRenderCanvas = canvas;
-    _vadRenderCtx = ctx;
 
-    // ── STEP 2: Load ad into hidden iframe for rendering ─────
-    setVadProgressText('Loading ad...');
-    setVadProgressBar(8);
-
-    var renderFrame = document.createElement('iframe');
-    renderFrame.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:' + adW + 'px;height:' + adH + 'px;border:none;opacity:0;pointer-events:none;';
-    renderFrame.srcdoc = _vadIframeDoc;
-    document.body.appendChild(renderFrame);
-
-    // Wait for iframe to load and ad to start
-    await new Promise(function(res){ setTimeout(res, 1200); });
-
-    setVadProgressText('Starting recording...');
-    setVadProgressBar(12);
-
-    // ── STEP 3: Capture canvas stream from the ad's render ───
-    // Use html2canvas to snapshot the iframe at each frame
-    // OR use captureStream on a canvas that we draw to
-
-    // Best approach: use the iframe's own canvas stream if available
-    var stream = canvas.captureStream(FPS);
-
-    // Draw iframe content to canvas using html2canvas at intervals
-    var html2canvasLoaded = false;
-    if (!window.html2canvas) {
-      await new Promise(function(res, rej) {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = function(){ html2canvasLoaded = true; res(); };
-        s.onerror = function(){ res(); }; // continue even if fails
-        document.head.appendChild(s);
-      });
-    } else {
-      html2canvasLoaded = true;
-    }
-
-    setVadProgressBar(18);
-
-    // ── STEP 4: Record the canvas stream ─────────────────────
-    var mimeType = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(function(t) {
+    // Detect best recording format
+    var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){
       return MediaRecorder.isTypeSupported(t);
     }) || 'video/webm';
 
+    setVadProgressText('Starting recording...');
+    setVadProgressBar(5);
+
+    // Start recording the canvas stream
+    var stream = canvas.captureStream(FPS);
     var chunks = [];
     var recorder = new MediaRecorder(stream, {
       mimeType: mimeType,
-      videoBitsPerSecond: 3500000
+      videoBitsPerSecond: 4000000
     });
     recorder.ondataavailable = function(e) {
       if (e.data && e.data.size > 0) chunks.push(e.data);
     };
+    recorder.start(100);
 
-    // ── STEP 5: Draw iframe to canvas at 30fps ───────────────
-    var recStart = Date.now();
-    var frameInterval = null;
-
-    if (html2canvasLoaded && window.html2canvas) {
-      // Use html2canvas to capture iframe frames
-      frameInterval = setInterval(async function() {
-        try {
-          if (!renderFrame.contentDocument || !renderFrame.contentDocument.body) return;
-          var snap = await window.html2canvas(renderFrame.contentDocument.body, {
-            canvas: canvas,
-            width: adW,
-            height: adH,
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            scale: 1,
-            backgroundColor: null
-          });
-          if (snap !== canvas) ctx.drawImage(snap, 0, 0, adW, adH);
-        } catch(e) { /* frame skip */ }
-      }, Math.round(1000 / FPS));
-    } else {
-      // Fallback: draw a solid color frame (at least produces a valid video)
-      // This handles devices where html2canvas fails
-      frameInterval = setInterval(function() {
-        ctx.fillStyle = '#080808';
-        ctx.fillRect(0, 0, adW, adH);
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = 'bold 32px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        var elapsed = Math.round((Date.now() - recStart) / 1000);
-        ctx.fillText('autopostleey.com', adW / 2, adH / 2 - 20);
-        ctx.font = '18px Inter, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.fillText(elapsed + 's / ' + Math.round(AD_DURATION/1000) + 's', adW/2, adH/2 + 20);
-      }, Math.round(1000 / FPS));
-    }
-
-    recorder.start(200);
-
-    // Progress updates during recording
-    var progInterval = setInterval(function() {
-      var elapsed = Date.now() - recStart;
-      var pct = 18 + Math.min(62, (elapsed / AD_DURATION) * 62);
-      setVadProgressBar(Math.round(pct));
-      var secs = Math.round(elapsed / 1000);
-      var total = Math.round(AD_DURATION / 1000);
-      setVadProgressText('Recording... ' + secs + 's / ' + total + 's');
-      if (btn) {
-        btn.innerHTML = '<div style="font-size:24px;margin-bottom:6px;">🔴</div>'
-          + '<div style="font-size:12px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
+    // Render the ad onto the canvas
+    await renderAdToCanvas(
+      canvas, c, biz, product, tagline, emojiVal, cap, plats, _vadProductImageUrl || '',
+      function(progress, frame, total) {
+        var pct = 5 + Math.round(progress * 78);
+        setVadProgressBar(pct);
+        var secs = Math.round(progress * 33);
+        setVadProgressText('Recording... ' + secs + 's / 33s');
+        if (btn && secs > 0) {
+          btn.innerHTML = '<div style="font-size:24px;margin-bottom:6px;">🔴</div>'
+            + '<div style="font-size:12px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
+        }
       }
-    }, 500);
+    );
 
-    // Wait for full ad duration
-    await new Promise(function(res){ setTimeout(res, AD_DURATION); });
-
-    // Stop everything
-    clearInterval(frameInterval);
-    clearInterval(progInterval);
+    // Stop recording
     recorder.stop();
     stream.getTracks().forEach(function(t){ t.stop(); });
-    document.body.removeChild(renderFrame);
 
-    setVadProgressBar(82);
-    setVadProgressText('Finalizing video...');
+    setVadProgressBar(85);
+    setVadProgressText('Saving video...');
 
-    // Collect final blob
     var rawBlob = await new Promise(function(res) {
       recorder.onstop = function() {
         res(new Blob(chunks, { type: mimeType }));
       };
-      setTimeout(function(){ res(new Blob(chunks, { type: mimeType })); }, 2000);
+      setTimeout(function(){ res(new Blob(chunks, { type: mimeType })); }, 3000);
     });
 
-    setVadProgressBar(85);
+    setVadProgressBar(88);
 
-    // ── STEP 6: Convert to MP4 if recorded as WebM ───────────
+    // Convert to MP4 if needed
     var finalBlob = rawBlob;
-    var finalExt = 'mp4';
+    var finalExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-    if (mimeType.includes('mp4')) {
-      // Already MP4 (Safari records MP4 natively!)
-      finalBlob = rawBlob;
-      finalExt = 'mp4';
-      setVadProgressBar(100);
-      setVadProgressText('✅ MP4 ready!');
-    } else {
-      // WebM → need to convert or deliver as-is
+    if (!mimeType.includes('mp4')) {
       setVadProgressText('Converting to MP4...');
       try {
         finalBlob = await convertWebmToMp4(rawBlob, function(p) {
-          setVadProgressBar(85 + Math.round(p * 14));
-          setVadProgressText('Converting to MP4... ' + Math.round(p * 100) + '%');
+          setVadProgressBar(88 + Math.round(p * 11));
+          setVadProgressText('Converting to MP4... ' + Math.round(p*100) + '%');
         });
         finalExt = 'mp4';
-        setVadProgressBar(100);
-        setVadProgressText('✅ MP4 ready!');
-      } catch(convErr) {
-        console.warn('MP4 conversion failed, using WebM:', convErr);
-        finalBlob = rawBlob;
-        finalExt = 'webm';
-        setVadProgressBar(100);
-        setVadProgressText('Download ready (.webm)');
+      } catch(e) {
+        console.warn('MP4 conversion skipped:', e.message);
       }
     }
 
-    // ── STEP 7: Download ──────────────────────────────────────
-    await new Promise(function(res){ setTimeout(res, 500); });
-    var dlUrl = URL.createObjectURL(finalBlob);
+    setVadProgressBar(100);
+    setVadProgressText('✅ Downloading...');
+
+    await new Promise(function(res){ setTimeout(res, 400); });
+
+    var url = URL.createObjectURL(finalBlob);
     var a = document.createElement('a');
-    a.href = dlUrl;
+    a.href = url;
     a.download = 'autopostleey-ad-' + Date.now() + '.' + finalExt;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(dlUrl); }, 5000);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
 
     var msg = finalExt === 'mp4'
-      ? '✅ MP4 downloaded! Share on WhatsApp, TikTok, Instagram and Facebook!'
-      : '✅ Downloaded! Works on Android & Chrome. For iPhone convert to MP4 in iMovie.';
+      ? '✅ MP4 downloaded! Share on WhatsApp, TikTok, Instagram & Facebook!'
+      : '✅ Video downloaded! Works on Android & Chrome.';
     showToast(msg, 'success');
 
   } catch(err) {
-    console.error('VAD download error:', err);
-    // Last resort: download as HTML
-    var html = _vadIframeDoc || '';
-    var blob = new Blob([html], { type: 'text/html' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'autopostleey-video-ad.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Saved as HTML. Open in Chrome → File menu → Print → Save as PDF, or use screen recorder.', 'success');
+    console.error('Download error:', err);
+    showToast('Download failed: ' + err.message, 'error');
   }
 
   showVadProgress(false);
   if (btn) resetDownloadBtn(btn);
 }
 
-// ── FFmpeg.wasm: WebM → MP4 ───────────────────────────────
+// FFmpeg WebM → MP4 converter
 async function convertWebmToMp4(webmBlob, onProgress) {
-  // Load FFmpeg.wasm v0.12 (ESM build works in modern browsers)
   if (!window._ffmpegInstance) {
-    setVadProgressText('Loading MP4 converter (first time only, ~5MB)...');
-
-    // Try lightweight FFmpeg build first
-    try {
-      await new Promise(function(res, rej) {
-        if (window.FFmpegWASM) { res(); return; }
-        var s = document.createElement('script');
-        s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-        s.crossOrigin = 'anonymous';
-        s.onload = res;
-        s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    } catch(e) {
-      throw new Error('FFmpeg library failed to load');
-    }
-
-    if (!window.FFmpegWASM && !window.FFmpeg) {
-      throw new Error('FFmpeg not available');
-    }
-
-    var FFmpegLib = window.FFmpegWASM || window.FFmpeg;
-    var ffmpeg = new FFmpegLib.FFmpeg();
-
-    ffmpeg.on('progress', function(e) {
-      if (onProgress && typeof e.progress === 'number') onProgress(e.progress);
+    setVadProgressText('Loading MP4 converter (first time, ~5MB)...');
+    await new Promise(function(res, rej) {
+      if (window.FFmpegWASM) { res(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
+      s.crossOrigin = 'anonymous';
+      s.onload = res;
+      s.onerror = rej;
+      document.head.appendChild(s);
     });
 
-    await ffmpeg.load({
+    var Lib = (window.FFmpegWASM || {}).FFmpeg || (window.FFmpeg || {}).FFmpeg || window.FFmpeg;
+    if (!Lib) throw new Error('FFmpeg not available');
+
+    var ff = new Lib();
+    ff.on('progress', function(e) { if (onProgress && e.progress) onProgress(e.progress); });
+    await ff.load({
       coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-      wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+      wasmURL:  'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
     });
-
-    window._ffmpegInstance = ffmpeg;
+    window._ffmpegInstance = ff;
   }
 
-  var ffmpeg = window._ffmpegInstance;
-  var { fetchFile } = window.FFmpegWASM || window.FFmpeg;
+  var ff = window._ffmpegInstance;
+  var fetchFile = (window.FFmpegWASM || window.FFmpeg || {}).fetchFile;
+  if (!fetchFile) {
+    var ab = await webmBlob.arrayBuffer();
+    await ff.writeFile('in.webm', new Uint8Array(ab));
+  } else {
+    await ff.writeFile('in.webm', await fetchFile(webmBlob));
+  }
 
-  // Write input
-  await ffmpeg.writeFile('in.webm', await fetchFile(webmBlob));
-
-  // Convert — H.264 + faststart = plays on every device
-  await ffmpeg.exec([
-    '-i', 'in.webm',
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-crf', '24',
-    '-an',                    // no audio (our ad has no audio)
-    '-movflags', '+faststart',
-    '-pix_fmt', 'yuv420p',
-    'out.mp4'
-  ]);
-
-  var data = await ffmpeg.readFile('out.mp4');
-  await ffmpeg.deleteFile('in.webm');
-  await ffmpeg.deleteFile('out.mp4');
-
+  await ff.exec(['-i','in.webm','-c:v','libx264','-preset','ultrafast','-crf','24','-an','-movflags','+faststart','-pix_fmt','yuv420p','out.mp4']);
+  var data = await ff.readFile('out.mp4');
+  await ff.deleteFile('in.webm');
+  await ff.deleteFile('out.mp4');
   return new Blob([data.buffer], { type: 'video/mp4' });
 }
 
