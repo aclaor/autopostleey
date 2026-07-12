@@ -2411,13 +2411,28 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           </div>
 
           <div class="card">
-            <div class="card-title">🎨 Industry Theme</div>
-            <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+            <div class="card-title">🎨 Theme</div>
+
+            <!-- Mode toggle -->
+            <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+              <button id="vad-mode-industry" onclick="setVadThemeMode('industry')"
+                style="flex:1;padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all .2s;">
+                🏭 Industry Theme
+              </button>
+              <button id="vad-mode-custom" onclick="setVadThemeMode('custom')"
+                style="flex:1;padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .2s;">
+                🎨 Custom Colors
+              </button>
+            </div>
+
+            <!-- INDUSTRY THEME panel -->
+            <div id="vad-panel-industry">
+              <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
               <button onclick="autoDetectTheme(true)" style="flex:1;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;">
                 🎯 Auto-Detect from Product
               </button>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;overflow-x:hidden;">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;overflow-x:hidden;">
 <div class="vad-theme" id="theme-ecommerce" onclick="selectVadTheme('ecommerce')"
                   style="padding:8px 6px;border:2px solid var(--accent);background:rgba(109,94,248,0.1);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;">
                   <div style="font-size:18px;margin-bottom:3px;">🛍️</div>
@@ -2524,8 +2539,75 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                   <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--text2);">Non-Profit</div>
                 </div>
             </div>
-            <div id="vad-theme-label" style="font-size:11px;color:var(--text2);text-align:center;padding:7px;background:var(--bg3);border-radius:6px;margin-top:8px;">
-              ✨ Selected: <span id="vad-theme-name" style="color:var(--accent);font-weight:700;">E-Commerce</span>
+            </div>
+
+            <!-- CUSTOM THEME panel -->
+            <div id="vad-panel-custom" style="display:none;">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Your brand colors will replace all theme colors across the entire video.</div>
+
+              <!-- Presets row -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+                <div onclick="applyVadCustomTheme('#08061a','#a855f7','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#08061a,#a855f7);border:2px solid var(--accent);position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Purple</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#0f172a','#0ea5e9','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0f172a,#0ea5e9);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Ocean</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#0a0a0a','#ef4444','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0a0a0a,#ef4444);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Red</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#052e16','#10b981','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#052e16,#10b981);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Forest</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#1a0a00','#f59e0b','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#1a0a00,#f59e0b);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Gold</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#1e1b4b','#818cf8','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#1e1b4b,#818cf8);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Indigo</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#ffffff','#6d5ef8','#1a1a1a')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#f0edff,#e0d9ff);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#333;font-weight:700;">White</div>
+                </div>
+                <div onclick="applyVadCustomTheme('#0c0c0c','#f97316','#ffffff')" class="vad-color-preset"
+                  style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0c0c0c,#f97316);border:2px solid transparent;position:relative;">
+                  <div style="position:absolute;bottom:3px;width:100%;text-align:center;font-size:9px;color:#fff;font-weight:700;">Neon</div>
+                </div>
+              </div>
+
+              <!-- Color pickers -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">◼ Background</label>
+                  <input type="color" id="vad-custom-bg" value="#08061a"
+                    onchange="applyVadCustomTheme(this.value,document.getElementById('vad-custom-accent').value,document.getElementById('vad-custom-text').value)"
+                    style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">✦ Accent</label>
+                  <input type="color" id="vad-custom-accent" value="#a855f7"
+                    onchange="applyVadCustomTheme(document.getElementById('vad-custom-bg').value,this.value,document.getElementById('vad-custom-text').value)"
+                    style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">A Text</label>
+                  <input type="color" id="vad-custom-text" value="#ffffff"
+                    onchange="applyVadCustomTheme(document.getElementById('vad-custom-bg').value,document.getElementById('vad-custom-accent').value,this.value)"
+                    style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;">
+                </div>
+              </div>
+
+              <!-- Live preview -->
+              <div id="vad-theme-preview-bar" style="border-radius:10px;padding:12px 16px;background:#08061a;display:flex;align-items:center;justify-content:space-between;">
+                <span id="vad-theme-prev-text" style="font-weight:700;font-size:13px;color:#ffffff;">Preview</span>
+                <span id="vad-theme-prev-badge" style="background:#a855f7;color:#fff;font-size:10px;padding:4px 12px;border-radius:20px;font-weight:700;">Your Brand</span>
+              </div>
             </div>
           </div>
 
@@ -2563,74 +2645,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           </div>
 
           <!-- Thumbnail -->
-          <div class="card">
-            <div class="card-title">🎨 Custom Theme</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Personalize your video colors. Presets below or pick your own.</div>
-
-            <!-- Preset themes -->
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
-              <div onclick="applyVadCustomTheme('#08061a','#a855f7','#ffffff')" title="Purple Night"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#08061a,#a855f7);border:2px solid var(--accent);position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Purple</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#0f172a','#0ea5e9','#ffffff')" title="Ocean Blue"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0f172a,#0ea5e9);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Ocean</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#0a0a0a','#ef4444','#ffffff')" title="Bold Red"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0a0a0a,#ef4444);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Bold Red</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#052e16','#10b981','#ffffff')" title="Forest Green"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#052e16,#10b981);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Forest</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#1a0a00','#f59e0b','#ffffff')" title="Golden"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#1a0a00,#f59e0b);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Golden</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#1e1b4b','#818cf8','#ffffff')" title="Indigo"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#1e1b4b,#818cf8);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Indigo</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#ffffff','#6d5ef8','#1a1a1a')" title="Clean White"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#ffffff,#e0d9ff);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#333;font-weight:700;">White</div>
-              </div>
-              <div onclick="applyVadCustomTheme('#0c0c0c','#f97316','#ffffff')" title="Neon Orange"
-                style="height:44px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#0c0c0c,#f97316);border:2px solid transparent;position:relative;overflow:hidden;">
-                <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#fff;font-weight:700;">Neon</div>
-              </div>
-            </div>
-
-            <!-- Custom color pickers -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-              <div>
-                <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">◼ Background</label>
-                <input type="color" id="vad-custom-bg" value="#08061a"
-                  onchange="applyVadCustomTheme(this.value,document.getElementById('vad-custom-accent').value,document.getElementById('vad-custom-text').value)"
-                  style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:transparent;">
-              </div>
-              <div>
-                <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">✦ Accent Color</label>
-                <input type="color" id="vad-custom-accent" value="#a855f7"
-                  onchange="applyVadCustomTheme(document.getElementById('vad-custom-bg').value,this.value,document.getElementById('vad-custom-text').value)"
-                  style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:transparent;">
-              </div>
-              <div>
-                <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;">A Text Color</label>
-                <input type="color" id="vad-custom-text" value="#ffffff"
-                  onchange="applyVadCustomTheme(document.getElementById('vad-custom-bg').value,document.getElementById('vad-custom-accent').value,this.value)"
-                  style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:transparent;">
-              </div>
-            </div>
-
-            <!-- Live preview bar -->
-            <div id="vad-theme-preview-bar" style="margin-top:12px;border-radius:10px;padding:12px 16px;background:#08061a;display:flex;align-items:center;justify-content:space-between;">
-              <span id="vad-theme-prev-text" style="font-weight:700;font-size:13px;color:#ffffff;">Your Business Name</span>
-              <span id="vad-theme-prev-badge" style="background:#a855f7;color:#fff;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;">● LIVE</span>
-            </div>
-          </div>
+          
 
           <!-- Background Music -->
           <div class="card">
@@ -9608,6 +9623,32 @@ var _vadSolidColor = '#08061a';
 // ── VAD CUSTOM THEME ────────────────────────────────────────────
 var _vadCustomTheme = null;
 
+
+// ── VAD THEME MODE ───────────────────────────────────────────────
+var _vadThemeMode = 'industry'; // 'industry' or 'custom'
+
+function setVadThemeMode(mode) {
+  _vadThemeMode = mode;
+
+  var industryPanel = document.getElementById('vad-panel-industry');
+  var customPanel   = document.getElementById('vad-panel-custom');
+  var industryBtn   = document.getElementById('vad-mode-industry');
+  var customBtn     = document.getElementById('vad-mode-custom');
+
+  if (industryPanel) industryPanel.style.display = mode === 'industry' ? 'block' : 'none';
+  if (customPanel)   customPanel.style.display   = mode === 'custom'   ? 'block' : 'none';
+
+  if (industryBtn) {
+    industryBtn.style.background = mode === 'industry' ? 'var(--accent)' : 'var(--bg3)';
+    industryBtn.style.color      = mode === 'industry' ? '#fff' : 'var(--text2)';
+  }
+  if (customBtn) {
+    customBtn.style.background = mode === 'custom' ? 'var(--accent)' : 'var(--bg3)';
+    customBtn.style.color      = mode === 'custom' ? '#fff' : 'var(--text2)';
+  }
+}
+
+
 function applyVadCustomTheme(bg, accent, textColor) {
   _vadCustomTheme = { bg: bg, accent: accent, text: textColor };
 
@@ -9623,16 +9664,15 @@ function applyVadCustomTheme(bg, accent, textColor) {
   var bar   = document.getElementById('vad-theme-preview-bar');
   var txt   = document.getElementById('vad-theme-prev-text');
   var badge = document.getElementById('vad-theme-prev-badge');
-  if (bar)   bar.style.background   = bg;
-  if (txt)   { txt.style.color = textColor; }
+  if (bar)   bar.style.background = bg;
+  if (txt)   txt.style.color      = textColor;
   if (badge) badge.style.background = accent;
 
-  // Highlight selected preset border
-  document.querySelectorAll('#vad-theme-presets div[onclick]').forEach(function(el) {
+  // Highlight selected preset
+  document.querySelectorAll('.vad-color-preset').forEach(function(el) {
     el.style.border = '2px solid transparent';
   });
-
-  showToast('✅ Theme applied! Click Generate to preview.', 'success');
+  if (event && event.currentTarget) event.currentTarget.style.border = '2px solid var(--accent)';
 }
 
 function toggleVadFloatingInfo() {
@@ -9984,15 +10024,19 @@ function generateVideoAd() {
   var btn = document.getElementById('vad-generate-btn');
   if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
 
-  var c = getVadThemeColors(_vadTheme);
-    // Apply custom theme colors if set
-    if (_vadCustomTheme) {
-      c = Object.assign({}, c, {
+  var c;
+    if (_vadThemeMode === 'custom' && _vadCustomTheme) {
+      // Custom mode: use customer brand colors entirely
+      c = Object.assign({}, getVadThemeColors(_vadTheme), {
         bg:     _vadCustomTheme.bg,
         accent: _vadCustomTheme.accent,
         text:   _vadCustomTheme.text,
-        sub:    _vadCustomTheme.text + 'aa',
+        sub:    _vadCustomTheme.text + '99',
+        photoUrl: null, // no theme photo in custom mode
       });
+    } else {
+      // Industry mode: use full industry theme
+      c = getVadThemeColors(_vadTheme);
     }
   var w = _vadFormat === 'reel' ? 607 : 500;
   var h = _vadFormat === 'reel' ? 1080 : 500;
