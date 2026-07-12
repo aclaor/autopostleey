@@ -11587,52 +11587,86 @@ async function startVoiceToPost() {
 
   if (_voiceActive) { stopVoiceToPost(); return; }
 
-  // 1st: Browser SpeechRecognition (free)
+  // Show loading state immediately so user knows something is happening
+  if (btn) { btn.textContent = '⏳ Starting...'; btn.disabled = true; }
+  if (output) output.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic">Requesting microphone access...</span>';
+
+  // Check browser support first
   var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SpeechRecognition) {
-    _voiceRecognition = new SpeechRecognition();
-    _voiceRecognition.continuous    = true;
-    _voiceRecognition.interimResults = true;
-    _voiceRecognition.lang          = 'en-PH';
-
-    _voiceRecognition.onstart = function() {
-      _voiceActive = true;
-      if (btn) { btn.textContent = '⏹ Stop Recording'; btn.style.background = '#ef4444'; }
-      if (output) output.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic">Listening... speak now 🎤</span>';
-    };
-
-    _voiceRecognition.onresult = function(e) {
-      var interim = '', final = '';
-      for (var i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript;
-        else interim += e.results[i][0].transcript;
-      }
-      _voiceTranscript += final;
-      if (output) output.innerHTML =
-        '<span style="color:var(--text)">' + _voiceTranscript + '</span>' +
-        (interim ? '<span style="color:rgba(255,255,255,0.4)"> ' + interim + '</span>' : '');
-    };
-
-    _voiceRecognition.onerror = function(e) {
-      console.warn('[SpeechRecognition error]', e.error);
-      if (e.error === 'not-allowed') {
-        showToast('Microphone permission denied. Please allow mic access.', 'error');
-      }
-      stopVoiceToPost();
-    };
-
-    _voiceRecognition.onend = function() {
-      _voiceActive = false;
-      if (btn) { btn.textContent = '🎤 Start Recording'; btn.style.background = ''; }
-      if (_voiceTranscript && postBtn) postBtn.style.display = 'block';
-    };
-
-    _voiceRecognition.start();
+  if (!SpeechRecognition) {
+    if (btn) { btn.textContent = '🎤 Start Recording'; btn.disabled = false; }
+    if (output) output.innerHTML = '<span style="color:#ef4444;">❌ Your browser does not support voice input.<br>Please use Chrome on Android or Safari on iPhone.</span>';
+    showToast('Voice not supported. Use Chrome or Safari.', 'error');
     return;
   }
 
-  // 2nd: Groq Whisper (if browser API not available)
-  showToast('Browser mic not available. Please use Chrome or Safari.', 'error');
+  // Request mic permission explicitly first
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(permErr) {
+    if (btn) { btn.textContent = '🎤 Start Recording'; btn.disabled = false; }
+    if (output) output.innerHTML = '<span style="color:#ef4444;">❌ Microphone access denied.<br>Go to your browser settings and allow microphone access for this site.</span>';
+    showToast('Microphone permission denied. Allow mic in browser settings.', 'error');
+    return;
+  }
+
+  // Permission granted — start recognition
+  _voiceTranscript = '';
+  _voiceRecognition = new SpeechRecognition();
+  _voiceRecognition.continuous     = true;
+  _voiceRecognition.interimResults = true;
+  _voiceRecognition.lang           = 'en-PH';
+  _voiceRecognition.maxAlternatives = 1;
+
+  _voiceRecognition.onstart = function() {
+    _voiceActive = true;
+    if (btn) { btn.textContent = '⏹ Stop Recording'; btn.style.background = '#ef4444'; btn.disabled = false; }
+    if (output) output.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic">🔴 Listening... speak about your product now!</span>';
+  };
+
+  _voiceRecognition.onresult = function(e) {
+    var interim = '', final = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    _voiceTranscript += final;
+    if (output) output.innerHTML =
+      '<span style="color:var(--text)">' + _voiceTranscript + '</span>' +
+      (interim ? '<span style="color:rgba(255,255,255,0.5)"> ' + interim + '</span>' : '');
+  };
+
+  _voiceRecognition.onerror = function(e) {
+    console.warn('[SpeechRecognition error]', e.error);
+    var msg = {
+      'not-allowed':    'Microphone permission denied. Allow mic in settings.',
+      'no-speech':      'No speech detected. Try speaking closer to the mic.',
+      'network':        'Network error. Check your connection.',
+      'audio-capture':  'No microphone found. Plug in a mic.',
+      'aborted':        'Recording stopped.',
+    }[e.error] || 'Voice error: ' + e.error;
+    if (e.error !== 'aborted') showToast(msg, 'error');
+    stopVoiceToPost();
+  };
+
+  _voiceRecognition.onend = function() {
+    _voiceActive = false;
+    if (btn) { btn.textContent = '🎤 Start Recording'; btn.style.background = ''; btn.disabled = false; }
+    if (_voiceTranscript && _voiceTranscript.trim()) {
+      if (postBtn) postBtn.style.display = 'block';
+      showToast('✅ Got it! Click "Write Post from Voice" to generate.', 'success');
+    } else if (output) {
+      output.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic">No speech detected. Try again.</span>';
+    }
+  };
+
+  try {
+    _voiceRecognition.start();
+  } catch(e) {
+    if (btn) { btn.textContent = '🎤 Start Recording'; btn.disabled = false; }
+    if (output) output.innerHTML = '<span style="color:#ef4444;">❌ Could not start: ' + e.message + '</span>';
+    showToast('Could not start recording: ' + e.message, 'error');
+  }
 }
 
 function stopVoiceToPost() {
