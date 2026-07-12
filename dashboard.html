@@ -10544,7 +10544,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         drawProgress(elapsed);
 
         frame++;
-        if (onProgress) onProgress(frame / totalFrames, frame, totalFrames);
+        if (onProgress) if(onProgress) onProgress(frame / totalFrames, frame, totalFrames);
 
         // Use setTimeout to yield to browser and allow MediaRecorder to collect frames
         setTimeout(renderFrame, 1000/FPS);
