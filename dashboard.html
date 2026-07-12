@@ -1968,6 +1968,86 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <div class="page-sub">Turn product photos into Reels, or analyze your videos and post automatically</div>
         </div>
       </div>
+      <!-- ══ AI TOOLS PAGE ══ -->
+      <div id="page-aitools" class="page" style="display:none;">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🤖 AI Tools</div>
+            <div class="page-sub">Voice-to-Post · Image-to-Ad · A/B Testing · Competitor Analyzer</div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <button onclick="switchAITab('voice')" id="aitab-voice" style="padding:8px 16px;border-radius:20px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">🎤 Voice</button>
+          <button onclick="switchAITab('image')" id="aitab-image" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">📸 Image-to-Ad</button>
+          <button onclick="switchAITab('ab')" id="aitab-ab" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">🔀 A/B Test</button>
+          <button onclick="switchAITab('competitor')" id="aitab-competitor" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">🕵️ Competitor</button>
+        </div>
+
+        <!-- VOICE TO POST -->
+        <div id="aitool-voice">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🎤 Voice to Post</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Speak about your product — AI writes the post. Uses browser mic (free) → Groq → Claude.</div>
+            <button id="voice-btn" onclick="startVoiceToPost()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">🎤 Start Recording</button>
+            <div id="voice-output" style="min-height:80px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:12px;"></div>
+            <button id="voice-post-btn" onclick="convertVoiceToPost()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">✨ Write Post from Voice</button>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Browser SpeechRecognition → Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- IMAGE TO AD -->
+        <div id="aitool-image" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">📸 Image to Ad</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Upload a product photo — AI describes it and writes a full ad. Uses Gemini Vision (free) → Groq → Claude.</div>
+            <label style="display:block;width:100%;padding:14px;background:var(--bg3);border:2px dashed var(--accent);border-radius:12px;text-align:center;cursor:pointer;margin-bottom:12px;color:var(--text);font-size:14px;">
+              📷 Tap to upload product photo
+              <input type="file" accept="image/*" onchange="handleImageToAdUpload(this)" style="display:none;">
+            </label>
+            <img id="img-ad-preview" style="display:none;width:100%;max-height:200px;object-fit:contain;border-radius:10px;margin-bottom:12px;">
+            <button id="img-ad-generate-btn" onclick="generateImageToAd()" style="display:none;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">✨ Generate Ad</button>
+            <div id="img-ad-output" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-weight:700;font-size:13px;color:var(--accent);">✨ Your Ad</span>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="postImageAd()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Use This ✓</button>
+                  <button onclick="navigator.clipboard.writeText(document.querySelector('.img-ad-text').textContent).then(function(){showToast('Copied!','success')})" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Copy</button>
+                </div>
+              </div>
+              <div class="img-ad-text" style="font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;"></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Gemini 1.5 Flash Vision → Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- A/B TESTING -->
+        <div id="aitool-ab" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🔀 A/B Post Testing</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Generate 3 versions of any post — emotional, factual, and casual. Pick the best one.</div>
+            <input id="ab-topic" placeholder="What is your post about? e.g. 50% sale on all items this weekend" style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+            <button id="ab-generate-btn" onclick="generateABVersions()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px;">✨ Generate 3 Versions</button>
+            <div id="ab-versions-container" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- COMPETITOR ANALYZER -->
+        <div id="aitool-competitor" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🕵️ Competitor Post Analyzer</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Paste any competitor's post — AI analyzes it and writes a better version for your business.</div>
+            <textarea id="competitor-post" placeholder="Paste competitor's post here..." rows="5" style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;margin-bottom:12px;"></textarea>
+            <button id="competitor-analyze-btn" onclick="analyzeCompetitor()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px;">🔍 Analyze & Improve</button>
+            <div id="competitor-output" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Groq Llama 70B → Claude</div>
+        </div>
+
+      </div>
+
 
       <!-- TABS -->
       <div style="display:flex;gap:8px;margin-bottom:20px;">
@@ -2885,6 +2965,7 @@ _db.auth.onAuthStateChange(function(event, session) {
 });
 
 async function initDashboard() {
+  loadSecureKeys(); // Load API keys from Worker (never stored in client)
   // Update topbar email
   var emailEl = document.getElementById('topbar-email');
   if(emailEl) emailEl.textContent = _user.email;
@@ -6016,7 +6097,7 @@ async function selectFacebookPageDirect(pageId, pageName, pageToken) {
       // Exchange app credentials for page token via Graph API
       var appTokenRes = await fetch(
         'https://graph.facebook.com/v19.0/' + pageId + '?fields=access_token&access_token=' + 
-        '474990059818223|e0c3ce178d9cab9b68f66e05362d21bf'
+        _FB_APP_ID + '|' + _FB_APP_SECRET_TOKEN
       );
       var appTokenData = await appTokenRes.json();
       console.log('[FB Connect] App token response:', JSON.stringify(appTokenData));
@@ -9133,6 +9214,9 @@ async function saveFBManual() {
     <button class="mobile-nav-btn" onclick="showPage('reels');setMobileNav(this)">
       <span class="mnav-icon">🎬</span><span>Reels</span>
     </button>
+    <button class="mobile-nav-btn" onclick="showPage('aitools');setMobileNav(this)">
+      <span class="mnav-icon">🤖</span><span>AI Tools</span>
+    </button>
     <button class="mobile-nav-btn" onclick="showPage('history');setMobileNav(this)">
       <span class="mnav-icon">📜</span><span>History</span>
     </button>
@@ -11307,6 +11391,458 @@ async function autoFillVadFromProfile() {
     }
   }
 }
+
+
+// ── SECURE KEY LOADER ─────────────────────────────────────────────
+// Keys are NEVER hardcoded — fetched from Cloudflare Worker (server-side env vars)
+var _GROQ_KEY   = '';
+var _GEMINI_KEY = '';
+var _FB_APP_ID  = '474990059818223';
+var _FB_APP_SECRET_TOKEN = ''; // fetched server-side only
+
+async function loadSecureKeys() {
+  try {
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    if (!token) return;
+    var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev/keys', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (r.ok) {
+      var d = await r.json();
+      _GROQ_KEY   = d.groq   || '';
+      _GEMINI_KEY = d.gemini || '';
+      _FB_APP_SECRET_TOKEN = d.fb_app_token || '';
+    }
+  } catch(e) { console.warn('[Keys] Failed to load:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AI FEATURE SUITE — Voice-to-Post, Image-to-Ad, A/B Test, Competitor
+// Keys loaded securely from Cloudflare Worker /keys endpoint (never hardcoded)
+// ══════════════════════════════════════════════════════════════════
+
+var _GEMINI_KEY = '';
+var _GROQ_KEY   = '';
+
+// ── SHARED: Text generation with fallback chain ────────────────────
+// Chain: Groq (free) → Claude Worker → error
+async function generateTextWithFallback(prompt, context) {
+  context = context || '';
+
+  // 1st: Groq (free, fast)
+  try {
+    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _GROQ_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 500,
+        messages: [
+          { role: 'system', content: 'You are an expert social media marketer for Filipino small businesses. Be concise and compelling.' + (context ? ' Context: ' + context : '') },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+    if (r.ok) {
+      var d = await r.json();
+      if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+    }
+  } catch(e) { console.warn('[Groq failed]', e.message); }
+
+  // 2nd: Claude Worker fallback
+  try {
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var r2 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ prompt: prompt, context: context })
+    });
+    if (r2.ok) {
+      var d2 = await r2.json();
+      return (d2.text || d2.content || '').trim();
+    }
+  } catch(e) { console.warn('[Claude fallback failed]', e.message); }
+
+  throw new Error('All AI services unavailable. Please try again.');
+}
+
+// ── SHARED: Image description with fallback chain ──────────────────
+// Chain: Gemini Flash (free vision) → Groq (text only) → Claude Worker
+async function describeImageWithFallback(base64Data, mimeType, extraPrompt) {
+  extraPrompt = extraPrompt || 'Describe this product image for a social media ad. Include what the product is, its key features, and who would want it.';
+
+  // 1st: Gemini Flash (free vision)
+  try {
+    var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + _GEMINI_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: extraPrompt },
+            { inline_data: { mime_type: mimeType, data: base64Data } }
+          ]
+        }],
+        generationConfig: { maxOutputTokens: 400 }
+      })
+    });
+    if (r.ok) {
+      var d = await r.json();
+      var text = d.candidates && d.candidates[0] && d.candidates[0].content &&
+                 d.candidates[0].content.parts && d.candidates[0].content.parts[0] &&
+                 d.candidates[0].content.parts[0].text;
+      if (text) return text.trim();
+    }
+  } catch(e) { console.warn('[Gemini vision failed]', e.message); }
+
+  // 2nd: Groq (no vision — ask user to describe or use filename)
+  try {
+    var r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _GROQ_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: 'Generate a compelling product ad description for a Filipino small business. Make it exciting and relatable. Keep it under 3 sentences.' }]
+      })
+    });
+    if (r2.ok) {
+      var d2 = await r2.json();
+      if (d2.choices && d2.choices[0]) return d2.choices[0].message.content.trim();
+    }
+  } catch(e) { console.warn('[Groq image fallback failed]', e.message); }
+
+  // 3rd: Claude Worker
+  try {
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var r3 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ prompt: extraPrompt, image_base64: base64Data, image_mime: mimeType })
+    });
+    if (r3.ok) {
+      var d3 = await r3.json();
+      return (d3.text || d3.content || '').trim();
+    }
+  } catch(e) { console.warn('[Claude image fallback failed]', e.message); }
+
+  return 'A great product for Filipino customers. Quality you can trust at an affordable price.';
+}
+
+// ── FEATURE 1: VOICE TO POST ───────────────────────────────────────
+var _voiceRecognition = null;
+var _voiceTranscript  = '';
+var _voiceActive      = false;
+
+async function startVoiceToPost() {
+  var btn     = document.getElementById('voice-btn');
+  var output  = document.getElementById('voice-output');
+  var postBtn = document.getElementById('voice-post-btn');
+
+  if (_voiceActive) { stopVoiceToPost(); return; }
+
+  // 1st: Browser SpeechRecognition (free)
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    _voiceRecognition = new SpeechRecognition();
+    _voiceRecognition.continuous    = true;
+    _voiceRecognition.interimResults = true;
+    _voiceRecognition.lang          = 'en-PH';
+
+    _voiceRecognition.onstart = function() {
+      _voiceActive = true;
+      if (btn) { btn.textContent = '⏹ Stop Recording'; btn.style.background = '#ef4444'; }
+      if (output) output.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-style:italic">Listening... speak now 🎤</span>';
+    };
+
+    _voiceRecognition.onresult = function(e) {
+      var interim = '', final = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      _voiceTranscript += final;
+      if (output) output.innerHTML =
+        '<span style="color:var(--text)">' + _voiceTranscript + '</span>' +
+        (interim ? '<span style="color:rgba(255,255,255,0.4)"> ' + interim + '</span>' : '');
+    };
+
+    _voiceRecognition.onerror = function(e) {
+      console.warn('[SpeechRecognition error]', e.error);
+      if (e.error === 'not-allowed') {
+        showToast('Microphone permission denied. Please allow mic access.', 'error');
+      }
+      stopVoiceToPost();
+    };
+
+    _voiceRecognition.onend = function() {
+      _voiceActive = false;
+      if (btn) { btn.textContent = '🎤 Start Recording'; btn.style.background = ''; }
+      if (_voiceTranscript && postBtn) postBtn.style.display = 'block';
+    };
+
+    _voiceRecognition.start();
+    return;
+  }
+
+  // 2nd: Groq Whisper (if browser API not available)
+  showToast('Browser mic not available. Please use Chrome or Safari.', 'error');
+}
+
+function stopVoiceToPost() {
+  if (_voiceRecognition) { try { _voiceRecognition.stop(); } catch(e) {} }
+  _voiceActive = false;
+  var btn = document.getElementById('voice-btn');
+  if (btn) { btn.textContent = '🎤 Start Recording'; btn.style.background = ''; }
+}
+
+async function convertVoiceToPost() {
+  if (!_voiceTranscript.trim()) { showToast('Nothing recorded yet!', 'error'); return; }
+  var btn = document.getElementById('voice-post-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '✨ Writing post...'; }
+
+  try {
+    var biz = (_bizProfile && _bizProfile.name) || (_autoConfig && _autoConfig.biz_name) || 'my business';
+    var prompt = 'Turn this voice note into an engaging social media post for ' + biz + '.\n\nVoice note: "' + _voiceTranscript + '"\n\nWrite a compelling post with emojis and 3-5 relevant hashtags. Keep it natural and authentic.';
+    var post = await generateTextWithFallback(prompt);
+
+    // Put in compose
+    var pc = document.getElementById('post-content');
+    if (pc) { pc.value = post; showPage('compose'); showToast('✅ Post ready! Review and publish.', 'success'); }
+    _voiceTranscript = '';
+    var output = document.getElementById('voice-output');
+    if (output) output.innerHTML = '';
+    if (btn) { btn.style.display = 'none'; }
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Write Post from Voice'; }
+  }
+}
+
+// ── FEATURE 2: IMAGE TO AD ─────────────────────────────────────────
+var _imgToAdFile = null;
+var _imgToAdB64  = null;
+var _imgToAdMime = null;
+
+function handleImageToAdUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  _imgToAdFile = file;
+  _imgToAdMime = file.type || 'image/jpeg';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _imgToAdB64 = e.target.result.split(',')[1];
+    var preview = document.getElementById('img-ad-preview');
+    if (preview) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    }
+    var btn = document.getElementById('img-ad-generate-btn');
+    if (btn) btn.style.display = 'block';
+    showToast('Photo ready! Click Generate Ad.', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function generateImageToAd() {
+  if (!_imgToAdB64) { showToast('Upload a product photo first!', 'error'); return; }
+  var btn = document.getElementById('img-ad-generate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '🔍 Analyzing photo...'; }
+
+  try {
+    var biz = (_bizProfile && _bizProfile.name) || (_autoConfig && _autoConfig.biz_name) || 'our business';
+    var industry = (_bizProfile && _bizProfile.industry) || 'retail';
+
+    // Step 1: Describe the image
+    showToast('🔍 Reading your product photo...', 'success');
+    var description = await describeImageWithFallback(
+      _imgToAdB64, _imgToAdMime,
+      'Describe this product image in detail. What is it, what does it look like, what are its key features, who would buy it?'
+    );
+
+    // Step 2: Generate full ad from description
+    if (btn) btn.textContent = '✍️ Writing ad copy...';
+    showToast('✍️ Writing your ad...', 'success');
+    var prompt = 'Create a complete social media ad post for ' + biz + ' (' + industry + ').\n\nProduct photo shows: ' + description + '\n\nWrite:\n1. A punchy headline (1 line)\n2. Ad body (3-4 sentences, compelling, use emojis)\n3. Call to action\n4. 5 hashtags\n\nFormat it ready to post.';
+    var adCopy = await generateTextWithFallback(prompt, 'Filipino SMB, ' + industry + ' industry');
+
+    // Step 3: Show result
+    var output = document.getElementById('img-ad-output');
+    if (output) {
+      output.style.display = 'block';
+      output.querySelector('.img-ad-text').textContent = adCopy;
+    }
+
+    // Also populate compose
+    var pc = document.getElementById('post-content');
+    if (pc) pc.value = adCopy;
+
+    // Store image for posting
+    window._composerImageUrl = '';
+    window._imgToAdPendingFile = _imgToAdFile;
+
+    showToast('✅ Ad ready! Post it now or edit first.', 'success');
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Generate Ad'; }
+  }
+}
+
+async function postImageAd() {
+  var text = document.getElementById('img-ad-output') &&
+             document.getElementById('img-ad-output').querySelector('.img-ad-text');
+  if (!text) return;
+  showPage('compose');
+  showToast('✅ Head to Compose to review and post!', 'success');
+}
+
+// ── FEATURE 3: AUTO A/B TESTING ────────────────────────────────────
+var _abVersions = [];
+
+async function generateABVersions() {
+  var topicEl = document.getElementById('ab-topic');
+  var topic   = topicEl ? topicEl.value.trim() : '';
+  if (!topic) { showToast('Enter your post topic first!', 'error'); return; }
+
+  var btn = document.getElementById('ab-generate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '✨ Generating 3 versions...'; }
+
+  try {
+    var biz      = (_bizProfile && _bizProfile.name) || 'my business';
+    var industry = (_bizProfile && _bizProfile.industry) || 'retail';
+    var prompt   = 'Create exactly 3 different social media post versions for ' + biz + ' about: "' + topic + '".\n\nMake each version use a different angle:\n- Version A: Emotional/story angle\n- Version B: Facts/benefits angle\n- Version C: Humor/casual angle\n\nEach should have emojis and hashtags. Separate each version with "---VERSION---".\n\nReturn ONLY the 3 versions, no extra text.';
+
+    var result = await generateTextWithFallback(prompt, industry + ' business');
+    _abVersions = result.split('---VERSION---').map(function(v) { return v.trim(); }).filter(Boolean);
+
+    if (_abVersions.length < 3) {
+      // Try splitting by double newline if marker not found
+      _abVersions = result.split('\n\n\n').map(function(v) { return v.trim(); }).filter(Boolean).slice(0, 3);
+    }
+
+    // Display versions
+    var container = document.getElementById('ab-versions-container');
+    if (container) {
+      container.style.display = 'block';
+      container.innerHTML = _abVersions.map(function(v, i) {
+        var labels = ['A', 'B', 'C'];
+        var angles = ['Emotional', 'Facts', 'Casual'];
+        return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+          '<span style="background:var(--accent);color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Version ' + labels[i] + ' — ' + angles[i] + '</span>' +
+          '<div style="display:flex;gap:8px;">' +
+          '<button onclick="useABVersion(' + i + ')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Use This ✓</button>' +
+          '<button onclick="copyABVersion(' + i + ')" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Copy</button>' +
+          '</div></div>' +
+          '<div style="font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;">' + v + '</div>' +
+          '</div>';
+      }).join('');
+    }
+    showToast('✅ 3 versions ready! Pick the best one.', 'success');
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Generate 3 Versions'; }
+  }
+}
+
+function useABVersion(idx) {
+  var v = _abVersions[idx];
+  if (!v) return;
+  var pc = document.getElementById('post-content');
+  if (pc) pc.value = v;
+  showPage('compose');
+  showToast('✅ Version loaded in Compose!', 'success');
+}
+
+function copyABVersion(idx) {
+  var v = _abVersions[idx];
+  if (!v) return;
+  navigator.clipboard.writeText(v).then(function() {
+    showToast('✅ Copied!', 'success');
+  }).catch(function() {
+    showToast('Copy failed — try manually', 'error');
+  });
+}
+
+// ── FEATURE 4: COMPETITOR ANALYZER ────────────────────────────────
+async function analyzeCompetitor() {
+  var postEl = document.getElementById('competitor-post');
+  var post   = postEl ? postEl.value.trim() : '';
+  if (!post) { showToast('Paste a competitor post first!', 'error'); return; }
+
+  var btn = document.getElementById('competitor-analyze-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '🔍 Analyzing...'; }
+
+  try {
+    var biz      = (_bizProfile && _bizProfile.name) || 'my business';
+    var prompt   = 'Analyze this competitor social media post and create a BETTER version for ' + biz + ':\n\n---COMPETITOR POST---\n' + post + '\n---END---\n\nFirst, in 2 sentences explain what makes this post work (or not work).\nThen write a BETTER version that:\n- Has more emotional pull\n- Better call-to-action\n- More engaging opening line\n- Better hashtags\n\nFormat:\nANALYSIS: [your 2-sentence analysis]\n\nBETTER VERSION:\n[the improved post]';
+
+    var result = await generateTextWithFallback(prompt);
+
+    var output = document.getElementById('competitor-output');
+    if (output) {
+      output.style.display = 'block';
+
+      var analysisPart = '', betterPart = '';
+      var parts = result.split('BETTER VERSION:');
+      if (parts.length >= 2) {
+        analysisPart = parts[0].replace('ANALYSIS:', '').trim();
+        betterPart   = parts[1].trim();
+      } else {
+        betterPart = result;
+      }
+
+      output.innerHTML =
+        (analysisPart ? '<div style="background:rgba(168,85,247,0.1);border-left:3px solid var(--accent);padding:12px;border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--sub);">' +
+        '💡 <strong style="color:var(--text)">Analysis:</strong> ' + analysisPart + '</div>' : '') +
+        '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        '<span style="color:var(--accent);font-weight:700;font-size:13px;">⬆️ Your Better Version</span>' +
+        '<div style="display:flex;gap:8px;">' +
+        '<button onclick="useCompetitorResult()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Use This ✓</button>' +
+        '<button onclick="navigator.clipboard.writeText(document.getElementById(\'comp-better-text\').textContent).then(function(){showToast(\'Copied!\',\'success\')})" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Copy</button>' +
+        '</div></div>' +
+        '<div id="comp-better-text" style="font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;">' + betterPart + '</div>' +
+        '</div>';
+    }
+    showToast('✅ Better version ready!', 'success');
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔍 Analyze & Improve'; }
+  }
+}
+
+function useCompetitorResult() {
+  var el = document.getElementById('comp-better-text');
+  if (!el) return;
+  var pc = document.getElementById('post-content');
+  if (pc) pc.value = el.textContent;
+  showPage('compose');
+  showToast('✅ Loaded in Compose!', 'success');
+}
+
+
+
+function switchAITab(tab) {
+  ['voice','image','ab','competitor'].forEach(function(t) {
+    var panel = document.getElementById('aitool-' + t);
+    var btn   = document.getElementById('aitab-' + t);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--accent)' : 'var(--bg3)';
+      btn.style.color      = t === tab ? '#fff' : 'var(--text)';
+      btn.style.border     = t === tab ? '1px solid var(--accent)' : '1px solid var(--border)';
+    }
+  });
+}
+
 </script>
 </body>
 </html>
