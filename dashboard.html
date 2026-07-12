@@ -10027,7 +10027,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       function slideUp(fr,dur){ var t=easeOut(clamp(fr/dur,0,1)); return {a:t,y:(1-t)*22}; }
 
       function drawMesh(alpha) {
-        // Solid base — crisp, never blurry
+        // Solid base — always fill so crossfade compositing works cleanly
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0,0,W,H);
 
@@ -10416,14 +10416,113 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         }
       }
 
+      // Crossfade between scenes — no black flash
+      var XFADE = Math.round(FPS * 0.5); // 0.5s crossfade
+
+      // Offscreen canvas for compositing
+      var offA = document.createElement('canvas');
+      offA.width = W; offA.height = H;
+      var ctxA = offA.getContext('2d');
+
+      var offB = document.createElement('canvas');
+      offB.width = W; offB.height = H;
+      var ctxB = offB.getContext('2d');
+
+      function drawSceneToCtx(targetCtx, sceneFrame) {
+        var saved = ctx;
+        // Temporarily redirect drawing to target context
+        // We do this by drawing into the target ctx directly
+        targetCtx.clearRect(0,0,W,H);
+        // Save main ctx state
+        var savedTransform = ctx.getTransform ? ctx.getTransform() : null;
+        // Draw scene onto targetCtx
+        // Since drawSX uses the outer `ctx`, we swap it temporarily
+        var _ctx = ctx;
+        // eslint-disable-next-line no-global-assign
+        ctx = targetCtx;
+        if(sceneFrame.scene === 1) drawS1(sceneFrame.f);
+        else if(sceneFrame.scene === 2) drawS2(sceneFrame.f);
+        else if(sceneFrame.scene === 3) drawS3(sceneFrame.f);
+        else if(sceneFrame.scene === 4) drawS4(sceneFrame.f);
+        else drawS5(sceneFrame.f);
+        ctx = _ctx;
+      }
+
       function renderFrame() {
         if(frame>totalFrames){ resolve(); return; }
+
+        // Determine current and next scene + their local frames
+        var curScene, curF, nextScene, nextF, xfadeT = 0;
+
+        if(frame <= S1e) {
+          curScene=1; curF=frame;
+          if(frame > S1e-XFADE && S2e > S1e) {
+            nextScene=2; nextF=frame-(S1e-XFADE);
+            xfadeT = (frame-(S1e-XFADE))/XFADE;
+          }
+        } else if(frame <= S2e) {
+          curScene=2; curF=frame-S1e;
+          if(frame > S2e-XFADE) {
+            nextScene=3; nextF=frame-(S2e-XFADE);
+            xfadeT = (frame-(S2e-XFADE))/XFADE;
+          }
+        } else if(frame <= S3e) {
+          curScene=3; curF=frame-S2e;
+          if(frame > S3e-XFADE) {
+            nextScene=4; nextF=frame-(S3e-XFADE);
+            xfadeT = (frame-(S3e-XFADE))/XFADE;
+          }
+        } else if(frame <= S4e) {
+          curScene=4; curF=frame-S3e;
+          if(frame > S4e-XFADE) {
+            nextScene=5; nextF=frame-(S4e-XFADE);
+            xfadeT = (frame-(S4e-XFADE))/XFADE;
+          }
+        } else {
+          curScene=5; curF=frame-S4e;
+        }
+
+        // Clamp xfadeT
+        xfadeT = Math.min(1, Math.max(0, xfadeT));
+
         ctx.clearRect(0,0,W,H);
-        if(frame<=S1e) drawS1(frame);
-        else if(frame<=S2e) drawS2(frame-S1e);
-        else if(frame<=S3e) drawS3(frame-S2e);
-        else if(frame<=S4e) drawS4(frame-S3e);
-        else drawS5(frame-S4e);
+
+        if(xfadeT > 0 && nextScene) {
+          // Draw current scene into offA
+          var _ctx = ctx; ctx = ctxA;
+          ctxA.clearRect(0,0,W,H);
+          if(curScene===1) drawS1(curF);
+          else if(curScene===2) drawS2(curF);
+          else if(curScene===3) drawS3(curF);
+          else if(curScene===4) drawS4(curF);
+          else drawS5(curF);
+          ctx = _ctx;
+
+          // Draw next scene into offB
+          ctx = ctxB;
+          ctxB.clearRect(0,0,W,H);
+          if(nextScene===1) drawS1(nextF);
+          else if(nextScene===2) drawS2(nextF);
+          else if(nextScene===3) drawS3(nextF);
+          else if(nextScene===4) drawS4(nextF);
+          else drawS5(nextF);
+          ctx = _ctx;
+
+          // Composite: current fades out, next fades in
+          ctx.globalAlpha = 1 - xfadeT;
+          ctx.drawImage(offA, 0, 0);
+          ctx.globalAlpha = xfadeT;
+          ctx.drawImage(offB, 0, 0);
+          ctx.globalAlpha = 1;
+        } else {
+          // No crossfade — draw directly
+          if(curScene===1) drawS1(curF);
+          else if(curScene===2) drawS2(curF);
+          else if(curScene===3) drawS3(curF);
+          else if(curScene===4) drawS4(curF);
+          else drawS5(curF);
+        }
+
         drawProg(frame);
         frame++;
         if(onProgress) onProgress(frame/totalFrames,frame,totalFrames);
