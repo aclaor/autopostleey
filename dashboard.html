@@ -9724,6 +9724,7 @@ function getVadFloatingInfo() {
 <script>
 // ── VIDEO AD MAKER ──────────────────────────────────────────
 var _vadTheme = 'aurora';
+var _vadBgPhotoUrl = null;
 var _vadFormat = 'square';
 var _vadBlob = null;
 var _vadRecorder = null;
@@ -10407,7 +10408,7 @@ function resetDownloadBtn(btn) {
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
-function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, thumbUrl, floatingInfo, onProgress, vadBackground) {
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, bgPhotoUrl, floatingInfo, onProgress, vadBackground) {
   return new Promise(function(resolve, reject) {
     var W = canvas.width / 2, H = canvas.height / 2; // logical size (canvas is 2x for retina
     var ctx = canvas.getContext('2d');
@@ -11236,8 +11237,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       productImg.onerror = tryStart;
       productImg.src = productImageUrl;
     }
-    // Load bgImg from photoUrl OR from thumbUrl (user's uploaded photo)
-    var bgImgSrc = c.photoUrl || (thumbUrl && vadBackground && vadBackground.mode === 'photo' ? thumbUrl : '');
+    // Load bgImg: user's background photo takes priority over theme photo
+    var bgImgSrc = (vadBackground && vadBackground.mode === 'photo' && bgPhotoUrl) ? bgPhotoUrl : (c.photoUrl || '');
     if (bgImgSrc) {
       imagesToLoad++;
       bgImg = new Image();
@@ -11301,7 +11302,7 @@ async function downloadVadVideo() {
     recorder.start(100);
 
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
-      thumbUrl||_vadProductImageUrl||'', benefits, website, problems, music, thumbUrl, floatingInfo, vadBackground,
+      _vadProductImageUrl||'', benefits, website, problems, music, _vadBgPhotoUrl||thumbUrl||'', floatingInfo, vadBackground,
       function(progress){
         setVadProgressBar(5+Math.round(progress*80));
         setVadProgressText('Recording... '+Math.round(progress*33)+'s / 33s');
@@ -11554,23 +11555,38 @@ var _vadThumbnailUrl = '';
 async function uploadVadThumbnail(input) {
   var file = input.files[0];
   if (!file) return;
-  showToast('Uploading thumbnail...', 'success');
+  showToast('Uploading photo...', 'success');
   try {
-    var url = await uploadFileToR2(file, 'video-ads');
-    if (url) {
-      _vadThumbnailUrl = url;
-      var img = document.getElementById('vad-thumb-img');
-      var preview = document.getElementById('vad-thumb-preview');
-      var drop = document.getElementById('vad-thumb-drop');
-      if (img) img.src = url;
-      if (preview) preview.style.display = 'block';
-      if (drop) drop.style.display = 'none';
-      showToast('✅ Thumbnail uploaded!', 'success');
-    }
+    // Use FileReader to get local URL immediately for preview + canvas
+    var localUrl = await new Promise(function(res) {
+      var reader = new FileReader();
+      reader.onload = function(e) { res(e.target.result); };
+      reader.readAsDataURL(file);
+    });
+
+    // Set as background photo URL (local data URL works in canvas)
+    _vadBgPhotoUrl = localUrl;
+    _vadThumbnailUrl = localUrl; // also keep for compatibility
+
+    // Show preview
+    var img = document.getElementById('vad-thumb-img');
+    var preview = document.getElementById('vad-thumb-preview');
+    var drop = document.getElementById('vad-thumb-drop');
+    if (img) img.src = localUrl;
+    if (preview) preview.style.display = 'block';
+    if (drop) drop.style.display = 'none';
+    showToast('✅ Photo ready! It will fill your video background.', 'success');
+
+    // Also upload to R2 in background for permanent URL
+    try {
+      var r2url = await uploadFileToR2(file, 'video-ads');
+      if (r2url) { _vadBgPhotoUrl = r2url; _vadThumbnailUrl = r2url; }
+    } catch(e) { /* local URL still works */ }
   } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
 }
 
 function clearVadThumbnail() {
+  _vadBgPhotoUrl = null;
   _vadThumbnailUrl = '';
   var img = document.getElementById('vad-thumb-img');
   var preview = document.getElementById('vad-thumb-preview');
