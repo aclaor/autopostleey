@@ -11474,104 +11474,91 @@ var _GROQ_KEY   = '';
 async function generateTextWithFallback(prompt, context) {
   context = context || '';
 
-  // 1st: Groq (free, fast)
-  try {
-    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _GROQ_KEY },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 500,
-        messages: [
-          { role: 'system', content: 'You are an expert social media marketer for Filipino small businesses. Be concise and compelling.' + (context ? ' Context: ' + context : '') },
-          { role: 'user', content: prompt }
-        ]
-      })
-    });
-    if (r.ok) {
-      var d = await r.json();
-      if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
-    }
-  } catch(e) { console.warn('[Groq failed]', e.message); }
+  // 1st: Try Groq directly if key is loaded
+  if (_GROQ_KEY) {
+    try {
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _GROQ_KEY },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile', max_tokens: 500,
+          messages: [
+            { role: 'system', content: 'You are an expert social media marketer for Filipino small businesses.' + (context ? ' Context: ' + context : '') },
+            { role: 'user', content: prompt }
+          ]
+        })
+      });
+      if (r.ok) {
+        var d = await r.json();
+        if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+      }
+    } catch(e) { console.warn('[Groq direct failed]', e.message); }
+  }
 
-  // 2nd: Claude Worker fallback
+  // 2nd: Cloudflare Worker (handles Groq + CF AI + Gemini server-side)
   try {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var r2 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate', {
+    var workerPrompt = prompt + (context ? '\n\nContext: ' + context : '');
+    var r2 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate-caption', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ prompt: prompt, context: context })
+      body: JSON.stringify({ prompt: workerPrompt })
     });
     if (r2.ok) {
       var d2 = await r2.json();
-      return (d2.text || d2.content || '').trim();
+      var text = d2.post || d2.text || d2.content || '';
+      if (text) return text.trim();
     }
-  } catch(e) { console.warn('[Claude fallback failed]', e.message); }
+  } catch(e) { console.warn('[Worker fallback failed]', e.message); }
 
-  throw new Error('All AI services unavailable. Please try again.');
+  throw new Error('AI unavailable. Please check your connection and try again.');
 }
 
 // ── SHARED: Image description with fallback chain ──────────────────
 // Chain: Gemini Flash (free vision) → Groq (text only) → Claude Worker
 async function describeImageWithFallback(base64Data, mimeType, extraPrompt) {
-  extraPrompt = extraPrompt || 'Describe this product image for a social media ad. Include what the product is, its key features, and who would want it.';
+  extraPrompt = extraPrompt || 'Describe this product image for a social media ad. What is the product, its key features, and who would want it?';
+  mimeType = mimeType || 'image/jpeg';
 
-  // 1st: Gemini Flash (free vision)
-  try {
-    var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + _GEMINI_KEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
+  // 1st: Gemini Flash vision (free, best quality)
+  if (_GEMINI_KEY) {
+    try {
+      var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + _GEMINI_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
             { text: extraPrompt },
             { inline_data: { mime_type: mimeType, data: base64Data } }
-          ]
-        }],
-        generationConfig: { maxOutputTokens: 400 }
-      })
-    });
-    if (r.ok) {
-      var d = await r.json();
-      var text = d.candidates && d.candidates[0] && d.candidates[0].content &&
-                 d.candidates[0].content.parts && d.candidates[0].content.parts[0] &&
-                 d.candidates[0].content.parts[0].text;
-      if (text) return text.trim();
-    }
-  } catch(e) { console.warn('[Gemini vision failed]', e.message); }
+          ]}],
+          generationConfig: { maxOutputTokens: 400 }
+        })
+      });
+      if (r.ok) {
+        var d = await r.json();
+        var text = d.candidates && d.candidates[0] && d.candidates[0].content &&
+                   d.candidates[0].content.parts && d.candidates[0].content.parts[0].text;
+        if (text) return text.trim();
+      }
+    } catch(e) { console.warn('[Gemini vision failed]', e.message); }
+  }
 
-  // 2nd: Groq (no vision — ask user to describe or use filename)
-  try {
-    var r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _GROQ_KEY },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: 'Generate a compelling product ad description for a Filipino small business. Make it exciting and relatable. Keep it under 3 sentences.' }]
-      })
-    });
-    if (r2.ok) {
-      var d2 = await r2.json();
-      if (d2.choices && d2.choices[0]) return d2.choices[0].message.content.trim();
-    }
-  } catch(e) { console.warn('[Groq image fallback failed]', e.message); }
-
-  // 3rd: Claude Worker
+  // 2nd: Worker /analyze-image (uses Groq vision + Gemini server-side)
   try {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var r3 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/generate', {
+    var r2 = await fetch('https://autopostleey-ai.alexclaor.workers.dev/analyze-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ prompt: extraPrompt, image_base64: base64Data, image_mime: mimeType })
+      body: JSON.stringify({ image_base64: base64Data, media_type: mimeType, prompt: extraPrompt })
     });
-    if (r3.ok) {
-      var d3 = await r3.json();
-      return (d3.text || d3.content || '').trim();
+    if (r2.ok) {
+      var d2 = await r2.json();
+      var text2 = d2.post || d2.text || d2.content || '';
+      if (text2) return text2.trim();
     }
-  } catch(e) { console.warn('[Claude image fallback failed]', e.message); }
+  } catch(e) { console.warn('[Worker analyze-image failed]', e.message); }
 
   return 'A great product for Filipino customers. Quality you can trust at an affordable price.';
 }
