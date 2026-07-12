@@ -8966,7 +8966,7 @@ async function postVideoToSelected() {
   showToast('Uploading to Cloudflare R2...','success');
   var videoUrl;
   try { videoUrl = await uploadFileToR2(_reelVideoFile,'videos'); }
-  catch(e) { showToast('Upload failed: '+e.message,'error'); return; }
+  catch(e) { showToast('Upload failed: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='?? Post Video Now';} return; }
   showToast('Publishing to '+checked.join(', ')+'...','success');
   try {
     var sess = await _db.auth.getSession();
@@ -8996,6 +8996,7 @@ async function postVideoToSelected() {
       }}
     if(fail.length) showToast('Failed: '+fail.join(', '),'error');
   } catch(e){showToast('Error: '+e.message,'error');}
+  if(btn){btn.disabled=false;btn.textContent='🚀 Post Video Now';}
 }
 
 
@@ -9837,7 +9838,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +(adMusic ? '<audio id="bg-music" loop style="display:none"><source src="'+(({upbeat:"https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",corporate:"https://assets.mixkit.co/music/preview/mixkit-corporate-business-show-574.mp3",inspiring:"https://assets.mixkit.co/music/preview/mixkit-inspiring-ambiance-529.mp3",relaxed:"https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3",luxury:"https://assets.mixkit.co/music/preview/mixkit-cinematic-mystery-528.mp3",tech:"https://assets.mixkit.co/music/preview/mixkit-future-bass-vibes-959.mp3"})[adMusic]||'')+'" type="audio/mp3"></audio>' : '')
     +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
 
-    +'<script>'
+    +'<scr'+'ipt>'
     +'var TM=[];'
     +'var _bgm=document.getElementById("bg-music");'
     +'if(_bgm){_bgm.volume=0.18;_bgm.play().catch(function(){});}'
@@ -9935,808 +9936,736 @@ function resetDownloadBtn(btn) {
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, thumbUrl, onProgress) {
   return new Promise(function(resolve, reject) {
-    var W = canvas.width, H = canvas.height;
+    var W = canvas.width / 2, H = canvas.height / 2; // logical size (canvas is 2x for retina
     var ctx = canvas.getContext('2d');
     var FPS = 30;
     var TOTAL_MS = 33000;
-
     var icons = ({
-      ecommerce:['🛍️','👗','👟','💎','✨','🛒'],realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
-      automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽'],food:['🍔','🍕','☕','🍜','🍰','🥤'],
-      fitness:['💪','🏋️','🥊','⚡','🏃','🏆'],beauty:['💄','💅','🌸','✨','👑','🌺'],
-      medical:['🏥','💊','🩺','❤️','🩹','🔬'],education:['📚','🎓','✏️','🧠','💡','🔭'],
-      professional:['💼','📊','🤝','⚖️','📈','🏛️'],homeservices:['🔨','🪴','🧹','🔌','🏠','🌿'],
-      technology:['💻','📱','⚡','🚀','🤖','🔮'],travel:['✈️','🌍','🏖️','🗺️','🌅','🧳'],
-      events:['🎉','🎊','📸','🎵','🥂','💐'],pets:['🐶','🐱','🐾','🦮','😺','🦴'],
-      finance:['💰','📈','🏦','💳','🪙','📊'],marketing:['📱','🎯','📊','🚀','📣','💡'],
-      manufacturing:['🏭','⚙️','🔩','🔧','📦','🛠️'],agriculture:['🌾','🚜','🌱','🌻','🐄','🌽'],
-      family:['👶','🧸','🍼','💕','🌈','🦄'],entertainment:['🎮','🎬','🎵','🕹️','🏆','🌟'],
-      nonprofit:['❤️','🤝','🌍','🕊️','⭐','🙏']
-    })[_vadTheme] || ['✨','⭐','🚀','💫','🌟','🎯'];
+      ecommerce:  ['🛍️','👗','👟','💎','✨','🛒'],
+      realestate: ['🏠','🔑','🏡','🏢','📍','🌳'],
+      automotive: ['🚗','🔧','⚙️','🏎️','🛞','⛽'],
+      food:       ['🍔','🍕','☕','🍜','🥗','🍰'],
+      fitness:    ['💪','🏋️','🥊','⚡','🏃','🎯'],
+      beauty:     ['💄','💅','🌸','✨','💋','🦮'],
+      medical:    ['🏥','💊','🩺','❤️','🧬','💉'],
+      education:  ['📚','🎓','✏️','🧠','💡','🔭'],
+      professional:['💼','📊','🤝','⚖️','📋','🏛️'],
+      homeservices:['🔨','🪴','🧹','🔌','🏠','🪟'],
+      technology: ['💻','📱','⚡','🚀','🤖','🔮'],
+      travel:     ['✈️','🌍','🏖️','🗺️','🌅','🧳'],
+      events:     ['🎉','🎊','📸','🎵','🥂','💐'],
+      pets:       ['🐶','🐱','🐾','🦮','🐩','😺'],
+      finance:    ['💰','📈','🏦','💳','🪙','📊'],
+      marketing:  ['📱','🎯','📊','✨','🚀','📣'],
+    }[_vadTheme] || ['✨','🚀','📅','🌐','⚡','💡']);
 
-    // Customer pain points per industry — what their CUSTOMERS struggle with
-    var PAIN_POINTS = {
-      realestate:  ['🔍 Hard to find the right home','💸 Overpriced listings everywhere','😰 Agents don\'t call back','⏰ Wasting weekends viewing'],
-      food:        ['😩 No good food nearby','🚗 Long drives just to eat','📵 No online ordering','😤 Inconsistent quality'],
-      fitness:     ['😓 No motivation alone','❓ Don\'t know where to start','💸 Gym fees too expensive','⏰ No time to workout'],
-      beauty:      ['😩 Hard to find trusted salon','📵 No easy booking','💸 Overpriced services','😤 Bad results before'],
-      medical:     ['😟 Long waiting times','❓ Hard to find the right doctor','💸 Expensive consultations','😰 Unsure who to trust'],
-      education:   ['😤 Boring traditional classes','❓ No personalized guidance','💸 Expensive tuition','😓 Hard to learn at own pace'],
-      automotive:  ['😩 Unreliable mechanics','💸 Hidden charges','⏰ Long repair times','😰 Don\'t know who to trust'],
-      travel:      ['😤 Expensive travel packages','😩 Generic tour experiences','⏰ Wasted vacation time','❓ Unsure what to book'],
-      events:      ['😓 Stressful event planning','💸 Over budget every time','⏰ Too many vendors to manage','😩 Results don\'t match vision'],
-      pets:        ['😟 No trusted groomer nearby','💸 Expensive vet bills','😩 Pet boarding anxiety','⏰ Hard to find pet care'],
-      technology:  ['😤 Slow outdated systems','💸 Too expensive software','😩 No tech support','⏰ Wasting time on manual tasks'],
-      homeservices:['😩 Unreliable contractors','💸 Surprise extra charges','⏰ No-shows & delays','😤 Sloppy workmanship'],
-      finance:     ['😰 Money not working for you','❓ Confusing financial advice','💸 Hidden bank fees','😤 Debt keeps growing'],
-      default:     ['😩 Hard to find quality','💸 Overpriced options','⏰ Wasting time searching','😤 Disappointed before']
-    };
-    var painPoints = PAIN_POINTS[_vadTheme] || PAIN_POINTS.default;
-
-    // Scene 3 — how business solves it
-    var SOLUTIONS = {
-      realestate:   ['Find your dream home fast','Verified affordable listings','Dedicated agent support','Stress-free viewing process'],
-      food:         ['Delicious food, always ready','Fresh ingredients daily','Easy online ordering','Delivered to your door'],
-      fitness:      ['Expert coaches guide you','Flexible class schedules','Affordable membership plans','Real results guaranteed'],
-      beauty:       ['Trusted certified artists','Easy online booking','Premium products used','Look & feel amazing'],
-      medical:      ['Same-day appointments','Expert specialists','Transparent pricing','Caring professional team'],
-      education:    ['Personalized learning plans','Expert tutors & coaches','Flexible online classes','Proven results'],
-      automotive:   ['Certified mechanics','Transparent pricing','Fast turnaround time','Quality guaranteed'],
-      travel:       ['Curated unique experiences','Best price guarantee','Expert local guides','Stress-free planning'],
-      events:       ['Full event management','On budget every time','One point of contact','Your vision, realized'],
-      pets:         ['Certified pet care experts','Affordable packages','Your pet treated like family','Peace of mind always'],
-      technology:   ['Modern tech solutions','Budget-friendly plans','24/7 support included','Fast implementation'],
-      homeservices: ['Licensed & insured team','Upfront transparent pricing','On time every time','Quality workmanship'],
-      finance:      ['Grow your money smartly','Clear honest advice','Low fees, high returns','Financial freedom awaits'],
-      default:      ['Premium quality service','Best price guaranteed','Expert team ready','Your satisfaction first']
-    };
-    var solutions = SOLUTIONS[_vadTheme] || SOLUTIONS.default;
-
-    // Use customer benefits if they filled them in
-    var displayBenefits = (benefits && benefits.length >= 2)
-      ? benefits.map(function(b){ return b.text; })
-      : solutions;
-    var displayBenefitIcons = (benefits && benefits.length >= 2)
-      ? benefits.map(function(b){ return b.icon; })
-      : ['✅','✅','✅','✅'];
-    var displayProblems = (problems && problems.length >= 2) ? problems : painPoints;
-    var heroImageUrl = thumbUrl || productImageUrl;
-
-    var displayBenefitIcons = (benefits && benefits.length >= 2)
-      ? benefits.map(function(b){ return b.icon; })
-      : ['✅','✅','✅','✅'];
-
-    var _ws = (website||'').trim().replace(/^https?:\/\//,'').replace(/\/$/,''); var siteUrl = _ws || (biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com');
-
-    // Image preloading
-    var productImg = null, bgImg = null;
-    var loaded = 0, toLoad = 0;
-
+      // Draw floating icons
     function startRender() {
-      // Crisp rendering — critical for sharp downloaded video
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.textRendering = 'geometricPrecision';
       var frame = 0;
-      var totalFrames = Math.ceil((TOTAL_MS/1000)*FPS);
-      // Scene timing
-      var S1e = 7*FPS, S2e = 14*FPS, S3e = 21*FPS, S4e = 27*FPS;
+      var totalFrames = Math.ceil((TOTAL_MS / 1000) * FPS);
 
-      function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-      function easeOut(t){ return 1-Math.pow(1-clamp(t,0,1),3); }
-      function slideUp(fr,dur){ var t=easeOut(clamp(fr/dur,0,1)); return {a:t,y:(1-t)*22}; }
+      // Scene timing in frames
+      var S1_END = 7 * FPS;    // 0-7s
+      var S2_END = 14 * FPS;   // 7-14s
+      var S3_END = 23 * FPS;   // 14-23s
+      var S4_END = 27.5 * FPS; // 23-27.5s
 
-      function drawMesh(alpha) {
-        // Solid base — crisp, never blurry
-        ctx.fillStyle = c.bg || '#08061a';
-        ctx.fillRect(0,0,W,H);
+      var captionChars = caption.split('');
 
-        ctx.globalAlpha = alpha||1;
-        // Small, tight accent blobs — accent only, no blur needed
-        (c.meshes||[]).forEach(function(m,mi){
-          var gx=(m.x/100)*W, gy=(m.y/100)*H;
-          // Smaller radius = crisper, less muddy
-          var gr = Math.min((m.w/100)*W,(m.h/100)*H) * 0.38;
-          var g = ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
-          var col = m.color.replace('rgba(','').replace(')','').split(',');
-          var r=col[0],g2=col[1],b=col[2];
-          var a = parseFloat(col[3]||0.3) * 0.7; // reduce opacity for subtlety
-          g.addColorStop(0, 'rgba('+r+','+g2+','+b+','+a+')');
-          g.addColorStop(0.5,'rgba('+r+','+g2+','+b+','+(a*0.4)+')');
-          g.addColorStop(1, 'rgba('+r+','+g2+','+b+',0)');
-          ctx.fillStyle = g;
+      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+      function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
+      function slideUp(fr, dur) {
+        var t = clamp(fr / dur, 0, 1);
+        return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
+      }
+
+      function drawMesh() {
+        (c.meshes || []).forEach(function(m) {
+          var gx = (m.x / 100) * W;
+          var gy = (m.y / 100) * H;
+          var gr = Math.max((m.w / 100) * W, (m.h / 100) * H) * 0.6;
+          var grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+          grad.addColorStop(0, m.color);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.ellipse(gx,gy,gr*0.9,gr*0.75,mi*0.5,0,Math.PI*2);
+          ctx.ellipse(gx, gy, (m.w/100)*W*0.5, (m.h/100)*H*0.5, 0, 0, Math.PI*2);
           ctx.fill();
         });
-        // Very subtle vignette — just a hint of depth
-        var vig = ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.75);
-        vig.addColorStop(0,'rgba(0,0,0,0)');
-        vig.addColorStop(1,'rgba(0,0,0,0.15)');
-        ctx.fillStyle = vig;
-        ctx.fillRect(0,0,W,H);
-        ctx.globalAlpha = 1;
       }
 
-      function drawFloatIcons(a, foff) {
-        var pos=[{x:.07,y:.11},{x:.88,y:.17},{x:.05,y:.42},{x:.90,y:.47},{x:.07,y:.70},{x:.87,y:.73}];
-        ctx.globalAlpha=a*0.3;
-        ctx.font='24px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        icons.slice(0,6).forEach(function(ic,i){
-          var p=pos[i], bob=Math.sin((foff/FPS+i*0.4)*Math.PI*2*0.5)*7;
-          ctx.fillText(ic,p.x*W,p.y*H+bob);
-        });
-        ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
-      }
-
-      function glass(x,y,w,h,r){
-        var rad = r||10;
-        ctx.beginPath();
-        // Manual rounded rect for max browser compat
-        ctx.moveTo(x+rad,y);
-        ctx.lineTo(x+w-rad,y); ctx.arcTo(x+w,y,x+w,y+rad,rad);
-        ctx.lineTo(x+w,y+h-rad); ctx.arcTo(x+w,y+h,x+w-rad,y+h,rad);
-        ctx.lineTo(x+rad,y+h); ctx.arcTo(x,y+h,x,y+h-rad,rad);
-        ctx.lineTo(x,y+rad); ctx.arcTo(x,y,x+rad,y,rad);
-        ctx.closePath();
-        // Solid fill — more opaque so it reads clearly in video
-        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.10)';
-        ctx.fill();
-        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.18)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-      // Draw a row: icon on left, text on right — perfectly aligned
-      function row(ico, txt, x, y, w, h, textColor, fontSize) {
-        var fs = fontSize || 13;
-        var mid = y + h/2;
-        // Icon
-        ctx.font = (fs+4) + 'px serif';
-        ctx.textAlign = 'left';
+      function drawFloatingIcons(alpha, frameInScene) {
+        var positions = [
+          {x:0.08,y:0.12},{x:0.88,y:0.18},{x:0.05,y:0.42},{x:0.90,y:0.48},
+          {x:0.07,y:0.70},{x:0.87,y:0.72},{x:0.15,y:0.86},{x:0.82,y:0.84}
+        ];
+        ctx.globalAlpha = alpha * 0.28;
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(ico, x+10, mid);
-        // Text — same middle baseline
-        ctx.font = 'bold ' + fs + 'px Inter,sans-serif';
-        ctx.fillStyle = textColor || c.text;
-        ctx.fillText(txt, x+36, mid);
+        icons.forEach(function(ic, i) {
+          if (i >= positions.length) return;
+          var p = positions[i];
+          var bobY = Math.sin((frameInScene / FPS) * (0.7 + i * 0.15) * Math.PI * 2) * 6;
+          ctx.fillText(ic, p.x * W, p.y * H + bobY);
+        });
+        ctx.globalAlpha = 1;
         ctx.textBaseline = 'alphabetic';
       }
 
-      function text(str,x,y,font,color,a,oy){
-        ctx.globalAlpha=clamp(a,0,1); ctx.fillStyle=color; ctx.font=font;
-        ctx.textAlign='center'; ctx.fillText(str,x,y+(oy||0)); ctx.globalAlpha=1;
+      // Draw glass card
+      function drawGlass(x, y, w, h, r) {
+        r = r || 12;
+        ctx.beginPath();
+        ctx.roundRect(ctx.roundRect ? x : x, y, w, h, r);
+        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.07)';
+        ctx.fill();
+        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
 
-      function wrapText(str, x, y, maxW, lineH) {
-        var words=str.split(' '), line='';
-        words.forEach(function(w){
-          var test=line+(line?' ':'')+w;
-          if(ctx.measureText(test).width>maxW&&line){ ctx.fillText(line,x,y); line=w; y+=lineH; }
-          else line=test;
-        });
-        if(line) ctx.fillText(line,x,y);
-        return y;
+      // Draw text with slide-up
+      function drawText(text, x, y, font, color, alpha, offsetY) {
+        ctx.globalAlpha = clamp(alpha, 0, 1);
+        ctx.fillStyle = color;
+        ctx.font = font;
+        ctx.textAlign = 'center';
+        ctx.fillText(text, x, y + (offsetY || 0));
+        ctx.globalAlpha = 1;
       }
 
-      function badge(str,cx,cy,a){
-        if(a<=0)return;
-        ctx.globalAlpha=clamp(a,0,1);
-        var m=ctx.measureText(str); var bw=m.width+36,bh=28;
-        glass(cx-bw/2,cy-bh/2,bw,bh,14);
-        ctx.fillStyle=c.accent; ctx.font='bold 11px Inter,sans-serif';
-        ctx.textAlign='center'; ctx.fillText(str,cx,cy+4);
-        ctx.globalAlpha=1;
+      // Draw pill badge
+      function drawBadge(text, cx, cy, alpha) {
+        if (alpha <= 0) return;
+        ctx.globalAlpha = clamp(alpha, 0, 1);
+        var metrics = ctx.measureText(text);
+        var bw = metrics.width + 40, bh = 28;
+        var bx = cx - bw/2, by = cy - bh/2;
+        drawGlass(bx, by, bw, bh, 14);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, cx, cy + 4);
+        ctx.globalAlpha = 1;
       }
 
-      function drawProg(f){ var p=f/totalFrames; ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,H-3,W,3); ctx.fillStyle=c.accent; ctx.fillRect(0,H-3,W*p,3); }
-
-      // ── SCENE 1: YOUR BUSINESS HERO ──────────────────────
+      // ── SCENE RENDERERS ────────────────────────────────────
       function drawS1(f) {
-        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
-        // Photo bg
-        drawMesh(1); // solid base + blobs
-        if(bgImg){
-          // Photo very subtle, on top of solid base
-          ctx.globalAlpha=clamp(f/(FPS*1.5),0,0.15);
-          ctx.drawImage(bgImg,0,0,W,H);
-          ctx.globalAlpha=1;
-          // Strong overlay to keep it clean
-          var g=ctx.createLinearGradient(0,0,0,H);
-          g.addColorStop(0,c.bg+'ee');g.addColorStop(.4,c.bg+'99');g.addColorStop(1,c.bg+'ee');
-          ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+        var t = f / S1_END;
+        // BG + mesh
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+          ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
+          ctx.drawImage(bgImg, 0, 0, W, H);
+          ctx.globalAlpha = 1;
+          // Dark overlay
+          var grad = ctx.createLinearGradient(0, 0, 0, H);
+          grad.addColorStop(0, c.bg + 'cc');
+          grad.addColorStop(0.5, c.bg + '66');
+          grad.addColorStop(1, c.bg + 'cc');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
         }
-        drawFloatIcons(clamp(f/(FPS*.6),0,1),f);
+        drawMesh();
+        drawFloatingIcons(clamp(f / (FPS * 0.5), 0, 1), f);
 
-        // Hero product image or emoji
-        var ha=easeOut(clamp((f-3)/(FPS*.9),0,1));
-        var hs=0.4+easeOut(clamp((f-3)/(FPS*.9),0,1))*0.6;
-        if(ha>0){
-          ctx.globalAlpha=ha; ctx.save(); ctx.translate(W/2,H*.25); ctx.scale(hs,hs);
-          if(heroImageUrl && (productImg || thumbUrl)){
-            var sz=W>500?180:140;
-            ctx.beginPath(); ctx.roundRect(-sz/2,-sz/2,sz,sz,18); ctx.clip();
-            ctx.imageSmoothingEnabled=true;
-            ctx.imageSmoothingQuality='high';
-            ctx.drawImage(productImg,-sz/2,-sz/2,sz,sz);
+        // Hero visual
+        var heroAlpha = easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1));
+        var heroScale = 0.5 + easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1)) * 0.5;
+        if (heroAlpha > 0) {
+          ctx.globalAlpha = heroAlpha;
+          ctx.save();
+          ctx.translate(W/2, H * 0.26);
+          ctx.scale(heroScale, heroScale);
+          if (productImg && productImg.complete && productImg.naturalWidth > 0) {
+            var sz = W > 500 ? 180 : 140;
+            ctx.beginPath();
+            ctx.roundRect(-sz/2, -sz/2, sz, sz, 18);
+            ctx.clip();
+            ctx.drawImage(productImg, -sz/2, -sz/2, sz, sz);
           } else {
-            ctx.font=(W>500?90:68)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillText(emoji||'✨',0,0); ctx.textBaseline='alphabetic';
+            ctx.font = (W > 500 ? 88 : 66) + 'px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji || '✨', 0, 0);
+            ctx.textBaseline = 'alphabetic';
           }
-          ctx.restore(); ctx.globalAlpha=1;
+          ctx.restore();
+          ctx.globalAlpha = 1;
         }
 
-        var cy=H*.56;
-        // Business name badge
-        var su=slideUp(f-FPS*.9,FPS*.55);
-        badge('● '+biz.toUpperCase(),W/2,cy-18,su.a);
+        var centerY = H * 0.53;
+        var su;
 
-        // Tagline — BIG
-        su=slideUp(f-FPS*1.15,FPS*.6);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.textAlign='center';
-        ctx.font='bold '+(W>500?48:34)+'px Inter,sans-serif';
-        var tl=tagline||product||biz;
-        if(ctx.measureText(tl).width>W*.85){
-          var ws=tl.split(' '), mid=Math.ceil(ws.length/2);
-          ctx.fillText(ws.slice(0,mid).join(' '),W/2,cy+22+su.y);
-          ctx.fillText(ws.slice(mid).join(' '),W/2,cy+22+su.y+(W>500?50:36));
+        // Brand badge
+        su = slideUp(f - FPS*0.9, FPS*0.55);
+        drawBadge('● ' + (biz || '').toUpperCase(), W/2, centerY - 20, su.alpha);
+
+        // Main headline
+        su = slideUp(f - FPS*1.15, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W > 500 ? 46 : 32) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        var hl = tagline || product || 'Your Product';
+        // Word wrap if too long
+        if (ctx.measureText(hl).width > W * 0.85) {
+          var words = hl.split(' ');
+          var mid = Math.ceil(words.length / 2);
+          ctx.fillText(words.slice(0, mid).join(' '), W/2, centerY + 24 + su.y);
+          ctx.fillText(words.slice(mid).join(' '), W/2, centerY + 24 + su.y + (W>500?52:38));
         } else {
-          ctx.fillText(tl,W/2,cy+22+su.y);
+          ctx.fillText(hl, W/2, centerY + 24 + su.y);
         }
-        ctx.globalAlpha=1;
+        ctx.globalAlpha = 1;
 
-        // Sub — what they do
-        su=slideUp(f-FPS*1.45,FPS*.5);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.sub; ctx.font='14px Inter,sans-serif'; ctx.textAlign='center';
-        ctx.fillText(product||'Quality service you can trust',W/2,cy+78+su.y);
-        ctx.globalAlpha=1;
+        // Sub
+        su = slideUp(f - FPS*1.45, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Post everywhere. In one click.', W/2, centerY + 80 + su.y);
+        ctx.globalAlpha = 1;
 
-        // Website badge
-        su=slideUp(f-FPS*1.75,FPS*.5);
-        badge('🌐 '+siteUrl,W/2,cy+112+su.y,su.a);
+        // URL badge
+        su = slideUp(f - FPS*1.75, FPS*0.5);
+        drawBadge((website||'autopostleey.com'), W/2, centerY + 114 + su.y, su.alpha);
       }
 
-      // ── SCENE 2: CUSTOMER PAIN / PROBLEM ─────────────────
       function drawS2(f) {
-        drawMesh(1); // fills solid bg + accent blobs
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
 
-        var su=slideUp(f-FPS*.05,FPS*.55);
-        // "FEELING THIS?" eyebrow
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
-        ctx.textAlign='center'; ctx.letterSpacing='4px';
-        ctx.fillText('DOES THIS SOUND FAMILIAR?',W/2,H*.1+su.y);
-        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
-
-        // Big pain emoji
-        su=slideUp(f-FPS*.2,FPS*.6);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.font='50px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('😩',W/2,H*.22+su.y);
-        ctx.textBaseline='alphabetic'; ctx.globalAlpha=1;
-
-        // Pain headline
-        su=slideUp(f-FPS*.45,FPS*.6);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?34:24)+'px Inter,sans-serif';
-        ctx.textAlign='center';
-        ctx.fillText('You deserve better.',W/2,H*.34+su.y);
-        ctx.globalAlpha=1;
-
-        // Pain points — full width rows, icon+text aligned via row()
-        var cpH=52, cpY0=H*.42;
-        displayProblems.slice(0,4).forEach(function(pt,i){
-          var ia=clamp((f-FPS*.65-i*FPS*.15)/(FPS*.4),0,1);
-          if(ia<=0)return;
-          var cy2=cpY0+i*(cpH+6);
-          ctx.globalAlpha=ia;
-          glass(12,cy2,W-24,cpH,10);
-          var pp=pt.match(/^(\S+)\s(.+)$/);
-          if(pp){ row(pp[1], pp[2], 12, cy2, W-24, cpH, c.text, 13); }
-          else { row('', pt, 12, cy2, W-24, cpH, c.text, 13); }
-          ctx.globalAlpha=1;
-        });
-
-        // Sub line
-        su=slideUp(f-FPS*1.4,FPS*.5);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.sub; ctx.font='13px Inter,sans-serif'; ctx.textAlign='center';
-        ctx.fillText('There is a better way →',W/2,H*.88+su.y);
-        ctx.globalAlpha=1;
-      }
-
-      // ── SCENE 3: INTRODUCING + PROBLEMS SOLVED ──────────
-      function drawS3(f) {
-        drawMesh(1);
-
-        var su=slideUp(f-FPS*.05,FPS*.5);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
-        ctx.textAlign='center'; ctx.letterSpacing='3px';
-        ctx.fillText('INTRODUCING '+biz.toUpperCase(),W/2,H*.08+su.y);
-        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
-
-        su=slideUp(f-FPS*.22,FPS*.55);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?30:22)+'px Inter,sans-serif';
-        ctx.textAlign='center';
-        ctx.fillText('We fix exactly',W/2,H*.19+su.y);
-        ctx.fillStyle=c.accent;
-        ctx.fillText('that.',W/2,H*.19+(W>500?38:28)+su.y);
-        ctx.globalAlpha=1;
-
-        // Problems solved — full width, icon+text perfectly aligned
-        var rowH=50, listY=H*.33;
-        displayProblems.slice(0,4).forEach(function(pt,i){
-          var ia=clamp((f-FPS*.42-i*FPS*.16)/(FPS*.4),0,1);
-          if(ia<=0)return;
-          var ry=listY+i*(rowH+6);
-          ctx.globalAlpha=ia;
-          glass(12,ry,W-24,rowH,10);
-          var solved=pt.replace(/^[^a-zA-Z]+/,'').trim();
-          row('✅', solved, 12, ry, W-24, rowH, c.text, 13);
-          ctx.globalAlpha=1;
-        });
-
-        // Caption
-        var capStart=FPS*1.3;
-        var capA=clamp((f-capStart)/(FPS*.4),0,1);
-        if(capA>0){
-          var capY=H*.79;
-          ctx.globalAlpha=capA;
-          glass(12,capY,W-24,H*.15,12);
-          ctx.fillStyle=c.sub; ctx.font='bold 8px Inter,sans-serif'; ctx.textAlign='left';
-          ctx.fillText('YOUR CAPTION',24,capY+13);
-          ctx.fillStyle=c.text; ctx.font='11px Inter,sans-serif';
-          var chars=Math.floor(clamp((f-capStart-FPS*.25)/(FPS*0.025),0,caption.length));
-          var shown=caption.slice(0,chars);
-          wrapText(shown,W/2,capY+28,W-48,15);
-          if(chars<caption.length&&Math.floor(f/(FPS*.4))%2===0){
-            ctx.fillStyle=c.accent;
-            ctx.fillRect(24+ctx.measureText(shown.split('\n').pop()||'').width+2,capY+17,2,12);
-          }
-          ctx.globalAlpha=1;
-        }
-      }
-
-      // ── SCENE 4: BUSINESS HIGHLIGHTS ─────────────────────
-      function drawS4(f) {
-        drawMesh(1);
-
-        var su=slideUp(f-FPS*.05,FPS*.5);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
-        ctx.textAlign='center'; ctx.letterSpacing='4px';
-        ctx.fillText('WHY CHOOSE US',W/2,H*.08+su.y);
-        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
-
-        su=slideUp(f-FPS*.25,FPS*.55);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?28:20)+'px Inter,sans-serif';
-        ctx.textAlign='center';
-        ctx.fillText('What makes',W/2,H*.19+su.y);
-        ctx.fillStyle=c.accent;
-        ctx.fillText(biz+' special',W/2,H*.19+(W>500?36:28)+su.y);
-        ctx.globalAlpha=1;
-
-        // 2x2 benefit grid — row() keeps icon+text aligned
-        var cw=(W-32)/2, ch=62, cx0=12, cy0=H*.33;
-        displayBenefits.slice(0,4).forEach(function(sol,i){
-          var ia=clamp((f-FPS*.45-i*FPS*.14)/(FPS*.4),0,1);
-          if(ia<=0)return;
-          var col=i%2, r4=Math.floor(i/2);
-          var cx=cx0+col*(cw+8), cy=cy0+r4*(ch+8);
-          ctx.globalAlpha=ia;
-          glass(cx,cy,cw,ch,10);
-          var ico=displayBenefitIcons[i]||'⭐';
-          row(ico, sol, cx, cy, cw, ch, c.text, 12);
-          ctx.globalAlpha=1;
-        });
-
-        // Stars
-        var sa=clamp((f-FPS*1.15)/(FPS*.5),0,1);
-        if(sa>0){
-          ctx.globalAlpha=sa;
-          ctx.fillStyle='#fbbf24'; ctx.font='20px serif'; ctx.textAlign='center';
-          ctx.fillText('★★★★★',W/2,H*.82);
-          ctx.fillStyle=c.sub; ctx.font='12px Inter,sans-serif';
-          ctx.fillText('Trusted by happy clients',W/2,H*.88);
-          ctx.globalAlpha=1;
-        }
-      }
-
-      // ── SCENE 5: CTA — CONTACT YOUR BUSINESS ─────────────
-      function drawS5(f) {
-        ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,H);
-        drawMesh(1);
-        drawFloatIcons(.2,f+S4e);
+        var su;
+        // Big emoji
+        su = slideUp(f - FPS*0.1, FPS*0.7);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.font = '52px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('! ! !', W/2, H*0.22 + su.y);
+        ctx.globalAlpha = 1;
 
         // Eyebrow
-        var su=slideUp(f-FPS*.08,FPS*.5);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.accent; ctx.font='bold 10px Inter,sans-serif';
-        ctx.textAlign='center'; ctx.letterSpacing='4px';
-        ctx.fillText('GET STARTED TODAY',W/2,H*.1+su.y);
-        ctx.letterSpacing='0px'; ctx.globalAlpha=1;
+        su = slideUp(f - FPS*0.35, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('THE PROBLEM', W/2, H*0.33 + su.y);
+        ctx.letterSpacing = '0px';
+        ctx.globalAlpha = 1;
 
-        // Business name big
-        su=slideUp(f-FPS*.28,FPS*.6);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        ctx.fillStyle=c.text; ctx.font='bold '+(W>500?46:32)+'px Inter,sans-serif';
-        ctx.textAlign='center';
-        if(ctx.measureText(biz).width>W*.85){
-          ctx.font='bold '+(W>500?34:24)+'px Inter,sans-serif';
+        // Headline
+        su = slideUp(f - FPS*0.55, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?38:26) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Posting manually', W/2, H*0.43 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText('wastes 3hrs/week', W/2, H*0.43 + (W>500?46:34) + su.y);
+        ctx.globalAlpha = 1;
+
+        // Pain points grid
+        su = slideUp(f - FPS*0.82, FPS*0.55);
+        if (su.alpha > 0) {
+          var pts = ['- Copy captions','- Reformat images','- Switch apps','- Miss peak hours'];
+          var gw = W * 0.42, gh = 36, gx0 = W*0.05, gy0 = H*0.55 + su.y;
+          ctx.globalAlpha = clamp(su.alpha, 0, 1);
+          pts.forEach(function(pt, i) {
+            var col = i % 2, row = Math.floor(i / 2);
+            var gx = gx0 + col*(gw+W*0.06), gy = gy0 + row*(gh+8);
+            drawGlass(gx, gy, gw, gh, 8);
+            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(pt, gx+10, gy+23);
+          });
+          ctx.globalAlpha = 1;
         }
-        ctx.fillText(biz,W/2,H*.22+su.y);
-        ctx.fillStyle=c.accent;
-        ctx.font='bold '+(W>500?20:15)+'px Inter,sans-serif';
-        ctx.fillText(tagline||product,W/2,H*.22+(W>500?36:28)+su.y);
-        ctx.globalAlpha=1;
 
-        // 4 benefits quick-fire
-        var bfw=(W-32)/2, bfh=56, bfx0=12, bfy0=H*.38;
-        displayBenefits.slice(0,4).forEach(function(b,i){
-          var ia=clamp((f-FPS*.52-i*FPS*.1)/(FPS*.38),0,1);
-          if(ia<=0)return;
-          var col=i%2, r5=Math.floor(i/2);
-          var bfx=bfx0+col*(bfw+8), bfy=bfy0+r5*(bfh+6);
-          ctx.globalAlpha=ia;
-          glass(bfx,bfy,bfw,bfh,10);
-          row(displayBenefitIcons[i]||'✅', b, bfx, bfy, bfw, bfh, c.text, 12);
-          ctx.globalAlpha=1;
-        });
-
-        // Website URL — customer's website
-        su=slideUp(f-FPS*1.0,FPS*.6);
-        ctx.globalAlpha=clamp(su.a,0,1);
-        var di=siteUrl.indexOf('.'), sn=di>-1?siteUrl.slice(0,di):siteUrl, sd=di>-1?siteUrl.slice(di):'.com';
-        ctx.font='bold '+(W>500?32:22)+'px Inter,sans-serif'; ctx.textAlign='center';
-        var nw=ctx.measureText(sn).width, dw=ctx.measureText(sd).width;
-        var ux=W/2-( nw+dw)/2, uy=H*.81+su.y;
-        ctx.textAlign='left';
-        ctx.fillStyle=c.text; ctx.fillText(sn,ux,uy);
-        ctx.fillStyle=c.accent; ctx.fillText(sd,ux+nw,uy);
-        ctx.strokeStyle=c.accent; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.moveTo(ux,uy+5); ctx.lineTo(ux+nw+dw,uy+5); ctx.stroke();
-        ctx.globalAlpha=1;
-
-        // CTA button
-        su=slideUp(f-FPS*1.25,FPS*.55);
-        if(su.a>0){
-          ctx.globalAlpha=clamp(su.a,0,1);
-          var btnH=44, btnY=H*.86+su.y;
-          ctx.beginPath(); ctx.roundRect(16,btnY,W-32,btnH,12);
-          ctx.fillStyle=c.accent; ctx.fill();
-          ctx.shadowColor=c.accent; ctx.shadowBlur=15; ctx.fill(); ctx.shadowBlur=0;
-          ctx.fillStyle=c.bg.startsWith('#f')?'#fff':'#000';
-          ctx.font='bold 15px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText('📞 Contact Us Today',W/2,btnY+btnH/2);
-          ctx.textBaseline='alphabetic'; ctx.globalAlpha=1;
+        // Platform chips
+        su = slideUp(f - FPS*1.1, FPS*0.5);
+        if (su.alpha > 0) {
+          ctx.globalAlpha = clamp(su.alpha, 0, 1);
+          var chips = platforms.slice(0,6);
+          var chipW = (W - 24) / Math.min(chips.length, 4);
+          var chipH = 24;
+          var startX = 12;
+          var chipY = H*0.78 + su.y;
+          // Row 1
+          chips.slice(0,4).forEach(function(p, i) {
+            drawGlass(startX + i*(chipW+4), chipY, chipW-4, chipH, 6);
+            ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+            ctx.font = '9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+16);
+          });
+          if (chips.length > 4) {
+            chips.slice(4).forEach(function(p, i) {
+              drawGlass(startX + i*(chipW+4), chipY+32, chipW-4, chipH, 6);
+              ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+              ctx.font = '9px Inter, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(p.replace(/^../,'').trim(), startX + i*(chipW+4) + (chipW-4)/2, chipY+48);
+            });
+          }
+          ctx.globalAlpha = 1;
         }
       }
 
+      function drawS3(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
+
+        // Eyebrow
+        var su = slideUp(f - FPS*0.08, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('AI WRITES YOUR CAPTION', W/2, H*0.08 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Caption box
+        su = slideUp(f - FPS*0.35, FPS*0.55);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        var boxY = H * 0.12, boxH = H * 0.35;
+        drawGlass(12, boxY + su.y, W-24, boxH, 12);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('CAPTION', 24, boxY + 18 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Typed caption text
+        var typeStart = FPS * 0.6;
+        var charsToShow = Math.floor(clamp((f - typeStart) / (FPS * 0.026), 0, captionChars.length));
+        var shown = captionChars.slice(0, charsToShow).join('');
+
+        if (su.alpha > 0.3) {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = c.text || '#fff';
+          ctx.font = '12px Inter, sans-serif';
+          ctx.textAlign = 'left';
+          // Word wrap
+          var words = shown.split(' ');
+          var lineW = W - 48;
+          var line = '', lineY = boxY + 36 + su.y;
+          words.forEach(function(w) {
+            var test = line + (line ? ' ' : '') + w;
+            if (ctx.measureText(test).width > lineW && line) {
+              if (lineY < boxY + boxH - 10) ctx.fillText(line, 24, lineY);
+              line = w;
+              lineY += 18;
+            } else { line = test; }
+          });
+          if (line && lineY < boxY + boxH - 10) {
+            // Blinking cursor
+            ctx.fillText(line, 24, lineY);
+            if (Math.floor(f / (FPS * 0.4)) % 2 === 0) {
+              ctx.fillStyle = c.accent || '#a855f7';
+              ctx.fillRect(24 + ctx.measureText(line).width + 2, lineY - 12, 2, 14);
+            }
+          }
+        }
+
+        // Platform chips lighting up
+        var platStart = typeStart + captionChars.length / (FPS * 0.026) + FPS * 0.2;
+        var platAlpha = clamp((f - platStart) / (FPS * 0.4), 0, 1);
+        if (platAlpha > 0) {
+          var chipW2 = (W-24) / Math.min(platforms.length, 4);
+          platforms.slice(0,8).forEach(function(p, i) {
+            var col = i % 4, row = Math.floor(i/4);
+            var cx2 = 12 + col*(chipW2+3);
+            var cy2 = H*0.54 + row*32;
+            var iAlpha = clamp((platAlpha*platforms.length - i*0.8) / 1, 0, 1);
+            ctx.globalAlpha = iAlpha;
+            drawGlass(cx2, cy2, chipW2-3, 26, 6);
+            ctx.fillStyle = iAlpha > 0.5 ? (c.accent || '#a855f7') : (c.sub || 'rgba(255,255,255,0.4)');
+            ctx.font = '9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.replace(/^../,'').trim(), cx2+(chipW2-3)/2, cy2+17);
+            ctx.globalAlpha = 1;
+          });
+        }
+
+        // Post button
+        var btnStart = platStart + FPS * 1.0;
+        var btnAlpha = clamp((f - btnStart) / (FPS*0.4), 0, 1);
+        if (btnAlpha > 0) {
+          var btnY = H * 0.82;
+          var btnPulse = 1 + Math.sin((f - btnStart) / FPS * Math.PI * 2) * 0.02;
+          ctx.globalAlpha = btnAlpha;
+          ctx.save();
+          ctx.translate(W/2, btnY + 22);
+          ctx.scale(btnPulse, btnPulse);
+          ctx.beginPath();
+          ctx.roundRect(-(W-24)/2, -22, W-24, 44, 12);
+          ctx.fillStyle = c.accent || '#a855f7';
+          ctx.fill();
+          // Glow
+          ctx.shadowColor = c.accent || '#a855f7';
+          ctx.shadowBlur = 20;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 14px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
+          ctx.textBaseline = 'alphabetic';
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      function drawS4(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        drawMesh();
+
+        // Burst icons radiating out
+        var burstDone = f > FPS * 0.3;
+        icons.forEach(function(ic, i) {
+          var burstStart = i * (FPS * 0.08);
+          var bf = f - burstStart;
+          if (bf <= 0) return;
+          var angle = i * (Math.PI * 2 / icons.length);
+          var dist = easeOut(clamp(bf / (FPS * 0.9), 0, 1)) * (W * 0.38);
+          var alpha = clamp(bf / (FPS * 0.5), 0, 0.65) * (1 - clamp((bf - FPS*2) / (FPS*0.8), 0, 1));
+          ctx.globalAlpha = alpha;
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ic, W/2 + Math.cos(angle)*dist, H*0.45 + Math.sin(angle)*dist);
+          ctx.textBaseline = 'alphabetic';
+          ctx.globalAlpha = 1;
+        });
+
+        // Big check icon
+        var iconAlpha = easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1));
+        var iconScale = 0.4 + easeOut(clamp((f - FPS*0.4) / (FPS*0.7), 0, 1)) * 0.6;
+        ctx.globalAlpha = iconAlpha;
+        ctx.save();
+        ctx.translate(W/2, H*0.3);
+        ctx.scale(iconScale, iconScale);
+        ctx.font = '62px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✅', 0, 0);
+        ctx.textBaseline = 'alphabetic';
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        // Published text
+        var su = slideUp(f - FPS*0.72, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?44:30) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Published!', W/2, H*0.48 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Sub
+        su = slideUp(f - FPS*0.98, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText((product || 'Your post') + ' is live on all platforms', W/2, H*0.56 + su.y);
+        ctx.globalAlpha = 1;
+
+        // Success chips
+        var chipStart = FPS * 1.1;
+        var chipW3 = (W-24) / Math.min(platforms.length, 4);
+        platforms.slice(0,8).forEach(function(p, i) {
+          var iAlpha = clamp((f - chipStart - i * FPS*0.09) / (FPS*0.35), 0, 1);
+          if (iAlpha <= 0) return;
+          var col = i % 4, row = Math.floor(i/4);
+          var cx3 = 12 + col*(chipW3+3), cy3 = H*0.64 + row*32;
+          ctx.globalAlpha = iAlpha;
+          ctx.fillStyle = 'rgba(74,222,128,0.1)';
+          ctx.strokeStyle = 'rgba(74,222,128,0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(cx3, cy3, chipW3-3, 26, 6);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#4ade80';
+          ctx.font = 'bold 9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✓ ' + p.replace(/^../,'').trim(), cx3+(chipW3-3)/2, cy3+17);
+          ctx.globalAlpha = 1;
+        });
+
+        // Done text
+        su = slideUp(f - FPS*1.9, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Done in under 10 seconds!', W/2, H*0.91 + su.y);
+        ctx.globalAlpha = 1;
+      }
+
+      function drawS5(f) {
+        ctx.fillStyle = c.bg || '#08061a';
+        ctx.fillRect(0, 0, W, H);
+        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+          ctx.globalAlpha = 0.10;
+          ctx.drawImage(bgImg, 0, 0, W, H);
+          ctx.globalAlpha = 1;
+        }
+        drawMesh();
+        drawFloatingIcons(0.2, f + S4_END);
+
+        var su;
+        su = slideUp(f - FPS*0.1, FPS*0.5);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('FOR SMALL BUSINESSES', W/2, H*0.12 + su.y);
+        ctx.globalAlpha = 1;
+
+        su = slideUp(f - FPS*0.3, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.fillStyle = c.text || '#fff';
+        ctx.font = 'bold ' + (W>500?46:32) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('One post.', W/2, H*0.24 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText(platforms.length + ' platforms.', W/2, H*0.24 + (W>500?54:40) + su.y);
+        ctx.globalAlpha = 1;
+
+        // Feature cards
+        var feats = [['AI','AI Captions'],['~',platforms.length+' Platforms'],['Cal','Auto-Schedule'],['Vid','Video+Reels']];
+        var fcW = (W-28)/2, fcH = 52;
+        feats.forEach(function(ft, i) {
+          var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
+          if (iAlpha <= 0) return;
+          var col = i%2, row = Math.floor(i/2);
+          var fcX = 12 + col*(fcW+4);
+          var fcY = H*0.46 + row*(fcH+8);
+          ctx.globalAlpha = iAlpha;
+          drawGlass(fcX, fcY, fcW, fcH, 10);
+          ctx.font = '20px serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(ft[0], fcX+10, fcY+34);
+          ctx.fillStyle = c.text || '#fff';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.fillText(ft[1], fcX+38, fcY+33);
+          ctx.globalAlpha = 1;
+        });
+
+        // URL
+        su = slideUp(f - FPS*1.0, FPS*0.6);
+        ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        ctx.font = 'bold ' + (W>500?34:24) + 'px Inter, sans-serif';
+        var cleanSite = (website||'autopostleey.com').replace(/https?:\/\//, '').split('/')[0];
+        var dotIdx = cleanSite.lastIndexOf('.');
+        var urlP1 = dotIdx>0 ? cleanSite.slice(0,dotIdx) : cleanSite;
+        var urlP2 = dotIdx>0 ? cleanSite.slice(dotIdx) : '';
+        var uw1 = ctx.measureText(urlP1).width;
+        var uw2 = ctx.measureText(urlP2).width;
+        var urlStartX = W/2 - (uw1+uw2)/2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = c.text || '#fff';
+        ctx.fillText(urlP1, urlStartX, H*0.82 + su.y);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillText(urlP2, urlStartX+uw1, H*0.82 + su.y);
+        ctx.strokeStyle = c.accent || '#a855f7'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(urlStartX, H*0.85+su.y); ctx.lineTo(urlStartX+uw1+uw2, H*0.85+su.y); ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.globalAlpha = 1;
+
+        // Pills
+        var pillLabels = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'];
+        var pillW = (W-24)/3;
+        pillLabels.forEach(function(pl, i) {
+          var pAlpha = clamp((f - FPS*1.25 - i*FPS*0.08) / (FPS*0.35), 0, 1);
+          if (pAlpha <= 0) return;
+          var px = 12 + i*(pillW+0);
+          ctx.globalAlpha = pAlpha;
+          drawGlass(px, H*0.89, pillW-4, 26, 13);
+          ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
+          ctx.font = '9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(pl, px+(pillW-4)/2, H*0.89+17);
+          ctx.globalAlpha = 1;
+        });
+      }
+
+      // Progress bar at bottom
+      function drawProgress(elapsed) {
+        var pct = Math.min(elapsed / TOTAL_MS, 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(0, H-3, W, 3);
+        ctx.fillStyle = c.accent || '#a855f7';
+        ctx.fillRect(0, H-3, W*pct, 3);
+      }
+
+      // Main render loop — uses setTimeout for consistent timing
       function renderFrame() {
-        if(frame>totalFrames){ resolve(); return; }
-        ctx.clearRect(0,0,W,H);
-        if(frame<=S1e) drawS1(frame);
-        else if(frame<=S2e) drawS2(frame-S1e);
-        else if(frame<=S3e) drawS3(frame-S2e);
-        else if(frame<=S4e) drawS4(frame-S3e);
-        else drawS5(frame-S4e);
-        drawProg(frame);
+        if (frame > totalFrames) {
+          resolve();
+          return;
+        }
+
+        var elapsed = frame * (1000/FPS);
+        ctx.clearRect(0, 0, W, H);
+
+        // Determine scene
+        if (frame <= S1_END) {
+          drawS1(frame);
+        } else if (frame <= S2_END) {
+          drawS2(frame - S1_END);
+        } else if (frame <= S3_END) {
+          drawS3(frame - S2_END);
+        } else if (frame <= S4_END) {
+          drawS4(frame - S3_END);
+        } else {
+          drawS5(frame - S4_END);
+        }
+
+        drawProgress(elapsed);
+
         frame++;
-        if(onProgress) onProgress(frame/totalFrames,frame,totalFrames);
-        setTimeout(renderFrame,1000/FPS);
+        if (typeof onProgress === "function") onProgress(frame / totalFrames, frame, totalFrames);
+
+        // Use setTimeout to yield to browser and allow MediaRecorder to collect frames
+        setTimeout(renderFrame, 1000/FPS);
       }
 
       renderFrame();
+    } // end startRender
+
+
+    // Load images then start
+    var imagesToLoad = 0;
+    var imagesLoaded = 0;
+    var productImg = null;
+    var bgImg = null;
+
+    function tryStart() {
+      imagesLoaded++;
+      if (imagesLoaded >= imagesToLoad) startRender();
     }
 
-    // Load images
-    if(thumbUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=thumbUrl; }
-    else if(productImageUrl){ toLoad++; productImg=new Image(); productImg.crossOrigin='anonymous'; productImg.onload=productImg.onerror=function(){ loaded++; if(loaded>=toLoad)startRender(); }; productImg.src=productImageUrl; }
-    // Skip Unsplash photo in canvas (CORS blocks it) - use gradient mesh instead
-    // bgImg stays null, mesh gradients provide the background
-    if(toLoad===0) startRender();
+    if (productImageUrl) {
+      imagesToLoad++;
+      productImg = new Image();
+      productImg.crossOrigin = 'anonymous';
+      productImg.onload = tryStart;
+      productImg.onerror = tryStart;
+      productImg.src = productImageUrl;
+    }
+    if (c.photoUrl) {
+      imagesToLoad++;
+      bgImg = new Image();
+      bgImg.crossOrigin = 'anonymous';
+      bgImg.onload = tryStart;
+      bgImg.onerror = tryStart;
+      bgImg.src = c.photoUrl;
+    }
+    if (imagesToLoad === 0) startRender();
   });
 }
 
 
 async function downloadVadVideo() {
-  if (!_vadIframeDoc) {
-    showToast('Generate an ad first!', 'error');
-    return;
-  }
-
+  if (!_vadIframeDoc) { showToast('Generate an ad first!', 'error'); return; }
   var btn = document.getElementById('vad-download-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div>'
-      + '<div style="font-size:13px;font-weight:700;color:var(--text);">Preparing...</div>';
-  }
-
-  showVadProgress(true);
-  setVadProgressBar(3);
-  setVadProgressText('Opening ad for recording...');
-
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">⏳</div><div style="font-size:11px;font-weight:700;color:var(--text);">Preparing...</div>'; }
+  showVadProgress(true); setVadProgressBar(2); setVadProgressText('Setting up...');
   var adW = _vadFormat === 'reel' ? 607 : 500;
   var adH = _vadFormat === 'reel' ? 1080 : 500;
-  var AD_DURATION = 34000;
   var FPS = 30;
-
-  // ── APPROACH: Open the actual HTML ad in a real window and record it ──
-  // This records the EXACT same HTML/CSS that looks great in the preview
-  // No canvas re-drawing = no blur, perfect emoji, perfect alignment
-
   try {
-    // Step 1: Open ad in a same-origin iframe that we can capture
-    setVadProgressText('Setting up recorder...');
-    setVadProgressBar(5);
+    var biz     = (document.getElementById('vad-bizname')||{}).value||'';
+    var product = (document.getElementById('vad-product')||{}).value||'';
+    var tagline = (document.getElementById('vad-tagline')||{}).value||'';
+    var emojiVal= (document.getElementById('vad-emoji')  ||{}).value||'✨';
+    var capEl   = document.getElementById('vad-caption');
+    var cap     = capEl ? capEl.value.split('\n\n??')[0].trim() : ('Discover '+product+' by '+biz);
+    var c = getVadThemeColors(_vadTheme);
+    var plats = ['?? Telegram','?? LinkedIn','?? Facebook','?? Discord','?? Bluesky','▶️ YouTube','?? Threads','?? FB Groups'];
+    var benefits = [
+      {icon:(document.getElementById('vad-b1-ico')||{}).textContent||'⭐',text:(document.getElementById('vad-b1')||{}).value||''},
+      {icon:(document.getElementById('vad-b2-ico')||{}).textContent||'✅',text:(document.getElementById('vad-b2')||{}).value||''},
+      {icon:(document.getElementById('vad-b3-ico')||{}).textContent||'??',text:(document.getElementById('vad-b3')||{}).value||''},
+      {icon:(document.getElementById('vad-b4-ico')||{}).textContent||'??',text:(document.getElementById('vad-b4')||{}).value||''},
+    ].filter(function(b){return b.text.trim();});
+    var problems = [
+      (document.getElementById('vad-p1')||{}).value||'',
+      (document.getElementById('vad-p2')||{}).value||'',
+      (document.getElementById('vad-p3')||{}).value||'',
+      (document.getElementById('vad-p4')||{}).value||'',
+    ].filter(function(p){return p.trim();});
+    var music    = (document.getElementById('vad-music')||{}).value||'';
+    var thumbUrl = _vadThumbnailUrl||'';
+    var website  = (document.getElementById('vad-website')||{}).value||(_bizProfile&&_bizProfile.website)||(_autoConfig&&_autoConfig.website)||'';
+    if(!website&&biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
 
-    // Create a hidden iframe at full resolution
-    var recIframe = document.createElement('iframe');
-    recIframe.style.cssText = [
-      'position:fixed',
-      'left:-9999px',
-      'top:0',
-      'width:' + adW + 'px',
-      'height:' + adH + 'px',
-      'border:none',
-      'z-index:-1',
-      'pointer-events:none'
-    ].join(';');
-    recIframe.srcdoc = _vadIframeDoc;
-    document.body.appendChild(recIframe);
+    var SCALE = 2;
+    var canvas = document.createElement('canvas');
+    canvas.width = adW * SCALE; canvas.height = adH * SCALE;
+    var ctx = canvas.getContext('2d'); ctx.scale(SCALE, SCALE);
 
-    // Wait for iframe to fully load and animation to start
-    await new Promise(function(res){ setTimeout(res, 1500); });
-
-    setVadProgressText('Starting recording...');
-    setVadProgressBar(10);
-
-    // Step 2: Capture the iframe body using html2canvas at high resolution
-    // and stream frames to a canvas — this gives us CSS/HTML quality
-
-    // Load html2canvas if needed
-    if (!window.html2canvas) {
-      await new Promise(function(res, rej) {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    }
-
-    // Create output canvas matching ad dimensions
-    var outCanvas = document.createElement('canvas');
-    outCanvas.width  = adW;
-    outCanvas.height = adH;
-    var outCtx = outCanvas.getContext('2d');
-
-    // Best mime type
-    var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){
-      return MediaRecorder.isTypeSupported(t);
-    }) || 'video/webm';
-
-    // Start recording
-    var stream = outCanvas.captureStream(FPS);
+    var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){return MediaRecorder.isTypeSupported(t);})||'video/webm';
+    setVadProgressBar(5); setVadProgressText('Recording...');
+    var stream = canvas.captureStream(FPS);
     var chunks = [];
-    var recorder = new MediaRecorder(stream, {
-      mimeType: mimeType,
-      videoBitsPerSecond: 16000000  // 16Mbps for crystal clear
-    });
-    recorder.ondataavailable = function(e){
-      if (e.data && e.data.size > 0) chunks.push(e.data);
-    };
+    var recorder = new MediaRecorder(stream, {mimeType:mimeType, videoBitsPerSecond:16000000});
+    recorder.ondataavailable = function(e){if(e.data&&e.data.size>0)chunks.push(e.data);};
     recorder.start(100);
 
-    // Step 3: Capture html2canvas frames in a loop
-    var recStart = Date.now();
-    var capturing = true;
-
-    // Frame capture loop — html2canvas each frame from the live iframe
-    async function captureFrames() {
-      while (capturing) {
-        var elapsed = Date.now() - recStart;
-
-        try {
-          var iframeBody = recIframe.contentDocument && recIframe.contentDocument.body;
-          if (iframeBody) {
-            var snap = await window.html2canvas(iframeBody, {
-              canvas:          outCanvas,
-              width:           adW,
-              height:          adH,
-              scale:           1,
-              useCORS:         true,
-              allowTaint:      true,
-              logging:         false,
-              backgroundColor: null,
-              removeContainer: false
-            });
-            // html2canvas draws directly to outCanvas if we pass it
-            if (snap !== outCanvas) {
-              outCtx.clearRect(0, 0, adW, adH);
-              outCtx.drawImage(snap, 0, 0, adW, adH);
-            }
-          }
-        } catch(e) { /* skip frame */ }
-
-        // Progress
-        var pct = 10 + Math.min(73, (elapsed / AD_DURATION) * 73);
-        setVadProgressBar(Math.round(pct));
-        var secs = Math.round(elapsed / 1000);
-        setVadProgressText('Recording... ' + secs + 's / 33s');
-        if (btn) {
-          btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">\uD83D\uDD34</div>'
-            + '<div style="font-size:11px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
-        }
-
-        // Target ~15fps for html2canvas (it's slower than canvas.fillRect)
-        await new Promise(function(res){ setTimeout(res, 66); });
+    await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
+      thumbUrl||_vadProductImageUrl||'', benefits, website, problems, music, thumbUrl,
+      function(progress){
+        setVadProgressBar(5+Math.round(progress*80));
+        setVadProgressText('Recording... '+Math.round(progress*33)+'s / 33s');
+        if(btn) btn.innerHTML='<div style="font-size:18px;margin-bottom:4px;">??</div><div style="font-size:11px;font-weight:700;color:var(--text);">Recording '+Math.round(progress*33)+'s</div>';
       }
-    }
+    );
 
-    // Run capture and wait for full ad duration simultaneously
-    var capturePromise = captureFrames();
-    await new Promise(function(res){ setTimeout(res, AD_DURATION); });
-    capturing = false;
-    await capturePromise;
-
-    // Stop recording
-    recorder.stop();
-    stream.getTracks().forEach(function(t){ t.stop(); });
-    document.body.removeChild(recIframe);
-
-    setVadProgressBar(85);
-    setVadProgressText('Saving video...');
+    recorder.stop(); stream.getTracks().forEach(function(t){t.stop();});
+    setVadProgressBar(87); setVadProgressText('Saving...');
 
     var rawBlob = await new Promise(function(res){
-      recorder.onstop = function(){ res(new Blob(chunks, { type: mimeType })); };
-      setTimeout(function(){ res(new Blob(chunks, { type: mimeType })); }, 3000);
+      recorder.onstop = function(){res(new Blob(chunks,{type:mimeType}));};
+      setTimeout(function(){res(new Blob(chunks,{type:mimeType}));},3000);
     });
 
-    setVadProgressBar(88);
-
-    // Convert to MP4 if needed
     var finalBlob = rawBlob;
     var finalExt  = mimeType.includes('mp4') ? 'mp4' : 'webm';
-
-    if (!mimeType.includes('mp4') && rawBlob.size > 0) {
+    if(!mimeType.includes('mp4') && rawBlob.size>0){
       setVadProgressText('Converting to MP4...');
-      try {
-        finalBlob = await convertWebmToMp4(rawBlob, function(p){
-          setVadProgressBar(88 + Math.round(p * 11));
-          setVadProgressText('Converting... ' + Math.round(p*100) + '%');
-        });
-        finalExt = 'mp4';
-      } catch(e) {
-        console.warn('MP4 conversion skipped:', e.message);
-      }
+      try{
+        finalBlob = await convertWebmToMp4(rawBlob,function(p){setVadProgressBar(87+Math.round(p*12));});
+        finalExt='mp4';
+      }catch(e){console.warn('MP4 skip:',e.message);}
     }
 
-    setVadProgressBar(100);
-    setVadProgressText('\u2705 Done! Downloading...');
-    await new Promise(function(res){ setTimeout(res, 400); });
-
-    // Download
-    var url = URL.createObjectURL(finalBlob);
-    var a   = document.createElement('a');
-    a.href     = url;
-    a.download = 'autopostleey-ad-' + Date.now() + '.' + finalExt;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
-
-    var msg = finalExt === 'mp4'
-      ? '\u2705 MP4 downloaded! Share on WhatsApp, TikTok, Instagram & Facebook!'
-      : '\u2705 Video downloaded! Works on Android & Chrome.';
-    showToast(msg, 'success');
-
-  } catch(err) {
-    console.error('Download error:', err);
-
-    // Fallback: download the HTML file
-    var blob = new Blob([_vadIframeDoc||''], { type: 'text/html' });
-    var a = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'autopostleey-video-ad.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Saved as HTML. Open in Chrome to screen-record it.', 'success');
+    setVadProgressBar(100); setVadProgressText('✅ Done!');
+    await new Promise(function(res){setTimeout(res,300);});
+    var url=URL.createObjectURL(finalBlob);
+    var a=document.createElement('a'); a.href=url; a.download='ad-'+Date.now()+'.'+finalExt;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},5000);
+    showToast('✅ Downloaded! ('+(finalBlob.size/1024/1024).toFixed(1)+'MB)','success');
+  } catch(err){
+    console.error('Download error:',err);
+    showToast('Download failed: '+err.message,'error');
   }
-
   showVadProgress(false);
-  if (btn) resetDownloadBtn(btn);
-}
-
-
-// FFmpeg WebM → MP4 converter
-async function convertWebmToMp4(webmBlob, onProgress) {
-  if (!window._ffmpegInstance) {
-    setVadProgressText('Loading MP4 converter (first time, ~5MB)...');
-    await new Promise(function(res, rej) {
-      if (window.FFmpegWASM) { res(); return; }
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-      s.crossOrigin = 'anonymous';
-      s.onload = res;
-      s.onerror = rej;
-      document.head.appendChild(s);
-    });
-
-    var Lib = (window.FFmpegWASM || {}).FFmpeg || (window.FFmpeg || {}).FFmpeg || window.FFmpeg;
-    if (!Lib) throw new Error('FFmpeg not available');
-
-    var ff = new Lib();
-    ff.on('progress', function(e) { if (onProgress && e.progress) onProgress(e.progress); });
-    await ff.load({
-      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-      wasmURL:  'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-    });
-    window._ffmpegInstance = ff;
-  }
-
-  var ff = window._ffmpegInstance;
-  var fetchFile = (window.FFmpegWASM || window.FFmpeg || {}).fetchFile;
-  if (!fetchFile) {
-    var ab = await webmBlob.arrayBuffer();
-    await ff.writeFile('in.webm', new Uint8Array(ab));
-  } else {
-    await ff.writeFile('in.webm', await fetchFile(webmBlob));
-  }
-
-  await ff.exec(['-i','in.webm','-c:v','libx264','-preset','ultrafast','-crf','24','-an','-movflags','+faststart','-pix_fmt','yuv420p','out.mp4']);
-  var data = await ff.readFile('out.mp4');
-  await ff.deleteFile('in.webm');
-  await ff.deleteFile('out.mp4');
-  return new Blob([data.buffer], { type: 'video/mp4' });
-}
-
-
-
-// FFmpeg WebM → MP4 converter
-async function convertWebmToMp4(webmBlob, onProgress) {
-  if (!window._ffmpegInstance) {
-    setVadProgressText('Loading MP4 converter (first time, ~5MB)...');
-    await new Promise(function(res, rej) {
-      if (window.FFmpegWASM) { res(); return; }
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-      s.crossOrigin = 'anonymous';
-      s.onload = res;
-      s.onerror = rej;
-      document.head.appendChild(s);
-    });
-
-    var Lib = (window.FFmpegWASM || {}).FFmpeg || (window.FFmpeg || {}).FFmpeg || window.FFmpeg;
-    if (!Lib) throw new Error('FFmpeg not available');
-
-    var ff = new Lib();
-    ff.on('progress', function(e) { if (onProgress && e.progress) onProgress(e.progress); });
-    await ff.load({
-      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-      wasmURL:  'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-    });
-    window._ffmpegInstance = ff;
-  }
-
-  var ff = window._ffmpegInstance;
-  var fetchFile = (window.FFmpegWASM || window.FFmpeg || {}).fetchFile;
-  if (!fetchFile) {
-    var ab = await webmBlob.arrayBuffer();
-    await ff.writeFile('in.webm', new Uint8Array(ab));
-  } else {
-    await ff.writeFile('in.webm', await fetchFile(webmBlob));
-  }
-
-  await ff.exec(['-i','in.webm','-c:v','libx264','-preset','ultrafast','-crf','24','-an','-movflags','+faststart','-pix_fmt','yuv420p','out.mp4']);
-  var data = await ff.readFile('out.mp4');
-  await ff.deleteFile('in.webm');
-  await ff.deleteFile('out.mp4');
-  return new Blob([data.buffer], { type: 'video/mp4' });
+  if(btn) resetDownloadBtn(btn);
 }
 
 async function loadVadPlatforms() {
