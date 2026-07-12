@@ -9049,6 +9049,18 @@ async function uploadDataUrlToR2(dataUrl, folder, ext) {
   if (!d.url) throw new Error(d.error || 'R2 upload failed');
   return d.url;
 }
+function showVideoPlatformPicker() {
+  // Populate the platform list with connected platforms
+  renderVideoPlatformList();
+  // Scroll to the platform selector
+  var list = document.getElementById('video-platform-list');
+  if (list) {
+    list.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Select your platforms below, then click Post Video Now!', 'success');
+  }
+}
+
+
 function renderVideoPlatformList() {
   var list = document.getElementById('video-platform-list');
   if (!list) return;
