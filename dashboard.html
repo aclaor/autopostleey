@@ -10416,103 +10416,18 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         }
       }
 
-      var XFADE = Math.round(FPS * 0.5); // 0.5s crossfade
-
-      // Pre-create offscreen canvases ONCE (no repeated allocation)
-      var offA = document.createElement('canvas');
-      offA.width = W; offA.height = H;
-      var ctxA = offA.getContext('2d');
-      ctxA.scale(canvas.width/W, canvas.height/H);
-
-      var offB = document.createElement('canvas');
-      offB.width = W; offB.height = H;
-      var ctxB = offB.getContext('2d');
-      ctxB.scale(canvas.width/W, canvas.height/H);
-
-      // Wrapper: draw scene N at local frame f, using given context
-      function drawScene(targetCtx, scene, f) {
-        // Swap the module-level ctx so all drawSX functions use targetCtx
-        var prev = ctx;
-        ctx = targetCtx;
-        targetCtx.clearRect(0, 0, W, H);
-        if(scene===1)      drawS1(f);
-        else if(scene===2) drawS2(f);
-        else if(scene===3) drawS3(f);
-        else if(scene===4) drawS4(f);
-        else               drawS5(f);
-        ctx = prev;
-      }
-
-      function getSceneAndFrame(f) {
-        if(f <= S1e) return { scene:1, lf:f };
-        if(f <= S2e) return { scene:2, lf:f-S1e };
-        if(f <= S3e) return { scene:3, lf:f-S2e };
-        if(f <= S4e) return { scene:4, lf:f-S3e };
-        return { scene:5, lf:f-S4e };
-      }
-
-      // Scene boundary frames
-      var boundaries = [S1e, S2e, S3e, S4e];
-
-      // Use precise timing to avoid setTimeout drift
-      var startTime = performance.now();
-      var msPerFrame = 1000 / FPS;
-
       function renderFrame() {
-        if(frame > totalFrames) { resolve(); return; }
-
-        var cur = getSceneAndFrame(frame);
-
-        // Check if we're in a crossfade window (within XFADE frames of a boundary)
-        var xfadeT = 0;
-        var nextScene = null;
-        var nextF = 0;
-
-        for(var bi = 0; bi < boundaries.length; bi++) {
-          var boundary = boundaries[bi];
-          if(frame > boundary - XFADE && frame <= boundary) {
-            xfadeT = (frame - (boundary - XFADE)) / XFADE;
-            nextScene = bi + 2; // scene index after boundary
-            nextF = frame - (boundary - XFADE);
-            break;
-          }
-        }
-
-        xfadeT = Math.min(1, Math.max(0, xfadeT));
-
-        if(xfadeT > 0 && nextScene) {
-          // Draw outgoing scene to offA
-          drawScene(ctxA, cur.scene, cur.lf);
-
-          // Draw incoming scene to offB (starts from its first frame)
-          drawScene(ctxB, nextScene, nextF);
-
-          // Composite onto main canvas — smooth crossfade, no swap needed
-          ctx.clearRect(0, 0, W, H);
-          ctx.globalAlpha = 1 - xfadeT;
-          ctx.drawImage(offA, 0, 0, W, H);
-          ctx.globalAlpha = xfadeT;
-          ctx.drawImage(offB, 0, 0, W, H);
-          ctx.globalAlpha = 1;
-        } else {
-          // Normal render — no crossfade
-          ctx.clearRect(0, 0, W, H);
-          if(cur.scene===1)      drawS1(cur.lf);
-          else if(cur.scene===2) drawS2(cur.lf);
-          else if(cur.scene===3) drawS3(cur.lf);
-          else if(cur.scene===4) drawS4(cur.lf);
-          else                   drawS5(cur.lf);
-        }
-
+        if(frame>totalFrames){ resolve(); return; }
+        ctx.clearRect(0,0,W,H);
+        if(frame<=S1e) drawS1(frame);
+        else if(frame<=S2e) drawS2(frame-S1e);
+        else if(frame<=S3e) drawS3(frame-S2e);
+        else if(frame<=S4e) drawS4(frame-S3e);
+        else drawS5(frame-S4e);
         drawProg(frame);
         frame++;
-        if(onProgress) onProgress(frame/totalFrames, frame, totalFrames);
-
-        // Precise timing: schedule next frame based on elapsed time
-        var elapsed = performance.now() - startTime;
-        var targetTime = frame * msPerFrame;
-        var delay = Math.max(0, targetTime - elapsed);
-        setTimeout(renderFrame, delay);
+        if(onProgress) onProgress(frame/totalFrames,frame,totalFrames);
+        setTimeout(renderFrame,1000/FPS);
       }
 
       renderFrame();
