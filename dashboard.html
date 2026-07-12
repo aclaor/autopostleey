@@ -8966,7 +8966,7 @@ async function postVideoToSelected() {
   showToast('Uploading to Cloudflare R2...','success');
   var videoUrl;
   try { videoUrl = await uploadFileToR2(_reelVideoFile,'videos'); }
-  catch(e) { showToast('Upload failed: '+e.message,'error'); return; }
+  catch(e) { showToast('Upload failed: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='?? Post Video Now';} return; }
   showToast('Publishing to '+checked.join(', ')+'...','success');
   try {
     var sess = await _db.auth.getSession();
@@ -8996,6 +8996,7 @@ async function postVideoToSelected() {
       }}
     if(fail.length) showToast('Failed: '+fail.join(', '),'error');
   } catch(e){showToast('Error: '+e.message,'error');}
+  if(btn){btn.disabled=false;btn.textContent='🚀 Post Video Now';}
 }
 
 
