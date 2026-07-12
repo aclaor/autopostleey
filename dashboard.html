@@ -9624,6 +9624,38 @@ var _vadSolidColor = '#08061a';
 var _vadCustomTheme = null;
 
 
+
+// ── VAD CUSTOM BACKGROUND PHOTO ─────────────────────────────────
+var _vadCustomBgDataUrl = null; // local data URL for canvas
+
+function setVadCustomBgPhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _vadCustomBgDataUrl = e.target.result;
+    var img   = document.getElementById('vad-custom-bg-img');
+    var prev  = document.getElementById('vad-custom-bg-preview');
+    var drop  = document.getElementById('vad-custom-bg-drop');
+    if (img)  img.src = e.target.result;
+    if (prev) prev.style.display = 'block';
+    if (drop) drop.style.display = 'none';
+    showToast('✅ Background photo set!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearVadCustomBgPhoto() {
+  _vadCustomBgDataUrl = null;
+  var prev  = document.getElementById('vad-custom-bg-preview');
+  var drop  = document.getElementById('vad-custom-bg-drop');
+  var input = document.getElementById('vad-custom-bg-input');
+  if (prev)  prev.style.display = 'none';
+  if (drop)  drop.style.display = 'block';
+  if (input) input.value = '';
+}
+
+
 // ── VAD THEME MODE ───────────────────────────────────────────────
 var _vadThemeMode = 'industry'; // 'industry' or 'custom'
 
@@ -11276,12 +11308,13 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       productImg.onerror = tryStart;
       productImg.src = productImageUrl;
     }
-    // Load bgImg: user's background photo takes priority over theme photo
-    var bgImgSrc = (vadBackground && vadBackground.mode === 'photo' && bgPhotoUrl) ? bgPhotoUrl : (c.photoUrl || '');
+    // Load bgImg: custom bg photo > theme photo
+    var bgImgSrc = bgPhotoUrl || c.photoUrl || '';
     if (bgImgSrc) {
       imagesToLoad++;
       bgImg = new Image();
-      bgImg.crossOrigin = 'anonymous';
+      // Only set crossOrigin for http URLs, not data URLs
+      if (bgImgSrc.indexOf('data:') !== 0) bgImg.crossOrigin = 'anonymous';
       bgImg.onload = tryStart;
       bgImg.onerror = tryStart;
       bgImg.src = bgImgSrc;
@@ -11341,7 +11374,7 @@ async function downloadVadVideo() {
     recorder.start(100);
 
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
-      _vadProductImageUrl||'', benefits, website, problems, music, _vadBgPhotoUrl||thumbUrl||'', floatingInfo, vadBackground,
+      _vadProductImageUrl||'', benefits, website, problems, music, (_vadThemeMode==='custom' ? _vadCustomBgDataUrl||'' : _vadBgPhotoUrl||thumbUrl||''), floatingInfo, vadBackground,
       function(progress){
         setVadProgressBar(5+Math.round(progress*80));
         setVadProgressText('Recording... '+Math.round(progress*33)+'s / 33s');
