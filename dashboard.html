@@ -9933,7 +9933,7 @@ function resetDownloadBtn(btn) {
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
-function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, onProgress) {
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, thumbUrl, onProgress) {
   return new Promise(function(resolve, reject) {
     var W = canvas.width, H = canvas.height;
     var ctx = canvas.getContext('2d');
@@ -10544,7 +10544,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         drawProgress(elapsed);
 
         frame++;
-        if (onProgress) if(onProgress) onProgress(frame / totalFrames, frame, totalFrames);
+        if (typeof onProgress === "function") onProgress(frame / totalFrames, frame, totalFrames);
 
         // Use setTimeout to yield to browser and allow MediaRecorder to collect frames
         setTimeout(renderFrame, 1000/FPS);
