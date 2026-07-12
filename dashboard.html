@@ -2005,6 +2005,77 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
             <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">📸 Image to Ad</div>
             <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Upload a product photo — AI describes it and writes a full ad. Uses Gemini Vision (free) → Groq → Claude.</div>
+            <label style="display:block;width:100%;padding:14px;background:var(--bg3);border:2px dashed var(--accent);border-radius:12px;text-align:center;cursor:pointer;margin-bottom:12px;color:var(--text);font-size:14px;box-sizing:border-box;">
+              📷 Tap to upload product photo
+              <input type="file" accept="image/*" onchange="handleImageToAdUpload(this)" style="display:none;">
+            </label>
+            <img id="img-ad-preview" style="display:none;width:100%;max-height:200px;object-fit:contain;border-radius:10px;margin-bottom:12px;">
+            <button id="img-ad-generate-btn" onclick="generateImageToAd()" style="display:none;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">✨ Generate Ad</button>
+            <div id="img-ad-output" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-weight:700;font-size:13px;color:var(--accent);">✨ Your Ad</span>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="postImageAd()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Use This ✓</button>
+                  <button onclick="navigator.clipboard.writeText(document.querySelector('.img-ad-text').textContent).then(function(){showToast('Copied!','success')})" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Copy</button>
+                </div>
+              </div>
+              <div class="img-ad-text" style="font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;"></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Gemini 1.5 Flash Vision → Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- A/B TESTING -->
+        <div id="aitool-ab" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🔀 A/B Post Testing</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Generate 3 versions of any post — emotional, factual, and casual. Pick the best one.</div>
+            <input id="ab-topic" placeholder="What is your post about? e.g. 50% sale on all items this weekend" style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+            <button id="ab-generate-btn" onclick="generateABVersions()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px;">✨ Generate 3 Versions</button>
+            <div id="ab-versions-container" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- COMPETITOR ANALYZER -->
+        <div id="aitool-competitor" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🕵️ Competitor Post Analyzer</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Paste any competitor post — AI analyzes it and writes a better version for your business.</div>
+            <textarea id="competitor-post" placeholder="Paste competitor post here..." rows="5" style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;margin-bottom:12px;"></textarea>
+            <button id="competitor-analyze-btn" onclick="analyzeCompetitor()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px;">🔍 Analyze & Improve</button>
+            <div id="competitor-output" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Groq Llama 70B → Claude</div>
+        </div>
+
+      </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <button onclick="switchAITab('voice')" id="aitab-voice" style="padding:8px 16px;border-radius:20px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">🎤 Voice</button>
+          <button onclick="switchAITab('image')" id="aitab-image" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">📸 Image-to-Ad</button>
+          <button onclick="switchAITab('ab')" id="aitab-ab" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">🔀 A/B Test</button>
+          <button onclick="switchAITab('competitor')" id="aitab-competitor" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;">🕵️ Competitor</button>
+        </div>
+
+        <!-- VOICE TO POST -->
+        <div id="aitool-voice">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">🎤 Voice to Post</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Speak about your product — AI writes the post. Uses browser mic (free) → Groq → Claude.</div>
+            <button id="voice-btn" onclick="startVoiceToPost()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">🎤 Start Recording</button>
+            <div id="voice-output" style="min-height:80px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:12px;"></div>
+            <button id="voice-post-btn" onclick="convertVoiceToPost()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">✨ Write Post from Voice</button>
+          </div>
+          <div style="font-size:12px;color:var(--sub);text-align:center;">Fallback chain: Browser SpeechRecognition → Groq Llama 70B → Claude</div>
+        </div>
+
+        <!-- IMAGE TO AD -->
+        <div id="aitool-image" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(99,102,241,0.15));border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:20px;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">📸 Image to Ad</div>
+            <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Upload a product photo — AI describes it and writes a full ad. Uses Gemini Vision (free) → Groq → Claude.</div>
             <label style="display:block;width:100%;padding:14px;background:var(--bg3);border:2px dashed var(--accent);border-radius:12px;text-align:center;cursor:pointer;margin-bottom:12px;color:var(--text);font-size:14px;">
               📷 Tap to upload product photo
               <input type="file" accept="image/*" onchange="handleImageToAdUpload(this)" style="display:none;">
