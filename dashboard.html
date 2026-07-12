@@ -10999,15 +10999,23 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.fillRect(0,0,W,H);
         } else {
           // Photo mode (default)
+          // Try productImg (uploaded photo) first, then bgImg, then theme bg
+          var drawnBg = false;
           if (productImg && productImg.complete && productImg.naturalWidth > 0) {
-            // Cover fill - maintain aspect ratio
             var imgW=productImg.naturalWidth, imgH=productImg.naturalHeight;
             var scale=Math.max(W/imgW, H/imgH);
             var sw=imgW*scale, sh=imgH*scale;
             ctx.drawImage(productImg, (W-sw)/2, (H-sh)/2, sw, sh);
-          } else if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-            ctx.drawImage(bgImg, 0, 0, W, H);
-          } else {
+            drawnBg = true;
+          }
+          if (!drawnBg && bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+            var imgW2=bgImg.naturalWidth, imgH2=bgImg.naturalHeight;
+            var scale2=Math.max(W/imgW2, H/imgH2);
+            var sw2=imgW2*scale2, sh2=imgH2*scale2;
+            ctx.drawImage(bgImg, (W-sw2)/2, (H-sh2)/2, sw2, sh2);
+            drawnBg = true;
+          }
+          if (!drawnBg) {
             ctx.fillStyle = c.bg || '#08061a'; ctx.fillRect(0,0,W,H);
             drawMesh();
           }
@@ -11228,13 +11236,15 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       productImg.onerror = tryStart;
       productImg.src = productImageUrl;
     }
-    if (c.photoUrl) {
+    // Load bgImg from photoUrl OR from thumbUrl (user's uploaded photo)
+    var bgImgSrc = c.photoUrl || (thumbUrl && vadBackground && vadBackground.mode === 'photo' ? thumbUrl : '');
+    if (bgImgSrc) {
       imagesToLoad++;
       bgImg = new Image();
       bgImg.crossOrigin = 'anonymous';
       bgImg.onload = tryStart;
       bgImg.onerror = tryStart;
-      bgImg.src = c.photoUrl;
+      bgImg.src = bgImgSrc;
     }
     if (imagesToLoad === 0) startRender();
   });
