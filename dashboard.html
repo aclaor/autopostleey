@@ -1973,7 +1973,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
       </div>
       <!-- TABS -->
       <div style="display:flex;gap:8px;margin-bottom:20px;">
-        <button id="reels-tab-1" onclick="switchReelsTab(1)" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">\ud83d\uddbc\ufe0f Photo \u2192 Reel</button>
+        <button id="reels-tab-1" onclick="switchReelsTab(1)" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">??️ Photo → Reel</button>
         <button id="reels-tab-2" onclick="switchReelsTab(2)" style="padding:10px 20px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🎥 Video Analyzer</button>
       </div>
       <!-- TAB 1: Photo Slideshow Reel -->
@@ -1983,15 +1983,15 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <div>
             <!-- Upload Area -->
             <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">\ud83d\udcf8 Upload Product Photos</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">?? Upload Product Photos</div>
               <div id="reel-dropzone" onclick="document.getElementById('reel-photo-input').click()"
                 style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color .2s;"
                 ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
                 ondragleave="this.style.borderColor='var(--border)'"
                 ondrop="handleReelPhotoDrop(event)">
-                <div style="font-size:36px;margin-bottom:8px;">\ud83d\uddbc\ufe0f</div>
+                <div style="font-size:36px;margin-bottom:8px;">??️</div>
                 <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag photos here</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:4px;">Upload 2-10 product photos \u00b7 JPG, PNG \u00b7 Max 5MB each</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">Upload 2-10 product photos · JPG, PNG · Max 5MB each</div>
               </div>
               <input id="reel-photo-input" type="file" accept="image/*" multiple style="display:none" onchange="handleReelPhotoUpload(this)">
               <!-- Photo grid -->
@@ -1999,19 +1999,19 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             </div>
             <!-- Reel Settings -->
             <div style="background:var(--bg2);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid var(--border);">
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">\u2699\ufe0f Reel Settings</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">⚙️ Reel Settings</div>
               <div class="form-group">
                 <label class="form-label">Caption / Text Overlay</label>
-                <textarea id="reel-caption" rows="3" class="form-textarea" placeholder="AI will generate this \u2014 or write your own..."></textarea>
+                <textarea id="reel-caption" rows="3" class="form-textarea" placeholder="AI will generate this — or write your own..."></textarea>
                 <button onclick="generateReelCaption()" style="margin-top:6px;padding:7px 14px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">✨ Generate with AI</button>
               </div>
               <div class="form-group">
                 <label class="form-label">Background Music</label>
                 <select id="reel-music" class="form-input">
-                  <option value="upbeat">\ud83c\udfb5 Upbeat & Energetic</option>
-                  <option value="chill">\ud83c\udfb6 Chill & Relaxed</option>
-                  <option value="corporate">\ud83d\udcbc Corporate & Professional</option>
-                  <option value="none">\ud83d\udd07 No Music</option>
+                  <option value="upbeat">?? Upbeat & Energetic</option>
+                  <option value="chill">?? Chill & Relaxed</option>
+                  <option value="corporate">?? Corporate & Professional</option>
+                  <option value="none">?? No Music</option>
                 </select>
               </div>
               <div class="form-group">
@@ -2049,7 +2049,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <!-- Right: Preview + Post -->
           <div>
             <div style="background:var(--bg2);border-radius:14px;padding:20px;border:1px solid var(--border);position:sticky;top:20px;">
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">\ud83d\udc41\ufe0f Preview</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">??️ Preview</div>
               <!-- Canvas preview -->
               <div style="background:#000;border-radius:10px;overflow:hidden;margin-bottom:12px;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;position:relative;">
                 <canvas id="reel-canvas" width="360" height="640" style="width:100%;height:100%;object-fit:contain;"></canvas>
@@ -2068,7 +2068,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <!-- Download + Post buttons -->
               <div id="reel-output-btns" style="display:none;">
                 <!-- Download -->
-                <a id="reel-download-btn" download="my-reel.webm" style="display:block;text-align:center;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:12px;">\u2b07\ufe0f Download Reel</a>
+                <a id="reel-download-btn" download="my-reel.webm" style="display:block;text-align:center;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:12px;">⬇️ Download Reel</a>
                 <!-- Platform selector with checkboxes -->
                 <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">SELECT PLATFORMS:</div>
                 <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;" id="reel-platform-checks">
@@ -2125,7 +2125,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 ondrop="handleVideoAnalyzerDrop(event)">
                 <div style="font-size:36px;margin-bottom:8px;">🎥</div>
                 <div style="font-size:13px;font-weight:600;color:var(--text2);">Click or drag your video here</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI \u00b7 Max 50MB</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px;">MP4, MOV, AVI · Max 50MB</div>
               </div>
               <input id="video-input" type="file" accept="video/*" style="display:none" onchange="handleVideoAnalyzer(this)">
               <!-- Video preview -->
@@ -2147,20 +2147,20 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📱 Platform Requirements</div>
               <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:var(--text3);">
                 <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">\ud83d\udcf8 Instagram Reels</div>
-                  Max 90 sec \u00b7 MP4 \u00b7 9:16 ratio \u00b7 Under 4GB
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">?? Instagram Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio · Under 4GB
                 </div>
                 <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">\u25b6\ufe0f YouTube Shorts</div>
-                  Max 60 sec \u00b7 MP4 \u00b7 Under 256MB
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">▶️ YouTube Shorts</div>
+                  Max 60 sec · MP4 · Under 256MB
                 </div>
                 <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">\ud83d\udcd8 Facebook Reels</div>
-                  Max 90 sec \u00b7 MP4 \u00b7 9:16 ratio
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">?? Facebook Reels</div>
+                  Max 90 sec · MP4 · 9:16 ratio
                 </div>
                 <div style="padding:10px;background:var(--bg3);border-radius:8px;">
-                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">\ud83d\udcac Telegram</div>
-                  Max 50MB \u00b7 Any format supported
+                  <div style="font-weight:700;color:var(--text);margin-bottom:4px;">?? Telegram</div>
+                  Max 50MB · Any format supported
                 </div>
               </div>
             </div>
