@@ -2968,7 +2968,7 @@ _db.auth.onAuthStateChange(function(event, session) {
 });
 
 async function initDashboard() {
-  loadSecureKeys(); // Load API keys from Worker (never stored in client)
+  if (typeof loadSecureKeys === "function") loadSecureKeys(); // Load API keys from Worker
   // Update topbar email
   var emailEl = document.getElementById('topbar-email');
   if(emailEl) emailEl.textContent = _user.email;
