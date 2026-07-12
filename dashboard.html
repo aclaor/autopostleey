@@ -2603,6 +2603,24 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 </div>
               </div>
 
+              <!-- Background Photo Upload -->
+              <div style="margin-bottom:12px;">
+                <label style="font-size:11px;color:var(--text2);font-weight:700;display:block;margin-bottom:6px;">📷 Background Photo <span style="font-weight:400;color:var(--text3);">— optional, replaces solid color</span></label>
+                <div id="vad-custom-bg-drop" onclick="document.getElementById('vad-custom-bg-input').click()"
+                  style="border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s;"
+                  onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                  <div style="font-size:22px;margin-bottom:4px;">📷</div>
+                  <div style="font-size:12px;font-weight:700;color:var(--text);">Tap to upload background photo</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:2px;">Your photo fills the entire video background</div>
+                </div>
+                <input type="file" id="vad-custom-bg-input" accept="image/*" style="display:none" onchange="setVadCustomBgPhoto(this)">
+                <div id="vad-custom-bg-preview" style="display:none;margin-top:8px;position:relative;">
+                  <img id="vad-custom-bg-img" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+                  <button onclick="clearVadCustomBgPhoto()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1;">✕</button>
+                  <div style="font-size:10px;color:var(--accent);margin-top:4px;text-align:center;font-weight:700;">✅ This photo will be your video background</div>
+                </div>
+              </div>
+
               <!-- Live preview -->
               <div id="vad-theme-preview-bar" style="border-radius:10px;padding:12px 16px;background:#08061a;display:flex;align-items:center;justify-content:space-between;">
                 <span id="vad-theme-prev-text" style="font-weight:700;font-size:13px;color:#ffffff;">Preview</span>
