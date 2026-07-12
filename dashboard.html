@@ -10547,6 +10547,11 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
 
     // Load images then start
+    var imagesToLoad = 0;
+    var imagesLoaded = 0;
+    var productImg = null;
+    var bgImg = null;
+
     function tryStart() {
       imagesLoaded++;
       if (imagesLoaded >= imagesToLoad) startRender();
