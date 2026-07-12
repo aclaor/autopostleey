@@ -10444,169 +10444,102 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
 
 async function downloadVadVideo() {
-  if (!_vadIframeDoc) {
-    showToast('Generate an ad first!', 'error');
-    return;
-  }
+  if (!_vadIframeDoc) { showToast('Generate an ad first!', 'error'); return; }
 
   var btn = document.getElementById('vad-download-btn');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div>'
-      + '<div style="font-size:13px;font-weight:700;color:var(--text);">Preparing...</div>';
+    btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">⏳</div><div style="font-size:11px;font-weight:700;color:var(--text);">Preparing...</div>';
   }
 
   showVadProgress(true);
-  setVadProgressBar(3);
-  setVadProgressText('Opening ad for recording...');
-
-  var adW = _vadFormat === 'reel' ? 607 : 500;
-  var adH = _vadFormat === 'reel' ? 1080 : 500;
-  var AD_DURATION = 34000;
-  var FPS = 30;
-
-  // ── APPROACH: Open the actual HTML ad in a real window and record it ──
-  // This records the EXACT same HTML/CSS that looks great in the preview
-  // No canvas re-drawing = no blur, perfect emoji, perfect alignment
+  setVadProgressBar(2);
+  setVadProgressText('Starting recording...');
 
   try {
-    // Step 1: Open ad in a same-origin iframe that we can capture
-    setVadProgressText('Setting up recorder...');
-    setVadProgressBar(5);
+    // Get the iframe element
+    var iframe = document.getElementById('vad-preview-iframe');
+    if (!iframe) throw new Error('Preview iframe not found — generate ad first');
 
-    // Create a hidden iframe at full resolution
-    var recIframe = document.createElement('iframe');
-    recIframe.style.cssText = [
-      'position:fixed',
-      'left:-9999px',
-      'top:0',
-      'width:' + adW + 'px',
-      'height:' + adH + 'px',
-      'border:none',
-      'z-index:-1',
-      'pointer-events:none'
-    ].join(';');
-    recIframe.srcdoc = _vadIframeDoc;
-    document.body.appendChild(recIframe);
+    var FPS = 30;
+    var DURATION_MS = 33500; // 33.5s total
 
-    // Wait for iframe to fully load and animation to start
-    await new Promise(function(res){ setTimeout(res, 1500); });
-
-    setVadProgressText('Starting recording...');
-    setVadProgressBar(10);
-
-    // Step 2: Capture the iframe body using html2canvas at high resolution
-    // and stream frames to a canvas — this gives us CSS/HTML quality
-
-    // Load html2canvas if needed
-    if (!window.html2canvas) {
-      await new Promise(function(res, rej) {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    }
-
-    // Create output canvas matching ad dimensions
-    var outCanvas = document.createElement('canvas');
-    outCanvas.width  = adW;
-    outCanvas.height = adH;
-    var outCtx = outCanvas.getContext('2d');
-
-    // Best mime type
+    // Detect best format
     var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){
       return MediaRecorder.isTypeSupported(t);
     }) || 'video/webm';
 
-    // Start recording
-    var stream = outCanvas.captureStream(FPS);
+    // Capture the iframe as a video stream
+    // This uses the browser compositor — same quality as what you see in the preview
+    var stream;
+    try {
+      stream = iframe.captureStream(FPS);
+    } catch(e) {
+      // Fallback: capture from the iframe's canvas if available
+      throw new Error('captureStream not supported — try Chrome browser');
+    }
+
     var chunks = [];
     var recorder = new MediaRecorder(stream, {
       mimeType: mimeType,
-      videoBitsPerSecond: 16000000  // 16Mbps for crystal clear
+      videoBitsPerSecond: 16000000
     });
-    recorder.ondataavailable = function(e){
+    recorder.ondataavailable = function(e) {
       if (e.data && e.data.size > 0) chunks.push(e.data);
     };
+
+    // Restart the ad animation from the beginning
+    setVadProgressText('Restarting ad...');
+    setVadProgressBar(5);
+
+    // Reset the iframe by replaying
+    if (typeof replayVadAd === 'function') replayVadAd();
+
+    // Small delay to let the ad initialize
+    await new Promise(function(res){ setTimeout(res, 400); });
+
+    // Start recording
     recorder.start(100);
+    setVadProgressText('Recording beautiful ad... 0s');
+    setVadProgressBar(8);
 
-    // Step 3: Capture html2canvas frames in a loop
-    var recStart = Date.now();
-    var capturing = true;
-
-    // Frame capture loop — html2canvas each frame from the live iframe
-    async function captureFrames() {
-      while (capturing) {
-        var elapsed = Date.now() - recStart;
-
-        try {
-          var iframeBody = recIframe.contentDocument && recIframe.contentDocument.body;
-          if (iframeBody) {
-            var snap = await window.html2canvas(iframeBody, {
-              canvas:          outCanvas,
-              width:           adW,
-              height:          adH,
-              scale:           1,
-              useCORS:         true,
-              allowTaint:      true,
-              logging:         false,
-              backgroundColor: null,
-              removeContainer: false
-            });
-            // html2canvas draws directly to outCanvas if we pass it
-            if (snap !== outCanvas) {
-              outCtx.clearRect(0, 0, adW, adH);
-              outCtx.drawImage(snap, 0, 0, adW, adH);
-            }
-          }
-        } catch(e) { /* skip frame */ }
-
-        // Progress
-        var pct = 10 + Math.min(73, (elapsed / AD_DURATION) * 73);
-        setVadProgressBar(Math.round(pct));
-        var secs = Math.round(elapsed / 1000);
-        setVadProgressText('Recording... ' + secs + 's / 33s');
-        if (btn) {
-          btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">\uD83D\uDD34</div>'
-            + '<div style="font-size:11px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
-        }
-
-        // Target ~15fps for html2canvas (it's slower than canvas.fillRect)
-        await new Promise(function(res){ setTimeout(res, 66); });
+    // Update progress while recording
+    var startTime = Date.now();
+    var progressInterval = setInterval(function() {
+      var elapsed = Date.now() - startTime;
+      var pct = 8 + Math.round((elapsed / DURATION_MS) * 80);
+      var secs = Math.round(elapsed / 1000);
+      setVadProgressBar(Math.min(88, pct));
+      setVadProgressText('Recording... ' + secs + 's / 33s');
+      if (btn && secs > 0) {
+        btn.innerHTML = '<div style="font-size:18px;margin-bottom:4px;">🔴</div>'
+          + '<div style="font-size:11px;font-weight:700;color:var(--text);">Recording ' + secs + 's</div>';
       }
-    }
+    }, 500);
 
-    // Run capture and wait for full ad duration simultaneously
-    var capturePromise = captureFrames();
-    await new Promise(function(res){ setTimeout(res, AD_DURATION); });
-    capturing = false;
-    await capturePromise;
+    // Wait for full ad duration
+    await new Promise(function(res){ setTimeout(res, DURATION_MS); });
 
-    // Stop recording
+    clearInterval(progressInterval);
     recorder.stop();
     stream.getTracks().forEach(function(t){ t.stop(); });
-    document.body.removeChild(recIframe);
 
-    setVadProgressBar(85);
+    setVadProgressBar(90);
     setVadProgressText('Saving video...');
 
-    var rawBlob = await new Promise(function(res){
-      recorder.onstop = function(){ res(new Blob(chunks, { type: mimeType })); };
+    var rawBlob = await new Promise(function(res) {
+      recorder.onstop = function() { res(new Blob(chunks, { type: mimeType })); };
       setTimeout(function(){ res(new Blob(chunks, { type: mimeType })); }, 3000);
     });
 
-    setVadProgressBar(88);
-
-    // Convert to MP4 if needed
     var finalBlob = rawBlob;
-    var finalExt  = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    var finalExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
 
     if (!mimeType.includes('mp4') && rawBlob.size > 0) {
       setVadProgressText('Converting to MP4...');
       try {
         finalBlob = await convertWebmToMp4(rawBlob, function(p){
-          setVadProgressBar(88 + Math.round(p * 11));
+          setVadProgressBar(90 + Math.round(p * 9));
           setVadProgressText('Converting... ' + Math.round(p*100) + '%');
         });
         finalExt = 'mp4';
@@ -10616,84 +10549,30 @@ async function downloadVadVideo() {
     }
 
     setVadProgressBar(100);
-    setVadProgressText('\u2705 Done! Downloading...');
-    await new Promise(function(res){ setTimeout(res, 400); });
+    setVadProgressText('✅ Downloading...');
+    await new Promise(function(res){ setTimeout(res, 300); });
 
-    // Download
     var url = URL.createObjectURL(finalBlob);
-    var a   = document.createElement('a');
-    a.href     = url;
+    var a = document.createElement('a');
+    a.href = url;
     a.download = 'autopostleey-ad-' + Date.now() + '.' + finalExt;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
 
-    var msg = finalExt === 'mp4'
-      ? '\u2705 MP4 downloaded! Share on WhatsApp, TikTok, Instagram & Facebook!'
-      : '\u2705 Video downloaded! Works on Android & Chrome.';
-    showToast(msg, 'success');
+    var sizeMB = (finalBlob.size / 1024 / 1024).toFixed(1);
+    showToast('✅ ' + finalExt.toUpperCase() + ' downloaded! (' + sizeMB + 'MB) Perfect quality — share anywhere!', 'success');
 
   } catch(err) {
     console.error('Download error:', err);
-
-    // Fallback: download the HTML file
-    var blob = new Blob([_vadIframeDoc||''], { type: 'text/html' });
-    var a = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'autopostleey-video-ad.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Saved as HTML. Open in Chrome to screen-record it.', 'success');
+    showToast('❌ ' + err.message, 'error');
   }
 
   showVadProgress(false);
   if (btn) resetDownloadBtn(btn);
 }
 
-
-// FFmpeg WebM → MP4 converter
-async function convertWebmToMp4(webmBlob, onProgress) {
-  if (!window._ffmpegInstance) {
-    setVadProgressText('Loading MP4 converter (first time, ~5MB)...');
-    await new Promise(function(res, rej) {
-      if (window.FFmpegWASM) { res(); return; }
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-      s.crossOrigin = 'anonymous';
-      s.onload = res;
-      s.onerror = rej;
-      document.head.appendChild(s);
-    });
-
-    var Lib = (window.FFmpegWASM || {}).FFmpeg || (window.FFmpeg || {}).FFmpeg || window.FFmpeg;
-    if (!Lib) throw new Error('FFmpeg not available');
-
-    var ff = new Lib();
-    ff.on('progress', function(e) { if (onProgress && e.progress) onProgress(e.progress); });
-    await ff.load({
-      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-      wasmURL:  'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-    });
-    window._ffmpegInstance = ff;
-  }
-
-  var ff = window._ffmpegInstance;
-  var fetchFile = (window.FFmpegWASM || window.FFmpeg || {}).fetchFile;
-  if (!fetchFile) {
-    var ab = await webmBlob.arrayBuffer();
-    await ff.writeFile('in.webm', new Uint8Array(ab));
-  } else {
-    await ff.writeFile('in.webm', await fetchFile(webmBlob));
-  }
-
-  await ff.exec(['-i','in.webm','-c:v','libx264','-preset','ultrafast','-crf','24','-an','-movflags','+faststart','-pix_fmt','yuv420p','out.mp4']);
-  var data = await ff.readFile('out.mp4');
-  await ff.deleteFile('in.webm');
-  await ff.deleteFile('out.mp4');
-  return new Blob([data.buffer], { type: 'video/mp4' });
-}
 
 
 
