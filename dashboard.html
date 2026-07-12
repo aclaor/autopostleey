@@ -10142,7 +10142,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
         // URL badge
         su = slideUp(f - FPS*1.75, FPS*0.5);
-        drawBadge('??  autopostleey.com', W/2, centerY + 114 + su.y, su.alpha);
+        drawBadge('🚀 ' + (website||'autopostleey.com'), W/2, centerY + 114 + su.y, su.alpha);
       }
 
       function drawS2(f) {
@@ -10156,7 +10156,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = clamp(su.alpha, 0, 1);
         ctx.font = '52px serif';
         ctx.textAlign = 'center';
-        ctx.fillText('??', W/2, H*0.22 + su.y);
+        ctx.fillText('😩', W/2, H*0.22 + su.y);
         ctx.globalAlpha = 1;
 
         // Eyebrow
@@ -10184,7 +10184,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // Pain points grid
         su = slideUp(f - FPS*0.82, FPS*0.55);
         if (su.alpha > 0) {
-          var pts = ['⏰ Copy captions','?? Reformat images','?? Switch apps','?? Miss peak hours'];
+          var pts = ['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'];
           var gw = W * 0.42, gh = 36, gx0 = W*0.05, gy0 = H*0.55 + su.y;
           ctx.globalAlpha = clamp(su.alpha, 0, 1);
           pts.forEach(function(pt, i) {
@@ -10329,7 +10329,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.font = 'bold 14px Inter, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('?? POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
+          ctx.fillText('🚀 POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
           ctx.textBaseline = 'alphabetic';
           ctx.restore();
           ctx.globalAlpha = 1;
@@ -10455,7 +10455,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = 1;
 
         // Feature cards
-        var feats = [['??','AI Captions'],['⚡',platforms.length+' Platforms'],['??','Auto-Schedule'],['??','Video+Reels']];
+        var feats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
         var fcW = (W-28)/2, fcH = 52;
         feats.forEach(function(ft, i) {
           var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
@@ -10477,19 +10477,30 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // URL
         su = slideUp(f - FPS*1.0, FPS*0.6);
         ctx.globalAlpha = clamp(su.alpha, 0, 1);
+        var urlFontSize = W>500?34:24;
+        ctx.font = 'bold ' + urlFontSize + 'px Inter, sans-serif';
+        // Split website into name + extension for two-color effect
+        var cleanSite = (website||'autopostleey.com').replace(/https?:\/\//, '').split('/')[0];
+        var dotIdx = cleanSite.lastIndexOf('.');
+        var sitePart1 = dotIdx > 0 ? cleanSite.slice(0, dotIdx) : cleanSite;
+        var sitePart2 = dotIdx > 0 ? cleanSite.slice(dotIdx) : '';
+        var w1 = ctx.measureText(sitePart1).width;
+        var w2 = ctx.measureText(sitePart2).width;
+        var totalUrlW = w1 + w2;
+        var urlStartX = W/2 - totalUrlW/2;
+        ctx.textAlign = 'left';
         ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?34:24) + 'px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('autopostleey', W/2 - (W>500?50:35), H*0.82 + su.y);
+        ctx.fillText(sitePart1, urlStartX, H*0.82 + su.y);
         ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText('.com', W/2 + (W>500?64:44), H*0.82 + su.y);
-        // Underline
+        ctx.fillText(sitePart2, urlStartX + w1, H*0.82 + su.y);
+        // Underline spans exact text width
         ctx.strokeStyle = c.accent || '#a855f7';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(W*0.15, H*0.85 + su.y);
-        ctx.lineTo(W*0.85, H*0.85 + su.y);
+        ctx.moveTo(urlStartX, H*0.85 + su.y);
+        ctx.lineTo(urlStartX + totalUrlW, H*0.85 + su.y);
         ctx.stroke();
+        ctx.textAlign = 'center';
         ctx.globalAlpha = 1;
 
         // Pills
