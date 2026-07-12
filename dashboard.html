@@ -10066,7 +10066,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // BG + mesh
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
-        if (bgImg) {
+        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
           ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
           ctx.drawImage(bgImg, 0, 0, W, H);
           ctx.globalAlpha = 1;
@@ -10089,7 +10089,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.save();
           ctx.translate(W/2, H * 0.26);
           ctx.scale(heroScale, heroScale);
-          if (productImg) {
+          if (productImg && productImg.complete && productImg.naturalWidth > 0) {
             var sz = W > 500 ? 180 : 140;
             ctx.beginPath();
             ctx.roundRect(-sz/2, -sz/2, sz, sz, 18);
@@ -10427,7 +10427,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       function drawS5(f) {
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
-        if (bgImg) {
+        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
           ctx.globalAlpha = 0.10;
           ctx.drawImage(bgImg, 0, 0, W, H);
           ctx.globalAlpha = 1;
