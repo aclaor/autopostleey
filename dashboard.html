@@ -9935,7 +9935,7 @@ function resetDownloadBtn(btn) {
 // ── CANVAS AD RENDERER — Customer Business Story ─────────
 function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, thumbUrl, onProgress) {
   return new Promise(function(resolve, reject) {
-    var W = canvas.width, H = canvas.height;
+    var W = canvas.width / 2, H = canvas.height / 2; // logical size (canvas is 2x for retina
     var ctx = canvas.getContext('2d');
     var FPS = 30;
     var TOTAL_MS = 33000;
