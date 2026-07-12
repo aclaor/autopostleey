@@ -9837,7 +9837,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +(adMusic ? '<audio id="bg-music" loop style="display:none"><source src="'+(({upbeat:"https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",corporate:"https://assets.mixkit.co/music/preview/mixkit-corporate-business-show-574.mp3",inspiring:"https://assets.mixkit.co/music/preview/mixkit-inspiring-ambiance-529.mp3",relaxed:"https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3",luxury:"https://assets.mixkit.co/music/preview/mixkit-cinematic-mystery-528.mp3",tech:"https://assets.mixkit.co/music/preview/mixkit-future-bass-vibes-959.mp3"})[adMusic]||'')+'" type="audio/mp3"></audio>' : '')
     +'<div class="prog-bar"><div class="prog-fill" id="prog"></div></div>'
 
-    +'<script>'
+    +'<scr'+'ipt>'
     +'var TM=[];'
     +'var _bgm=document.getElementById("bg-music");'
     +'if(_bgm){_bgm.volume=0.18;_bgm.play().catch(function(){});}'
@@ -9940,54 +9940,44 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     var FPS = 30;
     var TOTAL_MS = 33000;
     var icons = ({
-      ecommerce:['??️','??','??','??','✨','??'],realestate:['??','??','??','??','??','??'],
-      automotive:['??','??','⚙️','??️','??','⛽'],food:['??','??','☕','??','??','??'],
-      fitness:['??','??️','??','⚡','??','??'],beauty:['??','??','??','✨','??','??'],
-      medical:['??','??','??','❤️','??','??'],education:['??','??','✏️','??','??','??'],
-      professional:['??','??','??','⚖️','??','??️'],homeservices:['??','??','??','??','??','??'],
-      technology:['??','??','⚡','??','??','??'],travel:['✈️','??','??️','??️','??','??'],
-      events:['??','??','??','??','??','??'],pets:['??','??','??','??','??','??'],
-      finance:['??','??','??','??','??','??'],marketing:['??','??','??','??','??','??'],
-      manufacturing:['??','⚙️','??','??','??','??️'],agriculture:['??','??','??','??','??','??'],
-      family:['??','??','??','??','??','??'],entertainment:['??','??','??','??️','??','??'],
-      nonprofit:['❤️','??','??','??️','⭐','??']
-    })[_vadTheme] || ['✨','⭐','??','??','??','??'];
+      ecommerce:  ['🛍️','👗','👟','💎','✨','🛒'],
+      realestate: ['🏠','🔑','🏡','🏢','📍','🌳'],
+      automotive: ['🚗','🔧','⚙️','🏎️','🛞','⛽'],
+      food:       ['🍔','🍕','☕','🍜','🥗','🍰'],
+      fitness:    ['💪','🏋️','🥊','⚡','🏃','🎯'],
+      beauty:     ['💄','💅','🌸','✨','💋','🦮'],
+      medical:    ['🏥','💊','🩺','❤️','🧬','💉'],
+      education:  ['📚','🎓','✏️','🧠','💡','🔭'],
+      professional:['💼','📊','🤝','⚖️','📋','🏛️'],
+      homeservices:['🔨','🪴','🧹','🔌','🏠','🪟'],
+      technology: ['💻','📱','⚡','🚀','🤖','🔮'],
+      travel:     ['✈️','🌍','🏖️','🗺️','🌅','🧳'],
+      events:     ['🎉','🎊','📸','🎵','🥂','💐'],
+      pets:       ['🐶','🐱','🐾','🦮','🐩','😺'],
+      finance:    ['💰','📈','🏦','💳','🪙','📊'],
+      marketing:  ['📱','🎯','📊','✨','🚀','📣'],
+    }[_vadTheme] || ['✨','🚀','📅','🌐','⚡','💡']);
 
-    // Preload product image if any
-    var productImg = null;
-    var bgImg = null;
-    var imagesLoaded = 0;
-    var imagesToLoad = 0;
-
+      // Draw floating icons
     function startRender() {
       var frame = 0;
       var totalFrames = Math.ceil((TOTAL_MS / 1000) * FPS);
-      var startTime = performance.now();
-      var rafId = null;
 
       // Scene timing in frames
-      var S1_END = 7 * FPS;   // 0-7s
-      var S2_END = 14 * FPS;  // 7-14s
-      var S3_END = 23 * FPS;  // 14-23s
+      var S1_END = 7 * FPS;    // 0-7s
+      var S2_END = 14 * FPS;   // 7-14s
+      var S3_END = 23 * FPS;   // 14-23s
       var S4_END = 27.5 * FPS; // 23-27.5s
-      // S5: rest
 
-      // Caption typing state
       var captionChars = caption.split('');
-      var typedCaption = '';
 
       function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-      function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
       function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
-      function fadeIn(frameInScene, durationFrames) {
-        return clamp(frameInScene / durationFrames, 0, 1);
-      }
-      function slideUp(frameInScene, durationFrames) {
-        var t = clamp(frameInScene / durationFrames, 0, 1);
+      function slideUp(fr, dur) {
+        var t = clamp(fr / dur, 0, 1);
         return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
       }
 
-      // Draw mesh blobs
       function drawMesh() {
         (c.meshes || []).forEach(function(m) {
           var gx = (m.x / 100) * W;
@@ -10003,7 +9993,6 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         });
       }
 
-      // Draw floating icons
       function drawFloatingIcons(alpha, frameInScene) {
         var positions = [
           {x:0.08,y:0.12},{x:0.88,y:0.18},{x:0.05,y:0.42},{x:0.90,y:0.48},
@@ -10142,7 +10131,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
         // URL badge
         su = slideUp(f - FPS*1.75, FPS*0.5);
-        drawBadge('?? '+(website||'autopostleey.com'), W/2, centerY + 114 + su.y, su.alpha);
+        drawBadge((website||'autopostleey.com'), W/2, centerY + 114 + su.y, su.alpha);
       }
 
       function drawS2(f) {
@@ -10156,7 +10145,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = clamp(su.alpha, 0, 1);
         ctx.font = '52px serif';
         ctx.textAlign = 'center';
-        ctx.fillText('😩', W/2, H*0.22 + su.y);
+        ctx.fillText('! ! !', W/2, H*0.22 + su.y);
         ctx.globalAlpha = 1;
 
         // Eyebrow
@@ -10184,7 +10173,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // Pain points grid
         su = slideUp(f - FPS*0.82, FPS*0.55);
         if (su.alpha > 0) {
-          var pts = ['⏰ Copy captions','📋 Reformat images','🔄 Switch apps','😤 Miss peak hours'];
+          var pts = ['- Copy captions','- Reformat images','- Switch apps','- Miss peak hours'];
           var gw = W * 0.42, gh = 36, gx0 = W*0.05, gy0 = H*0.55 + su.y;
           ctx.globalAlpha = clamp(su.alpha, 0, 1);
           pts.forEach(function(pt, i) {
@@ -10329,7 +10318,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.font = 'bold 14px Inter, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('🚀 POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
+          ctx.fillText('POST TO ALL ' + platforms.length + ' PLATFORMS', 0, 0);
           ctx.textBaseline = 'alphabetic';
           ctx.restore();
           ctx.globalAlpha = 1;
@@ -10420,7 +10409,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.sub || 'rgba(255,255,255,0.4)';
         ctx.font = '12px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Done in under 10 seconds ⚡', W/2, H*0.91 + su.y);
+        ctx.fillText('Done in under 10 seconds!', W/2, H*0.91 + su.y);
         ctx.globalAlpha = 1;
       }
 
@@ -10455,7 +10444,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = 1;
 
         // Feature cards
-        var feats = [['🤖','AI Captions'],['⚡',platforms.length+' Platforms'],['📅','Auto-Schedule'],['🎬','Video+Reels']];
+        var feats = [['AI','AI Captions'],['~',platforms.length+' Platforms'],['Cal','Auto-Schedule'],['Vid','Video+Reels']];
         var fcW = (W-28)/2, fcH = 52;
         feats.forEach(function(ft, i) {
           var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
@@ -10554,7 +10543,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       }
 
       renderFrame();
-    }
+    } // end startRender
+
 
     // Load images then start
     function tryStart() {
