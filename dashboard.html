@@ -10023,8 +10023,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       var S1e = 7*FPS, S2e = 14*FPS, S3e = 21*FPS, S4e = 27*FPS;
 
       function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-      function easeOut(t){ return 1-Math.pow(1-clamp(t,0,1),3); }
-      function slideUp(fr,dur){ var t=easeOut(clamp(fr/(dur*0.6),0,1)); return {a:t,y:(1-t)*14}; }
+      function easeOut(t){ return 1-Math.pow(1-clamp(t,0,1),2); }
+      function slideUp(fr,dur){ var alpha=Math.min(1,easeOut(clamp(fr/(dur*0.3),0,1))*1.5); var y=(1-easeOut(clamp(fr/dur,0,1)))*10; return {a:alpha,y:y}; }
 
       function drawMesh(alpha) {
         // Solid base — always fill so crossfade compositing works cleanly
@@ -10145,11 +10145,11 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           g.addColorStop(0,c.bg+'ee');g.addColorStop(.4,c.bg+'99');g.addColorStop(1,c.bg+'ee');
           ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
         }
-        drawFloatIcons(clamp(f/(FPS*.6),0,1),f);
+        drawFloatIcons(clamp(f/(FPS*.3),0,1),f);
 
         // Hero product image or emoji
-        var ha=easeOut(clamp((f-3)/(FPS*.9),0,1));
-        var hs=0.4+easeOut(clamp((f-3)/(FPS*.9),0,1))*0.6;
+        var ha=easeOut(clamp((f-2)/(FPS*.3),0,1));
+        var hs=0.85+easeOut(clamp((f-2)/(FPS*.2),0,1))*0.15;
         if(ha>0){
           ctx.globalAlpha=ha; ctx.save(); ctx.translate(W/2,H*.25); ctx.scale(hs,hs);
           if(heroImageUrl && (productImg || thumbUrl)){
@@ -10227,7 +10227,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // Pain points — appear fast staggered
         var cpH=52, cpY0=H*.42;
         displayProblems.slice(0,4).forEach(function(pt,i){
-          var ia=clamp((f-14-i*8)/(FPS*.25),0,1);
+          var ia=clamp((f-5-i*4)/(FPS*.2),0,1);
           if(ia<=0)return;
           var cy2=cpY0+i*(cpH+6);
           ctx.globalAlpha=ia;
@@ -10269,7 +10269,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // Problems solved — full width, icon+text perfectly aligned
         var rowH=50, listY=H*.33;
         displayProblems.slice(0,4).forEach(function(pt,i){
-          var ia=clamp((f-12-i*8)/(FPS*.25),0,1);
+          var ia=clamp((f-5-i*4)/(FPS*.2),0,1);
           if(ia<=0)return;
           var ry=listY+i*(rowH+6);
           ctx.globalAlpha=ia;
@@ -10280,8 +10280,8 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         });
 
         // Caption
-        var capStart=FPS*1.0;
-        var capA=clamp((f-capStart)/(FPS*.25),0,1);
+        var capStart=FPS*0.7;
+        var capA=clamp((f-capStart)/(FPS*.2),0,1);
         if(capA>0){
           var capY=H*.79;
           ctx.globalAlpha=capA;
@@ -10323,7 +10323,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // 2x2 benefit grid — row() keeps icon+text aligned
         var cw=(W-32)/2, ch=62, cx0=12, cy0=H*.33;
         displayBenefits.slice(0,4).forEach(function(sol,i){
-          var ia=clamp((f-12-i*8)/(FPS*.25),0,1);
+          var ia=clamp((f-5-i*4)/(FPS*.2),0,1);
           if(ia<=0)return;
           var col=i%2, r4=Math.floor(i/2);
           var cx=cx0+col*(cw+8), cy=cy0+r4*(ch+8);
@@ -10335,7 +10335,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         });
 
         // Stars
-        var sa=clamp((f-FPS*0.85)/(FPS*.25),0,1);
+        var sa=clamp((f-30)/(FPS*.2),0,1);
         if(sa>0){
           ctx.globalAlpha=sa;
           ctx.fillStyle='#fbbf24'; ctx.font='20px serif'; ctx.textAlign='center';
@@ -10377,7 +10377,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         // 4 benefits quick-fire
         var bfw=(W-32)/2, bfh=56, bfx0=12, bfy0=H*.38;
         displayBenefits.slice(0,4).forEach(function(b,i){
-          var ia=clamp((f-14-i*7)/(FPS*.25),0,1);
+          var ia=clamp((f-5-i*4)/(FPS*.2),0,1);
           if(ia<=0)return;
           var col=i%2, r5=Math.floor(i/2);
           var bfx=bfx0+col*(bfw+8), bfy=bfy0+r5*(bfh+6);
@@ -10388,7 +10388,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         });
 
         // Website URL — customer's website
-        su=slideUp(f-42,FPS*.25);
+        su=slideUp(f-40,FPS*.3);
         ctx.globalAlpha=clamp(su.a,0,1);
         var di=siteUrl.indexOf('.'), sn=di>-1?siteUrl.slice(0,di):siteUrl, sd=di>-1?siteUrl.slice(di):'.com';
         ctx.font='bold '+(W>500?32:22)+'px system-ui,-apple-system,sans-serif'; ctx.textAlign='center';
@@ -10402,7 +10402,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha=1;
 
         // CTA button
-        su=slideUp(f-50,FPS*.25);
+        su=slideUp(f-46,FPS*.3);
         if(su.a>0){
           ctx.globalAlpha=clamp(su.a,0,1);
           var btnH=44, btnY=H*.86+su.y;
