@@ -10108,7 +10108,8 @@ function generateVideoAd() {
   .catch(function() {
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
     var caption = tagline || ('Discover the ' + product + ' by ' + biz + '. #shopnow #' + biz.replace(/\s+/g,''));
-    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH);
+    var bgPhoto = _vadBgPhotoUrl || _vadThumbnailUrl || '';
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, [], previewWebsite||'', [], previewMusic||'', bgPhoto);
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   });
 }
@@ -10287,8 +10288,9 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     : '';
 
   var photoBgDim = photo
-    ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">'
-      + '<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>'
+    ? (isUserPhoto
+      ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.85;"><div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>'
+      : '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);"><div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>')
     : '';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
