@@ -2361,15 +2361,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div style="font-size:11px;color:var(--accent);font-weight:700;text-align:center;margin-top:6px;">✅ This photo will be your video background</div>
             </div>
 
-            <!-- Without photo: use emoji instead -->
-            <div id="vad-bg-emoji-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Or use an emoji/icon instead of a photo:</div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input id="vad-emoji" placeholder="✨" maxlength="4"
-                  style="width:60px;font-size:24px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);">
-                <span style="font-size:11px;color:var(--text3);">Shown in video when no photo is uploaded</span>
-              </div>
-            </div>
+
           </div>
 
           <div class="card">
@@ -2382,7 +2374,33 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 🏭 Industry Theme
               </button>
               <button id="vad-mode-custom" onclick="setVadThemeMode('custom')"
-                style="flex:1;padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .2s;">
+                style="flex:1;padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--bg3);color:var(--text2
+
+          <!-- Business Info -->
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div class="card-title" style="margin-bottom:0;">📋 Your Business</div>
+              <button onclick="autoFillVadFromProfile()" style="font-size:11px;padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;">🔄 Load Profile</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <label style="font-size:11px;color:var(--text3);">Business Name</label>
+                <input id="vad-bizname" placeholder="e.g. Maria's Bakery" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);">Product / Service</label>
+                <input id="vad-product" placeholder="e.g. Freshly baked pastries" oninput="debouncedAutoDetect(this.value)" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);">Tagline / Headline</label>
+                <input id="vad-tagline" placeholder="e.g. Freshly baked with love every day" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);">Emoji / Icon</label>
+                <input id="vad-emoji" placeholder="🍞" maxlength="4" style="width:80px;font-size:22px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;">
+              </div>
+            </div>
+          </div>);transition:all .2s;">
                 🎨 Custom Colors
               </button>
             </div>
