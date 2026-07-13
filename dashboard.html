@@ -2383,8 +2383,19 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <input id="vad-tagline" placeholder="e.g. Freshly baked with love every day" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
               </div>
               <div>
-                <label style="font-size:11px;color:var(--text3);">Emoji / Icon</label>
-                <input id="vad-emoji" placeholder="🍞" maxlength="4" style="width:80px;font-size:22px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;">
+                <label style="font-size:11px;color:var(--text3);">Emoji / Icon <span style="color:var(--text3);font-weight:400;">(shown when no photo uploaded)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+                  <input id="vad-emoji" placeholder="✨" maxlength="4"
+                    style="width:70px;font-size:24px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">✨</span>
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">🚀</span>
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">⭐</span>
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">🔥</span>
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">💎</span>
+                    <span onclick="document.getElementById('vad-emoji').value=this.textContent" style="font-size:22px;cursor:pointer;padding:4px;">🎯</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2726,7 +2737,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           
 
           <!-- Generate Video Ad -->
-          <button onclick="downloadVadVideo()" id="vad-download-btn"
+          <button onclick="generateVideoAd()" id="vad-generate-btn"
             style="width:100%;padding:18px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 24px rgba(168,85,247,0.4);">
             ✨ Generate Video Ad
           </button>
