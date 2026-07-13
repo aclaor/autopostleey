@@ -10624,16 +10624,31 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
         if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-          ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
-          ctx.drawImage(bgImg, 0, 0, W, H);
-          ctx.globalAlpha = 1;
-          // Dark overlay
-          var grad = ctx.createLinearGradient(0, 0, 0, H);
-          grad.addColorStop(0, c.bg + 'cc');
-          grad.addColorStop(0.5, c.bg + '66');
-          grad.addColorStop(1, c.bg + 'cc');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, W, H);
+          if (bgPhotoUrl) {
+            // User uploaded photo — full background with cover fit
+            var bW=bgImg.naturalWidth, bH=bgImg.naturalHeight;
+            var bSc=Math.max(W/bW,H/bH);
+            ctx.globalAlpha = Math.min(1, clamp(f/(FPS*0.4),0,1));
+            ctx.drawImage(bgImg,(W-bW*bSc)/2,(H-bH*bSc)/2,bW*bSc,bH*bSc);
+            ctx.globalAlpha = 1;
+            // Semi-transparent overlay for text readability
+            var ov=ctx.createLinearGradient(0,0,0,H);
+            ov.addColorStop(0,'rgba(0,0,0,0.45)');
+            ov.addColorStop(0.5,'rgba(0,0,0,0.25)');
+            ov.addColorStop(1,'rgba(0,0,0,0.55)');
+            ctx.fillStyle=ov; ctx.fillRect(0,0,W,H);
+          } else {
+            // Theme photo — subtle overlay (original behavior)
+            ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.globalAlpha = 1;
+            var grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, c.bg + 'cc');
+            grad.addColorStop(0.5, c.bg + '66');
+            grad.addColorStop(1, c.bg + 'cc');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+          }
         }
         drawMesh();
         drawFloatingIcons(clamp(f / (FPS * 0.5), 0, 1), f);
@@ -10985,9 +11000,20 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
         if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-          ctx.globalAlpha = 0.10;
-          ctx.drawImage(bgImg, 0, 0, W, H);
-          ctx.globalAlpha = 1;
+          if (bgPhotoUrl) {
+            var bW5=bgImg.naturalWidth, bH5=bgImg.naturalHeight;
+            var bSc5=Math.max(W/bW5,H/bH5);
+            ctx.globalAlpha = 1;
+            ctx.drawImage(bgImg,(W-bW5*bSc5)/2,(H-bH5*bSc5)/2,bW5*bSc5,bH5*bSc5);
+            var ov5=ctx.createLinearGradient(0,0,0,H);
+            ov5.addColorStop(0,'rgba(0,0,0,0.4)');
+            ov5.addColorStop(1,'rgba(0,0,0,0.5)');
+            ctx.fillStyle=ov5; ctx.fillRect(0,0,W,H);
+          } else {
+            ctx.globalAlpha = 0.10;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.globalAlpha = 1;
+          }
         }
         drawMesh();
         drawFloatingIcons(0.2, f + S4_END);
@@ -11357,7 +11383,24 @@ async function downloadVadVideo() {
     var emojiVal= (document.getElementById('vad-emoji')  ||{}).value||'✨';
     var capEl   = document.getElementById('vad-caption');
     var cap     = capEl ? capEl.value.split('\n\n??')[0].trim() : ('Discover '+product+' by '+biz);
-    var c = getVadThemeColors(_vadTheme);
+    // Theme colors — industry theme OR custom brand colors
+    var c;
+    if (_vadThemeMode === 'custom' && _vadCustomTheme) {
+      // Custom mode: use brand colors, no industry photo
+      var baseC = getVadThemeColors(_vadTheme);
+      c = Object.assign({}, baseC, {
+        bg:       _vadCustomTheme.bg,
+        accent:   _vadCustomTheme.accent,
+        text:     _vadCustomTheme.text,
+        sub:      _vadCustomTheme.text + '99',
+        text2:    _vadCustomTheme.text + 'cc',
+        photoUrl: null,  // no unsplash photo in custom mode
+        meshes:   [],    // no mesh overlays in custom mode
+      });
+    } else {
+      // Industry mode: full theme
+      c = getVadThemeColors(_vadTheme);
+    }
     var plats = ['?? Telegram','?? LinkedIn','?? Facebook','?? Discord','?? Bluesky','▶️ YouTube','?? Threads','?? FB Groups'];
     var benefits = [
       {icon:(document.getElementById('vad-b1-ico')||{}).textContent||'⭐',text:(document.getElementById('vad-b1')||{}).value||''},
