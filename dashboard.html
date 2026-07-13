@@ -11440,8 +11440,11 @@ async function downloadVadVideo() {
     // Debug logging
     console.log('[VAD] mode:', _vadThemeMode, 'customTheme:', _vadCustomTheme, 'bgDataUrl:', _vadCustomBgDataUrl ? 'SET('+_vadCustomBgDataUrl.length+'chars)' : 'EMPTY');
 
+    var _bgForRender = _vadCustomBgDataUrl || _vadBgPhotoUrl || thumbUrl || '';
+    console.log('[VAD Download] mode='+_vadThemeMode+' bgPhoto='+(_bgForRender?'YES('+_bgForRender.substring(0,30)+'...)':'EMPTY')+' customBg='+(_vadCustomBgDataUrl?'SET':'null'));
+
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
-      _vadProductImageUrl||'', benefits, website, problems, music, (_vadThemeMode==='custom' ? _vadCustomBgDataUrl||'' : _vadBgPhotoUrl||thumbUrl||''), floatingInfo, vadBackground,
+      _vadProductImageUrl||'', benefits, website, problems, music, _bgForRender, floatingInfo, vadBackground,
       function(progress){
         setVadProgressBar(5+Math.round(progress*80));
         setVadProgressText('Recording... '+Math.round(progress*33)+'s / 33s');
