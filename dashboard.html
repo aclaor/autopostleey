@@ -2340,72 +2340,34 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         <div style="display:flex;flex-direction:column;gap:16px;">
 
           <div class="card">
-            <div class="card-title">📋 Your Business</div>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">BUSINESS NAME</label>
-                <input id="vad-bizname" placeholder="e.g. Luxera Watches" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT / SERVICE</label>
-                <input id="vad-product" placeholder="e.g. Gold Chronograph Watch" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" oninput="debouncedAutoDetect()">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">TAGLINE / KEY MESSAGE</label>
-                <div style="display:flex;gap:8px;align-items:flex-start;">
-                  <textarea id="vad-tagline" rows="2" placeholder="e.g. Precision. Elegance. Power." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;resize:none;font-family:var(--sans);"></textarea>
-                  <button onclick="generateVadTagline()" id="vad-tagline-btn" title="Generate from business profile"
-                    style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;">
-                    ✨ Generate
-                  </button>
-                </div>
-                <div style="font-size:10px;color:var(--text3);margin-top:4px;">AI generates from your business profile — edit freely after</div>
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:block;margin-bottom:6px;">PRODUCT VISUAL</label>
-                <!-- Toggle: Emoji or Image -->
-                <div style="display:flex;gap:6px;margin-bottom:10px;" id="vad-visual-toggle">
-                  <button id="vad-toggle-emoji" onclick="setVadVisualMode('emoji')"
-                    style="flex:1;padding:7px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:2px solid var(--accent);background:rgba(109,94,248,0.1);color:var(--accent);">
-                    😀 Use Emoji
-                  </button>
-                  <button id="vad-toggle-image" onclick="setVadVisualMode('image')"
-                    style="flex:1;padding:7px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);">
-                    📸 Upload Photo
-                  </button>
-                </div>
+            <div class="card-title">📷 Video Photo Background</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Upload your product photo — it fills the entire video background with text overlaid on top.</div>
 
-                <!-- Emoji mode -->
-                <div id="vad-emoji-mode">
-                  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-                    <input id="vad-emoji" placeholder="✨" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:28px;outline:none;text-align:center;">
-                    <button onclick="suggestVadEmoji()"
-                      style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);transition:all .2s;"
-                      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-                      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
-                      🎯 Match to Product
-                    </button>
-                  </div>
-                  <div id="vad-emoji-suggestions" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
-                  <div style="font-size:10px;color:var(--text3);">Type your product name above first, then tap Match to Product</div>
-                </div>
+            <!-- Single upload area -->
+            <div id="vad-bg-drop-main" onclick="document.getElementById('vad-bg-input-main').click()"
+              style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;"
+              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="font-size:36px;margin-bottom:8px;">📷</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);">Upload Product Photo</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px;">This photo fills the entire video background · JPG or PNG</div>
+            </div>
+            <input type="file" id="vad-bg-input-main" accept="image/*" style="display:none" onchange="uploadVadBgPhotoMain(this)">
 
-                <!-- Image mode -->
-                <div id="vad-image-mode" style="display:none;">
-                  <div id="vad-img-drop" onclick="document.getElementById('vad-product-img').click()"
-                    style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);"
-                    onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-                    <div style="font-size:32px;margin-bottom:8px;">📸</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text);">Upload product photo</div>
-                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG · max 10MB</div>
-                  </div>
-                  <input type="file" id="vad-product-img" accept="image/*" style="display:none" onchange="uploadVadProductImage(this)">
-                  <div id="vad-img-preview" style="display:none;margin-top:10px;position:relative;">
-                    <img id="vad-img-thumb" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
-                    <button onclick="clearVadProductImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">✕</button>
-                    <div style="position:absolute;bottom:6px;left:6px;background:rgba(109,94,248,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;">✓ Product photo ready</div>
-                  </div>
-                </div>
+            <!-- Preview -->
+            <div id="vad-bg-preview-main" style="display:none;margin-top:12px;position:relative;">
+              <img id="vad-bg-img-main" style="width:100%;max-height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--border);">
+              <button onclick="clearVadBgPhotoMain()"
+                style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:14px;">✕</button>
+              <div style="font-size:11px;color:var(--accent);font-weight:700;text-align:center;margin-top:6px;">✅ This photo will be your video background</div>
+            </div>
+
+            <!-- Without photo: use emoji instead -->
+            <div id="vad-bg-emoji-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Or use an emoji/icon instead of a photo:</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input id="vad-emoji" placeholder="✨" maxlength="4"
+                  style="width:60px;font-size:24px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);">
+                <span style="font-size:11px;color:var(--text3);">Shown in video when no photo is uploaded</span>
               </div>
             </div>
           </div>
@@ -9730,6 +9692,43 @@ function applyVadCustomTheme(bg, accent, textColor) {
   if (event && event.currentTarget) event.currentTarget.style.border = '2px solid var(--accent)';
 }
 
+
+// ── VAD MAIN BACKGROUND PHOTO ────────────────────────────────────
+function uploadVadBgPhotoMain(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    // Store as the primary background - works in ALL modes
+    _vadCustomBgDataUrl = e.target.result;
+    _vadBgPhotoUrl      = e.target.result;
+
+    var img  = document.getElementById('vad-bg-img-main');
+    var prev = document.getElementById('vad-bg-preview-main');
+    var drop = document.getElementById('vad-bg-drop-main');
+    var emojiSec = document.getElementById('vad-bg-emoji-section');
+    if (img)  img.src = e.target.result;
+    if (prev) prev.style.display = 'block';
+    if (drop) drop.style.display = 'none';
+    if (emojiSec) emojiSec.style.display = 'none';
+    showToast('✅ Photo uploaded! It will fill your video background.', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearVadBgPhotoMain() {
+  _vadCustomBgDataUrl = null;
+  _vadBgPhotoUrl      = null;
+  var prev = document.getElementById('vad-bg-preview-main');
+  var drop = document.getElementById('vad-bg-drop-main');
+  var inp  = document.getElementById('vad-bg-input-main');
+  var emojiSec = document.getElementById('vad-bg-emoji-section');
+  if (prev) prev.style.display = 'none';
+  if (drop) drop.style.display = 'block';
+  if (inp)  inp.value = '';
+  if (emojiSec) emojiSec.style.display = 'block';
+}
+
 function toggleVadFloatingInfo() {
   var body = document.getElementById('vad-fi-body');
   var icon = document.getElementById('vad-fi-toggle-icon');
@@ -11440,7 +11439,8 @@ async function downloadVadVideo() {
     // Debug logging
     console.log('[VAD] mode:', _vadThemeMode, 'customTheme:', _vadCustomTheme, 'bgDataUrl:', _vadCustomBgDataUrl ? 'SET('+_vadCustomBgDataUrl.length+'chars)' : 'EMPTY');
 
-    var _bgForRender = _vadCustomBgDataUrl || _vadBgPhotoUrl || thumbUrl || '';
+    var _bgForRender = _vadBgPhotoUrl || _vadCustomBgDataUrl || thumbUrl || '';
+    console.log('[VAD] bgPhotoSet:', !!_bgForRender, 'len:', _bgForRender.length);
     console.log('[VAD Download] mode='+_vadThemeMode+' bgPhoto='+(_bgForRender?'YES('+_bgForRender.substring(0,30)+'...)':'EMPTY')+' customBg='+(_vadCustomBgDataUrl?'SET':'null'));
 
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
