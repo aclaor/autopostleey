@@ -9680,6 +9680,11 @@ var _vadThemeMode = 'industry'; // 'industry' or 'custom'
 function setVadThemeMode(mode) {
   _vadThemeMode = mode;
 
+  // Auto-initialize custom theme with defaults if not set
+  if (mode === 'custom' && !_vadCustomTheme) {
+    _vadCustomTheme = { bg: '#08061a', accent: '#a855f7', text: '#ffffff' };
+  }
+
   var industryPanel = document.getElementById('vad-panel-industry');
   var customPanel   = document.getElementById('vad-panel-custom');
   var industryBtn   = document.getElementById('vad-mode-industry');
@@ -10075,7 +10080,7 @@ function generateVideoAd() {
   if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
 
   var c;
-    if (_vadThemeMode === 'custom' && _vadCustomTheme) {
+    if (_vadThemeMode === 'custom') {
       // Custom mode: use customer brand colors entirely
       c = Object.assign({}, getVadThemeColors(_vadTheme), {
         bg:     _vadCustomTheme.bg,
@@ -11388,14 +11393,15 @@ async function downloadVadVideo() {
     if (_vadThemeMode === 'custom' && _vadCustomTheme) {
       // Custom mode: use brand colors, no industry photo
       var baseC = getVadThemeColors(_vadTheme);
+      var ct = _vadCustomTheme || { bg: '#08061a', accent: '#a855f7', text: '#ffffff' };
       c = Object.assign({}, baseC, {
-        bg:       _vadCustomTheme.bg,
-        accent:   _vadCustomTheme.accent,
-        text:     _vadCustomTheme.text,
-        sub:      _vadCustomTheme.text + '99',
-        text2:    _vadCustomTheme.text + 'cc',
-        photoUrl: null,  // no unsplash photo in custom mode
-        meshes:   [],    // no mesh overlays in custom mode
+        bg:       ct.bg,
+        accent:   ct.accent,
+        text:     ct.text,
+        sub:      ct.text + '99',
+        text2:    ct.text + 'cc',
+        photoUrl: null,
+        meshes:   [],
       });
     } else {
       // Industry mode: full theme
@@ -11433,6 +11439,9 @@ async function downloadVadVideo() {
     var recorder = new MediaRecorder(stream, {mimeType:mimeType, videoBitsPerSecond:16000000});
     recorder.ondataavailable = function(e){if(e.data&&e.data.size>0)chunks.push(e.data);};
     recorder.start(100);
+
+    // Debug logging
+    console.log('[VAD] mode:', _vadThemeMode, 'customTheme:', _vadCustomTheme, 'bgDataUrl:', _vadCustomBgDataUrl ? 'SET('+_vadCustomBgDataUrl.length+'chars)' : 'EMPTY');
 
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
       _vadProductImageUrl||'', benefits, website, problems, music, (_vadThemeMode==='custom' ? _vadCustomBgDataUrl||'' : _vadBgPhotoUrl||thumbUrl||''), floatingInfo, vadBackground,
