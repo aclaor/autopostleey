@@ -589,6 +589,9 @@
         <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
       </a>
     </div>
+<div class="nav-item" onclick="showPage('photoad')">
+  <span>🖼️</span><span>Photo Ads</span>
+</div>
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_settings">Settings</span></div>
       <a class="nav-item" onclick="showPage('business');closeAPSidebar();return false;" href="#">
@@ -613,9 +616,7 @@
         <span class="nav-icon">💬</span> <span data-i18n="nav_support">Support</span>
       </a>
     </div>
-<div class="nav-item" onclick="showPage('photoad')">
-  <span>🖼️</span><span>Photo Ads</span>
-</div>
+
     <div class="sidebar-footer">
       <div class="plan-badge">
         <div class="plan-badge-name" id="sidebar-plan">FREE PLAN</div>
@@ -2736,6 +2737,36 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <div style="font-size:10px;color:var(--text3);margin-top:6px;">Shown in the last scene of your video ad</div>
           
 
+          <!-- Auto-Post Schedule -->
+          <div class="card" id="vad-autopost-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
+              <div id="vad-autopost-status" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);font-weight:700;">● OFF</div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Automatically post this video ad on a repeating schedule.</div>
+            <select id="vad-autopost-interval" onchange="updateAutoPostStatus('vad')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;margin-bottom:10px;">
+              <option value="0">🚫 Off — Don't auto-post</option>
+              <option value="4">⏱ Every 4 hours</option>
+              <option value="6">⏱ Every 6 hours</option>
+              <option value="8">⏱ Every 8 hours</option>
+              <option value="12">⏱ Every 12 hours</option>
+              <option value="24">⏱ Every 24 hours</option>
+              <option value="48">⏱ Every 2 days</option>
+            </select>
+            <div id="vad-autopost-platforms" style="display:none;">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Post to these platforms:</div>
+              <div id="vad-autopost-platform-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+              <button onclick="startVadAutoPost()" id="vad-autopost-start-btn"
+                style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+                ▶ Start Auto-Posting
+              </button>
+              <button onclick="stopVadAutoPost()" id="vad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
+                ⏹ Stop Auto-Posting
+              </button>
+            </div>
+          </div>
+
           <!-- Generate Video Ad -->
           <button onclick="generateVideoAd()" id="vad-generate-btn"
             style="width:100%;padding:18px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 24px rgba(168,85,247,0.4);">
@@ -2911,6 +2942,48 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div id="pad-labels-list" style="display:flex;flex-direction:column;gap:6px;"></div>
             </div>
 
+            <!-- Label Editor -->
+            <div class="card" id="pad-label-editor" style="display:none;">
+              <div class="card-title">✏️ Edit Selected Label</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Text</label>
+                  <input id="pad-edit-text" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Style</label>
+                  <select id="pad-edit-style" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-top:4px;">
+                    <option value="badge">Pill Badge</option>
+                    <option value="card">Glass Card</option>
+                    <option value="bold">Bold Text</option>
+                    <option value="tag">Price Tag</option>
+                  </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div>
+                    <label style="font-size:11px;color:var(--text3);">Text Color</label>
+                    <input type="color" id="pad-edit-color" value="#ffffff"
+                      style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:11px;color:var(--text3);">Background</label>
+                    <input type="color" id="pad-edit-bgcolor" value="#a855f7"
+                      style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Text Size: <span id="pad-edit-size-val">14px</span></label>
+                  <input type="range" id="pad-edit-size" min="10" max="48" value="14"
+                    oninput="document.getElementById('pad-edit-size-val').textContent=this.value+'px'"
+                    style="width:100%;margin-top:6px;accent-color:var(--accent);">
+                </div>
+                <button onclick="padApplyLabelEdit()"
+                  style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+                  ✅ Apply Changes
+                </button>
+              </div>
+            </div>
+
             <!-- Export options -->
             <div class="card">
               <div class="card-title">📤 Export</div>
@@ -2925,6 +2998,50 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                   🚀 Post to Social Media
                 </button>
               </div>
+            </div>
+
+            <!-- Auto-Post Schedule -->
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
+                <div id="pad-autopost-status" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);font-weight:700;">● OFF</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Automatically post this photo ad on a repeating schedule.</div>
+              <select id="pad-autopost-interval" onchange="updateAutoPostStatus('pad')"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;margin-bottom:10px;">
+                <option value="0">🚫 Off — Don't auto-post</option>
+                <option value="4">⏱ Every 4 hours</option>
+                <option value="6">⏱ Every 6 hours</option>
+                <option value="8">⏱ Every 8 hours</option>
+                <option value="12">⏱ Every 12 hours</option>
+                <option value="24">⏱ Every 24 hours</option>
+                <option value="48">⏱ Every 2 days</option>
+              </select>
+              <div id="pad-autopost-platforms" style="display:none;">
+                <div id="pad-autopost-platform-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+                <button onclick="startPadAutoPost()" id="pad-autopost-start-btn"
+                  style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+                  ▶ Start Auto-Posting
+                </button>
+                <button onclick="stopPadAutoPost()" id="pad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
+                  ⏹ Stop Auto-Posting
+                </button>
+              </div>
+            </div>
+
+            <!-- Caption + Platform Picker (shown after upload) -->
+            <div id="pad-platform-section" style="display:none;" class="card">
+              <div class="card-title">🚀 Post to Platforms</div>
+              <div style="margin-bottom:12px;">
+                <label style="font-size:11px;color:var(--text3);">Caption</label>
+                <textarea id="pad-caption" placeholder="Write your caption here..." rows="3"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;margin-top:4px;"></textarea>
+              </div>
+              <div id="pad-platform-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+              <button id="pad-post-now-btn" onclick="padPostNow()"
+                style="width:100%;padding:14px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                🚀 Post Now
+              </button>
             </div>
 
           </div>
@@ -13219,24 +13336,275 @@ function padExportSlideshow() {
 
 function padPostToSocial() {
   if (!_padPhotos.length) { showToast('Create your ad first!', 'error'); return; }
+  showToast('📤 Preparing image...', 'success');
   var canvas = document.getElementById('pad-canvas');
   if (!canvas) return;
-  // Convert canvas to blob and put in compose
   canvas.toBlob(function(blob) {
-    // Upload to R2 then post
-    uploadFileToR2(new File([blob], 'product-ad.jpg', {type:'image/jpeg'}), 'photo-ads')
+    uploadFileToR2(new File([blob], 'product-ad-'+Date.now()+'.jpg', {type:'image/jpeg'}), 'photo-ads')
       .then(function(url) {
         if (url) {
-          window._composerImageUrl = url;
-          showPage('compose');
-          showToast('✅ Image ready to post! Select platforms and click Post.', 'success');
+          _padPublicUrl = url;
+          // Show platform picker
+          var picker = document.getElementById('pad-platform-section');
+          if (picker) {
+            picker.style.display = 'block';
+            padRenderPlatformList();
+            picker.scrollIntoView({behavior:'smooth', block:'center'});
+          }
+          showToast('✅ Image uploaded! Select platforms below.', 'success');
         }
       }).catch(function() {
-        showToast('Could not upload. Try downloading and posting manually.', 'error');
+        showToast('Upload failed. Try downloading and posting manually.', 'error');
       });
   }, 'image/jpeg', 0.95);
 }
 
+var _padPublicUrl = '';
+
+function padRenderPlatformList() {
+  var list = document.getElementById('pad-platform-list');
+  if (!list) return;
+  var allMeta = {
+    facebook:{label:'Facebook',icon:'📘',color:'#1877f2'},
+    instagram:{label:'Instagram',icon:'📸',color:'#e1306c'},
+    telegram:{label:'Telegram',icon:'✈️',color:'#26a5e4'},
+    discord:{label:'Discord',icon:'🎮',color:'#5865f2'},
+    bluesky:{label:'Bluesky',icon:'🦋',color:'#0085ff'},
+    linkedin:{label:'LinkedIn',icon:'💼',color:'#0a66c2'},
+  };
+  list.innerHTML = Object.keys(allMeta).map(function(k) {
+    var m = allMeta[k];
+    var conn = _connectionsFull && _connectionsFull[k];
+    if (!conn) return '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;cursor:pointer;">'
+      + '<input type="checkbox" value="'+k+'" checked style="width:16px;height:16px;accent-color:'+m.color+';">'
+      + '<span style="font-size:18px;">'+m.icon+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--text);">'+m.label+'</span>'
+      + '<span style="font-size:10px;color:#22c55e;margin-left:auto;">● Connected</span>'
+      + '</label>';
+  }).filter(Boolean).join('');
+}
+
+function padPostNow() {
+  var list = document.getElementById('pad-platform-list');
+  if (!list) return;
+  var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
+  if (!checked.length) { showToast('Select at least one platform!', 'error'); return; }
+  if (!_padPublicUrl) { showToast('Image not uploaded yet. Try again.', 'error'); return; }
+  var btn = document.getElementById('pad-post-now-btn');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Posting...'; }
+  var caption = (document.getElementById('pad-caption')||{}).value || 'Check out our latest product! 🔥';
+  var connections = {};
+  checked.forEach(function(p){ if(_connectionsFull && _connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+  fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({content:caption, platforms:checked, connections:connections, image_url:_padPublicUrl})
+  }).then(function(r){return r.json();})
+  .then(function(d){
+    var ok = d.results ? d.results.filter(function(r){return r.success;}).length : 0;
+    showToast('✅ Posted to '+ok+' platform'+(ok!==1?'s':'')+'!','success');
+    if(btn){btn.disabled=false;btn.textContent='🚀 Post Now';}
+  }).catch(function(){
+    showToast('Post failed. Check connections.','error');
+    if(btn){btn.disabled=false;btn.textContent='🚀 Post Now';}
+  });
+}
+
+
+// ── AUTO-POST SCHEDULER ─────────────────────────────────────────
+var _vadAutoPostTimer = null;
+var _padAutoPostTimer = null;
+
+function updateAutoPostStatus(prefix) {
+  var sel = document.getElementById(prefix+'-autopost-interval');
+  var status = document.getElementById(prefix+'-autopost-status');
+  var platformsDiv = document.getElementById(prefix+'-autopost-platforms');
+  var platformList = document.getElementById(prefix+'-autopost-platform-list');
+  if (!sel) return;
+  var hrs = parseInt(sel.value);
+  if (hrs > 0) {
+    if (status) { status.textContent = '● Every '+hrs+'h'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+    if (platformsDiv) platformsDiv.style.display = 'block';
+    if (platformList) platformList.innerHTML = buildAutoPostPlatformList(prefix);
+  } else {
+    if (status) { status.textContent = '● OFF'; status.style.background='var(--bg3)'; status.style.color='var(--text3)'; }
+    if (platformsDiv) platformsDiv.style.display = 'none';
+  }
+}
+
+function buildAutoPostPlatformList(prefix) {
+  var plats = ['facebook','instagram','telegram','discord','bluesky'];
+  return plats.map(function(p) {
+    var conn = _connectionsFull && _connectionsFull[p];
+    if (!conn) return '';
+    var icons = {facebook:'📘',instagram:'📸',telegram:'✈️',discord:'🎮',bluesky:'🦋'};
+    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;cursor:pointer;">'
+      + '<input type="checkbox" value="'+p+'" checked style="accent-color:var(--accent);">'
+      + '<span>'+(icons[p]||'📱')+'</span>'
+      + '<span style="font-size:12px;font-weight:700;color:var(--text);">'+p.charAt(0).toUpperCase()+p.slice(1)+'</span>'
+      + '</label>';
+  }).filter(Boolean).join('');
+}
+
+function startVadAutoPost() {
+  var hrs = parseInt((document.getElementById('vad-autopost-interval')||{}).value||0);
+  if (!hrs) return;
+  if (!_vadIframeDoc) { showToast('Generate your video ad first!','error'); return; }
+  stopVadAutoPost();
+  var ms = hrs * 3600 * 1000;
+  _vadAutoPostTimer = setInterval(function() { triggerVadAutoPost(); }, ms);
+  triggerVadAutoPost(); // post immediately first
+  document.getElementById('vad-autopost-start-btn').style.display = 'none';
+  document.getElementById('vad-autopost-stop-btn').style.display = 'block';
+  var status = document.getElementById('vad-autopost-status');
+  if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+  showToast('✅ Auto-posting started! Every '+hrs+' hours.','success');
+}
+
+function stopVadAutoPost() {
+  if (_vadAutoPostTimer) { clearInterval(_vadAutoPostTimer); _vadAutoPostTimer = null; }
+  var startBtn = document.getElementById('vad-autopost-start-btn');
+  var stopBtn = document.getElementById('vad-autopost-stop-btn');
+  if (startBtn) startBtn.style.display = 'block';
+  if (stopBtn) stopBtn.style.display = 'none';
+  var status = document.getElementById('vad-autopost-status');
+  var sel = document.getElementById('vad-autopost-interval');
+  var hrs = sel ? parseInt(sel.value) : 0;
+  if (status && hrs > 0) { status.textContent = '● Every '+hrs+'h'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+  showToast('Auto-posting stopped.','success');
+}
+
+function triggerVadAutoPost() {
+  var list = document.getElementById('vad-autopost-platform-list');
+  var checked = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
+  if (!checked.length || !_vadIframeDoc) return;
+  var caption = (document.getElementById('vad-caption')||{}).value || (document.getElementById('vad-tagline')||{}).value || 'Check out our latest video ad!';
+  var connections = {};
+  checked.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+  fetch('https://autopostleey-ai.alexclaor.workers.dev/publish',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:caption,platforms:checked,connections:connections})
+  }).then(function(r){return r.json();}).then(function(d){
+    var ok=d.results?d.results.filter(function(r){return r.success;}).length:0;
+    showToast('🔄 Auto-posted to '+ok+' platform'+(ok!==1?'s':'')+'!','success');
+  }).catch(function(){});
+}
+
+function startPadAutoPost() {
+  var hrs = parseInt((document.getElementById('pad-autopost-interval')||{}).value||0);
+  if (!hrs) return;
+  if (!_padPublicUrl && !_padPhotos.length) { showToast('Upload and post your image first!','error'); return; }
+  stopPadAutoPost();
+  var ms = hrs * 3600 * 1000;
+  _padAutoPostTimer = setInterval(function() { triggerPadAutoPost(); }, ms);
+  triggerPadAutoPost();
+  document.getElementById('pad-autopost-start-btn').style.display = 'none';
+  document.getElementById('pad-autopost-stop-btn').style.display = 'block';
+  var status = document.getElementById('pad-autopost-status');
+  if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+  showToast('✅ Photo ad auto-posting started! Every '+hrs+' hours.','success');
+}
+
+function stopPadAutoPost() {
+  if (_padAutoPostTimer) { clearInterval(_padAutoPostTimer); _padAutoPostTimer = null; }
+  var startBtn = document.getElementById('pad-autopost-start-btn');
+  var stopBtn = document.getElementById('pad-autopost-stop-btn');
+  if (startBtn) startBtn.style.display = 'block';
+  if (stopBtn) stopBtn.style.display = 'none';
+  var status = document.getElementById('pad-autopost-status');
+  if (status) { status.textContent = '● OFF'; status.style.background='var(--bg3)'; status.style.color='var(--text3)'; }
+  showToast('Photo ad auto-posting stopped.','success');
+}
+
+function triggerPadAutoPost() {
+  var list = document.getElementById('pad-autopost-platform-list');
+  var checked = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
+  if (!checked.length || !_padPublicUrl) return;
+  var caption = (document.getElementById('pad-caption')||{}).value || 'Check out our latest product! 🔥';
+  var connections = {};
+  checked.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+  fetch('https://autopostleey-ai.alexclaor.workers.dev/publish',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:caption,platforms:checked,connections:connections,image_url:_padPublicUrl})
+  }).then(function(r){return r.json();}).then(function(d){
+    var ok=d.results?d.results.filter(function(r){return r.success;}).length:0;
+    showToast('🔄 Photo ad auto-posted to '+ok+' platform'+(ok!==1?'s':'')+'!','success');
+  }).catch(function(){});
+}
+
+
+// ── PAD TEXT CUSTOMIZATION ──────────────────────────────────────
+var _padSelectedLabel = null; // index of selected label
+
+function padSelectLabel(idx) {
+  _padSelectedLabel = idx;
+  padShowLabelEditor(idx);
+}
+
+function padShowLabelEditor(idx) {
+  var editor = document.getElementById('pad-label-editor');
+  if (!editor || !_padPhotos.length) return;
+  var label = _padPhotos[_padCurrentIdx].labels[idx];
+  if (!label) return;
+  editor.style.display = 'block';
+  document.getElementById('pad-edit-text').value = label.text;
+  document.getElementById('pad-edit-color').value = label.color || '#ffffff';
+  document.getElementById('pad-edit-size').value = label.size || 14;
+  document.getElementById('pad-edit-size-val').textContent = (label.size || 14) + 'px';
+  document.getElementById('pad-edit-style').value = label.style || 'badge';
+  document.getElementById('pad-edit-bgcolor').value = label.bgcolor || '#a855f7';
+}
+
+function padApplyLabelEdit() {
+  if (_padSelectedLabel === null || !_padPhotos.length) return;
+  var label = _padPhotos[_padCurrentIdx].labels[_padSelectedLabel];
+  if (!label) return;
+  label.text    = document.getElementById('pad-edit-text').value || label.text;
+  label.color   = document.getElementById('pad-edit-color').value;
+  label.size    = parseInt(document.getElementById('pad-edit-size').value) || 14;
+  label.style   = document.getElementById('pad-edit-style').value;
+  label.bgcolor = document.getElementById('pad-edit-bgcolor').value;
+  // Update PAD_LABEL_STYLES dynamically for this label
+  padDrawCanvas();
+  padRenderLabelsList();
+}
+
+// Override padDrawLabels to support custom colors/sizes
+function padDrawLabels(ctx, cw, ch) {
+  if (!_padPhotos.length) return;
+  var photo = _padPhotos[_padCurrentIdx];
+  photo.labels.forEach(function(label, i) {
+    var st = JSON.parse(JSON.stringify(PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge));
+    // Apply custom overrides
+    if (label.color)   st.color   = label.color;
+    if (label.bgcolor) st.bg      = label.bgcolor;
+    if (label.size)    st.fontSize = label.size;
+
+    var x = label.x * cw, y = label.y * ch;
+    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px Inter, sans-serif';
+    var tw = ctx.measureText(label.text).width;
+    var padH = 10, padW = 14;
+    var bw = tw + padW * 2, bh = st.fontSize + padH * 2;
+
+    if (st.bg && st.bg !== 'transparent') {
+      ctx.fillStyle = st.bg;
+      if (st.shadow) { ctx.shadowColor = st.shadow.replace(/[^,]+\)$/,'0.4)'); ctx.shadowBlur = 10; }
+      ctx.beginPath();
+      if (ctx.roundRect) { ctx.roundRect(x - bw/2, y - bh/2, bw, bh, st.radius || 0); }
+      else { ctx.rect(x - bw/2, y - bh/2, bw, bh); }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    if (st.textShadow) { ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8; }
+    ctx.fillStyle = st.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label.text, x, y);
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'left';
+  });
+}
 </script>
 </body>
 </html>
