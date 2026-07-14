@@ -2340,28 +2340,25 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         <div style="display:flex;flex-direction:column;gap:16px;">
 
           <div class="card">
-            <div class="card-title">📷 Video Photo Background</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Upload your product photo — it fills the entire video background with text overlaid on top.</div>
+            <div class="card-title">📷 Product Photos</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Upload 1–5 product photos. Each photo appears as a full-screen background in your video.</div>
 
-            <!-- Single upload area -->
-            <div id="vad-bg-drop-main" onclick="document.getElementById('vad-bg-input-main').click()"
-              style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;"
+            <!-- Multi photo upload -->
+            <div id="vad-photos-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;"></div>
+
+            <label id="vad-add-photo-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .2s;font-size:13px;color:var(--text2);"
               onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-              <div style="font-size:36px;margin-bottom:8px;">📷</div>
-              <div style="font-size:14px;font-weight:700;color:var(--text);">Upload Product Photo</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:4px;">This photo fills the entire video background · JPG or PNG</div>
+              <span style="font-size:22px;">📷</span>
+              <div>
+                <div style="font-weight:700;color:var(--text);">Add Product Photo</div>
+                <div style="font-size:10px;color:var(--text3);">Up to 5 photos · JPG or PNG</div>
+              </div>
+              <input type="file" accept="image/*" multiple style="display:none" onchange="addVadPhotos(this)">
+            </label>
+
+            <div id="vad-photo-note" style="display:none;font-size:10px;color:var(--accent);margin-top:8px;text-align:center;font-weight:700;">
+              ✅ Photos will fill entire video background · Each scene uses a different photo
             </div>
-            <input type="file" id="vad-bg-input-main" accept="image/*" style="display:none" onchange="uploadVadBgPhotoMain(this)">
-
-            <!-- Preview -->
-            <div id="vad-bg-preview-main" style="display:none;margin-top:12px;position:relative;">
-              <img id="vad-bg-img-main" style="width:100%;max-height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--border);">
-              <button onclick="clearVadBgPhotoMain()"
-                style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:14px;">✕</button>
-              <div style="font-size:11px;color:var(--accent);font-weight:700;text-align:center;margin-top:6px;">✅ This photo will be your video background</div>
-            </div>
-
-
           </div>
 
           <div class="card">
@@ -9670,6 +9667,71 @@ function applyVadCustomTheme(bg, accent, textColor) {
 
 
 // ── VAD MAIN BACKGROUND PHOTO ────────────────────────────────────
+
+// ── VAD MULTI-PHOTO UPLOAD ──────────────────────────────────────
+var _vadPhotoList = []; // array of {dataUrl, name}
+
+function addVadPhotos(input) {
+  var files = Array.from(input.files).slice(0, 5 - _vadPhotoList.length);
+  if (!files.length) return;
+
+  files.forEach(function(file) {
+    if (_vadPhotoList.length >= 5) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      _vadPhotoList.push({ dataUrl: e.target.result, name: file.name });
+      // Set primary bg photo to first one
+      _vadBgPhotoUrl = _vadPhotoList[0].dataUrl;
+      _vadThumbnailUrl = _vadPhotoList[0].dataUrl;
+      _vadCustomBgDataUrl = _vadPhotoList[0].dataUrl;
+      renderVadPhotosGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  // Reset input so same file can be re-added
+  input.value = '';
+}
+
+function renderVadPhotosGrid() {
+  var grid = document.getElementById('vad-photos-grid');
+  var addBtn = document.getElementById('vad-add-photo-btn');
+  var note = document.getElementById('vad-photo-note');
+  if (!grid) return;
+
+  grid.innerHTML = _vadPhotoList.map(function(p, i) {
+    return '<div style="position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid '+(i===0?'var(--accent)':'var(--border)')+';">'
+      + '<img src="'+p.dataUrl+'" style="width:100%;height:100%;object-fit:cover;">'
+      + (i===0 ? '<div style="position:absolute;top:4px;left:4px;background:var(--accent);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;">MAIN</div>' : '')
+      + '<button onclick="removeVadPhoto('+i+')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1;">✕</button>'
+      + '</div>';
+  }).join('');
+
+  // Show/hide add button (max 5 photos)
+  if (addBtn) addBtn.style.display = _vadPhotoList.length >= 5 ? 'none' : 'flex';
+  if (note) note.style.display = _vadPhotoList.length > 0 ? 'block' : 'none';
+}
+
+function removeVadPhoto(idx) {
+  _vadPhotoList.splice(idx, 1);
+  // Update primary photo
+  if (_vadPhotoList.length > 0) {
+    _vadBgPhotoUrl = _vadPhotoList[0].dataUrl;
+    _vadThumbnailUrl = _vadPhotoList[0].dataUrl;
+    _vadCustomBgDataUrl = _vadPhotoList[0].dataUrl;
+  } else {
+    _vadBgPhotoUrl = null;
+    _vadThumbnailUrl = '';
+    _vadCustomBgDataUrl = null;
+  }
+  renderVadPhotosGrid();
+}
+
+// Get photo for a specific scene (rotates through list)
+function getVadPhotoForScene(sceneIndex) {
+  if (!_vadPhotoList.length) return _vadBgPhotoUrl || '';
+  return _vadPhotoList[sceneIndex % _vadPhotoList.length].dataUrl;
+}
+
 function uploadVadBgPhotoMain(input) {
   var file = input.files[0];
   if (!file) return;
@@ -10077,9 +10139,12 @@ function generateVideoAd() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      prompt: 'Write a punchy social media caption for ' + biz + ' promoting their ' + product
-        + (tagline ? '. Key message: ' + tagline : '')
-        + '. Max 60 words. Include 2-3 hashtags. Output ONLY the caption.'
+      prompt: 'You are writing a social media ad caption for a business called \''+biz+'\' that sells \''+product+'\'.'
+        + (tagline ? ' Their key message is: '+tagline+'.' : '')
+        + ' Write ONE compelling ad caption in FIRST PERSON as the business owner.'
+        + ' Focus ONLY on their product \''+product+'\' — do NOT mention any other brand or service.'
+        + ' Max 60 words. No **bold**. Include 2-3 relevant hashtags at the end.'
+        + ' Output ONLY the caption text, nothing else.'
     })
   })
   .then(function(r) { return r.json(); })
@@ -10102,7 +10167,7 @@ function generateVideoAd() {
       || (_autoConfig && _autoConfig.website)
       || '';
     var previewMusic = (document.getElementById('vad-music')||{}).value || '';
-    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, _vadBgPhotoUrl || _vadThumbnailUrl || '');
+    buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, _vadProductImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, _vadBgPhotoUrl || _vadThumbnailUrl || '', _vadPhotoList.map(function(p){return p.dataUrl;}));
     if (btn) { btn.textContent = '✨ Generate Video Ad'; btn.disabled = false; }
   })
   .catch(function() {
@@ -10114,7 +10179,7 @@ function generateVideoAd() {
   });
 }
 
-function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, previewThumb) {
+function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH, productImageUrl, previewBenefits, previewWebsite, previewProblems, previewMusic, previewThumb, photosList) {
   var ph = document.getElementById('vad-placeholder');
   var iframe = document.getElementById('vad-iframe');
   var wrap = document.getElementById('vad-preview-wrap');
@@ -10156,7 +10221,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
-  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '', previewProblems || [], previewMusic || '', previewThumb || _vadBgPhotoUrl || _vadThumbnailUrl || '');
+  var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '', previewProblems || [], previewMusic || '', previewThumb || _vadBgPhotoUrl || _vadThumbnailUrl || '', photosList || []);
   _vadIframeDoc = adHTML;
   if (iframe) {
     iframe.srcdoc = adHTML;
@@ -10176,7 +10241,7 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
-function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite, adProblems, adMusic, adThumb) {
+function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite, adProblems, adMusic, adThumb, adPhotos) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
   var W = w;
@@ -10203,7 +10268,13 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   };
   var icons = ICONS[_vadTheme] || ICONS.ecommerce;
 
-  var photo = adThumb || c.photoUrl || ''; // adThumb = user uploaded bg photo
+  // adPhotos = array of user photos; adThumb = primary photo
+  var _photos = (adPhotos && adPhotos.length) ? adPhotos : (adThumb ? [adThumb] : []);
+  var photo = _photos[0] || c.photoUrl || ''; // S1 photo
+  var photoS2 = _photos[1] || _photos[0] || c.photoUrl || '';
+  var photoS3 = _photos[2] || _photos[0] || c.photoUrl || '';
+  var photoS4 = _photos[3] || _photos[0] || c.photoUrl || '';
+  var isUserPhoto = !!_photos.length;
   var mesh2 = '<div style="position:absolute;inset:0;overflow:hidden;">'
     + (c.meshes||[]).map(function(m){
         return '<div style="position:absolute;left:'+m.x+'%;top:'+m.y+'%;width:'+m.w+'%;height:'+m.h
@@ -10287,11 +10358,19 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s;" onload="this.style.opacity=\''+bgOpacity+'\'">'+bgOverlay
     : '';
 
-  var photoBgDim = photo
-    ? (isUserPhoto
-      ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.85;"><div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>'
-      : '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);"><div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>')
-    : '';
+  // Per-scene photo backgrounds
+  function makePhotoBgDim(src) {
+    if (!src) return '';
+    return isUserPhoto
+      ? '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.9;" onerror="this.style.display=\'none\'">'
+        + '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.42);"></div>'
+      : '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">'
+        + '<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>';
+  }
+  var photoBgDim  = makePhotoBgDim(photo);
+  var photoBgDimS2 = makePhotoBgDim(photoS2);
+  var photoBgDimS3 = makePhotoBgDim(photoS3);
+  var photoBgDimS4 = makePhotoBgDim(photoS4);
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
     +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">'
@@ -10318,18 +10397,20 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +mesh2
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px;text-align:center;z-index:2;">'
     +heroHTML
-    +'<div id="s1b" style="'+gs('100px;')+'padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span class="dot"></span><span style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
+    +'<div id="s1b" style="'+gs('100px;')+'padding:6px 20px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span class="dot"></span><span style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';">'+biz.toUpperCase()+'</span></div>'
     +'<div id="s1t" style="font-size:'+(w>500?48:32)+'px;font-weight:900;color:'+c.text+';line-height:1.05;letter-spacing:-1px;opacity:0;">'+(tagline||product)+'</div>'
     +'<div id="s1s" style="font-size:14px;color:'+c.sub+';opacity:0;">'+(product||biz)+'</div>'
     +'<div id="s1u" style="'+gs('10px;')+'padding:10px 22px;display:inline-flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">🌐</span><span style="font-size:14px;font-weight:700;color:'+c.text+';">'+siteName+siteDot+'</span></div>'
     +'</div></div>'
 
     // S2 — Customer Pain
-    +'<div class="sc-wrap" id="s2">'+mesh2
+    +'<div class="sc-wrap" id="s2">'
+    +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDimS2+'</div>'
+    +mesh2
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
-    +'<div id="s2e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
+    +'<div id="s2e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
     +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
-    +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;">You deserve better<br>than <span style="color:'+c.accent+';">this.</span></div>'
+    +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;text-shadow:0 3px 12px rgba(0,0,0,0.7);">You deserve better<br>than <span style="color:'+c.accent+';">this.</span></div>'
     +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
     +painPts.map(function(t){ return '<div style="'+gs('10px;')+'padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>'; }).join('')
     +'</div>'
@@ -10337,10 +10418,12 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'</div></div>'
 
     // S3 — INTRODUCING + Problems Solved
-    +'<div class="sc-wrap" id="s3">'+mesh2
+    +'<div class="sc-wrap" id="s3">'
+    +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDimS3+'</div>'
+    +mesh2
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px;z-index:1;">'
-    +'<div id="s3e" style="font-size:10px;font-weight:800;letter-spacing:3px;color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
-    +'<div id="s3t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">We fix exactly<br><span style="color:'+c.accent+';">that.</span></div>'
+    +'<div id="s3e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
+    +'<div id="s3t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;text-shadow:0 3px 12px rgba(0,0,0,0.7);">We fix exactly<br><span style="color:'+c.accent+';">that.</span></div>'
     +'<div id="s3g" style="display:flex;flex-direction:column;gap:7px;width:100%;opacity:0;">'
     +painPts.slice(0,4).map(function(pt){
         var solved = pt.replace(/^[^a-zA-Z]+/, '').trim();
@@ -10356,11 +10439,13 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'</div></div></div>'
 
         // S4 — Business Highlights
-    +'<div class="sc-wrap" id="s4">'+mesh2
+    +'<div class="sc-wrap" id="s4">'
+    +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDimS4+'</div>'
+    +mesh2
     +'<div style="position:absolute;inset:0;z-index:0;" id="s4burst"></div>'
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;z-index:1;">'
-    +'<div id="s4e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">WHY CHOOSE US</div>'
-    +'<div id="s4t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;">What makes<br><span style="color:'+c.accent+';">'+biz+'</span> special</div>'
+    +'<div id="s4e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">WHY CHOOSE US</div>'
+    +'<div id="s4t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;text-shadow:0 3px 12px rgba(0,0,0,0.7);">What makes<br><span style="color:'+c.accent+';">'+biz+'</span> special</div>'
     +'<div id="s4g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;opacity:0;">'+benefitCards+'</div>'
     +'<div id="s4stars" style="display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;">'
     +'<div style="color:#fbbf24;font-size:18px;">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>'
@@ -10373,7 +10458,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'<div style="position:absolute;inset:0;overflow:hidden;">'+photoBgDim+'</div>'
     +mesh2
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;z-index:1;">'
-    +'<div id="s5e" style="font-size:10px;font-weight:800;letter-spacing:4px;color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
+    +'<div id="s5e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">GET STARTED TODAY</div>'
     +'<div id="s5biz" style="opacity:0;">'
     +'<div style="font-size:'+(w>500?40:28)+'px;font-weight:900;color:'+c.text+';line-height:1;">'+biz+'</div>'
     +'<div style="font-size:'+(w>500?16:13)+'px;font-weight:700;color:'+c.accent+';margin-top:4px;">'+(tagline||product)+'</div>'
