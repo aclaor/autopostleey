@@ -588,10 +588,11 @@
         <span class="nav-icon">🎥</span> Video Ad Maker
         <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
       </a>
+      <a class="nav-item" onclick="showPage('photoad');closeAPSidebar();return false;" href="#" id="nav-photoad">
+        <span class="nav-icon">🖼️</span> Photo Ads
+        <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
+      </a>
     </div>
-<div class="nav-item" onclick="showPage('photoad')">
-  <span>🖼️</span><span>Photo Ads</span>
-</div>
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_settings">Settings</span></div>
       <a class="nav-item" onclick="showPage('business');closeAPSidebar();return false;" href="#">
@@ -2985,12 +2986,27 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                   <input id="pad-edit-text" oninput="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
                 </div>
                 <div>
-                  <label style="font-size:11px;color:var(--text3);">Style</label>
+                  <label style="font-size:11px;color:var(--text3);">Background Style</label>
                   <select id="pad-edit-style" onchange="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-top:4px;">
-                    <option value="badge">Pill Badge</option>
-                    <option value="card">Glass Card</option>
-                    <option value="bold">Bold Text</option>
-                    <option value="tag">Price Tag</option>
+                    <option value="badge">● Pill Badge</option>
+                    <option value="card">▪ Glass Card</option>
+                    <option value="outline">○ Outline</option>
+                    <option value="dark">■ Dark Box</option>
+                    <option value="bold">T Bold Text Only</option>
+                    <option value="tag">🏷 Price Tag</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Font</label>
+                  <select id="pad-edit-font" onchange="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-top:4px;">
+                    <option value="Inter,sans-serif">Inter (Modern)</option>
+                    <option value="Georgia,serif">Georgia (Classic)</option>
+                    <option value="'Courier New',monospace">Courier (Typewriter)</option>
+                    <option value="Impact,sans-serif">Impact (Bold Ad)</option>
+                    <option value="Arial,sans-serif">Arial (Clean)</option>
+                    <option value="'Times New Roman',serif">Times (Formal)</option>
+                    <option value="Verdana,sans-serif">Verdana (Rounded)</option>
+                    <option value="'Comic Sans MS',cursive">Comic Sans (Fun)</option>
                   </select>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -3067,9 +3083,15 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <div id="pad-platform-section" style="display:none;" class="card">
               <div class="card-title">🚀 Post to Platforms</div>
               <div style="margin-bottom:12px;">
-                <label style="font-size:11px;color:var(--text3);">Caption</label>
-                <textarea id="pad-caption" placeholder="Write your caption here..." rows="3"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;margin-top:4px;"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <label style="font-size:11px;color:var(--text3);">Caption</label>
+                  <button onclick="padGenerateCaption()" id="pad-gen-caption-btn"
+                    style="font-size:11px;padding:5px 12px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;">
+                    ✨ AI Generate
+                  </button>
+                </div>
+                <textarea id="pad-caption" placeholder="Click ✨ AI Generate to create a caption, or write your own..." rows="4"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
               <div id="pad-platform-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
               <button id="pad-post-now-btn" onclick="padPostNow()"
@@ -12986,10 +13008,12 @@ var _padCanvas = null;
 var _padCtx = null;
 
 var PAD_LABEL_STYLES = {
-  badge: { bg:'#a855f7', color:'#fff', border:'none', radius:20, pad:'6px 14px', shadow:'0 4px 12px rgba(168,85,247,0.5)', fontSize:13, fontWeight:700 },
-  card:  { bg:'rgba(0,0,0,0.55)', color:'#fff', border:'1px solid rgba(255,255,255,0.3)', radius:10, pad:'8px 14px', shadow:'0 4px 16px rgba(0,0,0,0.6)', fontSize:13, fontWeight:700 },
-  bold:  { bg:'transparent', color:'#fff', border:'none', radius:0, pad:'4px 8px', shadow:'0 2px 8px rgba(0,0,0,0.9)', fontSize:16, fontWeight:900, textShadow:true },
-  tag:   { bg:'#ef4444', color:'#fff', border:'none', radius:4, pad:'6px 12px', shadow:'0 4px 12px rgba(239,68,68,0.5)', fontSize:13, fontWeight:900 },
+  badge:   { bg:'#a855f7', color:'#fff', border:'none', radius:20, pad:'6px 14px', shadow:'none', fontSize:13, fontWeight:700 },
+  card:    { bg:'rgba(0,0,0,0.52)', color:'#fff', border:'1px solid rgba(255,255,255,0.25)', radius:10, pad:'8px 14px', shadow:'none', fontSize:13, fontWeight:700 },
+  bold:    { bg:'transparent', color:'#fff', border:'none', radius:0, pad:'4px 8px', shadow:'none', fontSize:16, fontWeight:900, textShadow:true },
+  tag:     { bg:'#ef4444', color:'#fff', border:'none', radius:4, pad:'6px 12px', shadow:'none', fontSize:13, fontWeight:900 },
+  outline: { bg:'transparent', color:'#fff', border:'2px solid #fff', radius:20, pad:'5px 14px', shadow:'none', fontSize:13, fontWeight:700 },
+  dark:    { bg:'rgba(0,0,0,0.75)', color:'#fff', border:'none', radius:8, pad:'6px 14px', shadow:'none', fontSize:13, fontWeight:700 },
 };
 
 function padAddPhotos(input) {
@@ -13104,7 +13128,8 @@ function padDrawLabels(ctx, cw, ch) {
   photo.labels.forEach(function(label) {
     var st = PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge;
     var x = label.x * cw, y = label.y * ch;
-    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px Inter, sans-serif';
+    var fontFamily = label.font || 'Inter, sans-serif';
+    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px ' + fontFamily;
     var tw = ctx.measureText(label.text).width;
     var padH = 10, padW = 14;
     var bw = tw + padW * 2, bh = st.fontSize + padH * 2;
@@ -13470,6 +13495,47 @@ function padRenderPlatformList() {
   }).filter(Boolean).join('');
 }
 
+
+async function padGenerateCaption() {
+  var btn = document.getElementById('pad-gen-caption-btn');
+  if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+
+  // Get business info
+  var biz     = (_bizProfile && _bizProfile.name)    || '';
+  var product = (_bizProfile && _bizProfile.product) || '';
+  var website = (_bizProfile && _bizProfile.website) || (document.getElementById('biz-website')||{}).value || '';
+  var phone   = (_bizProfile && _bizProfile.phone)   || '';
+
+  // Build prompt
+  var labelTexts = '';
+  if (_padPhotos.length && _padPhotos[_padCurrentIdx].labels.length) {
+    labelTexts = _padPhotos[_padCurrentIdx].labels.map(function(l){ return l.text; }).join(', ');
+  }
+
+  var prompt = 'Write a SHORT, punchy social media ad caption'
+    + (product ? ' for '+product : '')
+    + (biz ? ' by '+biz : '')
+    + (labelTexts ? '. The product features highlighted: '+labelTexts : '')
+    + '. Make it CAPTIVATING and sales-focused.'
+    + ' Use emojis. Max 60 words. Include 2-3 relevant hashtags.'
+    + (website ? ' End with: '+website : '')
+    + (phone ? ' Contact: '+phone : '')
+    + '. Output ONLY the caption, nothing else.';
+
+  try {
+    var caption = await generateTextWithFallback(prompt);
+    if (caption) {
+      var ta = document.getElementById('pad-caption');
+      if (ta) ta.value = cleanAIResponse(caption);
+      showToast('✅ Caption generated!', 'success');
+    }
+  } catch(e) {
+    showToast('Caption generation failed. Please write your own.', 'error');
+  }
+
+  if (btn) { btn.textContent = '✨ AI Generate'; btn.disabled = false; }
+}
+
 function padPostNow() {
   var list = document.getElementById('pad-platform-list');
   if (!list) return;
@@ -13639,18 +13705,21 @@ function padShowLabelEditor(idx) {
   document.getElementById('pad-edit-size-val').textContent = (label.size || 14) + 'px';
   document.getElementById('pad-edit-style').value = label.style || 'badge';
   document.getElementById('pad-edit-bgcolor').value = label.bgcolor || '#a855f7';
+  var fontEl = document.getElementById('pad-edit-font');
+  if (fontEl) fontEl.value = label.font || 'Inter,sans-serif';
 }
 
 function padApplyLabelEdit() {
   if (_padSelectedLabel === null || !_padPhotos.length) return;
   var label = _padPhotos[_padCurrentIdx].labels[_padSelectedLabel];
   if (!label) return;
-  label.text    = document.getElementById('pad-edit-text').value || label.text;
-  label.color   = document.getElementById('pad-edit-color').value;
-  label.size    = parseInt(document.getElementById('pad-edit-size').value) || 14;
-  label.style   = document.getElementById('pad-edit-style').value;
-  label.bgcolor = document.getElementById('pad-edit-bgcolor').value;
-  // Update PAD_LABEL_STYLES dynamically for this label
+  var textEl = document.getElementById('pad-edit-text');
+  if (textEl && textEl.value) label.text = textEl.value;
+  label.color   = (document.getElementById('pad-edit-color') || {}).value  || label.color  || '#ffffff';
+  label.size    = parseInt((document.getElementById('pad-edit-size')  || {}).value) || label.size || 14;
+  label.style   = (document.getElementById('pad-edit-style') || {}).value  || label.style  || 'badge';
+  label.bgcolor = (document.getElementById('pad-edit-bgcolor')|| {}).value  || label.bgcolor|| '#a855f7';
+  label.font    = (document.getElementById('pad-edit-font')  || {}).value  || label.font   || 'Inter,sans-serif';
   padDrawCanvas();
   padRenderLabelsList();
 }
