@@ -613,6 +613,9 @@
         <span class="nav-icon">💬</span> <span data-i18n="nav_support">Support</span>
       </a>
     </div>
+<div class="nav-item" onclick="showPage('photoad')">
+  <span>🖼️</span><span>Photo Ads</span>
+</div>
     <div class="sidebar-footer">
       <div class="plan-badge">
         <div class="plan-badge-name" id="sidebar-plan">FREE PLAN</div>
@@ -2827,6 +2830,134 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         </div>
       </div>
     </div>
+
+
+
+      <!-- ══ PHOTO AD MAKER PAGE ══ -->
+      <div id="page-photoad" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🖼️ Photo Ad Maker</div>
+            <div class="page-sub">Add text & labels to your product photos · Export as image or slideshow</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(300px,360px) 1fr;gap:24px;align-items:start;">
+
+          <!-- LEFT: Controls -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Upload photos -->
+            <div class="card">
+              <div class="card-title">📷 Product Photos</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Upload 1–10 photos. Use arrows to reorder.</div>
+
+              <div id="pad-photos-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"></div>
+
+              <label id="pad-add-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .2s;"
+                onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <span style="font-size:20px;">📷</span>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--text);">Add Photos</div>
+                  <div style="font-size:10px;color:var(--text3);">Up to 10 · JPG or PNG</div>
+                </div>
+                <input type="file" accept="image/*" multiple style="display:none" onchange="padAddPhotos(this)">
+              </label>
+            </div>
+
+            <!-- Text labels -->
+            <div class="card">
+              <div class="card-title">✏️ Add Text Labels</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Click a style to add a label. Drag it to position on your photo.</div>
+
+              <!-- Label style presets -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                <button onclick="padAddLabel('badge')" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;">
+                  <div style="background:#a855f7;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:4px;">✓ Feature</div>
+                  <div style="font-size:10px;color:var(--text3);">Pill Badge</div>
+                </button>
+                <button onclick="padAddLabel('card')" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;">
+                  <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;display:inline-block;margin-bottom:4px;backdrop-filter:blur(4px);">⭐ Quality</div>
+                  <div style="font-size:10px;color:var(--text3);">Glass Card</div>
+                </button>
+                <button onclick="padAddLabel('bold')" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;">
+                  <div style="color:#fff;font-size:13px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,0.8);display:inline-block;margin-bottom:4px;">PREMIUM</div>
+                  <div style="font-size:10px;color:var(--text3);">Bold Text</div>
+                </button>
+                <button onclick="padAddLabel('tag')" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;">
+                  <div style="background:#ef4444;color:#fff;font-size:11px;font-weight:900;padding:4px 10px;border-radius:4px;display:inline-block;margin-bottom:4px;">🔥 SALE</div>
+                  <div style="font-size:10px;color:var(--text3);">Price Tag</div>
+                </button>
+              </div>
+
+              <!-- Quick add common labels -->
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Quick add:</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <button onclick="padAddLabel('badge','Fast Shipping')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">🚀 Fast Shipping</button>
+                <button onclick="padAddLabel('badge','Superior Quality')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">⭐ Superior Quality</button>
+                <button onclick="padAddLabel('badge','Best Price')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">💰 Best Price</button>
+                <button onclick="padAddLabel('tag','SALE')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">🔥 Sale</button>
+                <button onclick="padAddLabel('badge','New Arrival')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">✨ New Arrival</button>
+                <button onclick="padAddLabel('badge','Free Shipping')" style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">📦 Free Shipping</button>
+              </div>
+            </div>
+
+            <!-- Label list -->
+            <div class="card" id="pad-labels-card" style="display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="card-title" style="margin-bottom:0;">📝 Labels on this photo</div>
+                <button onclick="padClearLabels()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;">Clear all</button>
+              </div>
+              <div id="pad-labels-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+
+            <!-- Export options -->
+            <div class="card">
+              <div class="card-title">📤 Export</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <button onclick="padExportImage()" style="width:100%;padding:14px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                  🖼️ Download as Image
+                </button>
+                <button onclick="padExportSlideshow()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                  🎬 Create Slideshow Video
+                </button>
+                <button onclick="padPostToSocial()" style="width:100%;padding:14px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                  🚀 Post to Social Media
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Canvas Preview -->
+          <div style="position:sticky;top:80px;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;font-weight:700;color:var(--text);">🖼️ Preview</div>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="padPrevPhoto()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:12px;">← Prev</button>
+                  <span id="pad-photo-counter" style="font-size:12px;color:var(--text3);padding:6px 4px;">1 / 1</span>
+                  <button onclick="padNextPhoto()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:12px;">Next →</button>
+                </div>
+              </div>
+
+              <!-- Canvas area -->
+              <div id="pad-canvas-wrap" style="position:relative;background:#111;min-height:400px;display:flex;align-items:center;justify-content:center;">
+                <div id="pad-empty-state" style="text-align:center;padding:60px 20px;color:var(--text3);">
+                  <div style="font-size:48px;margin-bottom:12px;">📷</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text);">Upload photos to get started</div>
+                  <div style="font-size:12px;margin-top:6px;">Your product will appear here</div>
+                </div>
+                <canvas id="pad-canvas" style="display:none;max-width:100%;max-height:500px;cursor:move;"></canvas>
+                <!-- Draggable labels overlay -->
+                <div id="pad-labels-overlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
 
     <div class="page" id="page-support">
       <div class="page-header">
@@ -10410,11 +10541,11 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:36px;text-align:center;z-index:1;">'
     +'<div id="s2e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">DOES THIS SOUND FAMILIAR?</div>'
     +'<div id="s2i" style="font-size:50px;opacity:0;">😩</div>'
-    +'<div id="s2t" style="font-size:'+(w>500?30:22)+'px;font-weight:900;color:'+c.text+';line-height:1.15;opacity:0;text-shadow:0 3px 12px rgba(0,0,0,0.7);">You deserve better<br>than <span style="color:'+c.accent+';">this.</span></div>'
-    +'<div id="s2g" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;opacity:0;">'
-    +painPts.map(function(t){ return '<div style="'+gs('10px;')+'padding:10px 12px;font-size:11px;color:'+c.sub+';font-weight:600;text-align:left;">'+t+'</div>'; }).join('')
+    +'<div id="s2t" style="font-size:'+(w>500?32:24)+'px;font-weight:900;color:#fff;line-height:1.15;opacity:0;text-shadow:0 4px 16px rgba(0,0,0,0.9);">Sound familiar?<br><span style="color:'+c.accent+';">You\'re not alone.</span></div>'
+    +'<div id="s2g" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;opacity:0;">'
+    +painPts.map(function(t){ return '<div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;text-align:left;"><span style="font-size:18px;flex-shrink:0;">❌</span><span style="font-size:'+(w>500?'14':'13')+'px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.8);">'+t.replace(/^[^\s]+\s/,'')+'</span></div>'; }).join('')
     +'</div>'
-    +'<div id="s2p" style="font-size:13px;font-weight:700;color:'+c.accent+';opacity:0;">There is a better way →</div>'
+    +'<div id="s2p" style="font-size:15px;font-weight:900;color:#fff;opacity:0;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:1px;">There is a better way →</div>'
     +'</div></div>'
 
     // S3 — INTRODUCING + Problems Solved
@@ -10423,7 +10554,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +mesh2
     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px;z-index:1;">'
     +'<div id="s3e" style="font-size:11px;font-weight:900;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);color:'+c.accent+';opacity:0;">INTRODUCING '+biz.toUpperCase()+'</div>'
-    +'<div id="s3t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:'+c.text+';text-align:center;opacity:0;line-height:1.1;text-shadow:0 3px 12px rgba(0,0,0,0.7);">We fix exactly<br><span style="color:'+c.accent+';">that.</span></div>'
+    +'<div id="s3t" style="font-size:'+(w>500?28:20)+'px;font-weight:900;color:#fff;text-align:center;opacity:0;line-height:1.1;text-shadow:0 4px 16px rgba(0,0,0,0.9);">Here\'s your<br><span style="color:'+c.accent+';">solution.</span></div>'
     +'<div id="s3g" style="display:flex;flex-direction:column;gap:7px;width:100%;opacity:0;">'
     +painPts.slice(0,4).map(function(pt){
         var solved = pt.replace(/^[^a-zA-Z]+/, '').trim();
@@ -12692,6 +12823,418 @@ function switchAITab(tab) {
       btn.style.border     = t === tab ? '1px solid var(--accent)' : '1px solid var(--border)';
     }
   });
+}
+
+
+
+// ── PHOTO AD MAKER ──────────────────────────────────────────────
+var _padPhotos = [];       // [{dataUrl, labels:[], img}]
+var _padCurrentIdx = 0;
+var _padDragging = null;   // currently dragged label
+var _padCanvas = null;
+var _padCtx = null;
+
+var PAD_LABEL_STYLES = {
+  badge: { bg:'#a855f7', color:'#fff', border:'none', radius:20, pad:'6px 14px', shadow:'0 4px 12px rgba(168,85,247,0.5)', fontSize:13, fontWeight:700 },
+  card:  { bg:'rgba(0,0,0,0.55)', color:'#fff', border:'1px solid rgba(255,255,255,0.3)', radius:10, pad:'8px 14px', shadow:'0 4px 16px rgba(0,0,0,0.6)', fontSize:13, fontWeight:700 },
+  bold:  { bg:'transparent', color:'#fff', border:'none', radius:0, pad:'4px 8px', shadow:'0 2px 8px rgba(0,0,0,0.9)', fontSize:16, fontWeight:900, textShadow:true },
+  tag:   { bg:'#ef4444', color:'#fff', border:'none', radius:4, pad:'6px 12px', shadow:'0 4px 12px rgba(239,68,68,0.5)', fontSize:13, fontWeight:900 },
+};
+
+function padAddPhotos(input) {
+  var files = Array.from(input.files).slice(0, 10 - _padPhotos.length);
+  var loaded = 0;
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        _padPhotos.push({ dataUrl: e.target.result, labels: [], img: img });
+        loaded++;
+        if (loaded === files.length) {
+          padRenderGrid();
+          padSetCurrentPhoto(_padPhotos.length - files.length);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function padRenderGrid() {
+  var grid = document.getElementById('pad-photos-grid');
+  var addBtn = document.getElementById('pad-add-btn');
+  if (!grid) return;
+  grid.innerHTML = _padPhotos.map(function(p, i) {
+    return '<div onclick="padSetCurrentPhoto('+i+')" style="position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid '+(i===_padCurrentIdx?'var(--accent)':'var(--border)')+';">'
+      + '<img src="'+p.dataUrl+'" style="width:100%;height:100%;object-fit:cover;">'
+      + (i===_padCurrentIdx?'<div style="position:absolute;inset:0;border:3px solid var(--accent);border-radius:6px;pointer-events:none;"></div>':'')
+      + '<button onclick="event.stopPropagation();padRemovePhoto('+i+')" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0;">✕</button>'
+      + '</div>';
+  }).join('');
+  if (addBtn) addBtn.style.display = _padPhotos.length >= 10 ? 'none' : 'flex';
+}
+
+function padRemovePhoto(idx) {
+  _padPhotos.splice(idx, 1);
+  if (_padCurrentIdx >= _padPhotos.length) _padCurrentIdx = Math.max(0, _padPhotos.length - 1);
+  padRenderGrid();
+  padDrawCanvas();
+}
+
+function padSetCurrentPhoto(idx) {
+  _padCurrentIdx = idx;
+  padRenderGrid();
+  padDrawCanvas();
+  padRenderLabelsList();
+  var counter = document.getElementById('pad-photo-counter');
+  if (counter) counter.textContent = (idx+1) + ' / ' + _padPhotos.length;
+}
+
+function padPrevPhoto() { if (_padPhotos.length) padSetCurrentPhoto((_padCurrentIdx - 1 + _padPhotos.length) % _padPhotos.length); }
+function padNextPhoto() { if (_padPhotos.length) padSetCurrentPhoto((_padCurrentIdx + 1) % _padPhotos.length); }
+
+function padDrawCanvas() {
+  var wrap = document.getElementById('pad-canvas-wrap');
+  var emptyState = document.getElementById('pad-empty-state');
+  var canvas = document.getElementById('pad-canvas');
+  var overlay = document.getElementById('pad-labels-overlay');
+  if (!canvas) return;
+
+  if (!_padPhotos.length) {
+    canvas.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'block';
+    if (overlay) overlay.innerHTML = '';
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = 'none';
+  canvas.style.display = 'block';
+
+  var photo = _padPhotos[_padCurrentIdx];
+  var img = photo.img;
+
+  // Size canvas to fit container while preserving aspect ratio
+  var wrapW = wrap.offsetWidth || 500;
+  var maxH = 500;
+  var ratio = img.naturalWidth / img.naturalHeight;
+  var cw, ch;
+  if (ratio >= 1) { cw = Math.min(wrapW, img.naturalWidth); ch = cw / ratio; }
+  else { ch = Math.min(maxH, img.naturalHeight); cw = ch * ratio; }
+  if (ch > maxH) { ch = maxH; cw = ch * ratio; }
+  cw = Math.round(cw); ch = Math.round(ch);
+
+  canvas.width = cw * 2;   // 2x for retina
+  canvas.height = ch * 2;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  _padCanvas = canvas;
+  _padCtx = ctx;
+
+  // Draw photo with cover fill
+  var scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+  var sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
+  ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+
+  // Draw labels on canvas
+  padDrawLabels(ctx, cw, ch);
+
+  // Render draggable overlay labels
+  padRenderOverlayLabels(cw, ch);
+}
+
+function padDrawLabels(ctx, cw, ch) {
+  var photo = _padPhotos[_padCurrentIdx];
+  photo.labels.forEach(function(label) {
+    var st = PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge;
+    var x = label.x * cw, y = label.y * ch;
+    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px Inter, sans-serif';
+    var tw = ctx.measureText(label.text).width;
+    var padH = 10, padW = 14;
+    var bw = tw + padW * 2, bh = st.fontSize + padH * 2;
+
+    if (st.bg !== 'transparent') {
+      ctx.fillStyle = st.bg;
+      ctx.beginPath();
+      ctx.roundRect(x - bw/2, y - bh/2, bw, bh, st.radius || 0);
+      ctx.fill();
+    }
+    if (st.textShadow) {
+      ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8;
+    }
+    ctx.fillStyle = st.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label.text, x, y);
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'left';
+  });
+}
+
+function padRenderOverlayLabels(cw, ch) {
+  var overlay = document.getElementById('pad-labels-overlay');
+  var wrap = document.getElementById('pad-canvas-wrap');
+  if (!overlay || !_padPhotos.length) return;
+
+  var photo = _padPhotos[_padCurrentIdx];
+  // Position overlay to match canvas
+  var canvas = document.getElementById('pad-canvas');
+  if (!canvas) return;
+  var cr = canvas.getBoundingClientRect();
+  var wr = wrap.getBoundingClientRect();
+
+  overlay.style.pointerEvents = 'auto';
+  overlay.style.left = (cr.left - wr.left) + 'px';
+  overlay.style.top = (cr.top - wr.top) + 'px';
+  overlay.style.width = cw + 'px';
+  overlay.style.height = ch + 'px';
+  overlay.style.position = 'absolute';
+
+  overlay.innerHTML = photo.labels.map(function(label, i) {
+    var st = PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge;
+    var x = label.x * cw, y = label.y * ch;
+    return '<div data-idx="'+i+'" class="pad-label-drag"'
+      + ' style="position:absolute;left:'+x+'px;top:'+y+'px;transform:translate(-50%,-50%);'
+      + 'background:'+st.bg+';color:'+st.color+';font-size:'+st.fontSize+'px;font-weight:'+st.fontWeight+';'
+      + 'padding:'+st.pad+';border-radius:'+st.radius+'px;'
+      + (st.border && st.border!=='none' ? 'border:'+st.border+';' : '')
+      + 'box-shadow:'+st.shadow+';cursor:grab;user-select:none;white-space:nowrap;'
+      + (st.textShadow ? 'text-shadow:0 2px 8px rgba(0,0,0,0.9);' : '')
+      + 'border:2px solid transparent;transition:border-color .15s;"'
+      + ' onmousedown="padStartDrag(event,'+i+')"'
+      + ' ontouchstart="padStartDragTouch(event,'+i+')">'
+      + label.text
+      + '<button onclick="padRemoveLabel('+i+')" style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;display:none;" class="pad-del-btn">✕</button>'
+      + '</div>';
+  }).join('');
+
+  // Show delete buttons on hover
+  overlay.querySelectorAll('.pad-label-drag').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      this.querySelector('.pad-del-btn').style.display = 'block';
+      this.style.borderColor = '#ef4444';
+    });
+    el.addEventListener('mouseleave', function() {
+      this.querySelector('.pad-del-btn').style.display = 'none';
+      this.style.borderColor = 'transparent';
+    });
+  });
+}
+
+function padStartDrag(e, labelIdx) {
+  e.preventDefault();
+  _padDragging = labelIdx;
+  var overlay = document.getElementById('pad-labels-overlay');
+  var canvas = document.getElementById('pad-canvas');
+  if (!overlay || !canvas) return;
+  var cw = parseInt(canvas.style.width), ch = parseInt(canvas.style.height);
+
+  function onMove(ev) {
+    var rect = overlay.getBoundingClientRect();
+    var x = (ev.clientX - rect.left) / cw;
+    var y = (ev.clientY - rect.top) / ch;
+    x = Math.max(0.05, Math.min(0.95, x));
+    y = Math.max(0.05, Math.min(0.95, y));
+    _padPhotos[_padCurrentIdx].labels[_padDragging].x = x;
+    _padPhotos[_padCurrentIdx].labels[_padDragging].y = y;
+    padDrawCanvas();
+  }
+  function onUp() {
+    _padDragging = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function padStartDragTouch(e, labelIdx) {
+  e.preventDefault();
+  _padDragging = labelIdx;
+  var overlay = document.getElementById('pad-labels-overlay');
+  var canvas = document.getElementById('pad-canvas');
+  if (!overlay || !canvas) return;
+  var cw = parseInt(canvas.style.width), ch = parseInt(canvas.style.height);
+  function onMove(ev) {
+    var touch = ev.touches[0];
+    var rect = overlay.getBoundingClientRect();
+    var x = Math.max(0.05, Math.min(0.95, (touch.clientX - rect.left) / cw));
+    var y = Math.max(0.05, Math.min(0.95, (touch.clientY - rect.top) / ch));
+    _padPhotos[_padCurrentIdx].labels[_padDragging].x = x;
+    _padPhotos[_padCurrentIdx].labels[_padDragging].y = y;
+    padDrawCanvas();
+  }
+  function onEnd() {
+    _padDragging = null;
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+  }
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('touchend', onEnd);
+}
+
+function padAddLabel(style, text) {
+  if (!_padPhotos.length) { showToast('Upload a photo first!', 'error'); return; }
+  var defaultTexts = { badge:'New Feature', card:'Top Quality', bold:'PREMIUM', tag:'50% OFF' };
+  var labelText = text || prompt('Enter label text:', defaultTexts[style] || 'Label');
+  if (!labelText) return;
+  _padPhotos[_padCurrentIdx].labels.push({
+    style: style,
+    text: labelText,
+    x: 0.3 + Math.random() * 0.4,
+    y: 0.3 + Math.random() * 0.4
+  });
+  padDrawCanvas();
+  padRenderLabelsList();
+  var card = document.getElementById('pad-labels-card');
+  if (card) card.style.display = 'block';
+}
+
+function padRemoveLabel(idx) {
+  if (!_padPhotos.length) return;
+  _padPhotos[_padCurrentIdx].labels.splice(idx, 1);
+  padDrawCanvas();
+  padRenderLabelsList();
+}
+
+function padClearLabels() {
+  if (!_padPhotos.length) return;
+  _padPhotos[_padCurrentIdx].labels = [];
+  padDrawCanvas();
+  padRenderLabelsList();
+}
+
+function padRenderLabelsList() {
+  var list = document.getElementById('pad-labels-list');
+  var card = document.getElementById('pad-labels-card');
+  if (!list || !_padPhotos.length) return;
+  var labels = _padPhotos[_padCurrentIdx].labels;
+  card.style.display = labels.length ? 'block' : 'none';
+  list.innerHTML = labels.map(function(l, i) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:8px;">'
+      + '<span style="font-size:12px;color:var(--text);">'+l.text+'</span>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button onclick="padRemoveLabel('+i+')" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:#ef4444;cursor:pointer;">✕ Remove</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function padExportImage() {
+  var canvas = document.getElementById('pad-canvas');
+  if (!canvas || !_padPhotos.length) { showToast('Upload a photo first!', 'error'); return; }
+  padDrawCanvas();
+  setTimeout(function() {
+    var link = document.createElement('a');
+    link.download = 'product-ad-' + Date.now() + '.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+    showToast('✅ Image downloaded!', 'success');
+  }, 100);
+}
+
+function padExportSlideshow() {
+  if (_padPhotos.length < 2) { showToast('Upload at least 2 photos for a slideshow!', 'error'); return; }
+  showToast('🎬 Creating slideshow... this may take a moment', 'success');
+
+  var canvas = document.getElementById('pad-canvas');
+  if (!canvas) return;
+  var cw = parseInt(canvas.style.width) || 500;
+  var ch = parseInt(canvas.style.height) || 500;
+
+  // Create recording canvas
+  var recCanvas = document.createElement('canvas');
+  recCanvas.width = cw * 2; recCanvas.height = ch * 2;
+  var recCtx = recCanvas.getContext('2d');
+  recCtx.scale(2, 2);
+
+  var stream = recCanvas.captureStream(30);
+  var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  var chunks = [];
+  recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = function() {
+    var blob = new Blob(chunks, { type: 'video/webm' });
+    var link = document.createElement('a');
+    link.download = 'product-slideshow-' + Date.now() + '.webm';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    showToast('✅ Slideshow downloaded!', 'success');
+  };
+
+  recorder.start();
+  var FPS = 30, durPerPhoto = 3; // 3 seconds per photo
+  var frame = 0, totalFrames = _padPhotos.length * durPerPhoto * FPS;
+  var prevIdx = -1;
+
+  function renderFrame() {
+    if (frame >= totalFrames) { recorder.stop(); return; }
+    var pIdx = Math.floor(frame / (durPerPhoto * FPS));
+    var pFrame = frame % (durPerPhoto * FPS);
+    var progress = pFrame / (durPerPhoto * FPS);
+
+    if (pIdx !== prevIdx) {
+      prevIdx = pIdx;
+      _padCurrentIdx = pIdx;
+    }
+
+    var photo = _padPhotos[pIdx];
+    var img = photo.img;
+
+    // Clear
+    recCtx.clearRect(0, 0, cw, ch);
+
+    // Slow Ken Burns effect
+    var scale = 1 + progress * 0.05;
+    var tx = (1 - scale) * cw / 2 - progress * 10;
+    recCtx.save();
+    recCtx.translate(tx, 0);
+    recCtx.scale(scale, scale);
+    var imgScale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    var sw = img.naturalWidth * imgScale, sh = img.naturalHeight * imgScale;
+    recCtx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+    recCtx.restore();
+
+    // Fade in/out
+    var fadeIn = Math.min(1, pFrame / (FPS * 0.5));
+    var fadeOut = 1 - Math.max(0, (pFrame - (durPerPhoto * FPS - FPS * 0.5)) / (FPS * 0.5));
+    var alpha = Math.min(fadeIn, fadeOut);
+    recCtx.globalAlpha = 1 - alpha;
+    recCtx.fillStyle = '#000';
+    recCtx.fillRect(0, 0, cw, ch);
+    recCtx.globalAlpha = 1;
+
+    // Draw labels
+    padDrawLabels(recCtx, cw, ch);
+
+    frame++;
+    setTimeout(renderFrame, 1000 / FPS);
+  }
+  renderFrame();
+}
+
+function padPostToSocial() {
+  if (!_padPhotos.length) { showToast('Create your ad first!', 'error'); return; }
+  var canvas = document.getElementById('pad-canvas');
+  if (!canvas) return;
+  // Convert canvas to blob and put in compose
+  canvas.toBlob(function(blob) {
+    // Upload to R2 then post
+    uploadFileToR2(new File([blob], 'product-ad.jpg', {type:'image/jpeg'}), 'photo-ads')
+      .then(function(url) {
+        if (url) {
+          window._composerImageUrl = url;
+          showPage('compose');
+          showToast('✅ Image ready to post! Select platforms and click Post.', 'success');
+        }
+      }).catch(function() {
+        showToast('Could not upload. Try downloading and posting manually.', 'error');
+      });
+  }, 'image/jpeg', 0.95);
 }
 
 </script>
