@@ -10646,7 +10646,7 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   }).join('');
 
   var benefitCards = solList.map(function(s){
-    return '<div class="fc" style="'+gs('10px;')+'padding:12px;display:flex;align-items:center;gap:8px;opacity:0;"><span style="font-size:18px;">'+s.ico+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+s.txt+'</span></div>';
+    return '<div class="fc" style="'+gs('10px;')+'padding:12px;display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">'+s.ico+'</span><span style="font-size:11px;font-weight:700;color:'+c.text+';">'+s.txt+'</span></div>';
   }).join('');
 
   var s5BenCards = solList.map(function(s){
@@ -10813,10 +10813,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'    setTimeout(function(){d.style.opacity="0.6";d.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))";},30);'
     +'    setTimeout(function(){d.style.opacity="0";d.style.transition="opacity .5s";},2800);'
     +'  },i*80));});'
-    +'  show("s4e",200);show("s4t",450);show("s4g",750,"sU");show("s4stars",1600,"fI");'
+    +'  show("s4e",200);show("s4t",450);showAll(".fc",700,80,"sU");show("s4stars",1500,"fI");'
     +'},23000));'
     // S5
-    +'TM.push(setTimeout(function(){go(5);show("s5e",100);show("s5biz",300);show("s5u",900,"sU");show("s5btn",1200,"fI");},27500));'
+    +'TM.push(setTimeout(function(){go(5);show("s5e",100);show("s5biz",300);showAll(".s5f",500,80,"sU");show("s5u",1000,"sU");show("s5btn",1300,"fI");},27500));'
     // Progress
     +'var st=Date.now();var pi=setInterval(function(){var p=Math.min(100,((Date.now()-st)/33000)*100);var e=q("prog");if(e)e.style.width=p+"%";if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}},100);'
     +'<\/script></body></html>';
