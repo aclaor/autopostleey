@@ -13598,32 +13598,87 @@ function buildAutoPostPlatformList(prefix) {
   }).filter(Boolean).join('');
 }
 
-function startVadAutoPost() {
+async function startVadAutoPost() {
   var hrs = parseInt((document.getElementById('vad-autopost-interval')||{}).value||0);
   if (!hrs) return;
   if (!_vadIframeDoc) { showToast('Generate your video ad first!','error'); return; }
-  stopVadAutoPost();
-  var ms = hrs * 3600 * 1000;
-  _vadAutoPostTimer = setInterval(function() { triggerVadAutoPost(); }, ms);
-  triggerVadAutoPost(); // post immediately first
-  document.getElementById('vad-autopost-start-btn').style.display = 'none';
-  document.getElementById('vad-autopost-stop-btn').style.display = 'block';
-  var status = document.getElementById('vad-autopost-status');
-  if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-  showToast('✅ Auto-posting started! Every '+hrs+' hours.','success');
+  if (!_user) { showToast('Please sign in first!','error'); return; }
+
+  var list = document.getElementById('vad-autopost-platform-list');
+  var platforms = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
+  if (!platforms.length) { showToast('Select at least one platform!','error'); return; }
+
+  var btn = document.getElementById('vad-autopost-start-btn');
+  if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
+
+  try {
+    // Upload the video ad HTML to R2 for permanent URL
+    var adUrl = '';
+    if (_vadIframeDoc) {
+      var htmlBlob = new Blob([_vadIframeDoc], {type:'text/html'});
+      adUrl = await uploadFileToR2(new File([htmlBlob], 'video-ad-'+Date.now()+'.html', {type:'text/html'}), 'video-ads');
+    }
+
+    var caption = (document.getElementById('vad-caption')||{}).value
+      || (document.getElementById('vad-tagline')||{}).value
+      || 'Check out our latest product! 🔥';
+
+    var connections = {};
+    platforms.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+
+    // Save to Supabase via Worker — Railway polls this and posts even when offline
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        user_id: _user.id,
+        type: 'videoad',
+        ad_url: adUrl,
+        caption: caption,
+        platforms: platforms,
+        connections: connections,
+        interval_hours: hrs,
+        enabled: true
+      })
+    });
+    var d = await res.json();
+
+    if (d.success) {
+      stopVadAutoPost();
+      _vadAutoPostActive = true;
+      document.getElementById('vad-autopost-start-btn').style.display = 'none';
+      document.getElementById('vad-autopost-stop-btn').style.display = 'block';
+      var status = document.getElementById('vad-autopost-status');
+      if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString() : '';
+      showToast('✅ Auto-posting scheduled every '+hrs+'h! Works even when offline. Next post: '+nextTime,'success');
+    }
+  } catch(e) {
+    showToast('Schedule failed: '+e.message,'error');
+  }
+  if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
 }
 
-function stopVadAutoPost() {
+async function stopVadAutoPost() {
   if (_vadAutoPostTimer) { clearInterval(_vadAutoPostTimer); _vadAutoPostTimer = null; }
   var startBtn = document.getElementById('vad-autopost-start-btn');
-  var stopBtn = document.getElementById('vad-autopost-stop-btn');
+  var stopBtn  = document.getElementById('vad-autopost-stop-btn');
   if (startBtn) startBtn.style.display = 'block';
-  if (stopBtn) stopBtn.style.display = 'none';
+  if (stopBtn)  stopBtn.style.display  = 'none';
   var status = document.getElementById('vad-autopost-status');
-  var sel = document.getElementById('vad-autopost-interval');
-  var hrs = sel ? parseInt(sel.value) : 0;
-  if (status && hrs > 0) { status.textContent = '● Every '+hrs+'h'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-  showToast('Auto-posting stopped.','success');
+  if (status) { status.textContent = '● OFF'; status.style.background='var(--bg3)'; status.style.color='var(--text3)'; }
+  // Disable in Supabase so Railway stops posting
+  if (_user) {
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({user_id:_user.id, type:'videoad', enabled:false, interval_hours:0})
+    }).catch(function(){});
+  }
+  showToast('Video ad auto-posting stopped.','success');
 }
 
 function triggerVadAutoPost() {
@@ -13642,29 +13697,78 @@ function triggerVadAutoPost() {
   }).catch(function(){});
 }
 
-function startPadAutoPost() {
+async function startPadAutoPost() {
   var hrs = parseInt((document.getElementById('pad-autopost-interval')||{}).value||0);
   if (!hrs) return;
-  if (!_padPublicUrl && !_padPhotos.length) { showToast('Upload and post your image first!','error'); return; }
-  stopPadAutoPost();
-  var ms = hrs * 3600 * 1000;
-  _padAutoPostTimer = setInterval(function() { triggerPadAutoPost(); }, ms);
-  triggerPadAutoPost();
-  document.getElementById('pad-autopost-start-btn').style.display = 'none';
-  document.getElementById('pad-autopost-stop-btn').style.display = 'block';
-  var status = document.getElementById('pad-autopost-status');
-  if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-  showToast('✅ Photo ad auto-posting started! Every '+hrs+' hours.','success');
+  if (!_user) { showToast('Please sign in first!','error'); return; }
+
+  var list = document.getElementById('pad-autopost-platform-list');
+  var platforms = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
+  if (!platforms.length) { showToast('Select at least one platform!','error'); return; }
+
+  if (!_padPublicUrl && _padPhotos.length) {
+    showToast('Click "Post to Social Media" first to upload the photo, then start auto-posting.','error');
+    return;
+  }
+  if (!_padPublicUrl) { showToast('Upload and post your image first!','error'); return; }
+
+  var btn = document.getElementById('pad-autopost-start-btn');
+  if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
+
+  try {
+    var caption = (document.getElementById('pad-caption')||{}).value || 'Check out our latest product! 🔥';
+    var connections = {};
+    platforms.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        user_id: _user.id,
+        type: 'photoad',
+        ad_url: _padPublicUrl,
+        caption: caption,
+        platforms: platforms,
+        connections: connections,
+        interval_hours: hrs,
+        enabled: true
+      })
+    });
+    var d = await res.json();
+
+    if (d.success) {
+      stopPadAutoPost();
+      document.getElementById('pad-autopost-start-btn').style.display = 'none';
+      document.getElementById('pad-autopost-stop-btn').style.display = 'block';
+      var status = document.getElementById('pad-autopost-status');
+      if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString() : '';
+      showToast('✅ Photo ad scheduled every '+hrs+'h! Works even when offline. Next: '+nextTime,'success');
+    }
+  } catch(e) {
+    showToast('Schedule failed: '+e.message,'error');
+  }
+  if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
 }
 
-function stopPadAutoPost() {
+async function stopPadAutoPost() {
   if (_padAutoPostTimer) { clearInterval(_padAutoPostTimer); _padAutoPostTimer = null; }
   var startBtn = document.getElementById('pad-autopost-start-btn');
-  var stopBtn = document.getElementById('pad-autopost-stop-btn');
+  var stopBtn  = document.getElementById('pad-autopost-stop-btn');
   if (startBtn) startBtn.style.display = 'block';
-  if (stopBtn) stopBtn.style.display = 'none';
+  if (stopBtn)  stopBtn.style.display  = 'none';
   var status = document.getElementById('pad-autopost-status');
   if (status) { status.textContent = '● OFF'; status.style.background='var(--bg3)'; status.style.color='var(--text3)'; }
+  if (_user) {
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({user_id:_user.id, type:'photoad', enabled:false, interval_hours:0})
+    }).catch(function(){});
+  }
   showToast('Photo ad auto-posting stopped.','success');
 }
 
