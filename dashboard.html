@@ -13563,6 +13563,72 @@ function padPostNow() {
 }
 
 
+
+// ── RESTORE AUTO-POST STATUS ON PAGE LOAD ────────────────────────
+async function restoreAdScheduleStatus() {
+  if (!_user) return;
+  try {
+    // Check video ad schedule
+    var vadRes = await _db
+      .from('autopostleey_ad_schedules')
+      .select('enabled,interval_hours,next_post_at')
+      .eq('user_id', _user.id)
+      .single();
+
+    if (vadRes.data && vadRes.data.enabled) {
+      var hrs = vadRes.data.interval_hours || 4;
+      var next = vadRes.data.next_post_at ? new Date(vadRes.data.next_post_at).toLocaleString() : '';
+      var sel = document.getElementById('vad-autopost-interval');
+      if (sel) sel.value = hrs;
+      updateAutoPostStatus('vad');
+      var status = document.getElementById('vad-autopost-status');
+      if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+      var startBtn = document.getElementById('vad-autopost-start-btn');
+      var stopBtn  = document.getElementById('vad-autopost-stop-btn');
+      if (startBtn) startBtn.style.display = 'none';
+      if (stopBtn)  stopBtn.style.display  = 'block';
+      var platformsDiv = document.getElementById('vad-autopost-platforms');
+      if (platformsDiv) {
+        platformsDiv.style.display = 'block';
+        var platformList = document.getElementById('vad-autopost-platform-list');
+        if (platformList) platformList.innerHTML = buildAutoPostPlatformList('vad');
+      }
+      console.log('[AutoPost] Video ad schedule active — next post:', next);
+    }
+
+    // Check photo ad schedule
+    var padRes = await _db
+      .from('autopostleey_photo_schedules')
+      .select('enabled,interval_hours,next_post_at')
+      .eq('user_id', _user.id)
+      .single();
+
+    if (padRes.data && padRes.data.enabled) {
+      var phrs = padRes.data.interval_hours || 4;
+      var pnext = padRes.data.next_post_at ? new Date(padRes.data.next_post_at).toLocaleString() : '';
+      var psel = document.getElementById('pad-autopost-interval');
+      if (psel) psel.value = phrs;
+      updateAutoPostStatus('pad');
+      var pstatus = document.getElementById('pad-autopost-status');
+      if (pstatus) { pstatus.textContent = '🟢 ACTIVE'; pstatus.style.background='rgba(16,185,129,0.2)'; pstatus.style.color='#10b981'; }
+      var pstartBtn = document.getElementById('pad-autopost-start-btn');
+      var pstopBtn  = document.getElementById('pad-autopost-stop-btn');
+      if (pstartBtn) pstartBtn.style.display = 'none';
+      if (pstopBtn)  pstopBtn.style.display  = 'block';
+      var pPlatformsDiv = document.getElementById('pad-autopost-platforms');
+      if (pPlatformsDiv) {
+        pPlatformsDiv.style.display = 'block';
+        var pPlatformList = document.getElementById('pad-autopost-platform-list');
+        if (pPlatformList) pPlatformList.innerHTML = buildAutoPostPlatformList('pad');
+      }
+      console.log('[AutoPost] Photo ad schedule active — next post:', pnext);
+    }
+  } catch(e) {
+    // Tables may not exist yet — silently ignore
+    console.log('[AutoPost] Schedule check skipped:', e.message);
+  }
+}
+
 // ── AUTO-POST SCHEDULER ─────────────────────────────────────────
 var _vadAutoPostTimer = null;
 var _padAutoPostTimer = null;
@@ -13652,8 +13718,13 @@ async function startVadAutoPost() {
       document.getElementById('vad-autopost-stop-btn').style.display = 'block';
       var status = document.getElementById('vad-autopost-status');
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString() : '';
-      showToast('✅ Auto-posting scheduled every '+hrs+'h! Works even when offline. Next post: '+nextTime,'success');
+      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
+      var vstatus = document.getElementById('vad-autopost-status');
+      if (vstatus) {
+        vstatus.textContent = '🟢 ACTIVE · Next: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '');
+        vstatus.style.background='rgba(16,185,129,0.2)'; vstatus.style.color='#10b981';
+      }
+      showToast('✅ Video ad auto-posting on! Every '+hrs+'h — works even when offline.','success');
     }
   } catch(e) {
     showToast('Schedule failed: '+e.message,'error');
@@ -13744,8 +13815,13 @@ async function startPadAutoPost() {
       document.getElementById('pad-autopost-stop-btn').style.display = 'block';
       var status = document.getElementById('pad-autopost-status');
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString() : '';
-      showToast('✅ Photo ad scheduled every '+hrs+'h! Works even when offline. Next: '+nextTime,'success');
+      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
+      var pstatus2 = document.getElementById('pad-autopost-status');
+      if (pstatus2) {
+        pstatus2.textContent = '🟢 ACTIVE · Next: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '');
+        pstatus2.style.background='rgba(16,185,129,0.2)'; pstatus2.style.color='#10b981';
+      }
+      showToast('✅ Photo ad auto-posting on! Every '+hrs+'h — works even when offline.','success');
     }
   } catch(e) {
     showToast('Schedule failed: '+e.message,'error');
