@@ -14335,54 +14335,150 @@ function vehRenderOverlayEditor() {
   var list = document.getElementById('veh-overlay-list');
   if (!list) return;
   var dur = _vehVideo ? _vehVideo.duration || 30 : 30;
+  list.innerHTML = '';
 
-  list.innerHTML = _vehOverlays.map(function(o, i) {
-    return '<div id="veh-ov-card-'+o.id+'" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;">'
-      // Text input
-      + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">'
-      + '<input value="'+o.text.replace(/"/g,'&quot;')+'" onchange="vehUpdateOverlay('+o.id+',\'text\',this.value)" oninput="vehUpdateOverlay('+o.id+',\'text\',this.value)"'
-      + ' style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;font-weight:700;">'
-      + '<button onclick="vehDeleteOverlay('+o.id+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>'
-      + '</div>'
-      // Time range
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
-      + '<div><label style="font-size:9px;color:var(--text3);">START (sec)</label>'
-      + '<div style="display:flex;align-items:center;gap:4px;margin-top:3px;">'
-      + '<input type="range" min="0" max="'+Math.floor(dur)+'" step="0.5" value="'+o.startSec+'" oninput="vehUpdateOverlay('+o.id+',\'startSec\',parseFloat(this.value));document.getElementById(\'veh-st-'+o.id+'\').textContent=this.value+\'s\'" style="flex:1;accent-color:var(--accent);">'
-      + '<span id="veh-st-'+o.id+'" style="font-size:10px;color:var(--accent);width:28px;font-weight:700;">'+o.startSec+'s</span>'
-      + '</div></div>'
-      + '<div><label style="font-size:9px;color:var(--text3);">END (sec)</label>'
-      + '<div style="display:flex;align-items:center;gap:4px;margin-top:3px;">'
-      + '<input type="range" min="0" max="'+Math.floor(dur)+'" step="0.5" value="'+o.endSec+'" oninput="vehUpdateOverlay('+o.id+',\'endSec\',parseFloat(this.value));document.getElementById(\'veh-et-'+o.id+'\').textContent=this.value+\'s\'" style="flex:1;accent-color:var(--accent);">'
-      + '<span id="veh-et-'+o.id+'" style="font-size:10px;color:var(--accent);width:28px;font-weight:700;">'+o.endSec+'s</span>'
-      + '</div></div>'
-      + '</div>'
-      // Position buttons
-      + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">'
-      + '<span style="font-size:10px;color:var(--text3);">Position:</span>'
-      + ['top','center','bottom'].map(function(pos) {
-          return '<button onclick="vehUpdateOverlay('+o.id+',\'position\',\''+pos+'\')" '
-            + 'style="flex:1;padding:5px;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;'
-            + (o.position===pos ? 'background:var(--accent);color:#fff;border:none;' : 'background:var(--bg2);color:var(--text2);border:1px solid var(--border);')
-            + '">'+pos.charAt(0).toUpperCase()+pos.slice(1)+'</button>';
-        }).join('')
-      + '</div>'
-      // Style + colors row
-      + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
-      + '<select onchange="vehUpdateOverlay('+o.id+',\'style\',this.value)" style="flex:1;min-width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:11px;">'
-      + ['bold','glass','neon','subtitle'].map(function(s) {
-          return '<option value="'+s+'"'+(o.style===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
-        }).join('')
-      + '</select>'
-      + '<div title="Text color"><label style="font-size:9px;color:var(--text3);display:block;">Text</label>'
-      + '<input type="color" value="'+(o.textColor||'#ffffff')+'" onchange="vehUpdateOverlay('+o.id+',\'textColor\',this.value)" style="width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;"></div>'
-      + '<div title="Bg/accent color"><label style="font-size:9px;color:var(--text3);display:block;">Accent</label>'
-      + '<input type="color" value="'+(o.accentColor||'#a855f7')+'" onchange="vehUpdateOverlay('+o.id+',\'accentColor\',this.value)" style="width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;"></div>'
-      + '<div title="Font size"><label style="font-size:9px;color:var(--text3);display:block;">Size</label>'
-      + '<input type="range" min="0.5" max="2" step="0.1" value="'+(o.fontSize||1)+'" oninput="vehUpdateOverlay('+o.id+',\'fontSize\',parseFloat(this.value))" style="width:50px;accent-color:var(--accent);"></div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+  _vehOverlays.forEach(function(o, i) {
+    var card = document.createElement('div');
+    card.id = 'veh-ov-card-' + o.id;
+    card.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;';
+
+    // --- Text + delete row ---
+    var textRow = document.createElement('div');
+    textRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:10px;';
+
+    var textInput = document.createElement('input');
+    textInput.value = o.text || '';
+    textInput.style.cssText = 'flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;font-weight:700;';
+    textInput.oninput = (function(oid){ return function(){ vehUpdateOverlay(oid,'text',this.value); }; })(o.id);
+
+    var delBtn = document.createElement('button');
+    delBtn.textContent = '✕';
+    delBtn.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0;';
+    delBtn.onclick = (function(oid){ return function(){ vehDeleteOverlay(oid); }; })(o.id);
+
+    textRow.appendChild(textInput);
+    textRow.appendChild(delBtn);
+    card.appendChild(textRow);
+
+    // --- Time range row ---
+    var timeGrid = document.createElement('div');
+    timeGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;';
+
+    ['startSec','endSec'].forEach(function(key) {
+      var label = key === 'startSec' ? 'START (sec)' : 'END (sec)';
+      var spanId = (key === 'startSec' ? 'veh-st-' : 'veh-et-') + o.id;
+      var col = document.createElement('div');
+      var lbl = document.createElement('label');
+      lbl.style.cssText = 'font-size:9px;color:var(--text3);';
+      lbl.textContent = label;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:4px;margin-top:3px;';
+      var slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 0;
+      slider.max = Math.floor(dur);
+      slider.step = 0.5;
+      slider.value = o[key];
+      slider.style.cssText = 'flex:1;accent-color:var(--accent);';
+      var span = document.createElement('span');
+      span.id = spanId;
+      span.style.cssText = 'font-size:10px;color:var(--accent);width:32px;font-weight:700;';
+      span.textContent = o[key] + 's';
+      slider.oninput = (function(oid, k, sp){
+        return function() {
+          vehUpdateOverlay(oid, k, parseFloat(this.value));
+          sp.textContent = this.value + 's';
+        };
+      })(o.id, key, span);
+      row.appendChild(slider);
+      row.appendChild(span);
+      col.appendChild(lbl);
+      col.appendChild(row);
+      timeGrid.appendChild(col);
+    });
+    card.appendChild(timeGrid);
+
+    // --- Position buttons ---
+    var posRow = document.createElement('div');
+    posRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:10px;';
+    var posLabel = document.createElement('span');
+    posLabel.style.cssText = 'font-size:10px;color:var(--text3);';
+    posLabel.textContent = 'Position:';
+    posRow.appendChild(posLabel);
+    ['top','center','bottom'].forEach(function(pos) {
+      var btn = document.createElement('button');
+      btn.textContent = pos.charAt(0).toUpperCase() + pos.slice(1);
+      btn.style.cssText = 'flex:1;padding:5px;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;'
+        + (o.position === pos
+          ? 'background:var(--accent);color:#fff;border:none;'
+          : 'background:var(--bg2);color:var(--text2);border:1px solid var(--border);');
+      btn.onclick = (function(oid, p){ return function(){ vehUpdateOverlay(oid,'position',p); }; })(o.id, pos);
+      posRow.appendChild(btn);
+    });
+    card.appendChild(posRow);
+
+    // --- Style selector ---
+    var styleRow = document.createElement('div');
+    styleRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:10px;';
+    var styleSel = document.createElement('select');
+    styleSel.style.cssText = 'flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:11px;';
+    ['bold','glass','neon','subtitle'].forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      if (o.style === s) opt.selected = true;
+      styleSel.appendChild(opt);
+    });
+    styleSel.onchange = (function(oid){ return function(){ vehUpdateOverlay(oid,'style',this.value); }; })(o.id);
+
+    // Text color
+    var textColorWrap = document.createElement('div');
+    var tcLabel = document.createElement('label');
+    tcLabel.style.cssText = 'font-size:9px;color:var(--text3);display:block;';
+    tcLabel.textContent = 'Text';
+    var textColor = document.createElement('input');
+    textColor.type = 'color';
+    textColor.value = o.textColor || '#ffffff';
+    textColor.style.cssText = 'width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;';
+    textColor.onchange = (function(oid){ return function(){ vehUpdateOverlay(oid,'textColor',this.value); }; })(o.id);
+    textColorWrap.appendChild(tcLabel);
+    textColorWrap.appendChild(textColor);
+
+    // Accent color
+    var accentColorWrap = document.createElement('div');
+    var acLabel = document.createElement('label');
+    acLabel.style.cssText = 'font-size:9px;color:var(--text3);display:block;';
+    acLabel.textContent = 'Accent';
+    var accentColor = document.createElement('input');
+    accentColor.type = 'color';
+    accentColor.value = o.accentColor || '#a855f7';
+    accentColor.style.cssText = 'width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;';
+    accentColor.onchange = (function(oid){ return function(){ vehUpdateOverlay(oid,'accentColor',this.value); }; })(o.id);
+    accentColorWrap.appendChild(acLabel);
+    accentColorWrap.appendChild(accentColor);
+
+    // Size slider
+    var sizeWrap = document.createElement('div');
+    var sLabel = document.createElement('label');
+    sLabel.style.cssText = 'font-size:9px;color:var(--text3);display:block;';
+    sLabel.textContent = 'Size';
+    var sizeSlider = document.createElement('input');
+    sizeSlider.type = 'range';
+    sizeSlider.min = 0.5; sizeSlider.max = 2.5; sizeSlider.step = 0.1;
+    sizeSlider.value = o.fontSize || 1;
+    sizeSlider.style.cssText = 'width:60px;accent-color:var(--accent);';
+    sizeSlider.oninput = (function(oid){ return function(){ vehUpdateOverlay(oid,'fontSize',parseFloat(this.value)); }; })(o.id);
+    sizeWrap.appendChild(sLabel);
+    sizeWrap.appendChild(sizeSlider);
+
+    styleRow.appendChild(styleSel);
+    styleRow.appendChild(textColorWrap);
+    styleRow.appendChild(accentColorWrap);
+    styleRow.appendChild(sizeWrap);
+    card.appendChild(styleRow);
+
+    list.appendChild(card);
+  });
 }
 
 function vehUpdateOverlay(id, key, value) {
