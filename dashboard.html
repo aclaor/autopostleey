@@ -14213,10 +14213,12 @@ async function vehGenerateOverlay() {
 
   var btn = document.getElementById('veh-gen-btn');
   if (btn) { btn.textContent = '⏳ AI Writing Script...'; btn.disabled = true; }
-  document.getElementById('veh-status').textContent = 'AI generating overlays...';
+  var status = document.getElementById('veh-status');
+  if (status) status.textContent = 'AI generating overlays...';
 
   try {
-    var prompt = 'Create ' + Math.min(8, Math.ceil(dur/4)) + ' short punchy text overlays for a ' + dur + '-second product video ad for "' + product + '"'
+    var count = Math.min(8, Math.ceil(dur / 4));
+    var prompt = 'Create ' + count + ' short punchy text overlays for a ' + dur + '-second product video ad for "' + product + '"'
       + (biz ? ' by ' + biz : '')
       + (tagline ? '. Key features: ' + tagline : '')
       + '. Format: one phrase per line, max 5 words each, no numbering.'
@@ -14224,47 +14226,42 @@ async function vehGenerateOverlay() {
       + '. Make them CAPTIVATING for Filipino social media. Output ONLY the phrases, one per line.';
 
     var raw = await generateTextWithFallback(prompt);
-    var lines = raw.split('\n').map(function(l) { return l.replace(/^[-•*\d.]+\s*/, '').trim(); }).filter(Boolean);
+    var lines = raw.split('\n').map(function(l){ return l.replace(/^[-•*\d.]+\s*/,'').trim(); }).filter(Boolean).slice(0, count);
 
-    // Distribute overlays across video duration
     var segDur = dur / lines.length;
     _vehOverlays = lines.map(function(text, i) {
       return {
+        id: Date.now() + i,
         text: text,
-        startSec: i * segDur,
-        endSec:   i * segDur + segDur * 0.85,
-        position: i % 3 === 0 ? 'top' : i % 3 === 1 ? 'center' : 'bottom'
+        startSec: Math.round(i * segDur * 10) / 10,
+        endSec:   Math.round((i * segDur + segDur * 0.85) * 10) / 10,
+        position: i % 3 === 0 ? 'top' : i % 3 === 1 ? 'center' : 'bottom',
+        style:    _vehStyle,
+        textColor: (document.getElementById('veh-text-color') || {}).value || '#ffffff',
+        accentColor: (document.getElementById('veh-accent-color') || {}).value || '#a855f7',
+        fontSize: 1.0, // multiplier
+        y: null, // null = use position, number = custom y%
       };
     });
 
-    // Show script preview
-    var scriptList = document.getElementById('veh-script-list');
-    var scriptPrev = document.getElementById('veh-script-preview');
-    if (scriptList) {
-      scriptList.innerHTML = _vehOverlays.map(function(o, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:8px;">'
-          + '<span style="font-size:10px;color:var(--text3);width:32px;flex-shrink:0;">' + Math.round(o.startSec) + 's</span>'
-          + '<span style="font-size:12px;font-weight:700;color:var(--text);">' + o.text + '</span>'
-          + '<span style="font-size:10px;color:var(--text3);margin-left:auto;">' + o.position + '</span>'
-          + '</div>';
-      }).join('');
-    }
-    if (scriptPrev) scriptPrev.style.display = 'block';
-
-    // Start live preview
+    vehRenderOverlayEditor();
+    vehRenderTimeline();
     vehStartPreview();
 
+    var editor = document.getElementById('veh-overlay-editor');
     var exportBtns = document.getElementById('veh-export-btns');
+    var tlWrap = document.getElementById('veh-timeline-wrap');
+    if (editor) editor.style.display = 'block';
     if (exportBtns) exportBtns.style.display = 'flex';
-    document.getElementById('veh-status').textContent = '✅ ' + _vehOverlays.length + ' overlays ready · Preview playing';
-    showToast('✅ AI text overlays generated! Preview is playing.', 'success');
+    if (tlWrap) tlWrap.style.display = 'block';
+    if (status) status.textContent = '✅ ' + _vehOverlays.length + ' overlays · Drag to reposition';
+    showToast('✅ Done! Customize each overlay below.', 'success');
 
   } catch(e) {
     showToast('Generation failed: ' + e.message, 'error');
-    document.getElementById('veh-status').textContent = 'Generation failed';
+    if (status) status.textContent = 'Generation failed';
   }
-
-  if (btn) { btn.textContent = '✨ Generate AI Text Overlay'; btn.disabled = false; }
+  if (btn) { btn.textContent = '✨ Regenerate AI Text'; btn.disabled = false; }
 }
 
 function vehStartPreview() {
@@ -14299,11 +14296,207 @@ function vehStartPreview() {
   drawFrame();
 }
 
-function vehDrawOverlay(ctx, text, x, y, alpha, W) {
+
+// ── VIDEO ENHANCER OVERLAY EDITOR ───────────────────────────────
+var _vehSelectedOverlay = null;
+var _vehDragOverlay = null;
+
+function vehRenderOverlayEditor() {
+  var list = document.getElementById('veh-overlay-list');
+  if (!list) return;
+  var dur = _vehVideo ? _vehVideo.duration || 30 : 30;
+
+  list.innerHTML = _vehOverlays.map(function(o, i) {
+    return '<div id="veh-ov-card-'+o.id+'" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;">'
+      // Text input
+      + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">'
+      + '<input value="'+o.text.replace(/"/g,'&quot;')+'" onchange="vehUpdateOverlay('+o.id+',\'text\',this.value)" oninput="vehUpdateOverlay('+o.id+',\'text\',this.value)"'
+      + ' style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;font-weight:700;">'
+      + '<button onclick="vehDeleteOverlay('+o.id+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>'
+      + '</div>'
+      // Time range
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
+      + '<div><label style="font-size:9px;color:var(--text3);">START (sec)</label>'
+      + '<div style="display:flex;align-items:center;gap:4px;margin-top:3px;">'
+      + '<input type="range" min="0" max="'+Math.floor(dur)+'" step="0.5" value="'+o.startSec+'" oninput="vehUpdateOverlay('+o.id+',\'startSec\',parseFloat(this.value));document.getElementById(\'veh-st-'+o.id+'\').textContent=this.value+\'s\'" style="flex:1;accent-color:var(--accent);">'
+      + '<span id="veh-st-'+o.id+'" style="font-size:10px;color:var(--accent);width:28px;font-weight:700;">'+o.startSec+'s</span>'
+      + '</div></div>'
+      + '<div><label style="font-size:9px;color:var(--text3);">END (sec)</label>'
+      + '<div style="display:flex;align-items:center;gap:4px;margin-top:3px;">'
+      + '<input type="range" min="0" max="'+Math.floor(dur)+'" step="0.5" value="'+o.endSec+'" oninput="vehUpdateOverlay('+o.id+',\'endSec\',parseFloat(this.value));document.getElementById(\'veh-et-'+o.id+'\').textContent=this.value+\'s\'" style="flex:1;accent-color:var(--accent);">'
+      + '<span id="veh-et-'+o.id+'" style="font-size:10px;color:var(--accent);width:28px;font-weight:700;">'+o.endSec+'s</span>'
+      + '</div></div>'
+      + '</div>'
+      // Position buttons
+      + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">'
+      + '<span style="font-size:10px;color:var(--text3);">Position:</span>'
+      + ['top','center','bottom'].map(function(pos) {
+          return '<button onclick="vehUpdateOverlay('+o.id+',\'position\',\''+pos+'\')" '
+            + 'style="flex:1;padding:5px;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;'
+            + (o.position===pos ? 'background:var(--accent);color:#fff;border:none;' : 'background:var(--bg2);color:var(--text2);border:1px solid var(--border);')
+            + '">'+pos.charAt(0).toUpperCase()+pos.slice(1)+'</button>';
+        }).join('')
+      + '</div>'
+      // Style + colors row
+      + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
+      + '<select onchange="vehUpdateOverlay('+o.id+',\'style\',this.value)" style="flex:1;min-width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:11px;">'
+      + ['bold','glass','neon','subtitle'].map(function(s) {
+          return '<option value="'+s+'"'+(o.style===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+        }).join('')
+      + '</select>'
+      + '<div title="Text color"><label style="font-size:9px;color:var(--text3);display:block;">Text</label>'
+      + '<input type="color" value="'+(o.textColor||'#ffffff')+'" onchange="vehUpdateOverlay('+o.id+',\'textColor\',this.value)" style="width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;"></div>'
+      + '<div title="Bg/accent color"><label style="font-size:9px;color:var(--text3);display:block;">Accent</label>'
+      + '<input type="color" value="'+(o.accentColor||'#a855f7')+'" onchange="vehUpdateOverlay('+o.id+',\'accentColor\',this.value)" style="width:36px;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:1px;"></div>'
+      + '<div title="Font size"><label style="font-size:9px;color:var(--text3);display:block;">Size</label>'
+      + '<input type="range" min="0.5" max="2" step="0.1" value="'+(o.fontSize||1)+'" oninput="vehUpdateOverlay('+o.id+',\'fontSize\',parseFloat(this.value))" style="width:50px;accent-color:var(--accent);"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function vehUpdateOverlay(id, key, value) {
+  var ov = _vehOverlays.find(function(o){ return o.id === id; });
+  if (!ov) return;
+  ov[key] = value;
+  // Re-render position buttons if position changed
+  if (key === 'position' || key === 'style') vehRenderOverlayEditor();
+  vehRenderTimeline();
+  // Seek preview to show change immediately
+  if (key === 'startSec') {
+    if (_vehVideo) _vehVideo.currentTime = value;
+  }
+}
+
+function vehDeleteOverlay(id) {
+  _vehOverlays = _vehOverlays.filter(function(o){ return o.id !== id; });
+  vehRenderOverlayEditor();
+  vehRenderTimeline();
+}
+
+function vehAddOverlay() {
+  var dur = _vehVideo ? _vehVideo.duration || 30 : 30;
+  var t = _vehVideo ? _vehVideo.currentTime : 0;
+  _vehOverlays.push({
+    id: Date.now(),
+    text: 'Your text here',
+    startSec: Math.round(t * 10) / 10,
+    endSec:   Math.round(Math.min(dur, t + 3) * 10) / 10,
+    position: 'center',
+    style: _vehStyle,
+    textColor: '#ffffff',
+    accentColor: '#a855f7',
+    fontSize: 1.0,
+    y: null,
+  });
+  vehRenderOverlayEditor();
+  vehRenderTimeline();
+  // Scroll to bottom of list
+  var list = document.getElementById('veh-overlay-list');
+  if (list) list.scrollTop = list.scrollHeight;
+}
+
+function vehRenderTimeline() {
+  var seg = document.getElementById('veh-timeline-segments');
+  if (!seg || !_vehVideo) return;
+  var dur = _vehVideo.duration || 30;
+  var colors = ['#a855f7','#0ea5e9','#10b981','#f59e0b','#ef4444','#6366f1','#ec4899','#14b8a6'];
+  seg.innerHTML = _vehOverlays.map(function(o, i) {
+    var left  = (o.startSec / dur * 100).toFixed(1);
+    var width = ((o.endSec - o.startSec) / dur * 100).toFixed(1);
+    return '<div title="'+o.text+'" onclick="vehSeekTo('+o.startSec+')" style="position:absolute;top:4px;height:28px;left:'+left+'%;width:'+width+'%;'
+      + 'background:'+colors[i%colors.length]+'66;border-left:2px solid '+colors[i%colors.length]+';border-radius:3px;cursor:pointer;'
+      + 'overflow:hidden;display:flex;align-items:center;padding:0 4px;pointer-events:auto;">'
+      + '<span style="font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+o.text+'</span>'
+      + '</div>';
+  }).join('');
+
+  // Update cursor position while video plays
+  if (_vehVideo && !_vehVideo._tlListenerAdded) {
+    _vehVideo._tlListenerAdded = true;
+    _vehVideo.addEventListener('timeupdate', function() {
+      var dur2 = _vehVideo.duration || 1;
+      var pct = (_vehVideo.currentTime / dur2 * 100).toFixed(1);
+      var cursor = document.getElementById('veh-timeline-cursor');
+      var prog = document.getElementById('veh-timeline-progress');
+      var disp = document.getElementById('veh-time-display');
+      if (cursor) cursor.style.left = pct + '%';
+      if (prog)   prog.style.width  = pct + '%';
+      if (disp) {
+        var s = Math.floor(_vehVideo.currentTime);
+        disp.textContent = Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);
+      }
+    });
+  }
+}
+
+function vehSeekTo(sec) {
+  if (_vehVideo) { _vehVideo.currentTime = sec; _vehVideo.play().catch(function(){}); }
+}
+
+function vehSeekFromTimeline(e) {
+  if (!_vehVideo) return;
+  var tl = document.getElementById('veh-timeline');
+  var rect = tl.getBoundingClientRect();
+  var pct = (e.clientX - rect.left) / rect.width;
+  _vehVideo.currentTime = pct * _vehVideo.duration;
+  _vehVideo.play().catch(function(){});
+}
+
+// Override vehStartPreview to use per-overlay style settings
+function vehStartPreview() {
+  if (!_vehVideo) return;
+  if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
+  var canvas = document.getElementById('veh-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  _vehVideo.play().catch(function(){});
+
+  function drawFrame() {
+    if (_vehVideo.paused && _vehVideo.currentTime >= _vehVideo.duration) {
+      _vehVideo.currentTime = 0; _vehVideo.play().catch(function(){});
+    }
+    ctx.clearRect(0, 0, W, H);
+    try { ctx.drawImage(_vehVideo, 0, 0, W, H); } catch(e) {}
+    var t = _vehVideo.currentTime;
+    _vehOverlays.forEach(function(o) {
+      if (t < o.startSec || t > o.endSec) return;
+      var prog = Math.min(1, (t - o.startSec) / 0.4);
+      var slideY = (1 - prog) * 25;
+      // Use custom y% or position preset
+      var y;
+      if (o.y !== null && o.y !== undefined) {
+        y = o.y * H;
+      } else {
+        y = o.position === 'top' ? H * 0.1 : o.position === 'center' ? H * 0.5 : H * 0.85;
+      }
+      // Override global style with per-overlay settings
+      var savedStyle = _vehStyle;
+      _vehStyle = o.style || _vehStyle;
+      var savedTextColor   = (document.getElementById('veh-text-color')   || {}).value;
+      var savedAccentColor = (document.getElementById('veh-accent-color') || {}).value;
+      if (o.textColor   && document.getElementById('veh-text-color'))   document.getElementById('veh-text-color').value   = o.textColor;
+      if (o.accentColor && document.getElementById('veh-accent-color')) document.getElementById('veh-accent-color').value = o.accentColor;
+
+      vehDrawOverlay(ctx, o.text, W/2, y + slideY, prog, W, o.fontSize || 1);
+
+      _vehStyle = savedStyle;
+      if (savedTextColor   && document.getElementById('veh-text-color'))   document.getElementById('veh-text-color').value   = savedTextColor;
+      if (savedAccentColor && document.getElementById('veh-accent-color')) document.getElementById('veh-accent-color').value = savedAccentColor;
+    });
+    _vehAnimFrame = requestAnimationFrame(drawFrame);
+  }
+  drawFrame();
+}
+
+
+function vehDrawOverlay(ctx, text, x, y, alpha, W, fontScale) {
+  fontScale = fontScale || 1.0;
   var style = _vehStyle;
   var textColor   = document.getElementById('veh-text-color')   ? document.getElementById('veh-text-color').value   : '#ffffff';
   var accentColor = document.getElementById('veh-accent-color') ? document.getElementById('veh-accent-color').value : '#a855f7';
-  var fontSize = Math.round(W / 14);
+  var fontSize = Math.round((W / 14) * fontScale);
 
   ctx.globalAlpha = alpha;
   ctx.textAlign = 'center';
