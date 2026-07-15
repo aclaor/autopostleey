@@ -2744,7 +2744,12 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
               <div id="vad-autopost-status" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);font-weight:700;">● OFF</div>
             </div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Automatically post this video ad on a repeating schedule.</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+              Posts automatically even when your browser is closed. Powered by Cloudflare — always on, always free.
+            </div>
+            <div id="vad-schedule-info" style="display:none;font-size:11px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#10b981;">
+              📅 <span id="vad-next-post-time">Checking schedule...</span>
+            </div>
             <select id="vad-autopost-interval" onchange="updateAutoPostStatus('vad')"
               style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;margin-bottom:10px;">
               <option value="0">🚫 Off — Don't auto-post</option>
@@ -3056,7 +3061,12 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
                 <div id="pad-autopost-status" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);font-weight:700;">● OFF</div>
               </div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Automatically post this photo ad on a repeating schedule.</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+                Posts automatically even when your browser is closed. Powered by Cloudflare — always on, always free.
+              </div>
+              <div id="pad-schedule-info" style="display:none;font-size:11px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#10b981;">
+                📅 <span id="pad-next-post-time">Checking schedule...</span>
+              </div>
               <select id="pad-autopost-interval" onchange="updateAutoPostStatus('pad')"
                 style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;margin-bottom:10px;">
                 <option value="0">🚫 Off — Don't auto-post</option>
@@ -13593,6 +13603,10 @@ async function restoreAdScheduleStatus() {
         var platformList = document.getElementById('vad-autopost-platform-list');
         if (platformList) platformList.innerHTML = buildAutoPostPlatformList('vad');
       }
+      var infoBox = document.getElementById('vad-schedule-info');
+      var infoTime = document.getElementById('vad-next-post-time');
+      if (infoBox) infoBox.style.display = 'block';
+      if (infoTime) infoTime.textContent = 'Next post: ' + (vadRes.data.next_post_at ? new Date(vadRes.data.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
       console.log('[AutoPost] Video ad schedule active — next post:', next);
     }
 
@@ -13621,11 +13635,18 @@ async function restoreAdScheduleStatus() {
         var pPlatformList = document.getElementById('pad-autopost-platform-list');
         if (pPlatformList) pPlatformList.innerHTML = buildAutoPostPlatformList('pad');
       }
+      var pinfoBox = document.getElementById('pad-schedule-info');
+      var pinfoTime = document.getElementById('pad-next-post-time');
+      if (pinfoBox) pinfoBox.style.display = 'block';
+      if (pinfoTime) pinfoTime.textContent = 'Next post: ' + (padRes.data.next_post_at ? new Date(padRes.data.next_post_at).toLocaleString() : 'soon') + ' · Every ' + phrs + 'h';
       console.log('[AutoPost] Photo ad schedule active — next post:', pnext);
     }
   } catch(e) {
-    // Tables may not exist yet — silently ignore
-    console.log('[AutoPost] Schedule check skipped:', e.message);
+    // Tables don't exist yet — create them automatically
+    console.log('[AutoPost] Setting up schedule tables...');
+    try {
+      await fetch('https://autopostleey-ai.alexclaor.workers.dev/setup-ad-tables');
+    } catch(e2) {}
   }
 }
 
@@ -13720,11 +13741,12 @@ async function startVadAutoPost() {
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
       var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
       var vstatus = document.getElementById('vad-autopost-status');
-      if (vstatus) {
-        vstatus.textContent = '🟢 ACTIVE · Next: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '');
-        vstatus.style.background='rgba(16,185,129,0.2)'; vstatus.style.color='#10b981';
-      }
-      showToast('✅ Video ad auto-posting on! Every '+hrs+'h — works even when offline.','success');
+      if (vstatus) { vstatus.textContent = '🟢 ACTIVE'; vstatus.style.background='rgba(16,185,129,0.2)'; vstatus.style.color='#10b981'; }
+      var vinfoBox = document.getElementById('vad-schedule-info');
+      var vinfoTime = document.getElementById('vad-next-post-time');
+      if (vinfoBox) vinfoBox.style.display = 'block';
+      if (vinfoTime) vinfoTime.textContent = 'Next post: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
+      showToast('✅ Scheduled! Posts every '+hrs+'h — even when browser is closed.','success');
     }
   } catch(e) {
     showToast('Schedule failed: '+e.message,'error');
@@ -13749,6 +13771,8 @@ async function stopVadAutoPost() {
       body: JSON.stringify({user_id:_user.id, type:'videoad', enabled:false, interval_hours:0})
     }).catch(function(){});
   }
+  var vs_info = document.getElementById('vad-schedule-info');
+  if (vs_info) vs_info.style.display = 'none';
   showToast('Video ad auto-posting stopped.','success');
 }
 
@@ -13817,11 +13841,12 @@ async function startPadAutoPost() {
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
       var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
       var pstatus2 = document.getElementById('pad-autopost-status');
-      if (pstatus2) {
-        pstatus2.textContent = '🟢 ACTIVE · Next: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '');
-        pstatus2.style.background='rgba(16,185,129,0.2)'; pstatus2.style.color='#10b981';
-      }
-      showToast('✅ Photo ad auto-posting on! Every '+hrs+'h — works even when offline.','success');
+      if (pstatus2) { pstatus2.textContent = '🟢 ACTIVE'; pstatus2.style.background='rgba(16,185,129,0.2)'; pstatus2.style.color='#10b981'; }
+      var pinfoBox2 = document.getElementById('pad-schedule-info');
+      var pinfoTime2 = document.getElementById('pad-next-post-time');
+      if (pinfoBox2) pinfoBox2.style.display = 'block';
+      if (pinfoTime2) pinfoTime2.textContent = 'Next post: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
+      showToast('✅ Scheduled! Posts every '+hrs+'h — even when browser is closed.','success');
     }
   } catch(e) {
     showToast('Schedule failed: '+e.message,'error');
@@ -13845,6 +13870,8 @@ async function stopPadAutoPost() {
       body: JSON.stringify({user_id:_user.id, type:'photoad', enabled:false, interval_hours:0})
     }).catch(function(){});
   }
+  var ps_info = document.getElementById('pad-schedule-info');
+  if (ps_info) ps_info.style.display = 'none';
   showToast('Photo ad auto-posting stopped.','success');
 }
 
