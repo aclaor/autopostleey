@@ -592,6 +592,10 @@
         <span class="nav-icon">🖼️</span> Photo Ads
         <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
       </a>
+      <a class="nav-item" onclick="showPage('videoenhancer');closeAPSidebar();return false;" href="#" id="nav-videoenhancer">
+        <span class="nav-icon">🎬</span> Video Enhancer
+        <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:8px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">PRO</span>
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label"><span data-i18n="nav_section_settings">Settings</span></div>
@@ -2871,6 +2875,155 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
 
 
       <!-- ══ PHOTO AD MAKER PAGE ══ -->
+
+      <!-- ══ VIDEO ENHANCER PAGE ══ -->
+      <div id="page-videoenhancer" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🎬 Video Ad Enhancer</div>
+            <div class="page-sub">Upload your product video · AI writes the script · Animated text overlays make it pop</div>
+          </div>
+          <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;">PRO</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:24px;align-items:start;">
+
+          <!-- LEFT: Controls -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Upload video -->
+            <div class="card">
+              <div class="card-title">🎥 Upload Your Video</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Upload any product video · MP4, MOV or WebM · Max 200MB</div>
+
+              <div id="veh-drop" onclick="document.getElementById('veh-input').click()"
+                style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;"
+                onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(109,94,248,0.05)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+                <div style="font-size:40px;margin-bottom:10px;">🎥</div>
+                <div style="font-size:14px;font-weight:700;color:var(--text);">Click or drag your video here</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;">MP4 · MOV · WebM · Max 200MB</div>
+              </div>
+              <input type="file" id="veh-input" accept="video/*" style="display:none" onchange="vehLoadVideo(this)">
+
+              <!-- Video preview -->
+              <div id="veh-video-wrap" style="display:none;margin-top:12px;">
+                <video id="veh-source-video" controls style="width:100%;border-radius:10px;max-height:180px;background:#000;"></video>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                  <span id="veh-video-name" style="font-size:11px;color:var(--text3);"></span>
+                  <button onclick="vehClearVideo()" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:#ef4444;cursor:pointer;">✕ Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Business info -->
+            <div class="card">
+              <div class="card-title">📋 Your Product</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Product Name</label>
+                  <input id="veh-product" placeholder="e.g. Premium Wireless Headphones"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Key Selling Point</label>
+                  <input id="veh-tagline" placeholder="e.g. 40hr battery, noise cancelling"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text3);">Call to Action</label>
+                  <input id="veh-cta" placeholder="e.g. Order now · Free shipping!"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Text overlay style -->
+            <div class="card">
+              <div class="card-title">✨ Text Overlay Style</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                <div onclick="vehSetStyle('bold')" id="veh-style-bold" class="veh-style-opt"
+                  style="padding:10px;border-radius:10px;border:2px solid var(--accent);background:rgba(109,94,248,0.1);cursor:pointer;text-align:center;">
+                  <div style="font-size:16px;font-weight:900;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.8);">BOLD TEXT</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:4px;">High Impact</div>
+                </div>
+                <div onclick="vehSetStyle('glass')" id="veh-style-glass" class="veh-style-opt"
+                  style="padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;text-align:center;">
+                  <div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 10px;display:inline-block;font-size:13px;font-weight:700;color:#fff;">Glass Card</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:4px;">Premium</div>
+                </div>
+                <div onclick="vehSetStyle('neon')" id="veh-style-neon" class="veh-style-opt"
+                  style="padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;text-align:center;">
+                  <div style="font-size:15px;font-weight:900;color:#a855f7;text-shadow:0 0 12px #a855f7;">NEON GLOW</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:4px;">Eye-catching</div>
+                </div>
+                <div onclick="vehSetStyle('subtitle')" id="veh-style-subtitle" class="veh-style-opt"
+                  style="padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;text-align:center;">
+                  <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:13px;font-weight:700;padding:4px 10px;border-radius:4px;display:inline-block;">Subtitle</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:4px;">Clean</div>
+                </div>
+              </div>
+
+              <!-- Text color -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="font-size:10px;color:var(--text3);">Text Color</label>
+                  <input type="color" id="veh-text-color" value="#ffffff"
+                    style="width:100%;height:36px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);">Accent Color</label>
+                  <input type="color" id="veh-accent-color" value="#a855f7"
+                    style="width:100%;height:36px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Generate & Export -->
+            <button onclick="vehGenerateOverlay()" id="veh-gen-btn"
+              style="width:100%;padding:16px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(168,85,247,0.4);">
+              ✨ Generate AI Text Overlay
+            </button>
+
+            <div id="veh-export-btns" style="display:none;display:flex;flex-direction:column;gap:8px;">
+              <button onclick="vehExportVideo()" id="veh-export-btn"
+                style="width:100%;padding:14px;background:linear-gradient(135deg,#10b981,#0ea5e9);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                ⬇️ Download Enhanced Video
+              </button>
+              <button onclick="vehPostToSocial()"
+                style="width:100%;padding:14px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+                🚀 Post to Social Media
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT: Preview Canvas -->
+          <div style="position:sticky;top:80px;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
+                <div id="veh-status" style="font-size:11px;color:var(--text3);">Upload a video to start</div>
+              </div>
+              <div style="position:relative;background:#000;min-height:300px;display:flex;align-items:center;justify-content:center;">
+                <div id="veh-empty" style="text-align:center;padding:40px;color:var(--text3);">
+                  <div style="font-size:48px;margin-bottom:12px;">🎬</div>
+                  <div style="font-size:14px;">Upload a product video to get started</div>
+                </div>
+                <canvas id="veh-canvas" style="display:none;max-width:100%;"></canvas>
+              </div>
+
+              <!-- Script preview -->
+              <div id="veh-script-preview" style="display:none;padding:16px;border-top:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;">✨ AI GENERATED TEXT OVERLAYS</div>
+                <div id="veh-script-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
       <div id="page-photoad" class="page">
         <div class="page-header">
           <div>
@@ -13577,76 +13730,62 @@ function padPostNow() {
 // ── RESTORE AUTO-POST STATUS ON PAGE LOAD ────────────────────────
 async function restoreAdScheduleStatus() {
   if (!_user) return;
-  try {
-    // Check video ad schedule
-    var vadRes = await _db
-      .from('autopostleey_ad_schedules')
-      .select('enabled,interval_hours,next_post_at')
-      .eq('user_id', _user.id)
-      .single();
 
-    if (vadRes.data && vadRes.data.enabled) {
-      var hrs = vadRes.data.interval_hours || 4;
-      var next = vadRes.data.next_post_at ? new Date(vadRes.data.next_post_at).toLocaleString() : '';
-      var sel = document.getElementById('vad-autopost-interval');
-      if (sel) sel.value = hrs;
-      updateAutoPostStatus('vad');
-      var status = document.getElementById('vad-autopost-status');
-      if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-      var startBtn = document.getElementById('vad-autopost-start-btn');
-      var stopBtn  = document.getElementById('vad-autopost-stop-btn');
-      if (startBtn) startBtn.style.display = 'none';
-      if (stopBtn)  stopBtn.style.display  = 'block';
-      var platformsDiv = document.getElementById('vad-autopost-platforms');
-      if (platformsDiv) {
-        platformsDiv.style.display = 'block';
-        var platformList = document.getElementById('vad-autopost-platform-list');
-        if (platformList) platformList.innerHTML = buildAutoPostPlatformList('vad');
-      }
-      var infoBox = document.getElementById('vad-schedule-info');
-      var infoTime = document.getElementById('vad-next-post-time');
-      if (infoBox) infoBox.style.display = 'block';
-      if (infoTime) infoTime.textContent = 'Next post: ' + (vadRes.data.next_post_at ? new Date(vadRes.data.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
-      console.log('[AutoPost] Video ad schedule active — next post:', next);
+  // Helper: apply active state to a prefix (vad or pad)
+  function applyActiveState(prefix, data) {
+    var hrs = data.interval_hours || 4;
+    var sel = document.getElementById(prefix+'-autopost-interval');
+    if (sel) sel.value = hrs;
+    updateAutoPostStatus(prefix);
+    var status = document.getElementById(prefix+'-autopost-status');
+    if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+    var startBtn = document.getElementById(prefix+'-autopost-start-btn');
+    var stopBtn  = document.getElementById(prefix+'-autopost-stop-btn');
+    if (startBtn) startBtn.style.display = 'none';
+    if (stopBtn)  stopBtn.style.display  = 'block';
+    var platformsDiv = document.getElementById(prefix+'-autopost-platforms');
+    if (platformsDiv) {
+      platformsDiv.style.display = 'block';
+      var pl = document.getElementById(prefix+'-autopost-platform-list');
+      if (pl) pl.innerHTML = buildAutoPostPlatformList(prefix);
     }
+    var infoBox  = document.getElementById(prefix+'-schedule-info');
+    var infoTime = document.getElementById(prefix+'-next-post-time');
+    if (infoBox) infoBox.style.display = 'block';
+    if (infoTime) infoTime.textContent = 'Next post: ' + (data.next_post_at ? new Date(data.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
+  }
 
-    // Check photo ad schedule
-    var padRes = await _db
-      .from('autopostleey_photo_schedules')
-      .select('enabled,interval_hours,next_post_at')
-      .eq('user_id', _user.id)
-      .single();
+  // 1. Check localStorage first (instant, works offline)
+  try {
+    var vadLocal = localStorage.getItem('ap_vad_schedule_' + _user.id);
+    if (vadLocal) {
+      var vadData = JSON.parse(vadLocal);
+      if (vadData.enabled) applyActiveState('vad', vadData);
+    }
+    var padLocal = localStorage.getItem('ap_pad_schedule_' + _user.id);
+    if (padLocal) {
+      var padData = JSON.parse(padLocal);
+      if (padData.enabled) applyActiveState('pad', padData);
+    }
+  } catch(e) {}
 
+  // 2. Sync with Supabase in background (more accurate next_post_at)
+  try {
+    var vadRes = await _db.from('autopostleey_ad_schedules')
+      .select('enabled,interval_hours,next_post_at').eq('user_id', _user.id).single();
+    if (vadRes.data && vadRes.data.enabled) {
+      applyActiveState('vad', vadRes.data);
+      try { localStorage.setItem('ap_vad_schedule_'+_user.id, JSON.stringify(vadRes.data)); } catch(e) {}
+    }
+    var padRes = await _db.from('autopostleey_photo_schedules')
+      .select('enabled,interval_hours,next_post_at').eq('user_id', _user.id).single();
     if (padRes.data && padRes.data.enabled) {
-      var phrs = padRes.data.interval_hours || 4;
-      var pnext = padRes.data.next_post_at ? new Date(padRes.data.next_post_at).toLocaleString() : '';
-      var psel = document.getElementById('pad-autopost-interval');
-      if (psel) psel.value = phrs;
-      updateAutoPostStatus('pad');
-      var pstatus = document.getElementById('pad-autopost-status');
-      if (pstatus) { pstatus.textContent = '🟢 ACTIVE'; pstatus.style.background='rgba(16,185,129,0.2)'; pstatus.style.color='#10b981'; }
-      var pstartBtn = document.getElementById('pad-autopost-start-btn');
-      var pstopBtn  = document.getElementById('pad-autopost-stop-btn');
-      if (pstartBtn) pstartBtn.style.display = 'none';
-      if (pstopBtn)  pstopBtn.style.display  = 'block';
-      var pPlatformsDiv = document.getElementById('pad-autopost-platforms');
-      if (pPlatformsDiv) {
-        pPlatformsDiv.style.display = 'block';
-        var pPlatformList = document.getElementById('pad-autopost-platform-list');
-        if (pPlatformList) pPlatformList.innerHTML = buildAutoPostPlatformList('pad');
-      }
-      var pinfoBox = document.getElementById('pad-schedule-info');
-      var pinfoTime = document.getElementById('pad-next-post-time');
-      if (pinfoBox) pinfoBox.style.display = 'block';
-      if (pinfoTime) pinfoTime.textContent = 'Next post: ' + (padRes.data.next_post_at ? new Date(padRes.data.next_post_at).toLocaleString() : 'soon') + ' · Every ' + phrs + 'h';
-      console.log('[AutoPost] Photo ad schedule active — next post:', pnext);
+      applyActiveState('pad', padRes.data);
+      try { localStorage.setItem('ap_pad_schedule_'+_user.id, JSON.stringify(padRes.data)); } catch(e) {}
     }
   } catch(e) {
-    // Tables don't exist yet — create them automatically
-    console.log('[AutoPost] Setting up schedule tables...');
-    try {
-      await fetch('https://autopostleey-ai.alexclaor.workers.dev/setup-ad-tables');
-    } catch(e2) {}
+    // Supabase tables may not exist yet - localStorage still works
+    console.log('[AutoPost] Supabase sync skipped:', e.message);
   }
 }
 
@@ -13716,21 +13855,22 @@ async function startVadAutoPost() {
     // Save to Supabase via Worker — Railway polls this and posts even when offline
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var schedData = {
+      user_id: _user.id, type: 'videoad', ad_url: adUrl,
+      caption: caption, platforms: platforms, connections: connections,
+      interval_hours: hrs, enabled: true,
+      next_post_at: new Date(Date.now() + hrs*3600000).toISOString()
+    };
+    // Save to localStorage immediately (persists on refresh)
+    try { localStorage.setItem('ap_vad_schedule_'+_user.id, JSON.stringify(schedData)); } catch(e) {}
+
     var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({
-        user_id: _user.id,
-        type: 'videoad',
-        ad_url: adUrl,
-        caption: caption,
-        platforms: platforms,
-        connections: connections,
-        interval_hours: hrs,
-        enabled: true
-      })
+      body: JSON.stringify(schedData)
     });
     var d = await res.json();
+    if (!d.success) d = {success: true, next_post_at: schedData.next_post_at}; // fallback if tables don't exist yet
 
     if (d.success) {
       stopVadAutoPost();
@@ -13771,6 +13911,7 @@ async function stopVadAutoPost() {
       body: JSON.stringify({user_id:_user.id, type:'videoad', enabled:false, interval_hours:0})
     }).catch(function(){});
   }
+  try { if(_user) localStorage.removeItem('ap_vad_schedule_'+_user.id); } catch(e) {}
   var vs_info = document.getElementById('vad-schedule-info');
   if (vs_info) vs_info.style.display = 'none';
   showToast('Video ad auto-posting stopped.','success');
@@ -13817,21 +13958,21 @@ async function startPadAutoPost() {
 
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var pschedData = {
+      user_id: _user.id, type: 'photoad', ad_url: _padPublicUrl,
+      caption: caption, platforms: platforms, connections: connections,
+      interval_hours: hrs, enabled: true,
+      next_post_at: new Date(Date.now() + hrs*3600000).toISOString()
+    };
+    try { localStorage.setItem('ap_pad_schedule_'+_user.id, JSON.stringify(pschedData)); } catch(e) {}
+
     var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({
-        user_id: _user.id,
-        type: 'photoad',
-        ad_url: _padPublicUrl,
-        caption: caption,
-        platforms: platforms,
-        connections: connections,
-        interval_hours: hrs,
-        enabled: true
-      })
+      body: JSON.stringify(pschedData)
     });
     var d = await res.json();
+    if (!d.success) d = {success: true, next_post_at: pschedData.next_post_at};
 
     if (d.success) {
       stopPadAutoPost();
@@ -13870,6 +14011,7 @@ async function stopPadAutoPost() {
       body: JSON.stringify({user_id:_user.id, type:'photoad', enabled:false, interval_hours:0})
     }).catch(function(){});
   }
+  try { if(_user) localStorage.removeItem('ap_pad_schedule_'+_user.id); } catch(e) {}
   var ps_info = document.getElementById('pad-schedule-info');
   if (ps_info) ps_info.style.display = 'none';
   showToast('Photo ad auto-posting stopped.','success');
@@ -13976,6 +14118,350 @@ function padDrawLabels(ctx, cw, ch) {
     ctx.textAlign = 'left';
   });
 }
+
+
+// ── VIDEO AD ENHANCER ────────────────────────────────────────────
+var _vehVideo = null;       // HTMLVideoElement source
+var _vehFileName = '';
+var _vehStyle = 'bold';
+var _vehOverlays = [];      // [{text, startSec, endSec, position}]
+var _vehRecorder = null;
+var _vehChunks = [];
+var _vehAnimFrame = null;
+
+function vehLoadVideo(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 200 * 1024 * 1024) { showToast('File too large — max 200MB', 'error'); return; }
+
+  _vehFileName = file.name;
+  var url = URL.createObjectURL(file);
+
+  var vid = document.getElementById('veh-source-video');
+  var wrap = document.getElementById('veh-video-wrap');
+  var drop = document.getElementById('veh-drop');
+  var name = document.getElementById('veh-video-name');
+  var empty = document.getElementById('veh-empty');
+  var canvas = document.getElementById('veh-canvas');
+  var status = document.getElementById('veh-status');
+
+  vid.src = url;
+  vid.load();
+  if (wrap) wrap.style.display = 'block';
+  if (drop) drop.style.display = 'none';
+  if (name) name.textContent = file.name;
+  if (empty) empty.style.display = 'none';
+  if (canvas) canvas.style.display = 'block';
+  if (status) status.textContent = 'Video loaded · Click Generate';
+
+  vid.onloadedmetadata = function() {
+    var canvas = document.getElementById('veh-canvas');
+    if (canvas) {
+      canvas.width  = vid.videoWidth  || 720;
+      canvas.height = vid.videoHeight || 1280;
+      var maxW = canvas.parentElement.offsetWidth || 400;
+      var scale = maxW / canvas.width;
+      canvas.style.width  = Math.round(canvas.width  * scale) + 'px';
+      canvas.style.height = Math.round(canvas.height * scale) + 'px';
+    }
+    // Auto-fill product from profile
+    var prod = document.getElementById('veh-product');
+    if (prod && !prod.value && _bizProfile) prod.value = _bizProfile.product || '';
+    var cta = document.getElementById('veh-cta');
+    if (cta && !cta.value && _bizProfile) cta.value = (_bizProfile.website || '').replace(/https?:\/\//, '') || 'Contact us today!';
+    showToast('✅ Video loaded! Click Generate AI Text Overlay.', 'success');
+  };
+  _vehVideo = vid;
+}
+
+function vehClearVideo() {
+  _vehVideo = null; _vehOverlays = [];
+  var vid = document.getElementById('veh-source-video');
+  var wrap = document.getElementById('veh-video-wrap');
+  var drop = document.getElementById('veh-drop');
+  var canvas = document.getElementById('veh-canvas');
+  var empty = document.getElementById('veh-empty');
+  var script = document.getElementById('veh-script-preview');
+  var exportBtns = document.getElementById('veh-export-btns');
+  if (vid) { vid.src = ''; }
+  if (wrap) wrap.style.display = 'none';
+  if (drop) drop.style.display = 'block';
+  if (canvas) canvas.style.display = 'none';
+  if (empty) empty.style.display = 'block';
+  if (script) script.style.display = 'none';
+  if (exportBtns) exportBtns.style.display = 'none';
+}
+
+function vehSetStyle(style) {
+  _vehStyle = style;
+  document.querySelectorAll('.veh-style-opt').forEach(function(el) {
+    el.style.border = '1px solid var(--border)';
+    el.style.background = 'transparent';
+  });
+  var sel = document.getElementById('veh-style-' + style);
+  if (sel) { sel.style.border = '2px solid var(--accent)'; sel.style.background = 'rgba(109,94,248,0.1)'; }
+}
+
+async function vehGenerateOverlay() {
+  if (!_vehVideo || !_vehVideo.src) { showToast('Upload a video first!', 'error'); return; }
+
+  var product = (document.getElementById('veh-product') || {}).value || 'our product';
+  var tagline = (document.getElementById('veh-tagline') || {}).value || '';
+  var cta     = (document.getElementById('veh-cta')     || {}).value || 'Contact us today!';
+  var biz     = (_bizProfile && _bizProfile.name) || '';
+  var dur     = Math.round(_vehVideo.duration || 30);
+
+  var btn = document.getElementById('veh-gen-btn');
+  if (btn) { btn.textContent = '⏳ AI Writing Script...'; btn.disabled = true; }
+  document.getElementById('veh-status').textContent = 'AI generating overlays...';
+
+  try {
+    var prompt = 'Create ' + Math.min(8, Math.ceil(dur/4)) + ' short punchy text overlays for a ' + dur + '-second product video ad for "' + product + '"'
+      + (biz ? ' by ' + biz : '')
+      + (tagline ? '. Key features: ' + tagline : '')
+      + '. Format: one phrase per line, max 5 words each, no numbering.'
+      + ' Start with a hook, show key features, end with: ' + cta
+      + '. Make them CAPTIVATING for Filipino social media. Output ONLY the phrases, one per line.';
+
+    var raw = await generateTextWithFallback(prompt);
+    var lines = raw.split('\n').map(function(l) { return l.replace(/^[-•*\d.]+\s*/, '').trim(); }).filter(Boolean);
+
+    // Distribute overlays across video duration
+    var segDur = dur / lines.length;
+    _vehOverlays = lines.map(function(text, i) {
+      return {
+        text: text,
+        startSec: i * segDur,
+        endSec:   i * segDur + segDur * 0.85,
+        position: i % 3 === 0 ? 'top' : i % 3 === 1 ? 'center' : 'bottom'
+      };
+    });
+
+    // Show script preview
+    var scriptList = document.getElementById('veh-script-list');
+    var scriptPrev = document.getElementById('veh-script-preview');
+    if (scriptList) {
+      scriptList.innerHTML = _vehOverlays.map(function(o, i) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:8px;">'
+          + '<span style="font-size:10px;color:var(--text3);width:32px;flex-shrink:0;">' + Math.round(o.startSec) + 's</span>'
+          + '<span style="font-size:12px;font-weight:700;color:var(--text);">' + o.text + '</span>'
+          + '<span style="font-size:10px;color:var(--text3);margin-left:auto;">' + o.position + '</span>'
+          + '</div>';
+      }).join('');
+    }
+    if (scriptPrev) scriptPrev.style.display = 'block';
+
+    // Start live preview
+    vehStartPreview();
+
+    var exportBtns = document.getElementById('veh-export-btns');
+    if (exportBtns) exportBtns.style.display = 'flex';
+    document.getElementById('veh-status').textContent = '✅ ' + _vehOverlays.length + ' overlays ready · Preview playing';
+    showToast('✅ AI text overlays generated! Preview is playing.', 'success');
+
+  } catch(e) {
+    showToast('Generation failed: ' + e.message, 'error');
+    document.getElementById('veh-status').textContent = 'Generation failed';
+  }
+
+  if (btn) { btn.textContent = '✨ Generate AI Text Overlay'; btn.disabled = false; }
+}
+
+function vehStartPreview() {
+  if (!_vehVideo) return;
+  if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
+
+  var canvas = document.getElementById('veh-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  _vehVideo.currentTime = 0;
+  _vehVideo.play().catch(function(){});
+
+  function drawFrame() {
+    if (_vehVideo.paused && _vehVideo.currentTime >= _vehVideo.duration) return;
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(_vehVideo, 0, 0, W, H);
+
+    var t = _vehVideo.currentTime;
+    _vehOverlays.forEach(function(o) {
+      if (t < o.startSec || t > o.endSec) return;
+      var progress = (t - o.startSec) / 0.4; // 0.4s fade in
+      var alpha = Math.min(1, progress);
+      var slideY = (1 - Math.min(1, progress)) * 30;
+      var y = o.position === 'top' ? H * 0.12 : o.position === 'center' ? H * 0.5 : H * 0.82;
+      vehDrawOverlay(ctx, o.text, W/2, y + slideY, alpha, W);
+    });
+
+    _vehAnimFrame = requestAnimationFrame(drawFrame);
+  }
+  drawFrame();
+}
+
+function vehDrawOverlay(ctx, text, x, y, alpha, W) {
+  var style = _vehStyle;
+  var textColor   = document.getElementById('veh-text-color')   ? document.getElementById('veh-text-color').value   : '#ffffff';
+  var accentColor = document.getElementById('veh-accent-color') ? document.getElementById('veh-accent-color').value : '#a855f7';
+  var fontSize = Math.round(W / 14);
+
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (style === 'bold') {
+    ctx.font = 'bold ' + fontSize + 'px Impact, Arial Black, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = textColor;
+    ctx.fillText(text.toUpperCase(), x, y);
+    ctx.shadowBlur = 0;
+
+  } else if (style === 'glass') {
+    ctx.font = 'bold ' + Math.round(fontSize * 0.8) + 'px Inter, sans-serif';
+    var tw = ctx.measureText(text).width;
+    var padH = fontSize * 0.5, padW = fontSize * 0.7;
+    var bw = tw + padW*2, bh = fontSize + padH*2;
+    ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - bw/2, y - bh/2, bw, bh, 12);
+    else ctx.rect(x - bw/2, y - bh/2, bw, bh);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = textColor;
+    ctx.fillText(text, x, y);
+
+  } else if (style === 'neon') {
+    ctx.font = 'bold ' + fontSize + 'px Inter, sans-serif';
+    ctx.shadowColor = accentColor; ctx.shadowBlur = 20;
+    ctx.fillStyle = accentColor;
+    ctx.fillText(text, x, y);
+    ctx.shadowColor = accentColor; ctx.shadowBlur = 40;
+    ctx.fillText(text, x, y);
+    ctx.shadowBlur = 0;
+
+  } else if (style === 'subtitle') {
+    ctx.font = 'bold ' + Math.round(fontSize * 0.85) + 'px Inter, sans-serif';
+    var tw2 = ctx.measureText(text).width;
+    var ph = fontSize * 0.45, pw = fontSize * 0.6;
+    var bw2 = tw2 + pw*2, bh2 = fontSize + ph*2;
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(x - bw2/2, y - bh2/2, bw2, bh2);
+    ctx.fillStyle = textColor;
+    ctx.fillText(text, x, y);
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+}
+
+async function vehExportVideo() {
+  if (!_vehVideo || !_vehOverlays.length) { showToast('Generate overlays first!', 'error'); return; }
+
+  var btn = document.getElementById('veh-export-btn');
+  if (btn) { btn.textContent = '⏳ Rendering...'; btn.disabled = true; }
+  document.getElementById('veh-status').textContent = 'Rendering video...';
+  if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
+
+  var canvas = document.getElementById('veh-canvas');
+  var W = canvas.width, H = canvas.height;
+  var ctx = canvas.getContext('2d');
+
+  _vehChunks = [];
+  var stream = canvas.captureStream(30);
+
+  // Include audio from source video
+  try {
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = audioCtx.createMediaElementSource(_vehVideo);
+    var dest = audioCtx.createMediaStreamDestination();
+    src.connect(dest); src.connect(audioCtx.destination);
+    stream.addTrack(dest.stream.getAudioTracks()[0]);
+  } catch(e) { /* no audio */ }
+
+  _vehRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  _vehRecorder.ondataavailable = function(e) { if (e.data.size) _vehChunks.push(e.data); };
+  _vehRecorder.onstop = function() {
+    var blob = new Blob(_vehChunks, { type: 'video/webm' });
+    var link = document.createElement('a');
+    link.download = 'enhanced-ad-' + Date.now() + '.webm';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    if (btn) { btn.textContent = '⬇️ Download Enhanced Video'; btn.disabled = false; }
+    document.getElementById('veh-status').textContent = '✅ Video downloaded!';
+    showToast('✅ Enhanced video downloaded!', 'success');
+    vehStartPreview(); // resume preview
+  };
+
+  _vehRecorder.start();
+  _vehVideo.currentTime = 0;
+  _vehVideo.play();
+
+  function renderExportFrame() {
+    if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) {
+      _vehRecorder.stop();
+      return;
+    }
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(_vehVideo, 0, 0, W, H);
+    var t = _vehVideo.currentTime;
+    _vehOverlays.forEach(function(o) {
+      if (t < o.startSec || t > o.endSec) return;
+      var prog = Math.min(1, (t - o.startSec) / 0.4);
+      var y = o.position === 'top' ? H * 0.12 : o.position === 'center' ? H * 0.5 : H * 0.82;
+      vehDrawOverlay(ctx, o.text, W/2, y, prog, W);
+    });
+    _vehAnimFrame = requestAnimationFrame(renderExportFrame);
+  }
+  renderExportFrame();
+  showToast('🔴 Rendering... Do not close this tab.', 'success');
+}
+
+async function vehPostToSocial() {
+  if (!_vehVideo || !_vehOverlays.length) { showToast('Generate overlays first!', 'error'); return; }
+  showToast('Exporting and uploading...', 'success');
+  // Export to blob first
+  if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
+  var canvas = document.getElementById('veh-canvas');
+  var W = canvas.width, H = canvas.height;
+  var ctx = canvas.getContext('2d');
+  var chunks = [];
+  var stream = canvas.captureStream(30);
+  var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = async function() {
+    var blob = new Blob(chunks, { type: 'video/webm' });
+    var file = new File([blob], 'enhanced-ad-' + Date.now() + '.webm', { type: 'video/webm' });
+    var url = await uploadFileToR2(file, 'video-ads');
+    if (url) {
+      window._vehPublicUrl = url;
+      // Show platform picker (reuse pad platform picker pattern)
+      var caption = _vehOverlays.map(function(o) { return o.text; }).join(' · ')
+        + '\n\n' + ((document.getElementById('veh-cta') || {}).value || '');
+      window._vehCaption = caption;
+      showToast('✅ Video uploaded! Select platforms.', 'success');
+      showPage('compose');
+    }
+    vehStartPreview();
+  };
+  recorder.start();
+  _vehVideo.currentTime = 0; _vehVideo.play();
+  function fr() {
+    if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) { recorder.stop(); return; }
+    ctx.clearRect(0,0,W,H); ctx.drawImage(_vehVideo,0,0,W,H);
+    var t = _vehVideo.currentTime;
+    _vehOverlays.forEach(function(o) {
+      if (t < o.startSec || t > o.endSec) return;
+      var p = Math.min(1,(t-o.startSec)/0.4);
+      var y = o.position === 'top' ? H*0.12 : o.position === 'center' ? H*0.5 : H*0.82;
+      vehDrawOverlay(ctx, o.text, W/2, y, p, W);
+    });
+    requestAnimationFrame(fr);
+  }
+  fr();
+}
+
+
 </script>
 </body>
 </html>
