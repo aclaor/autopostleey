@@ -2985,7 +2985,18 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               ✨ Generate AI Text Overlay
             </button>
 
-            <div id="veh-export-btns" style="display:none;display:flex;flex-direction:column;gap:8px;">
+     
+            <!-- Overlay Editor - shown after AI generates -->
+            <div id="veh-overlay-editor" style="display:none;" class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="card-title" style="margin-bottom:0;">✏️ Customize Overlays</div>
+                <button onclick="vehAddOverlay()" style="font-size:11px;padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;">＋ Add</button>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Edit text · set timing · choose position · pick style & colors · adjust size</div>
+              <div id="veh-overlay-list" style="display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding-right:2px;"></div>
+            </div>
+
+             id="veh-export-btns" style="display:none;flex-direction:column;gap:8px;">
               <button onclick="vehExportVideo()" id="veh-export-btn"
                 style="width:100%;padding:14px;background:linear-gradient(135deg,#10b981,#0ea5e9);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
                 ⬇️ Download Enhanced Video
@@ -14251,11 +14262,14 @@ async function vehGenerateOverlay() {
     var editor = document.getElementById('veh-overlay-editor');
     var exportBtns = document.getElementById('veh-export-btns');
     var tlWrap = document.getElementById('veh-timeline-wrap');
-    if (editor) editor.style.display = 'block';
+    if (editor) {
+      editor.style.display = 'block';
+      setTimeout(function() { editor.scrollIntoView({behavior:'smooth', block:'start'}); }, 300);
+    }
     if (exportBtns) exportBtns.style.display = 'flex';
     if (tlWrap) tlWrap.style.display = 'block';
-    if (status) status.textContent = '✅ ' + _vehOverlays.length + ' overlays · Drag to reposition';
-    showToast('✅ Done! Customize each overlay below.', 'success');
+    if (status) status.textContent = '✅ ' + _vehOverlays.length + ' overlays ready';
+    showToast('✅ Done! Edit each overlay in the panel below ↓', 'success');
 
   } catch(e) {
     showToast('Generation failed: ' + e.message, 'error');
