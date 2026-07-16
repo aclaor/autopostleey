@@ -10597,6 +10597,46 @@ function detectIndustryTheme(product, biz, desc) {
 
 
 
+
+
+
+// ── VIDEO AD MAKER FUNCTIONS (recovered) ──────────────────
+
+var INDUSTRY_KEYWORD_MAP = [
+  {theme:'ecommerce',    words:['clothing','shirt','dress','shoes','sneakers','bag','handbag','jewelry','watch','cosmetics','skincare','makeup','perfume','toy','baby','home decor','furniture','kitchenware','electronics','gadget','phone','laptop','computer','accessory','accessories']},
+  {theme:'realestate',   words:['house','condo','apartment','lot','building','warehouse','office','airbnb','vacation rental','property','real estate','rent','lease']},
+  {theme:'automotive',   words:['car','vehicle','truck','motorcycle','auto','tire','car wash','car rental','dealership','repair shop','auto repair']},
+  {theme:'food',         words:['restaurant','cafe','bakery','fast food','food truck','catering','coffee','bubble tea','ice cream','pizza','sushi','seafood','bar','dining','meal','dish','food','beverage','drink']},
+  {theme:'fitness',      words:['gym','fitness','workout','yoga','pilates','crossfit','martial arts','nutrition','supplement','sports','trainer','exercise','muscle']},
+  {theme:'beauty',       words:['salon','nail','barbershop','spa','massage','facial','lash','tattoo','hair','beauty','grooming','waxing']},
+  {theme:'medical',      words:['hospital','clinic','dentist','eye','pharmacy','veterinary','therapy','mental health','doctor','medical','health','dental','orthopedic']},
+  {theme:'education',    words:['school','college','university','course','tutor','language','music lesson','coding','driving school','education','class','learning','training']},
+  {theme:'professional', words:['lawyer','accountant','consultant','insurance','financial advisor','recruitment','hr','virtual assistant','bookkeeping','legal','audit','tax','advisory']},
+  {theme:'homeservices', words:['plumbing','electrical','roofing','hvac','cleaning','landscaping','pest control','painting','interior design','renovation','repair','home service']},
+  {theme:'technology',   words:['saas','software','app','web development','cybersecurity','cloud','it support','hosting','ai tool','tech','developer','digital','platform','autopostleey','automation','posting','social media tool']},
+  {theme:'travel',       words:['hotel','resort','airline','cruise','travel','tour','camping','adventure','booking','vacation','flight','tourism']},
+  {theme:'events',       words:['wedding','photographer','videographer','dj','event','venue','florist','party','celebration','photography','catering']},
+  {theme:'pets',         words:['pet','dog','cat','fish','bird','animal','grooming','veterinary','pet food','pet shop','fur']},
+  {theme:'finance',      words:['bank','credit','loan','mortgage','investment','crypto','stock','trading','tax','finance','fund','insurance broker']},
+  {theme:'marketing',    words:['seo','social media marketing','facebook ads','google ads','email marketing','branding','graphic design','content creation','digital marketing','advertising','agency']},
+  {theme:'manufacturing',words:['industrial','packaging','printing','chemicals','construction','machinery','equipment','factory','manufacturing','supply']},
+  {theme:'agriculture',  words:['farm','fertilizer','seeds','livestock','aquaculture','farm equipment','agriculture','crop','harvest','plant nursery']},
+  {theme:'family',       words:['daycare','maternity','children','kids','baby','family','parenting','toddler','infant']},
+  {theme:'entertainment',words:['gaming','streaming','movie','music','podcast','esports','arcade','game','entertainment','youtube','content creator']},
+  {theme:'nonprofit',    words:['charity','church','foundation','community','volunteer','fundraising','ngo','non-profit','nonprofit','donation']}
+];
+
+function detectIndustryTheme(product, biz, desc) {
+  var combined = ((product||'') + ' ' + (biz||'') + ' ' + (desc||'')).toLowerCase();
+  for (var i = 0; i < INDUSTRY_KEYWORD_MAP.length; i++) {
+    var entry = INDUSTRY_KEYWORD_MAP[i];
+    for (var j = 0; j < entry.words.length; j++) {
+      if (combined.indexOf(entry.words[j]) !== -1) return entry.theme;
+    }
+  }
+  return 'ecommerce'; // default
+}
+
 function generateVideoAd() {
   var biz     = (document.getElementById('vad-bizname')  || {}).value || '';
   var product = (document.getElementById('vad-product')  || {}).value || '';
@@ -10736,6 +10776,27 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
+function replayVadAd() {
+  var iframe = document.getElementById('vad-iframe');
+  var wrap = document.getElementById('vad-preview-wrap');
+  if (iframe && _vadIframeDoc) {
+    iframe.srcdoc = '';
+    setTimeout(function(){
+      iframe.srcdoc = _vadIframeDoc;
+      setTimeout(function(){
+        if (wrap && iframe) {
+          var cw = wrap.offsetWidth || 600;
+          var iw = parseInt(iframe.style.width) || 500;
+          var ih = parseInt(iframe.style.height) || 500;
+          var s = cw / iw;
+          iframe.style.transform = 'scale(' + s + ')';
+          wrap.style.height = Math.round(ih * s) + 'px';
+        }
+      }, 300);
+    }, 50);
+  }
+}
+
 function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl, adBenefits, adWebsite, adProblems, adMusic, adThumb, adPhotos) {
   var isLight = c.bg.startsWith('#f') || c.bg.startsWith('#e');
   var btnColor = isLight ? '#fff' : '#000';
@@ -10845,10 +10906,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   }).join('');
 
   var isUserPhoto = !!adThumb;
-  var bgOpacity = isUserPhoto ? '0.95' : '0.28';
+  var bgOpacity = isUserPhoto ? '1' : '0.22';
   var bgOverlay = isUserPhoto
-    ? '<div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.1) 50%,rgba(0,0,0,0.45) 100%);"></div>'
-    : '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'cc 0%,'+c.bg+'44 50%,'+c.bg+'cc 100%);"></div>';
+    ? '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 60%,rgba(0,0,0,0.45) 100%);"></div>'
+    : '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'bb 0%,'+c.bg+'33 50%,'+c.bg+'bb 100%);"></div>';
   var photoBg = photo
     ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s;" onload="this.style.opacity=\''+bgOpacity+'\'">'+bgOverlay
     : '';
@@ -10856,13 +10917,12 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   // Per-scene photo backgrounds
   function makePhotoBgDim(src) {
     if (!src) return '';
-    return isUserPhoto
-      // User photo = full brightness, minimal dark gradient just for text readability
-      ? '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:1;" onerror="this.style.display=\'none\'">'
-        + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0) 40%,rgba(0,0,0,0) 60%,rgba(0,0,0,0.3) 100%);"></div>'
-      // Theme photo = subtle (original behavior)
-      : '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">'
-        + '<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>';
+    if (isUserPhoto) {
+      return '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:1;">'
+        + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 60%,rgba(0,0,0,0.45) 100%);"></div>';
+    }
+    return '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.7;">'
+      + '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'88 0%,'+c.bg+'22 50%,'+c.bg+'88 100%);"></div>';
   }
   var photoBgDim  = makePhotoBgDim(photo);
   var photoBgDimS2 = makePhotoBgDim(photoS2);
@@ -11014,228 +11074,124 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'var st=Date.now();var pi=setInterval(function(){var p=Math.min(100,((Date.now()-st)/33000)*100);var e=q("prog");if(e)e.style.width=p+"%";if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}},100);'
     +'<\/script></body></html>';
 }
-
-
-function replayVadAd() {
-  var iframe = document.getElementById('vad-iframe');
-  var wrap = document.getElementById('vad-preview-wrap');
-  if (iframe && _vadIframeDoc) {
-    iframe.srcdoc = '';
-    setTimeout(function(){
-      iframe.srcdoc = _vadIframeDoc;
-      setTimeout(function(){
-        if (wrap && iframe) {
-          var cw = wrap.offsetWidth || 600;
-          var iw = parseInt(iframe.style.width) || 500;
-          var ih = parseInt(iframe.style.height) || 500;
-          var s = cw / iw;
-          iframe.style.transform = 'scale(' + s + ')';
-          wrap.style.height = Math.round(ih * s) + 'px';
-        }
-      }, 300);
-    }, 50);
-  }
-}
-
-// ── VIDEO AD DOWNLOAD — Native Canvas Renderer ───────────
-// Draws scenes directly on canvas — no iframe capture, no flickering
-// Works on iPhone, Android, Desktop
-
-var _vadRecorder = null;
-
-function setVadProgressBar(pct) {
-  var bar = document.getElementById('vad-progress-bar');
-  if (bar) bar.style.width = Math.round(pct) + '%';
-}
-function setVadProgressText(txt) {
-  var el = document.getElementById('vad-progress-text');
-  if (el) el.textContent = txt;
-}
-function showVadProgress(show) {
-  var el = document.getElementById('vad-progress');
-  if (el) el.style.display = show ? 'block' : 'none';
-  if (!show) setVadProgressBar(0);
-}
-function resetDownloadBtn(btn) {
-  if (!btn) return;
-  btn.disabled = false;
-  btn.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⬇️</div>'
-    + '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Download MP4</div>'
-    + '<div style="font-size:11px;color:var(--text2);">Works on WhatsApp, TikTok,<br>Instagram & iPhone</div>';
-}
-
-// ── CANVAS AD RENDERER ────────────────────────────────────
-// ── CANVAS AD RENDERER — Customer Business Story ─────────
-// ── CANVAS AD RENDERER — Customer Business Story ─────────
-// ── CANVAS AD RENDERER — Customer Business Story ─────────
 function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, bgPhotoUrl, floatingInfo, onProgress, vadBackground) {
-  return new Promise(function(resolve, reject) {
-    var W = canvas.width / 2, H = canvas.height / 2; // logical size (canvas is 2x for retina
+  return new Promise(function(resolve) {
+    var W = canvas.width / 2, H = canvas.height / 2;
     var ctx = canvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(2,2);
     var FPS = 30;
     var TOTAL_MS = 33000;
-    var icons = ({
-      ecommerce:  ['🛍️','👗','👟','💎','✨','🛒'],
-      realestate: ['🏠','🔑','🏡','🏢','📍','🌳'],
-      automotive: ['🚗','🔧','⚙️','🏎️','🛞','⛽'],
-      food:       ['🍔','🍕','☕','🍜','🥗','🍰'],
-      fitness:    ['💪','🏋️','🥊','⚡','🏃','🎯'],
-      beauty:     ['💄','💅','🌸','✨','💋','🦮'],
-      medical:    ['🏥','💊','🩺','❤️','🧬','💉'],
-      education:  ['📚','🎓','✏️','🧠','💡','🔭'],
-      professional:['💼','📊','🤝','⚖️','📋','🏛️'],
-      homeservices:['🔨','🪴','🧹','🔌','🏠','🪟'],
-      technology: ['💻','📱','⚡','🚀','🤖','🔮'],
-      travel:     ['✈️','🌍','🏖️','🗺️','🌅','🧳'],
-      events:     ['🎉','🎊','📸','🎵','🥂','💐'],
-      pets:       ['🐶','🐱','🐾','🦮','🐩','😺'],
-      finance:    ['💰','📈','🏦','💳','🪙','📊'],
-      marketing:  ['📱','🎯','📊','✨','🚀','📣'],
-    }[_vadTheme] || ['✨','🚀','📅','🌐','⚡','💡']);
 
-      // Draw floating icons
-    function startRender() {
-      var frame = 0;
-      var totalFrames = Math.ceil((TOTAL_MS / 1000) * FPS);
-      // Add 8 extra seconds for floating info scene if items exist
-      if (floatingInfo && floatingInfo.items && floatingInfo.items.length > 0) {
-        totalFrames += FPS * 8;
-      }
+    var S1_END = 7   * FPS;
+    var S2_END = 14  * FPS;
+    var S3_END = 23  * FPS;
+    var S4_END = 27.5* FPS;
 
-      // Scene timing in frames
-      var S1_END = 7 * FPS;    // 0-7s
-      var S2_END = 14 * FPS;   // 7-14s
-      var S3_END = 23 * FPS;   // 14-23s
-      var S4_END = 27.5 * FPS; // 23-27.5s
+    var captionChars = caption ? caption.split('') : [];
 
-      var captionChars = caption.split('');
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+    function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
+    function slideUp(fr, dur) {
+      var t = clamp(fr / dur, 0, 1);
+      return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
+    }
+    function drawFloatingIcons(alpha, frameInScene) {
+      var positions=[{x:.08,y:.12},{x:.88,y:.18},{x:.05,y:.42},{x:.90,y:.48},
+        {x:.07,y:.70},{x:.87,y:.72},{x:.15,y:.86},{x:.82,y:.84}];
+      var icons=({ecommerce:['🛍️','👗','👟','💎','✨','🛒'],
+        realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
+        food:['🍔','🍕','☕','🍜','🥗','🍰'],
+        fitness:['💪','🏋️','🥊','⚡','🏃','🎯'],
+        beauty:['💄','💅','🌸','✨','💋','👄'],
+        technology:['💻','📱','⚡','🚀','🤖','🔮'],
+        automotive:['🚗','🔧','⚙️','🏎️','🛞','⛽'],
+        medical:['🏥','💊','🩺','❤️','🧬','💉'],
+        education:['📚','🎓','✏️','🧠','💡','🔭'],
+        professional:['💼','📊','🤝','⚖️','📋','🏛️'],
+        homeservices:['🔨','🪴','🧹','🔌','🏠','🪟'],
+        travel:['✈️','🌍','🏖️','🗺️','🌅','🧳'],
+        events:['🎉','🎊','📸','🎵','🥂','💐'],
+        pets:['🐶','🐱','🐾','🦮','🐩','😺'],
+        finance:['💰','📈','🏦','💳','🪙','📊'],
+        marketing:['📱','🎯','📊','✨','🚀','📣']
+      })[typeof _vadTheme!=='undefined'?_vadTheme:'ecommerce']||['✨','🚀','📅','🌐','⚡','💡'];
+      ctx.globalAlpha = alpha * 0.28;
+      ctx.font = '26px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      icons.forEach(function(ic,i){
+        if(i>=positions.length)return;
+        var p=positions[i];
+        var bobY=Math.sin((frameInScene/FPS)*(0.7+i*0.15)*Math.PI*2)*6;
+        ctx.fillText(ic,p.x*W,p.y*H+bobY);
+      });
+      ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
+    }
+    function drawMesh() {
+      (c.meshes||[]).forEach(function(m){
+        var gx=(m.x/100)*W,gy=(m.y/100)*H,gr=Math.max((m.w/100)*W,(m.h/100)*H)*0.6;
+        var grad=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+        grad.addColorStop(0,m.color); grad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grad; ctx.beginPath();
+        ctx.ellipse(gx,gy,(m.w/100)*W*0.5,(m.h/100)*H*0.5,0,0,Math.PI*2); ctx.fill();
+      });
+    }
+    function drawBgPhoto(fadeIn) {
+      if(!bgPhotoUrl||!bgImg||!bgImg.complete||bgImg.naturalWidth===0)return;
+      var bW=bgImg.naturalWidth,bH=bgImg.naturalHeight,bSc=Math.max(W/bW,H/bH);
+      ctx.globalAlpha=fadeIn!==undefined?Math.min(1,fadeIn):1;
+      ctx.drawImage(bgImg,(W-bW*bSc)/2,(H-bH*bSc)/2,bW*bSc,bH*bSc);
+      // Light gradient only - photo stays vivid
+      var ov=ctx.createLinearGradient(0,0,0,H);
+      ov.addColorStop(0,'rgba(0,0,0,0)'); ov.addColorStop(0.65,'rgba(0,0,0,0)');
+      ov.addColorStop(1,'rgba(0,0,0,0.4)');
+      ctx.fillStyle=ov; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+    }
+    function drawGlass(x,y,w,h,r){
+      r=r||12; ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);
+      ctx.fillStyle=c.glass||'rgba(255,255,255,0.07)'; ctx.fill();
+      ctx.strokeStyle=c.glassBorder||'rgba(255,255,255,0.12)'; ctx.lineWidth=1; ctx.stroke();
+    }
+    function drawText(text,x,y,font,color,alpha,offsetY){
+      ctx.globalAlpha=clamp(alpha,0,1); ctx.fillStyle=color; ctx.font=font;
+      ctx.textAlign='center'; ctx.fillText(text,x,y+(offsetY||0)); ctx.globalAlpha=1;
+    }
+    function drawBadge(text,cx,cy,alpha){
+      if(alpha<=0||!text)return;
+      ctx.globalAlpha=clamp(alpha,0,1);
+      ctx.font='bold 11px Inter,sans-serif';
+      var metrics=ctx.measureText(text); var bw=metrics.width+40,bh=28;
+      drawGlass(cx-bw/2,cy-bh/2,bw,bh,14);
+      ctx.fillStyle=c.accent||'#a855f7'; ctx.textAlign='center';
+      ctx.fillText(text,cx,cy+4); ctx.globalAlpha=1;
+    }
 
-      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-      function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
-      function slideUp(fr, dur) {
-        var t = clamp(fr / dur, 0, 1);
-        return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
-      }
-
-      function drawMesh() {
-        (c.meshes || []).forEach(function(m) {
-          var gx = (m.x / 100) * W;
-          var gy = (m.y / 100) * H;
-          var gr = Math.max((m.w / 100) * W, (m.h / 100) * H) * 0.6;
-          var grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-          grad.addColorStop(0, m.color);
-          grad.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.ellipse(gx, gy, (m.w/100)*W*0.5, (m.h/100)*H*0.5, 0, 0, Math.PI*2);
-          ctx.fill();
-        });
-      }
-
-      // Draw user's background photo as full-screen cover (called in every scene)
-      function drawBgPhoto(fadeIn) {
-        if (!bgPhotoUrl || !bgImg || !bgImg.complete || bgImg.naturalWidth === 0) return;
-        var bW = bgImg.naturalWidth, bH = bgImg.naturalHeight;
-        var bSc = Math.max(W / bW, H / bH);
-        ctx.globalAlpha = fadeIn !== undefined ? Math.min(1, fadeIn) : 1;
-        ctx.drawImage(bgImg, (W - bW*bSc)/2, (H - bH*bSc)/2, bW*bSc, bH*bSc);
-        // Light gradient only at top/bottom for text — photo stays vivid
-        var ov = ctx.createLinearGradient(0, 0, 0, H);
-        ov.addColorStop(0,   'rgba(0,0,0,0.25)');
-        ov.addColorStop(0.3, 'rgba(0,0,0,0)');
-        ov.addColorStop(0.7, 'rgba(0,0,0,0)');
-        ov.addColorStop(1,   'rgba(0,0,0,0.35)');
-        ctx.fillStyle = ov;
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalAlpha = 1;
-      }
-
-      function drawFloatingIcons(alpha, frameInScene) {
-        var positions = [
-          {x:0.08,y:0.12},{x:0.88,y:0.18},{x:0.05,y:0.42},{x:0.90,y:0.48},
-          {x:0.07,y:0.70},{x:0.87,y:0.72},{x:0.15,y:0.86},{x:0.82,y:0.84}
-        ];
-        ctx.globalAlpha = alpha * 0.28;
-        ctx.font = '26px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        icons.forEach(function(ic, i) {
-          if (i >= positions.length) return;
-          var p = positions[i];
-          var bobY = Math.sin((frameInScene / FPS) * (0.7 + i * 0.15) * Math.PI * 2) * 6;
-          ctx.fillText(ic, p.x * W, p.y * H + bobY);
-        });
-        ctx.globalAlpha = 1;
-        ctx.textBaseline = 'alphabetic';
-      }
-
-      // Draw glass card
-      function drawGlass(x, y, w, h, r) {
-        r = r || 12;
-        ctx.beginPath();
-        ctx.roundRect(ctx.roundRect ? x : x, y, w, h, r);
-        ctx.fillStyle = c.glass || 'rgba(255,255,255,0.07)';
-        ctx.fill();
-        ctx.strokeStyle = c.glassBorder || 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // Draw text with slide-up
-      function drawText(text, x, y, font, color, alpha, offsetY) {
-        ctx.globalAlpha = clamp(alpha, 0, 1);
-        ctx.fillStyle = color;
-        ctx.font = font;
-        ctx.textAlign = 'center';
-        ctx.fillText(text, x, y + (offsetY || 0));
-        ctx.globalAlpha = 1;
-      }
-
-      // Draw pill badge
-      function drawBadge(text, cx, cy, alpha) {
-        if (alpha <= 0) return;
-        ctx.globalAlpha = clamp(alpha, 0, 1);
-        var metrics = ctx.measureText(text);
-        var bw = metrics.width + 40, bh = 28;
-        var bx = cx - bw/2, by = cy - bh/2;
-        drawGlass(bx, by, bw, bh, 14);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(text, cx, cy + 4);
-        ctx.globalAlpha = 1;
-      }
-
-      // ── SCENE RENDERERS ────────────────────────────────────
+      function startRender() {
       function drawS1(f) {
-        var t = f / S1_END;
-        // BG + mesh
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
         if (bgPhotoUrl) {
           drawBgPhoto(clamp(f/(FPS*0.4),0,1));
         } else if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-          // Theme photo — subtle overlay
-          ctx.globalAlpha = clamp(f / (FPS * 1.5), 0, 0.28);
-          ctx.drawImage(bgImg, 0, 0, W, H);
-          ctx.globalAlpha = 1;
-          var grad = ctx.createLinearGradient(0, 0, 0, H);
-          grad.addColorStop(0, c.bg + 'cc');
-          grad.addColorStop(0.5, c.bg + '66');
-          grad.addColorStop(1, c.bg + 'cc');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, W, H);
+          var bWt=bgImg.naturalWidth,bHt=bgImg.naturalHeight,bSct=Math.max(W/bWt,H/bHt);
+          ctx.globalAlpha = Math.min(0.72, clamp(f/(FPS*0.8),0,0.72));
+          ctx.drawImage(bgImg,(W-bWt*bSct)/2,(H-bHt*bSct)/2,bWt*bSct,bHt*bSct);
+          ctx.globalAlpha=1;
+          var g1=ctx.createLinearGradient(0,0,0,H);
+          g1.addColorStop(0,c.bg+'88'); g1.addColorStop(0.5,c.bg+'22'); g1.addColorStop(1,c.bg+'88');
+          ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
         }
         drawMesh();
-        drawFloatingIcons(clamp(f / (FPS * 0.5), 0, 1), f);
+        drawFloatingIcons(clamp(f/(FPS*0.5),0,1), f);
 
-        // Hero visual
-        var heroAlpha = easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1));
-        var heroScale = 0.5 + easeOut(clamp((f - 3) / (FPS * 0.9), 0, 1)) * 0.5;
+        // Hero product image or emoji
+        var heroAlpha = easeOut(clamp((f-3)/(FPS*0.9),0,1));
+        var heroScale = 0.5 + heroAlpha * 0.5;
         if (heroAlpha > 0) {
           ctx.globalAlpha = heroAlpha;
           ctx.save();
-          ctx.translate(W/2, H * 0.26);
+          ctx.translate(W/2, H*0.26);
           ctx.scale(heroScale, heroScale);
           if (productImg && productImg.complete && productImg.naturalWidth > 0) {
             var sz = W > 500 ? 180 : 140;
@@ -11268,7 +11224,6 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.font = 'bold ' + (W > 500 ? 46 : 32) + 'px Inter, sans-serif';
         ctx.textAlign = 'center';
         var hl = tagline || product || 'Your Product';
-        // Word wrap if too long
         if (ctx.measureText(hl).width > W * 0.85) {
           var words = hl.split(' ');
           var mid = Math.ceil(words.length / 2);
@@ -11285,12 +11240,12 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
         ctx.font = '14px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Post everywhere. In one click.', W/2, centerY + 80 + su.y);
+        ctx.fillText(product || 'Your Product Here', W/2, centerY + 80 + su.y);
         ctx.globalAlpha = 1;
 
         // URL badge
         su = slideUp(f - FPS*1.75, FPS*0.5);
-        drawBadge((website||'autopostleey.com'), W/2, centerY + 114 + su.y, su.alpha);
+        drawBadge((website||''), W/2, centerY + 114 + su.y, su.alpha);
       }
 
       function drawS2(f) {
