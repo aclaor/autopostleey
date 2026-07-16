@@ -3236,58 +3236,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
                 ✅ Apply Changes
               </button>
-
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                <div>
-                  <label style="font-size:11px;color:var(--text3);">Text</label>
-                  <input id="pad-edit-text" oninput="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:4px;">
-                </div>
-                <div>
-                  <label style="font-size:11px;color:var(--text3);">Background Style</label>
-                  <select id="pad-edit-style" onchange="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-top:4px;">
-                    <option value="badge">● Pill Badge</option>
-                    <option value="card">▪ Glass Card</option>
-                    <option value="outline">○ Outline</option>
-                    <option value="dark">■ Dark Box</option>
-                    <option value="bold">T Bold Text Only</option>
-                    <option value="tag">🏷 Price Tag</option>
-                  </select>
-                </div>
-                <div>
-                  <label style="font-size:11px;color:var(--text3);">Font</label>
-                  <select id="pad-edit-font" onchange="padApplyLabelEdit()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-top:4px;">
-                    <option value="Inter,sans-serif">Inter (Modern)</option>
-                    <option value="Georgia,serif">Georgia (Classic)</option>
-                    <option value="'Courier New',monospace">Courier (Typewriter)</option>
-                    <option value="Impact,sans-serif">Impact (Bold Ad)</option>
-                    <option value="Arial,sans-serif">Arial (Clean)</option>
-                    <option value="'Times New Roman',serif">Times (Formal)</option>
-                    <option value="Verdana,sans-serif">Verdana (Rounded)</option>
-                    <option value="'Comic Sans MS',cursive">Comic Sans (Fun)</option>
-                  </select>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                  <div>
-                    <label style="font-size:11px;color:var(--text3);">Text Color</label>
-                    <input type="color" id="pad-edit-color" value="#ffffff" oninput="padApplyLabelEdit()"
-                      style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
-                  </div>
-                  <div>
-                    <label style="font-size:11px;color:var(--text3);">Background</label>
-                    <input type="color" id="pad-edit-bgcolor" value="#a855f7" oninput="padApplyLabelEdit()"
-                      style="width:100%;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;margin-top:4px;">
-                  </div>
-                </div>
-                <div>
-                  <label style="font-size:11px;color:var(--text3);">Size: <span id="pad-edit-size-val">14px</span></label>
-                  <input type="range" id="pad-edit-size" min="10" max="120" value="14"
-                    oninput="document.getElementById('pad-edit-size-val').textContent=this.value+'px';padApplyLabelEdit();"
-                    style="width:100%;margin-top:6px;accent-color:var(--accent);">
-                </div>
-                <button onclick="padApplyLabelEdit()"
-                  style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
-                  ✅ Apply Changes
-                </button>
+            
               </div>
             </div>
 
@@ -14111,7 +14060,7 @@ function padShowLabelEditor(idx) {
   if (!label) return;
 
   editor.style.display = 'block';
-  editor.dataset.labelIdx = idx; // persist idx
+  _padSelectedLabel = idx; // always keep in sync
   editor.style.border = '2px solid var(--accent)';
   setTimeout(function() { editor.style.border = '1px solid var(--border)'; }, 800);
 
@@ -14136,34 +14085,34 @@ function padShowLabelEditor(idx) {
 }
 
 function padApplyLabelEdit() {
-  // Use stored index so clicks in the editor don't deselect
-  var idx = _padSelectedLabel;
-  if (idx === null || idx === undefined) {
-    // Try the last known label idx from a data attribute
-    var editor = document.getElementById('pad-label-editor');
-    if (editor && editor.dataset.labelIdx !== undefined) idx = parseInt(editor.dataset.labelIdx);
-  }
-  if (idx === null || idx === undefined || !_padPhotos.length) return;
-  var label = _padPhotos[_padCurrentIdx].labels[idx];
+  // Same simple pattern as padAddLabel
+  if (!_padPhotos.length) return;
+  
+  // _padSelectedLabel must be set by padSelectLabel when user clicks a label
+  if (_padSelectedLabel === null || _padSelectedLabel === undefined) return;
+  
+  var labels = _padPhotos[_padCurrentIdx].labels;
+  var label = labels[_padSelectedLabel];
   if (!label) return;
 
-  var textEl = document.getElementById('pad-edit-text');
-  if (textEl) label.text = textEl.value || label.text;
-  var colorEl = document.getElementById('pad-edit-color');
-  if (colorEl) label.color = colorEl.value;
-  var sizeEl = document.getElementById('pad-edit-size');
-  if (sizeEl) label.size = parseInt(sizeEl.value) || label.size;
-  var styleEl = document.getElementById('pad-edit-style');
-  if (styleEl) label.style = styleEl.value;
-  var bgEl = document.getElementById('pad-edit-bgcolor');
-  if (bgEl) label.bgcolor = bgEl.value;
-  var fontEl = document.getElementById('pad-edit-font');
-  if (fontEl) label.font = fontEl.value;
+  // Read values directly from DOM — same as padAddLabel reads prompt()
+  var t = document.getElementById('pad-edit-text');
+  var s = document.getElementById('pad-edit-style');
+  var f = document.getElementById('pad-edit-font');
+  var c = document.getElementById('pad-edit-color');
+  var b = document.getElementById('pad-edit-bgcolor');
+  var sz = document.getElementById('pad-edit-size');
 
-  _padSelectedLabel = idx; // restore selection
+  if (t && t.value.trim()) label.text    = t.value;
+  if (s) label.style   = s.value;
+  if (f) label.font    = f.value;
+  if (c) label.color   = c.value;
+  if (b) label.bgcolor = b.value;
+  if (sz) label.size   = parseInt(sz.value) || 14;
+
+  // Redraw — same as padAddLabel does
   padDrawCanvas();
   padRenderLabelsList();
-  showToast('✅ Label updated!', 'success');
 }
 
 // Override padDrawLabels to support custom colors/sizes
