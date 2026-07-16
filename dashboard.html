@@ -10919,10 +10919,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     if (!src) return '';
     if (isUserPhoto) {
       return '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:1;">'
-        + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 60%,rgba(0,0,0,0.45) 100%);"></div>';
+        + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 65%,rgba(0,0,0,0.35) 100%);"></div>';
     }
-    return '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.7;">'
-      + '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'88 0%,'+c.bg+'22 50%,'+c.bg+'88 100%);"></div>';
+    return '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.8;">'
+      + '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+c.bg+'66 0%,'+c.bg+'11 50%,'+c.bg+'66 100%);"></div>';
   }
   var photoBgDim  = makePhotoBgDim(photo);
   var photoBgDimS2 = makePhotoBgDim(photoS2);
@@ -11142,9 +11142,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       ctx.globalAlpha=fadeIn!==undefined?Math.min(1,fadeIn):1;
       ctx.drawImage(bgImg,(W-bW*bSc)/2,(H-bH*bSc)/2,bW*bSc,bH*bSc);
       // Light gradient only - photo stays vivid
+      // Very light gradient only at very bottom - photo stays vivid
       var ov=ctx.createLinearGradient(0,0,0,H);
-      ov.addColorStop(0,'rgba(0,0,0,0)'); ov.addColorStop(0.65,'rgba(0,0,0,0)');
-      ov.addColorStop(1,'rgba(0,0,0,0.4)');
+      ov.addColorStop(0,'rgba(0,0,0,0)'); ov.addColorStop(0.7,'rgba(0,0,0,0)');
+      ov.addColorStop(1,'rgba(0,0,0,0.3)');
       ctx.fillStyle=ov; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
     }
     function drawGlass(x,y,w,h,r){
@@ -13275,7 +13276,10 @@ function padDrawCanvas() {
 function padDrawLabels(ctx, cw, ch) {
   var photo = _padPhotos[_padCurrentIdx];
   photo.labels.forEach(function(label) {
-    var st = PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge;
+    var st = JSON.parse(JSON.stringify(PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge));
+    if (label.color)   st.color    = label.color;
+    if (label.bgcolor) st.bg       = label.bgcolor;
+    if (label.size)    st.fontSize = label.size;
     var x = label.x * cw, y = label.y * ch;
     var fontFamily = label.font || 'Inter, sans-serif';
     ctx.font = st.fontWeight + ' ' + st.fontSize + 'px ' + fontFamily;
@@ -13319,9 +13323,10 @@ function padRenderOverlayLabels(cw, ch) {
   overlay.innerHTML = '';
   photo.labels.forEach(function(label, i) {
     var st = JSON.parse(JSON.stringify(PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge));
-    if (label.color)   st.color = label.color;
-    if (label.bgcolor) st.bg = label.bgcolor;
+    if (label.color)   st.color    = label.color;
+    if (label.bgcolor) st.bg       = label.bgcolor;
     if (label.size)    st.fontSize = label.size;
+    var fontFamily = label.font || 'Inter, sans-serif';
 
     var x = label.x * cw, y = label.y * ch;
     var el = document.createElement('div');
@@ -13339,6 +13344,7 @@ function padRenderOverlayLabels(cw, ch) {
       'background:' + (isEmoji ? 'transparent' : st.bg),
       'color:' + st.color,
       'font-size:' + st.fontSize + 'px',
+      'font-family:' + fontFamily,
       'font-weight:' + (isEmoji ? 'normal' : st.fontWeight),
       'padding:' + (isEmoji ? '0' : st.pad),
       'border-radius:' + st.radius + 'px',
@@ -14039,6 +14045,7 @@ function padShowLabelEditor(idx) {
   if (!label) return;
 
   editor.style.display = 'block';
+  editor.dataset.labelIdx = idx; // persist idx
   editor.style.border = '2px solid var(--accent)';
   setTimeout(function() { editor.style.border = '1px solid var(--border)'; }, 800);
 
@@ -14063,18 +14070,34 @@ function padShowLabelEditor(idx) {
 }
 
 function padApplyLabelEdit() {
-  if (_padSelectedLabel === null || !_padPhotos.length) return;
-  var label = _padPhotos[_padCurrentIdx].labels[_padSelectedLabel];
+  // Use stored index so clicks in the editor don't deselect
+  var idx = _padSelectedLabel;
+  if (idx === null || idx === undefined) {
+    // Try the last known label idx from a data attribute
+    var editor = document.getElementById('pad-label-editor');
+    if (editor && editor.dataset.labelIdx !== undefined) idx = parseInt(editor.dataset.labelIdx);
+  }
+  if (idx === null || idx === undefined || !_padPhotos.length) return;
+  var label = _padPhotos[_padCurrentIdx].labels[idx];
   if (!label) return;
+
   var textEl = document.getElementById('pad-edit-text');
-  if (textEl && textEl.value) label.text = textEl.value;
-  label.color   = (document.getElementById('pad-edit-color') || {}).value  || label.color  || '#ffffff';
-  label.size    = parseInt((document.getElementById('pad-edit-size')  || {}).value) || label.size || 14;
-  label.style   = (document.getElementById('pad-edit-style') || {}).value  || label.style  || 'badge';
-  label.bgcolor = (document.getElementById('pad-edit-bgcolor')|| {}).value  || label.bgcolor|| '#a855f7';
-  label.font    = (document.getElementById('pad-edit-font')  || {}).value  || label.font   || 'Inter,sans-serif';
+  if (textEl) label.text = textEl.value || label.text;
+  var colorEl = document.getElementById('pad-edit-color');
+  if (colorEl) label.color = colorEl.value;
+  var sizeEl = document.getElementById('pad-edit-size');
+  if (sizeEl) label.size = parseInt(sizeEl.value) || label.size;
+  var styleEl = document.getElementById('pad-edit-style');
+  if (styleEl) label.style = styleEl.value;
+  var bgEl = document.getElementById('pad-edit-bgcolor');
+  if (bgEl) label.bgcolor = bgEl.value;
+  var fontEl = document.getElementById('pad-edit-font');
+  if (fontEl) label.font = fontEl.value;
+
+  _padSelectedLabel = idx; // restore selection
   padDrawCanvas();
   padRenderLabelsList();
+  showToast('✅ Label updated!', 'success');
 }
 
 // Override padDrawLabels to support custom colors/sizes
