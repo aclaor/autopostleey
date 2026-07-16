@@ -10857,8 +10857,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
   function makePhotoBgDim(src) {
     if (!src) return '';
     return isUserPhoto
-      ? '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.9;" onerror="this.style.display=\'none\'">'
-        + '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.42);"></div>'
+      // User photo = full brightness, minimal dark gradient just for text readability
+      ? '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:1;" onerror="this.style.display=\'none\'">'
+        + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0) 40%,rgba(0,0,0,0) 60%,rgba(0,0,0,0.3) 100%);"></div>'
+      // Theme photo = subtle (original behavior)
       : '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;opacity:0.12;filter:blur(3px);">'
         + '<div style="position:absolute;inset:0;background:'+c.bg+'dd;"></div>';
   }
@@ -11137,11 +11139,12 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         var bSc = Math.max(W / bW, H / bH);
         ctx.globalAlpha = fadeIn !== undefined ? Math.min(1, fadeIn) : 1;
         ctx.drawImage(bgImg, (W - bW*bSc)/2, (H - bH*bSc)/2, bW*bSc, bH*bSc);
-        // Semi-transparent overlay so text stays readable
+        // Light gradient only at top/bottom for text — photo stays vivid
         var ov = ctx.createLinearGradient(0, 0, 0, H);
-        ov.addColorStop(0, 'rgba(0,0,0,0.45)');
-        ov.addColorStop(0.5, 'rgba(0,0,0,0.2)');
-        ov.addColorStop(1, 'rgba(0,0,0,0.55)');
+        ov.addColorStop(0,   'rgba(0,0,0,0.25)');
+        ov.addColorStop(0.3, 'rgba(0,0,0,0)');
+        ov.addColorStop(0.7, 'rgba(0,0,0,0)');
+        ov.addColorStop(1,   'rgba(0,0,0,0.35)');
         ctx.fillStyle = ov;
         ctx.fillRect(0, 0, W, H);
         ctx.globalAlpha = 1;
@@ -13544,13 +13547,17 @@ function padExportSlideshow() {
   recCtx.scale(2, 2);
 
   var stream = recCanvas.captureStream(30);
-  var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  var slideMime = 'video/webm;codecs=vp9';
+  if (MediaRecorder.isTypeSupported('video/mp4')) slideMime = 'video/mp4';
+  else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) slideMime = 'video/webm;codecs=h264';
+  var recorder = new MediaRecorder(stream, { mimeType: slideMime });
   var chunks = [];
   recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = function() {
     var blob = new Blob(chunks, { type: 'video/webm' });
     var link = document.createElement('a');
-    link.download = 'product-slideshow-' + Date.now() + '.webm';
+    var slideExt = slideMime.includes('mp4') ? 'mp4' : 'webm';
+    link.download = 'product-slideshow-' + Date.now() + '.' + slideExt;
     link.href = URL.createObjectURL(blob);
     link.click();
     showToast('✅ Slideshow downloaded!', 'success');
@@ -14075,15 +14082,29 @@ function padShowLabelEditor(idx) {
   if (!editor || !_padPhotos.length) return;
   var label = _padPhotos[_padCurrentIdx].labels[idx];
   if (!label) return;
+
   editor.style.display = 'block';
-  document.getElementById('pad-edit-text').value = label.text;
-  document.getElementById('pad-edit-color').value = label.color || '#ffffff';
-  document.getElementById('pad-edit-size').value = label.size || 14;
-  document.getElementById('pad-edit-size-val').textContent = (label.size || 14) + 'px';
-  document.getElementById('pad-edit-style').value = label.style || 'badge';
-  document.getElementById('pad-edit-bgcolor').value = label.bgcolor || '#a855f7';
+  editor.style.border = '2px solid var(--accent)';
+  setTimeout(function() { editor.style.border = '1px solid var(--border)'; }, 800);
+
+  var textEl = document.getElementById('pad-edit-text');
+  if (textEl) textEl.value = label.text;
+  var colorEl = document.getElementById('pad-edit-color');
+  if (colorEl) colorEl.value = label.color || '#ffffff';
+  var sizeEl = document.getElementById('pad-edit-size');
+  if (sizeEl) sizeEl.value = label.size || 14;
+  var sizeVal = document.getElementById('pad-edit-size-val');
+  if (sizeVal) sizeVal.textContent = (label.size || 14) + 'px';
+  var styleEl = document.getElementById('pad-edit-style');
+  if (styleEl) styleEl.value = label.style || 'badge';
+  var bgEl = document.getElementById('pad-edit-bgcolor');
+  if (bgEl) bgEl.value = label.bgcolor || '#a855f7';
   var fontEl = document.getElementById('pad-edit-font');
   if (fontEl) fontEl.value = label.font || 'Inter,sans-serif';
+
+  // Scroll to editor so user can see it
+  editor.scrollIntoView({behavior:'smooth', block:'nearest'});
+  showToast('Label selected — edit below and changes apply live', 'success');
 }
 
 function padApplyLabelEdit() {
@@ -14739,46 +14760,119 @@ async function vehExportVideo() {
 
 async function vehPostToSocial() {
   if (!_vehVideo || !_vehOverlays.length) { showToast('Generate overlays first!', 'error'); return; }
-  showToast('Exporting and uploading...', 'success');
-  // Export to blob first
+
+  var btn = document.querySelector('[onclick="vehPostToSocial()"]');
+  if (btn) { btn.textContent = '⏳ Uploading video...'; btn.disabled = true; }
+  showToast('📤 Rendering & uploading video...', 'success');
+
   if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
   var canvas = document.getElementById('veh-canvas');
+  if (!canvas) return;
   var W = canvas.width, H = canvas.height;
   var ctx = canvas.getContext('2d');
   var chunks = [];
+
+  // Try mp4 first, fallback to webm
+  var mimeType = 'video/webm;codecs=vp9';
+  if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+
   var stream = canvas.captureStream(30);
-  var recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  try {
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = audioCtx.createMediaElementSource(_vehVideo);
+    var dest = audioCtx.createMediaStreamDestination();
+    src.connect(dest); src.connect(audioCtx.destination);
+    stream.addTrack(dest.stream.getAudioTracks()[0]);
+  } catch(e) {}
+
+  var recorder = new MediaRecorder(stream, { mimeType: mimeType });
   recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = async function() {
-    var blob = new Blob(chunks, { type: 'video/webm' });
-    var file = new File([blob], 'enhanced-ad-' + Date.now() + '.webm', { type: 'video/webm' });
-    var url = await uploadFileToR2(file, 'video-ads');
-    if (url) {
-      window._vehPublicUrl = url;
-      // Show platform picker (reuse pad platform picker pattern)
-      var caption = _vehOverlays.map(function(o) { return o.text; }).join(' · ')
-        + '\n\n' + ((document.getElementById('veh-cta') || {}).value || '');
-      window._vehCaption = caption;
-      showToast('✅ Video uploaded! Select platforms.', 'success');
-      showPage('compose');
-    }
+    var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    var blob = new Blob(chunks, { type: mimeType });
+    var file = new File([blob], 'enhanced-ad-' + Date.now() + '.' + ext, { type: mimeType });
+    try {
+      var url = await uploadFileToR2(file, 'video-ads');
+      if (url) {
+        _vehPublicUrl = url;
+        // Show platform picker
+        var section = document.getElementById('veh-platform-section');
+        if (section) {
+          section.style.display = 'block';
+          vehRenderPlatformList();
+          section.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+        showToast('✅ Video uploaded! Select platforms below.', 'success');
+      }
+    } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+    if (btn) { btn.textContent = '🚀 Post to Social Media'; btn.disabled = false; }
     vehStartPreview();
   };
+
   recorder.start();
-  _vehVideo.currentTime = 0; _vehVideo.play();
-  function fr() {
+  _vehVideo.currentTime = 0;
+  _vehVideo.play();
+
+  function renderFr() {
     if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) { recorder.stop(); return; }
-    ctx.clearRect(0,0,W,H); ctx.drawImage(_vehVideo,0,0,W,H);
+    ctx.clearRect(0,0,W,H);
+    try { ctx.drawImage(_vehVideo,0,0,W,H); } catch(e) {}
     var t = _vehVideo.currentTime;
     _vehOverlays.forEach(function(o) {
       if (t < o.startSec || t > o.endSec) return;
       var p = Math.min(1,(t-o.startSec)/0.4);
-      var y = o.position === 'top' ? H*0.12 : o.position === 'center' ? H*0.5 : H*0.82;
-      vehDrawOverlay(ctx, o.text, W/2, y, p, W);
+      var savedStyle = _vehStyle; _vehStyle = o.style || _vehStyle;
+      var y = o.position==='top' ? H*0.1 : o.position==='center' ? H*0.5 : H*0.85;
+      vehDrawOverlay(ctx, o.text, W/2, y, p, W, o.fontSize||1);
+      _vehStyle = savedStyle;
     });
-    requestAnimationFrame(fr);
+    requestAnimationFrame(renderFr);
   }
-  fr();
+  renderFr();
+}
+
+var _vehPublicUrl = '';
+
+function vehRenderPlatformList() {
+  var list = document.getElementById('veh-platform-list');
+  if (!list) return;
+  var plats = {
+    facebook:{label:'Facebook',icon:'📘'},instagram:{label:'Instagram',icon:'📸'},
+    telegram:{label:'Telegram',icon:'✈️'},discord:{label:'Discord',icon:'🎮'},
+    bluesky:{label:'Bluesky',icon:'🦋'},
+  };
+  list.innerHTML = Object.keys(plats).map(function(k) {
+    var m = plats[k];
+    var conn = _connectionsFull && _connectionsFull[k];
+    if (!conn) return '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;cursor:pointer;">'
+      + '<input type="checkbox" value="'+k+'" checked style="width:16px;height:16px;accent-color:var(--accent);">'
+      + '<span style="font-size:18px;">'+m.icon+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--text);">'+m.label+'</span>'
+      + '<span style="font-size:10px;color:#22c55e;margin-left:auto;">● Connected</span></label>';
+  }).filter(Boolean).join('') || '<div style="font-size:12px;color:var(--text3);padding:12px;">No platforms connected yet.</div>';
+}
+
+async function vehPostNow() {
+  var list = document.getElementById('veh-platform-list');
+  if (!list || !_vehPublicUrl) return;
+  var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
+  if (!checked.length) { showToast('Select at least one platform!','error'); return; }
+  var caption = (document.getElementById('veh-caption-input')||{}).value || _vehOverlays.map(function(o){return o.text;}).join(' · ');
+  var connections = {};
+  checked.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+  var btn = document.getElementById('veh-post-now-btn');
+  if (btn) { btn.textContent='⏳ Posting...'; btn.disabled=true; }
+  try {
+    var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({content:caption, platforms:checked, connections:connections, image_url:_vehPublicUrl})
+    });
+    var d = await r.json();
+    var ok = d.results ? d.results.filter(function(r){return r.success;}).length : 0;
+    showToast('✅ Posted to '+ok+' platform'+(ok!==1?'s':'')+'!','success');
+  } catch(e) { showToast('Post failed.','error'); }
+  if (btn) { btn.textContent='🚀 Post Now'; btn.disabled=false; }
 }
 
 
