@@ -13997,10 +13997,15 @@ async function startVadAutoPost() {
       body: JSON.stringify(schedData)
     });
     var d = await res.json();
-    if (!d.success) d = {success: true, next_post_at: schedData.next_post_at}; // fallback if tables don't exist yet
+    console.log('[AutoPost] schedule-ad response:', JSON.stringify(d));
+
+    if (!d.success) {
+      showToast('❌ Failed to save schedule: ' + (d.error || JSON.stringify(d)), 'error');
+      if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+      return;
+    }
 
     if (d.success) {
-      stopVadAutoPost();
       _vadAutoPostActive = true;
       document.getElementById('vad-autopost-start-btn').style.display = 'none';
       document.getElementById('vad-autopost-stop-btn').style.display = 'block';
@@ -14099,7 +14104,13 @@ async function startPadAutoPost() {
       body: JSON.stringify(pschedData)
     });
     var d = await res.json();
-    if (!d.success) d = {success: true, next_post_at: pschedData.next_post_at};
+    console.log('[AutoPost] schedule-ad response:', JSON.stringify(d));
+
+    if (!d.success) {
+      showToast('❌ Failed to save schedule: ' + (d.error || JSON.stringify(d)), 'error');
+      if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+      return;
+    }
 
     if (d.success) {
       stopPadAutoPost();
