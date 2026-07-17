@@ -13991,21 +13991,24 @@ async function startVadAutoPost() {
     // Save to localStorage immediately (persists on refresh)
     try { localStorage.setItem('ap_vad_schedule_'+_user.id, JSON.stringify(schedData)); } catch(e) {}
 
-    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify(schedData)
+    var upsertRes = await _db.from('autopostleey_ad_schedules').upsert({
+      user_id:       schedData.user_id,
+      type:          'videoad',
+      ad_url:        schedData.ad_url || '',
+      caption:       schedData.caption || '',
+      platforms:     schedData.platforms,
+      connections:   schedData.connections,
+      interval_hours: schedData.interval_hours,
+      enabled:       true,
+      next_post_at:  schedData.next_post_at,
+      created_at:    new Date().toISOString()
     });
-    var d = await res.json();
-    console.log('[AutoPost] schedule-ad response:', JSON.stringify(d));
-
-    if (!d.success) {
-      showToast('❌ Failed to save schedule: ' + (d.error || JSON.stringify(d)), 'error');
+    if (upsertRes.error) {
+      showToast('Could not save schedule: ' + upsertRes.error.message, 'error');
       if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
       return;
     }
-
-    if (d.success) {
+    if (true) {
       _vadAutoPostActive = true;
       document.getElementById('vad-autopost-start-btn').style.display = 'none';
       document.getElementById('vad-autopost-stop-btn').style.display = 'block';
@@ -14038,10 +14041,7 @@ async function stopVadAutoPost() {
   if (_user) {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({user_id:_user.id, type:'videoad', enabled:false, interval_hours:0})
-    }).catch(function(){});
+    _db.from('autopostleey_ad_schedules').update({enabled:false}).eq('user_id',_user.id).catch(function(){});
   }
   try { if(_user) localStorage.removeItem('ap_vad_schedule_'+_user.id); } catch(e) {}
   var vs_info = document.getElementById('vad-schedule-info');
@@ -14098,21 +14098,24 @@ async function startPadAutoPost() {
     };
     try { localStorage.setItem('ap_pad_schedule_'+_user.id, JSON.stringify(pschedData)); } catch(e) {}
 
-    var res = await fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify(pschedData)
+    var pupsertRes = await _db.from('autopostleey_photo_schedules').upsert({
+      user_id:       pschedData.user_id,
+      type:          'photoad',
+      ad_url:        pschedData.ad_url || '',
+      caption:       pschedData.caption || '',
+      platforms:     pschedData.platforms,
+      connections:   pschedData.connections,
+      interval_hours: pschedData.interval_hours,
+      enabled:       true,
+      next_post_at:  pschedData.next_post_at,
+      created_at:    new Date().toISOString()
     });
-    var d = await res.json();
-    console.log('[AutoPost] schedule-ad response:', JSON.stringify(d));
-
-    if (!d.success) {
-      showToast('❌ Failed to save schedule: ' + (d.error || JSON.stringify(d)), 'error');
+    if (pupsertRes.error) {
+      showToast('Could not save schedule: ' + pupsertRes.error.message, 'error');
       if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
       return;
     }
-
-    if (d.success) {
+    if (true) {
       stopPadAutoPost();
       document.getElementById('pad-autopost-start-btn').style.display = 'none';
       document.getElementById('pad-autopost-stop-btn').style.display = 'block';
@@ -14144,10 +14147,7 @@ async function stopPadAutoPost() {
   if (_user) {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    fetch('https://autopostleey-ai.alexclaor.workers.dev/schedule-ad', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({user_id:_user.id, type:'photoad', enabled:false, interval_hours:0})
-    }).catch(function(){});
+    _db.from('autopostleey_photo_schedules').update({enabled:false}).eq('user_id',_user.id).catch(function(){});
   }
   try { if(_user) localStorage.removeItem('ap_pad_schedule_'+_user.id); } catch(e) {}
   var ps_info = document.getElementById('pad-schedule-info');
