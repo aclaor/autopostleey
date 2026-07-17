@@ -14014,13 +14014,13 @@ async function startVadAutoPost() {
       document.getElementById('vad-autopost-stop-btn').style.display = 'block';
       var status = document.getElementById('vad-autopost-status');
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
+      var nextTime = schedData.next_post_at ? new Date(schedData.next_post_at).toLocaleString() : '';
       var vstatus = document.getElementById('vad-autopost-status');
       if (vstatus) { vstatus.textContent = '🟢 ACTIVE'; vstatus.style.background='rgba(16,185,129,0.2)'; vstatus.style.color='#10b981'; }
       var vinfoBox = document.getElementById('vad-schedule-info');
       var vinfoTime = document.getElementById('vad-next-post-time');
       if (vinfoBox) vinfoBox.style.display = 'block';
-      if (vinfoTime) vinfoTime.textContent = 'Next post: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
+      if (vinfoTime) vinfoTime.textContent = 'Next post: ' + (schedData.next_post_at ? new Date(schedData.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
       showToast('✅ Scheduled! Posts every '+hrs+'h — even when browser is closed.','success');
     }
   } catch(e) {
@@ -14041,7 +14041,7 @@ async function stopVadAutoPost() {
   if (_user) {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    _db.from('autopostleey_ad_schedules').update({enabled:false}).eq('user_id',_user.id).catch(function(){});
+    _db.from('autopostleey_ad_schedules').update({enabled:false}).eq('user_id',_user.id).then(function(){}).catch(function(){});
   }
   try { if(_user) localStorage.removeItem('ap_vad_schedule_'+_user.id); } catch(e) {}
   var vs_info = document.getElementById('vad-schedule-info');
@@ -14121,13 +14121,13 @@ async function startPadAutoPost() {
       document.getElementById('pad-autopost-stop-btn').style.display = 'block';
       var status = document.getElementById('pad-autopost-status');
       if (status) { status.textContent = '🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
-      var nextTime = d.next_post_at ? new Date(d.next_post_at).toLocaleString() : '';
+      var nextTime = pschedData.next_post_at ? new Date(pschedData.next_post_at).toLocaleString() : '';
       var pstatus2 = document.getElementById('pad-autopost-status');
       if (pstatus2) { pstatus2.textContent = '🟢 ACTIVE'; pstatus2.style.background='rgba(16,185,129,0.2)'; pstatus2.style.color='#10b981'; }
       var pinfoBox2 = document.getElementById('pad-schedule-info');
       var pinfoTime2 = document.getElementById('pad-next-post-time');
       if (pinfoBox2) pinfoBox2.style.display = 'block';
-      if (pinfoTime2) pinfoTime2.textContent = 'Next post: ' + (d.next_post_at ? new Date(d.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
+      if (pinfoTime2) pinfoTime2.textContent = 'Next post: ' + (pschedData.next_post_at ? new Date(pschedData.next_post_at).toLocaleString() : 'soon') + ' · Every ' + hrs + 'h';
       showToast('✅ Scheduled! Posts every '+hrs+'h — even when browser is closed.','success');
     }
   } catch(e) {
@@ -14147,7 +14147,7 @@ async function stopPadAutoPost() {
   if (_user) {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    _db.from('autopostleey_photo_schedules').update({enabled:false}).eq('user_id',_user.id).catch(function(){});
+    _db.from('autopostleey_photo_schedules').update({enabled:false}).eq('user_id',_user.id).then(function(){}).catch(function(){});
   }
   try { if(_user) localStorage.removeItem('ap_pad_schedule_'+_user.id); } catch(e) {}
   var ps_info = document.getElementById('pad-schedule-info');
