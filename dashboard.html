@@ -13771,7 +13771,6 @@ function padRenderPlatformList() {
 }
 
 
-async 
 async function testAdPostNow(type) {
   if (!_user) { showToast('Please sign in first','error'); return; }
   var btn = document.getElementById((type==='videoad'?'vad':'pad')+'-test-post-btn');
@@ -14933,51 +14932,7 @@ async function startVehAutoPost() {
   var hrs = parseInt((document.getElementById('veh-autopost-interval')||{}).value||0);
   if (!hrs) return;
   if (!_user) { showToast('Please sign in first!','error'); return; }
-  // Auto-export if not already uploaded
-  if (!_vehPublicUrl && _vehVideo && _vehOverlays.length) {
-    showToast('📤 Uploading video for auto-posting...', 'success');
-    btn = document.getElementById('veh-autopost-start-btn');
-    if (btn) { btn.textContent='⏳ Uploading...'; btn.disabled=true; }
-    try {
-      var canvas3 = document.getElementById('veh-canvas');
-      var W3=canvas3.width, H3=canvas3.height, ctx3=canvas3.getContext('2d');
-      var chunks3=[]; var stream3=canvas3.captureStream(30);
-      var mime3=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9';
-      var rec3=new MediaRecorder(stream3,{mimeType:mime3});
-      rec3.ondataavailable=function(e){if(e.data.size)chunks3.push(e.data);};
-      await new Promise(function(resolve){
-        rec3.onstop=resolve;
-        rec3.start();
-        _vehVideo.currentTime=0; _vehVideo.play();
-        function rf3(){
-          if(_vehVideo.ended||_vehVideo.currentTime>=_vehVideo.duration){rec3.stop();return;}
-          ctx3.clearRect(0,0,W3,H3);
-          try{ctx3.drawImage(_vehVideo,0,0,W3,H3);}catch(e){}
-          var t3=_vehVideo.currentTime;
-          _vehOverlays.forEach(function(o){
-            if(t3<o.startSec||t3>o.endSec)return;
-            var p=Math.min(1,(t3-o.startSec)/0.4);
-            var savedS=_vehStyle; _vehStyle=o.style||_vehStyle;
-            var y3=o.position==='top'?H3*0.1:o.position==='center'?H3*0.5:H3*0.85;
-            vehDrawOverlay(ctx3,o.text,W3/2,y3,p,W3,o.fontSize||1);
-            _vehStyle=savedS;
-          });
-          requestAnimationFrame(rf3);
-        }
-        rf3();
-      });
-      var ext3=mime3.includes('mp4')?'mp4':'webm';
-      var blob3=new Blob(chunks3,{type:mime3});
-      _vehPublicUrl=await uploadFileToR2(new File([blob3],'veh-auto-'+Date.now()+'.'+ext3,{type:mime3}),'video-ads');
-      vehStartPreview();
-    } catch(e) {
-      showToast('Upload failed: '+e.message,'error');
-      if(btn){btn.textContent='▶ Start Auto-Posting';btn.disabled=false;}
-      return;
-    }
-  } else if (!_vehVideo) {
-    showToast('Upload and generate overlays first!','error'); return;
-  }
+  if (!_vehVideo) { showToast('Upload a video and generate overlays first!','error'); return; }
 
   var list = document.getElementById('veh-autopost-platform-list');
   var platforms = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
@@ -14991,8 +14946,12 @@ async function startVehAutoPost() {
     || 'Check out our latest video! 🔥';
   var connections = {};
   platforms.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+
+  // If no public URL yet, use a placeholder — Cloudflare will use whatever URL is saved
+  var adUrl = _vehPublicUrl || '';
+
   var schedData = {
-    user_id: _user.id, type: 'videoad', ad_url: _vehPublicUrl,
+    user_id: _user.id, type: 'videoad', ad_url: adUrl,
     caption: caption, platforms: platforms, connections: connections,
     interval_hours: hrs, enabled: true,
     next_post_at: new Date(Date.now() + hrs*3600000).toISOString()
@@ -15028,7 +14987,59 @@ async function startVehAutoPost() {
   if (time) time.textContent='Next post: '+new Date(schedData.next_post_at).toLocaleString()+' · Every '+hrs+'h';
   showToast('✅ Video Enhancer auto-posting scheduled every '+hrs+'h!','success');
   if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
+
+  // Upload video in background for next auto-post cycle
+  if (!_vehPublicUrl && _vehVideo && _vehOverlays.length) {
+    vehExportAndSave();
+  }
 }
+
+function vehExportAndSave() {
+  try {
+    var canvas3 = document.getElementById('veh-canvas');
+    if (!canvas3) return;
+    var W3=canvas3.width, H3=canvas3.height, ctx3=canvas3.getContext('2d');
+    var chunks3=[]; var stream3=canvas3.captureStream(30);
+    var mime3=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9';
+    var rec3=new MediaRecorder(stream3,{mimeType:mime3});
+    rec3.ondataavailable=function(e){if(e.data.size)chunks3.push(e.data);};
+    rec3.onstop=function(){
+      var ext3=mime3.includes('mp4')?'mp4':'webm';
+      var blob3=new Blob(chunks3,{type:mime3});
+      uploadFileToR2(new File([blob3],'veh-auto-'+Date.now()+'.'+ext3,{type:mime3}),'video-ads').then(function(url){
+        if (url) {
+          _vehPublicUrl = url;
+          // Update the schedule row with the real URL
+          if (_user) {
+            _db.from('autopostleey_ad_schedules').update({ad_url:url}).eq('user_id',_user.id).then(function(){
+              showToast('✅ Video uploaded for auto-posting!','success');
+            });
+          }
+        }
+        vehStartPreview();
+      });
+    };
+    rec3.start();
+    _vehVideo.currentTime=0; _vehVideo.play();
+    function rf3(){
+      if(_vehVideo.ended||_vehVideo.currentTime>=_vehVideo.duration){rec3.stop();return;}
+      ctx3.clearRect(0,0,W3,H3);
+      try{ctx3.drawImage(_vehVideo,0,0,W3,H3);}catch(e){}
+      var t3=_vehVideo.currentTime;
+      _vehOverlays.forEach(function(o){
+        if(t3<o.startSec||t3>o.endSec)return;
+        var p=Math.min(1,(t3-o.startSec)/0.4);
+        var savedS=_vehStyle; _vehStyle=o.style||_vehStyle;
+        var y3=o.position==='top'?H3*0.1:o.position==='center'?H3*0.5:H3*0.85;
+        vehDrawOverlay(ctx3,o.text,W3/2,y3,p,W3,o.fontSize||1);
+        _vehStyle=savedS;
+      });
+      requestAnimationFrame(rf3);
+    }
+    rf3();
+  } catch(e) { console.log('VEH export error:', e.message); }
+}
+
 
 async function stopVehAutoPost() {
   document.getElementById('veh-autopost-start-btn').style.display='block';
