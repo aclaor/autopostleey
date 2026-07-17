@@ -3032,6 +3032,41 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
                 <div id="veh-status" style="font-size:11px;color:var(--text3);">Upload a video to start</div>
               </div>
+
+            <!-- Auto-Post Schedule -->
+            <div class="card" id="veh-autopost-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
+                <div id="veh-autopost-status" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);font-weight:700;">● OFF</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+                Posts automatically even when your browser is closed. Powered by Cloudflare — always on, always free.
+              </div>
+              <div id="veh-schedule-info" style="display:none;font-size:11px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#10b981;">
+                📅 <span id="veh-next-post-time">Checking schedule...</span>
+              </div>
+              <select id="veh-autopost-interval" onchange="updateVehAutoPostStatus()"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;margin-bottom:10px;">
+                <option value="0">🚫 Off — Don't auto-post</option>
+                <option value="4">⏱ Every 4 hours</option>
+                <option value="6">⏱ Every 6 hours</option>
+                <option value="8">⏱ Every 8 hours</option>
+                <option value="12">⏱ Every 12 hours</option>
+                <option value="24">⏱ Every 24 hours</option>
+                <option value="48">⏱ Every 2 days</option>
+              </select>
+              <div id="veh-autopost-platforms" style="display:none;">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Post to these platforms:</div>
+                <div id="veh-autopost-platform-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+                <button onclick="startVehAutoPost()" id="veh-autopost-start-btn"
+                  style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+                  ▶ Start Auto-Posting
+                </button>
+                <button onclick="stopVehAutoPost()" id="veh-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
+                  ⏹ Stop Auto-Posting
+                </button>
+              </div>
+            </div>
               <div style="position:relative;background:#000;min-height:300px;display:flex;align-items:center;justify-content:center;">
                 <div id="veh-empty" style="text-align:center;padding:40px;color:var(--text3);">
                   <div style="font-size:48px;margin-bottom:12px;">🎬</div>
@@ -14877,6 +14912,89 @@ async function vehExportVideo() {
   }
   renderExportFrame();
   showToast('🔴 Rendering... Do not close this tab.', 'success');
+}
+
+
+function updateVehAutoPostStatus() {
+  var sel = document.getElementById('veh-autopost-interval');
+  var hrs = parseInt(sel ? sel.value : 0);
+  var platDiv = document.getElementById('veh-autopost-platforms');
+  if (platDiv) platDiv.style.display = hrs > 0 ? 'block' : 'none';
+  if (hrs > 0) {
+    var list = document.getElementById('veh-autopost-platform-list');
+    if (list) list.innerHTML = buildAutoPostPlatformList('veh');
+  }
+}
+
+async function startVehAutoPost() {
+  var hrs = parseInt((document.getElementById('veh-autopost-interval')||{}).value||0);
+  if (!hrs) return;
+  if (!_user) { showToast('Please sign in first!','error'); return; }
+  if (!_vehPublicUrl) { showToast('Export your video first, then start auto-posting.','error'); return; }
+
+  var list = document.getElementById('veh-autopost-platform-list');
+  var platforms = list ? Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;}) : [];
+  if (!platforms.length) { showToast('Select at least one platform!','error'); return; }
+
+  var btn = document.getElementById('veh-autopost-start-btn');
+  if (btn) { btn.textContent='⏳ Saving...'; btn.disabled=true; }
+
+  var caption = (document.getElementById('veh-caption-input')||{}).value
+    || (_vehOverlays||[]).map(function(o){return o.text;}).join(' · ')
+    || 'Check out our latest video! 🔥';
+  var connections = {};
+  platforms.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
+  var schedData = {
+    user_id: _user.id, type: 'videoad', ad_url: _vehPublicUrl,
+    caption: caption, platforms: platforms, connections: connections,
+    interval_hours: hrs, enabled: true,
+    next_post_at: new Date(Date.now() + hrs*3600000).toISOString()
+  };
+  try { localStorage.setItem('ap_veh_schedule_'+_user.id, JSON.stringify(schedData)); } catch(e) {}
+
+  var upsertRes = await _db.from('autopostleey_ad_schedules').upsert({
+    user_id:       schedData.user_id,
+    type:          'videoad',
+    ad_url:        schedData.ad_url,
+    caption:       schedData.caption,
+    platforms:     schedData.platforms,
+    connections:   schedData.connections,
+    interval_hours: schedData.interval_hours,
+    enabled:       true,
+    next_post_at:  schedData.next_post_at,
+    created_at:    new Date().toISOString()
+  });
+
+  if (upsertRes.error) {
+    showToast('Could not save schedule: ' + upsertRes.error.message,'error');
+    if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
+    return;
+  }
+
+  document.getElementById('veh-autopost-start-btn').style.display='none';
+  document.getElementById('veh-autopost-stop-btn').style.display='block';
+  var status = document.getElementById('veh-autopost-status');
+  if (status) { status.textContent='🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+  var info = document.getElementById('veh-schedule-info');
+  var time = document.getElementById('veh-next-post-time');
+  if (info) info.style.display='block';
+  if (time) time.textContent='Next post: '+new Date(schedData.next_post_at).toLocaleString()+' · Every '+hrs+'h';
+  showToast('✅ Video Enhancer auto-posting scheduled every '+hrs+'h!','success');
+  if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
+}
+
+async function stopVehAutoPost() {
+  document.getElementById('veh-autopost-start-btn').style.display='block';
+  document.getElementById('veh-autopost-stop-btn').style.display='none';
+  var status = document.getElementById('veh-autopost-status');
+  if (status) { status.textContent='● OFF'; status.style.background='var(--bg3)'; status.style.color='var(--text3)'; }
+  var info = document.getElementById('veh-schedule-info');
+  if (info) info.style.display='none';
+  if (_user) {
+    _db.from('autopostleey_ad_schedules').update({enabled:false}).eq('user_id',_user.id).then(function(){}).catch(function(){});
+    try { localStorage.removeItem('ap_veh_schedule_'+_user.id); } catch(e) {}
+  }
+  showToast('Video Enhancer auto-posting stopped.','success');
 }
 
 async function vehPostToSocial() {
