@@ -13587,29 +13587,95 @@ function padExportSlideshow() {
   renderFrame();
 }
 
-function padPostToSocial() {
-  if (!_padPhotos.length) { showToast('Create your ad first!', 'error'); return; }
-  showToast('📤 Preparing image...', 'success');
-  var canvas = document.getElementById('pad-canvas');
-  if (!canvas) return;
-  canvas.toBlob(function(blob) {
-    uploadFileToR2(new File([blob], 'product-ad-'+Date.now()+'.jpg', {type:'image/jpeg'}), 'photo-ads')
-      .then(function(url) {
-        if (url) {
-          _padPublicUrl = url;
-          // Show platform picker
-          var picker = document.getElementById('pad-platform-section');
-          if (picker) {
-            picker.style.display = 'block';
-            padRenderPlatformList();
-            picker.scrollIntoView({behavior:'smooth', block:'center'});
-          }
-          showToast('✅ Image uploaded! Select platforms below.', 'success');
+async function padPostToSocial() {
+  if (!_padPhotos.length) { showToast('Upload photos first!', 'error'); return; }
+
+  var count = _padPhotos.length;
+
+  if (count === 1) {
+    // Single photo: capture canvas and upload
+    showToast('📤 Preparing image...', 'success');
+    var canvas = document.getElementById('pad-canvas');
+    if (!canvas) return;
+
+    // Draw labels on canvas for export
+    var ctx = canvas.getContext('2d');
+    var cw = parseInt(canvas.style.width), ch = parseInt(canvas.style.height);
+    var photo = _padPhotos[0];
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.scale(2,2);
+    var scale = Math.max(cw/photo.img.naturalWidth, ch/photo.img.naturalHeight);
+    var sw = photo.img.naturalWidth*scale, sh = photo.img.naturalHeight*scale;
+    ctx.drawImage(photo.img, (cw-sw)/2, (ch-sh)/2, sw, sh);
+    padDrawLabels(ctx, cw, ch);
+
+    canvas.toBlob(async function(blob) {
+      padDrawCanvas();
+      var url = await uploadFileToR2(new File([blob],'product-ad-'+Date.now()+'.jpg',{type:'image/jpeg'}),'photo-ads');
+      if (url) {
+        _padPublicUrl = url;
+        var section = document.getElementById('pad-platform-section');
+        if (section) { section.style.display = 'block'; padRenderPlatformList(); }
+        showToast('✅ Image ready! Select platforms and click Post Now.', 'success');
+      }
+    }, 'image/jpeg', 0.95);
+
+  } else {
+    // Multiple photos: export as slideshow video then post
+    showToast('📽️ Creating slideshow from ' + count + ' photos...', 'success');
+    var btn = document.querySelector('[onclick="padPostToSocial()"]');
+    if (btn) { btn.textContent = '⏳ Creating slideshow...'; btn.disabled = true; }
+
+    try {
+      // Build slideshow frames
+      var tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 720; tempCanvas.height = 720;
+      var ctx2 = tempCanvas.getContext('2d');
+
+      var chunks = [];
+      var stream2 = tempCanvas.captureStream(15);
+      var mimeType2 = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm;codecs=vp9';
+      var recorder2 = new MediaRecorder(stream2, {mimeType: mimeType2});
+      recorder2.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
+
+      recorder2.onstop = async function() {
+        var ext = mimeType2.includes('mp4') ? 'mp4' : 'webm';
+        var blob2 = new Blob(chunks, {type: mimeType2});
+        var url2 = await uploadFileToR2(new File([blob2], 'product-slideshow-'+Date.now()+'.'+ext, {type:mimeType2}), 'photo-ads');
+        if (url2) {
+          _padPublicUrl = url2;
+          var section2 = document.getElementById('pad-platform-section');
+          if (section2) { section2.style.display = 'block'; padRenderPlatformList(); }
+          showToast('✅ Slideshow ready! Select platforms and click Post Now.', 'success');
         }
-      }).catch(function() {
-        showToast('Upload failed. Try downloading and posting manually.', 'error');
-      });
-  }, 'image/jpeg', 0.95);
+        if (btn) { btn.textContent = '🚀 Post to Social Media'; btn.disabled = false; }
+      };
+
+      recorder2.start();
+      var frameIdx = 0;
+      var framesPerPhoto = 45; // 3 seconds at 15fps
+
+      function renderSlideFrame() {
+        if (frameIdx >= count * framesPerPhoto) { recorder2.stop(); return; }
+        var photoIdx = Math.floor(frameIdx / framesPerPhoto);
+        var photo2 = _padPhotos[photoIdx];
+        ctx2.clearRect(0,0,720,720);
+        if (photo2 && photo2.img) {
+          var s2 = Math.max(720/photo2.img.naturalWidth, 720/photo2.img.naturalHeight);
+          ctx2.drawImage(photo2.img, (720-photo2.img.naturalWidth*s2)/2, (720-photo2.img.naturalHeight*s2)/2, photo2.img.naturalWidth*s2, photo2.img.naturalHeight*s2);
+          padDrawLabels(ctx2, 720, 720);
+        }
+        frameIdx++;
+        requestAnimationFrame(renderSlideFrame);
+      }
+      renderSlideFrame();
+
+    } catch(e) {
+      showToast('Slideshow creation failed: ' + e.message, 'error');
+      if (btn) { btn.textContent = '🚀 Post to Social Media'; btn.disabled = false; }
+    }
+  }
 }
 
 var _padPublicUrl = '';
