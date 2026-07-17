@@ -2785,6 +2785,12 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <button onclick="stopVadAutoPost()" id="vad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
                 ⏹ Stop Auto-Posting
               </button>
+              <button onclick="testAdPostNow('videoad')" id="vad-test-post-btn" style="display:none;width:100%;padding:10px;background:var(--bg3);border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
+                ⚡ Test: Post Right Now
+              </button>
+              <div id="vad-last-posted" style="display:none;margin-top:8px;font-size:11px;color:var(--text3);background:var(--bg3);border-radius:8px;padding:8px 12px;">
+                📬 <span id="vad-last-posted-text">Checking last post...</span>
+              </div>
             </div>
           </div>
 
@@ -3278,6 +3284,12 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <button onclick="stopPadAutoPost()" id="pad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
                   ⏹ Stop Auto-Posting
                 </button>
+                <button onclick="testAdPostNow('photoad')" id="pad-test-post-btn" style="display:none;width:100%;padding:10px;background:var(--bg3);border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
+                  ⚡ Test: Post Right Now
+                </button>
+                <div id="pad-last-posted" style="display:none;margin-top:8px;font-size:11px;color:var(--text3);background:var(--bg3);border-radius:8px;padding:8px 12px;">
+                  📬 <span id="pad-last-posted-text">Checking last post...</span>
+                </div>
               </div>
             </div>
 
@@ -13654,6 +13666,59 @@ function padRenderPlatformList() {
   }).filter(Boolean).join('');
 }
 
+
+async 
+async function testAdPostNow(type) {
+  if (!_user) { showToast('Please sign in first','error'); return; }
+  var btn = document.getElementById((type==='videoad'?'vad':'pad')+'-test-post-btn');
+  if (btn) { btn.textContent='⏳ Posting...'; btn.disabled=true; }
+
+  try {
+    // Get schedule from Supabase
+    var table = type==='photoad' ? 'autopostleey_photo_schedules' : 'autopostleey_ad_schedules';
+    var res = await _db.from(table).select('*').eq('user_id', _user.id).single();
+    if (!res.data) { showToast('No schedule found. Set up auto-posting first.','error'); return; }
+    var s = res.data;
+    var platforms = typeof s.platforms==='string' ? JSON.parse(s.platforms) : s.platforms || [];
+    var connections = typeof s.connections==='string' ? JSON.parse(s.connections) : s.connections || {};
+
+    // Post it now
+    var sess = await _db.auth.getSession();
+    var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var postRes = await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        content: s.caption || 'Check out our latest product! 🔥',
+        platforms: platforms,
+        connections: connections,
+        image_url: s.ad_url || ''
+      })
+    });
+    var d = await postRes.json();
+    var ok = (d.results||[]).filter(function(r){return r.success;}).length;
+    var fail = (d.results||[]).filter(function(r){return !r.success;}).length;
+
+    // Update last_posted_at in Supabase
+    await _db.from(table).update({last_posted_at: new Date().toISOString()}).eq('user_id',_user.id);
+
+    // Show result
+    var prefix = type==='videoad' ? 'vad' : 'pad';
+    var lastDiv = document.getElementById(prefix+'-last-posted');
+    var lastText = document.getElementById(prefix+'-last-posted-text');
+    if (lastDiv) lastDiv.style.display = 'block';
+    if (lastText) lastText.textContent = 'Last posted: Just now ✅ (' + ok + ' platform' + (ok!==1?'s':'') + ')';
+
+    if (ok > 0) {
+      showToast('✅ Test post sent to ' + ok + ' platform' + (ok!==1?'s':'') + '! Check your page to verify.', 'success');
+    } else {
+      showToast('⚠️ Post attempted but 0 platforms succeeded. Check your connections.', 'error');
+    }
+  } catch(e) {
+    showToast('Test failed: ' + e.message, 'error');
+  }
+  if (btn) { btn.textContent='⚡ Test: Post Right Now'; btn.disabled=false; }
+}
 
 async function padGenerateCaption() {
   var btn = document.getElementById('pad-gen-caption-btn');
