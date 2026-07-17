@@ -492,25 +492,18 @@
 /* ── VIDEO AD MAKER RESPONSIVE ──────────────────────────── */
 @media(max-width:1024px){
   #vad-main-grid{
-    grid-template-columns:300px 1fr !important;
-    gap:16px !important;
-  }
-  #page-photoad > div[style*="display:grid"],
-  #page-videoenhancer > div[style*="display:grid"] {
-    grid-template-columns:300px 1fr !important;
-    gap:16px !important;
+    #pad-main-grid {
+    grid-template-columns: 300px 1fr !important;
+    gap: 16px !important;
   }
 }
 @media(max-width:768px){
-  #page-photoad > div[style*="display:grid"],
-  #page-videoenhancer > div[style*="display:grid"] {
-    display:flex !important;
-    flex-direction:column !important;
+  #pad-main-grid {
+    grid-template-columns: 1fr !important;
   }
-  #page-photoad > div[style*="display:grid"] > div:last-child,
-  #page-videoenhancer > div[style*="display:grid"] > div:last-child {
-    position:relative !important;
-    top:auto !important;
+  #pad-main-grid > div:last-child {
+    position: relative !important;
+    top: auto !important;
   }
 }
 @media(max-width:768px){
@@ -3027,7 +3020,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
 
           </div>
           <!-- RIGHT: Preview Canvas -->
-          <div style="position:sticky;top:80px;">
+          <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:80px;">
             <div class="card" style="padding:0;overflow:hidden;">
               <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
@@ -3061,7 +3054,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:24px;align-items:start;">
+        <div style="display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:24px;align-items:start;" id="pad-main-grid">
 
           <!-- LEFT: Controls -->
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -3314,7 +3307,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           
 
           <!-- RIGHT: Canvas Preview -->
-          <div style="position:sticky;top:80px;">
+          <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:80px;">
             <div class="card" style="padding:0;overflow:hidden;">
               <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;font-weight:700;color:var(--text);">🖼️ Preview</div>
