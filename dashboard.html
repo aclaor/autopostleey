@@ -15334,29 +15334,45 @@ function renderTrends(trends) {
     var safeTitle = escapeHtml(t.title);
     var ctx       = t.context ? escapeHtml(t.context) : '';
     var src       = (t.news && t.news[0]) ? escapeHtml(t.news[0].source) : '';
-    var thumb     = t.image
+    var link      = (t.news && t.news[0] && t.news[0].url) ? t.news[0].url : (t.link || '');
+
+    var media = t.image
       ? '<img src="' + escapeHtml(t.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" ' +
-        'style="width:100%;height:110px;object-fit:cover;border-radius:10px;margin-bottom:12px;background:var(--bg3);">'
+        'style="width:100%;height:132px;object-fit:cover;display:block;">'
+      : '<div style="height:132px;background:linear-gradient(135deg,var(--bg3),var(--border));display:flex;align-items:center;justify-content:center;font-size:44px;">📈</div>';
+
+    // Rank badge: this is the feed's own ordering, so it is a real signal.
+    var rank = idx < 3
+      ? '<div style="position:absolute;top:10px;left:10px;background:#DC2626;color:#fff;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:.3px;">TOP ' + (idx + 1) + '</div>'
+      : '';
+
+    // Search volume straight from the feed. No invented percentages.
+    var traffic = t.traffic
+      ? '<div style="position:absolute;top:10px;right:10px;background:#059669;color:#fff;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;">' + escapeHtml(t.traffic) + '</div>'
       : '';
 
     return '' +
-      '<div style="background:var(--bg2,var(--bg3));border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;">' +
-        thumb +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
-          (t.traffic
-            ? '<span style="background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;">🔥 ' + escapeHtml(t.traffic) + ' searches</span>'
-            : '') +
-          (src ? '<span style="color:var(--text2);font-size:11px;">via ' + src + '</span>' : '') +
-        '</div>' +
-        '<div style="font-size:16px;font-weight:800;text-transform:capitalize;margin-bottom:6px;line-height:1.3;">' + safeTitle + '</div>' +
-        (ctx ? '<div style="color:var(--text2);font-size:12.5px;line-height:1.5;margin-bottom:12px;">' + ctx.slice(0, 150) + (ctx.length > 150 ? '…' : '') + '</div>' : '<div style="flex:1;"></div>') +
-        '<div style="display:flex;gap:8px;margin-top:auto;">' +
-          '<button onclick="useTrend(' + idx + ',false)" ' +
-            'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px;color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;">' +
-            '→ Compose</button>' +
-          '<button onclick="useTrend(' + idx + ',true)" ' +
-            'style="flex:1.3;background:linear-gradient(135deg,#a855f7,#6366f1);border:none;border-radius:8px;padding:9px;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">' +
-            '✨ Write it for me</button>' +
+      '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column;" ' +
+           'onmouseover="this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.08)\';this.style.transform=\'translateY(-2px)\'" ' +
+           'onmouseout="this.style.boxShadow=\'none\';this.style.transform=\'translateY(0)\'">' +
+        '<div style="position:relative;">' + media + rank + traffic + '</div>' +
+        '<div style="padding:14px 16px 16px;display:flex;flex-direction:column;flex:1;">' +
+          (src ? '<span style="align-self:flex-start;font-size:10px;font-weight:800;color:var(--accent);background:rgba(109,94,248,.1);padding:3px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;">' + src + '</span>' : '') +
+          '<h3 style="font-size:15.5px;font-weight:800;text-transform:capitalize;line-height:1.35;margin:0 0 7px;">' + safeTitle + '</h3>' +
+          (ctx
+            ? '<p style="color:var(--text2);font-size:12.5px;line-height:1.5;margin:0 0 14px;">' + ctx.slice(0, 130) + (ctx.length > 130 ? '…' : '') + '</p>'
+            : '<div style="flex:1;min-height:10px;"></div>') +
+          '<div style="display:flex;gap:8px;margin-top:auto;">' +
+            '<button onclick="useTrend(' + idx + ',true)" ' +
+              'style="flex:1;padding:10px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">' +
+              '🚀 Share to Compose</button>' +
+            '<button onclick="useTrend(' + idx + ',false)" title="Send the topic without writing the post" ' +
+              'style="padding:10px 13px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">✏️</button>' +
+            (link
+              ? '<button onclick="window.open(' + JSON.stringify(link).replace(/"/g, '&quot;') + ',\'_blank\',\'noopener\')" title="Read the story" ' +
+                'style="padding:10px 13px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">🔗</button>'
+              : '') +
+          '</div>' +
         '</div>' +
       '</div>';
   }).join('');
@@ -15370,6 +15386,7 @@ async function useTrend(idx, autoWrite) {
   var topicEl = document.getElementById('post-topic');
   if (topicEl) {
     topicEl.value = t.context ? (t.title + ' — ' + t.context.slice(0, 120)) : t.title;
+    topicEl.dispatchEvent(new Event('input'));
   }
   showPage('compose');
 
@@ -15410,6 +15427,7 @@ async function useTrend(idx, autoWrite) {
     var data = await res.json();
     if (contentEl) {
       contentEl.value = data.post || '';
+      contentEl.dispatchEvent(new Event('input'));
       if (!data.post) throw new Error(data.error || 'empty');
     }
     if (typeof showToast === 'function') showToast('Post written — review and schedule it! ✨', 'success');
