@@ -1243,36 +1243,24 @@
             Keywords below come from YouTube. The Google Trends reports open in a new tab. Both show <strong>interest</strong> — not sales.
           </p>
 
-          <div id="sig-keywords-wrap" style="margin-bottom:20px;"></div>
-
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
-            <a id="sig-tr-time" href="#" target="_blank" rel="noopener noreferrer"
-               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
-              <div style="font-size:22px;margin-bottom:8px;">📈</div>
-              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Interest over 12 months</div>
-              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">Is demand for this rising or falling?</div>
-              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
-            </a>
-            <a id="sig-tr-geo" href="#" target="_blank" rel="noopener noreferrer"
-               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
-              <div style="font-size:22px;margin-bottom:8px;">🗺️</div>
-              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Where interest is strongest</div>
-              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">Which regions to focus ads or delivery on.</div>
-              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
-            </a>
-            <a id="sig-tr-rel" href="#" target="_blank" rel="noopener noreferrer"
-               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
-              <div style="font-size:22px;margin-bottom:8px;">🔎</div>
-              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Rising related searches</div>
-              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">What else people look for around this.</div>
-              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
-            </a>
+          <div id="sig-int-panel" style="margin-bottom:22px;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text2);margin-bottom:2px;">Google search interest, last 12 months</div>
+            <p style="color:var(--text3);font-size:11.5px;margin:0 0 10px;">
+              Relative interest, 0-100. 100 is this term's own peak — it is not a count of searches.
+            </p>
+            <div id="sig-int-status" style="color:var(--text3);font-size:12.5px;"></div>
+            <div id="sig-int-wrap" style="position:relative;">
+              <div id="sig-int-chart" style="overflow-x:auto;"></div>
+              <div id="sig-int-tip" style="display:none;position:absolute;background:#0D1117;color:#fff;font-size:11.5px;line-height:1.5;padding:7px 10px;border-radius:7px;pointer-events:none;white-space:nowrap;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.2);"></div>
+            </div>
           </div>
+
+          <div id="sig-keywords-wrap" style="margin-bottom:16px;"></div>
 
           <div style="margin-top:12px;">
             <a id="sig-tr-link" href="#" target="_blank" rel="noopener noreferrer"
                style="color:var(--accent);font-size:12.5px;font-weight:700;text-decoration:none;">
-              Open full report on Google Trends →
+              See the full report on Google Trends →
             </a>
           </div>
         </div>
@@ -15638,26 +15626,158 @@ function renderSignals(d) {
 // restricts framing), so these open the real report in a new tab
 // instead of showing an empty box. The keyword list below is our own
 // data, pulled from the tags on the videos that are actually winning.
-function renderTrendEmbeds() {
+async function renderTrendEmbeds() {
   if (!_sigData || !_sigData.product) return;
   var product = _sigData.product;
   var geoEl = document.getElementById('sig-geo');
   var geo = geoEl ? geoEl.value : '';
 
-  var base = 'https://trends.google.com/trends/explore?q=' + encodeURIComponent(product)
-           + '&date=today%2012-m' + (geo ? '&geo=' + geo : '');
-
-  var t = document.getElementById('sig-tr-time');
-  var g = document.getElementById('sig-tr-geo');
-  var r = document.getElementById('sig-tr-rel');
-  if (t) t.href = base;
-  if (g) g.href = base;
-  if (r) r.href = base;
-
   var link = document.getElementById('sig-tr-link');
-  if (link) link.href = base;
+  if (link) {
+    link.href = 'https://trends.google.com/trends/explore?q=' + encodeURIComponent(product)
+      + '&date=today%2012-m' + (geo ? '&geo=' + geo : '');
+  }
 
   renderKeywords();
+  loadSearchInterest(product, geo);
+}
+
+async function loadSearchInterest(product, geo) {
+  var status = document.getElementById('sig-int-status');
+  var chart  = document.getElementById('sig-int-chart');
+  if (!status || !chart) return;
+
+  status.textContent = 'Loading search interest…';
+  chart.innerHTML = '';
+
+  try {
+    var r = await fetch(AP_WORKER + '/search-interest?q=' + encodeURIComponent(product)
+              + (geo ? '&geo=' + encodeURIComponent(geo) : ''));
+    var d = await r.json();
+
+    if (!d.available) {
+      // Hide the panel rather than show a broken box. The YouTube
+      // chart above is still real data, so the page stays useful.
+      status.innerHTML = '<span style="color:var(--text3);">' + escapeHtml(d.reason || 'Not available right now.') + '</span>';
+      return;
+    }
+
+    var pts = (d.data && d.data.points) || [];
+    if (!pts.length) { status.textContent = 'No search-interest data for that term.'; return; }
+
+    status.textContent = '';
+    chart.innerHTML = buildIntChart(pts);
+    wireIntChart(pts);
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--text3);">Search interest unavailable right now.</span>';
+  }
+}
+
+// Same visual language as the YouTube chart: single series, so the
+// title carries identity and no legend is needed.
+function buildIntChart(pts) {
+  var W = 720, H = 210, PL = 40, PR = 16, PT = 16, PB = 26;
+  var iw = W - PL - PR, ih = H - PT - PB;
+  var top = 100;                       // Trends is always 0-100
+  var step = pts.length > 1 ? iw / (pts.length - 1) : 0;
+
+  function X(i) { return PL + i * step; }
+  function Y(v) { return PT + ih - (v / top) * ih; }
+
+  var coords = pts.map(function (p, i) { return X(i) + ',' + Y(p.value); });
+  var area = 'M' + PL + ',' + (PT + ih) + ' L' + coords.join(' L') + ' L' + X(pts.length - 1) + ',' + (PT + ih) + ' Z';
+
+  var grid = '';
+  [0, 25, 50, 75, 100].forEach(function (gv) {
+    var gy = Y(gv);
+    grid += '<line x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy + '" stroke="#E2E6EA" stroke-width="1"/>'
+         +  '<text x="' + (PL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10.5" fill="#6B7280" font-family="Inter,sans-serif">' + gv + '</text>';
+  });
+
+  // Weekly data means ~52 points; label a handful, not all of them.
+  var everyN = Math.max(1, Math.ceil(pts.length / 6));
+  var xlab = '';
+  pts.forEach(function (p, i) {
+    if (i % everyN !== 0 && i !== pts.length - 1) return;
+    var short = String(p.label).split('–')[0].split('-')[0].trim().slice(0, 6);
+    xlab += '<text x="' + X(i) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="10.5" fill="#6B7280" font-family="Inter,sans-serif">' + short + '</text>';
+  });
+
+  var peak = pts.reduce(function (a, p, i) { return p.value > pts[a].value ? i : a; }, 0);
+
+  return '<svg id="sig-int-svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" ' +
+      'style="min-width:520px;height:auto;max-height:260px;display:block;" ' +
+      'role="img" aria-label="Google search interest for the last 12 months, 0 to 100">' +
+    '<defs><linearGradient id="intFill" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#EC4899" stop-opacity="0.18"/>' +
+      '<stop offset="100%" stop-color="#EC4899" stop-opacity="0.02"/>' +
+    '</linearGradient></defs>' +
+    grid + xlab +
+    '<path d="' + area + '" fill="url(#intFill)"/>' +
+    '<polyline points="' + coords.join(' ') + '" fill="none" stroke="#EC4899" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<circle cx="' + X(peak) + '" cy="' + Y(pts[peak].value) + '" r="4.5" fill="#EC4899" stroke="#FFFFFF" stroke-width="2"/>' +
+    '<line id="sig-int-cross" x1="0" y1="' + PT + '" x2="0" y2="' + (PT + ih) + '" stroke="#CDD2D8" stroke-width="1" stroke-dasharray="3 3" style="display:none;"/>' +
+    '<circle id="sig-int-dot" r="5" fill="#EC4899" stroke="#FFFFFF" stroke-width="2" style="display:none;"/>' +
+    '<rect id="sig-int-hit" x="' + PL + '" y="' + PT + '" width="' + iw + '" height="' + ih + '" fill="transparent" style="cursor:crosshair;"/>' +
+  '</svg>';
+}
+
+function wireIntChart(pts) {
+  var svg = document.getElementById('sig-int-svg');
+  var hit = document.getElementById('sig-int-hit');
+  if (!svg || !hit) return;
+  var cross = document.getElementById('sig-int-cross');
+  var dot   = document.getElementById('sig-int-dot');
+  var tip   = document.getElementById('sig-int-tip');
+  var wrap  = document.getElementById('sig-int-wrap');
+
+  var W = 720, H = 210, PL = 40, PR = 16, PT = 16, PB = 26;
+  var iw = W - PL - PR, ih = H - PT - PB;
+  var step = pts.length > 1 ? iw / (pts.length - 1) : 0;
+
+  function toUser(cx, cy) {
+    var m = svg.getScreenCTM(); if (!m) return null;
+    var p = svg.createSVGPoint(); p.x = cx; p.y = cy;
+    return p.matrixTransform(m.inverse());
+  }
+  function toScreen(ux, uy) {
+    var m = svg.getScreenCTM(); if (!m) return null;
+    var p = svg.createSVGPoint(); p.x = ux; p.y = uy;
+    return p.matrixTransform(m);
+  }
+
+  function show(e) {
+    var loc = toUser(e.clientX, e.clientY); if (!loc) return;
+    var i = step ? Math.round((loc.x - PL) / step) : 0;
+    if (i < 0) i = 0;
+    if (i > pts.length - 1) i = pts.length - 1;
+    var p = pts[i];
+    var cx = PL + i * step;
+    var cy = PT + ih - (p.value / 100) * ih;
+
+    cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.style.display = '';
+    dot.setAttribute('cx', cx);   dot.setAttribute('cy', cy);   dot.style.display = '';
+
+    tip.innerHTML = '<strong>' + escapeHtml(p.label) + '</strong><br>Interest: ' + p.value + ' / 100';
+    tip.style.display = 'block';
+
+    var scr = toScreen(cx, cy); if (!scr) return;
+    var wb = wrap.getBoundingClientRect();
+    var px = scr.x - wb.left, py = scr.y - wb.top;
+    var tx = px + 14;
+    if (tx + tip.offsetWidth > wb.width) tx = px - tip.offsetWidth - 14;
+    if (tx < 0) tx = 0;
+    var ty = py - tip.offsetHeight - 12;
+    if (ty < 0) ty = py + 14;
+    tip.style.left = tx + 'px';
+    tip.style.top  = ty + 'px';
+  }
+  function hide() { cross.style.display = 'none'; dot.style.display = 'none'; tip.style.display = 'none'; }
+
+  hit.addEventListener('mousemove', show);
+  hit.addEventListener('mouseleave', hide);
+  hit.addEventListener('touchmove', function (e) { if (e.touches[0]) show(e.touches[0]); });
+  hit.addEventListener('touchend', hide);
 }
 
 function renderKeywords() {
