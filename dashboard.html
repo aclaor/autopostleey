@@ -1221,6 +1221,47 @@
           <div id="sig-table" style="display:none;margin-top:12px;overflow-x:auto;"></div>
         </div>
 
+        <!-- Google Trends embeds -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:2px;">
+            <h3 style="font-size:15px;font-weight:800;margin:0;">Google search interest</h3>
+            <select id="sig-geo" onchange="renderTrendEmbeds()"
+                    style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12.5px;outline:none;cursor:pointer;">
+              <option value="">🌍 Worldwide</option>
+              <option value="US">🇺🇸 United States</option>
+              <option value="PH">🇵🇭 Philippines</option>
+              <option value="GB">🇬🇧 United Kingdom</option>
+              <option value="CA">🇨🇦 Canada</option>
+              <option value="AU">🇦🇺 Australia</option>
+              <option value="IN">🇮🇳 India</option>
+              <option value="SG">🇸🇬 Singapore</option>
+              <option value="DE">🇩🇪 Germany</option>
+              <option value="BR">🇧🇷 Brazil</option>
+            </select>
+          </div>
+          <p style="color:var(--text3);font-size:12px;margin:0 0 14px;">
+            How many people are <strong>searching</strong> for this — not how many are buying. Live from Google Trends.
+          </p>
+
+          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">Interest over the last 12 months</div>
+          <div id="sig-tr-time" style="min-height:340px;margin-bottom:20px;"></div>
+
+          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">Where that interest is strongest</div>
+          <p style="color:var(--text3);font-size:11.5px;margin:0 0 8px;">Useful for deciding where to focus ads or delivery.</p>
+          <div id="sig-tr-geo" style="min-height:340px;margin-bottom:20px;"></div>
+
+          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">What people search alongside it</div>
+          <p style="color:var(--text3);font-size:11.5px;margin:0 0 8px;">Each of these is a post idea or a hashtag worth trying.</p>
+          <div id="sig-tr-rel" style="min-height:340px;"></div>
+
+          <div style="margin-top:12px;">
+            <a id="sig-tr-link" href="#" target="_blank" rel="noopener noreferrer"
+               style="color:var(--accent);font-size:12.5px;font-weight:700;text-decoration:none;">
+              Open full report on Google Trends →
+            </a>
+          </div>
+        </div>
+
         <!-- top videos -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;">
           <h3 style="font-size:15px;font-weight:800;margin:0 0 12px;">What's getting watched right now</h3>
@@ -15566,12 +15607,54 @@ function renderSignals(d) {
       '</div></a>';
   }).join('') || '<div style="color:var(--text3);font-size:13px;">No videos found for that term.</div>';
 
+  // ── Google Trends embeds ──
+  renderTrendEmbeds();
+
   // ── honest gaps ──
   var gaps = d.unavailable || {};
   document.getElementById('sig-gaps').innerHTML =
-    '<li><strong>Search volume graph</strong> — ' + escapeHtml(gaps.search_volume || '') + '</li>' +
+    '<li><strong>Exact search numbers</strong> — the Google Trends charts above show relative interest (0-100), not a count of searches. Exact volumes need the Google Trends API.</li>' +
     '<li><strong>Amazon / AliExpress sales</strong> — ' + escapeHtml(gaps.marketplace_sales || '') + '</li>' +
     '<li><strong>Where your sales come from</strong> — we\'d need to connect your store (Shopify, Stripe) to show real order locations.</li>';
+}
+
+// ── Google Trends embeds ──────────────────────────────────────────
+// Google's embed_loader.js is version-pinned (they rotate the URL), and
+// all it does is build an iframe. We build the same iframe directly:
+// no third-party script in the dashboard, nothing to break on rotation.
+function trendEmbedUrl(widget, product, geo) {
+  var req = {
+    comparisonItem: [{ keyword: product, geo: geo || '', time: 'today 12-m' }],
+    category: 0,
+    property: ''
+  };
+  var eq = 'q=' + encodeURIComponent(product) + '&date=today 12-m' + (geo ? '&geo=' + geo : '');
+  return 'https://trends.google.com/trends/embed/explore/' + widget
+    + '?req=' + encodeURIComponent(JSON.stringify(req))
+    + '&tz=' + new Date().getTimezoneOffset()
+    + '&eq=' + encodeURIComponent(eq);
+}
+
+function renderTrendEmbeds() {
+  if (!_sigData || !_sigData.product) return;
+  var product = _sigData.product;
+  var geoEl = document.getElementById('sig-geo');
+  var geo = geoEl ? geoEl.value : '';
+
+  [['sig-tr-time', 'TIMESERIES'], ['sig-tr-geo', 'GEO_MAP'], ['sig-tr-rel', 'RELATED_QUERIES']]
+    .forEach(function (pair) {
+      var el = document.getElementById(pair[0]);
+      if (!el) return;
+      el.innerHTML = '<iframe src="' + escapeHtml(trendEmbedUrl(pair[1], product, geo)) + '" '
+        + 'style="width:100%;height:340px;border:0;display:block;" loading="lazy" '
+        + 'title="Google Trends: ' + escapeHtml(product) + '"></iframe>';
+    });
+
+  var link = document.getElementById('sig-tr-link');
+  if (link) {
+    link.href = 'https://trends.google.com/trends/explore?q=' + encodeURIComponent(product)
+      + '&date=today 12-m' + (geo ? '&geo=' + geo : '');
+  }
 }
 
 function toggleSigTable() {
