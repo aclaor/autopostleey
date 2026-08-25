@@ -1224,7 +1224,7 @@
         <!-- Google Trends embeds -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:2px;">
-            <h3 style="font-size:15px;font-weight:800;margin:0;">Google search interest</h3>
+            <h3 style="font-size:15px;font-weight:800;margin:0;">Search & keyword intelligence</h3>
             <select id="sig-geo" onchange="renderTrendEmbeds()"
                     style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12.5px;outline:none;cursor:pointer;">
               <option value="">🌍 Worldwide</option>
@@ -1240,19 +1240,34 @@
             </select>
           </div>
           <p style="color:var(--text3);font-size:12px;margin:0 0 14px;">
-            How many people are <strong>searching</strong> for this — not how many are buying. Live from Google Trends.
+            Keywords below come from YouTube. The Google Trends reports open in a new tab. Both show <strong>interest</strong> — not sales.
           </p>
 
-          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">Interest over the last 12 months</div>
-          <div id="sig-tr-time" style="min-height:340px;margin-bottom:20px;"></div>
+          <div id="sig-keywords-wrap" style="margin-bottom:20px;"></div>
 
-          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">Where that interest is strongest</div>
-          <p style="color:var(--text3);font-size:11.5px;margin:0 0 8px;">Useful for deciding where to focus ads or delivery.</p>
-          <div id="sig-tr-geo" style="min-height:340px;margin-bottom:20px;"></div>
-
-          <div style="margin-bottom:8px;font-size:12.5px;font-weight:700;color:var(--text2);">What people search alongside it</div>
-          <p style="color:var(--text3);font-size:11.5px;margin:0 0 8px;">Each of these is a post idea or a hashtag worth trying.</p>
-          <div id="sig-tr-rel" style="min-height:340px;"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+            <a id="sig-tr-time" href="#" target="_blank" rel="noopener noreferrer"
+               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
+              <div style="font-size:22px;margin-bottom:8px;">📈</div>
+              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Interest over 12 months</div>
+              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">Is demand for this rising or falling?</div>
+              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
+            </a>
+            <a id="sig-tr-geo" href="#" target="_blank" rel="noopener noreferrer"
+               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
+              <div style="font-size:22px;margin-bottom:8px;">🗺️</div>
+              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Where interest is strongest</div>
+              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">Which regions to focus ads or delivery on.</div>
+              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
+            </a>
+            <a id="sig-tr-rel" href="#" target="_blank" rel="noopener noreferrer"
+               style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;display:block;">
+              <div style="font-size:22px;margin-bottom:8px;">🔎</div>
+              <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">Rising related searches</div>
+              <div style="color:var(--text3);font-size:11.5px;line-height:1.5;margin-bottom:10px;">What else people look for around this.</div>
+              <span style="color:var(--accent);font-size:12px;font-weight:700;">Open on Google Trends →</span>
+            </a>
+          </div>
 
           <div style="margin-top:12px;">
             <a id="sig-tr-link" href="#" target="_blank" rel="noopener noreferrer"
@@ -15607,54 +15622,106 @@ function renderSignals(d) {
       '</div></a>';
   }).join('') || '<div style="color:var(--text3);font-size:13px;">No videos found for that term.</div>';
 
-  // ── Google Trends embeds ──
+  // ── Google Trends links + keyword chips ──
   renderTrendEmbeds();
 
   // ── honest gaps ──
   var gaps = d.unavailable || {};
   document.getElementById('sig-gaps').innerHTML =
-    '<li><strong>Exact search numbers</strong> — the Google Trends charts above show relative interest (0-100), not a count of searches. Exact volumes need the Google Trends API.</li>' +
+    '<li><strong>Exact search numbers</strong> — Google Trends shows relative interest (0-100), not a count of searches. Exact volumes need the Google Trends API.</li>' +
     '<li><strong>Amazon / AliExpress sales</strong> — ' + escapeHtml(gaps.marketplace_sales || '') + '</li>' +
     '<li><strong>Where your sales come from</strong> — we\'d need to connect your store (Shopify, Stripe) to show real order locations.</li>';
 }
 
-// ── Google Trends embeds ──────────────────────────────────────────
-// Google's embed_loader.js is version-pinned (they rotate the URL), and
-// all it does is build an iframe. We build the same iframe directly:
-// no third-party script in the dashboard, nothing to break on rotation.
-function trendEmbedUrl(widget, product, geo) {
-  var req = {
-    comparisonItem: [{ keyword: product, geo: geo || '', time: 'today 12-m' }],
-    category: 0,
-    property: ''
-  };
-  var eq = 'q=' + encodeURIComponent(product) + '&date=today 12-m' + (geo ? '&geo=' + geo : '');
-  return 'https://trends.google.com/trends/embed/explore/' + widget
-    + '?req=' + encodeURIComponent(JSON.stringify(req))
-    + '&tz=' + new Date().getTimezoneOffset()
-    + '&eq=' + encodeURIComponent(eq);
-}
-
+// ── Google Trends links + real keywords ───────────────────────────
+// The iframe embed didn't render reliably (Google rate-limits and
+// restricts framing), so these open the real report in a new tab
+// instead of showing an empty box. The keyword list below is our own
+// data, pulled from the tags on the videos that are actually winning.
 function renderTrendEmbeds() {
   if (!_sigData || !_sigData.product) return;
   var product = _sigData.product;
   var geoEl = document.getElementById('sig-geo');
   var geo = geoEl ? geoEl.value : '';
 
-  [['sig-tr-time', 'TIMESERIES'], ['sig-tr-geo', 'GEO_MAP'], ['sig-tr-rel', 'RELATED_QUERIES']]
-    .forEach(function (pair) {
-      var el = document.getElementById(pair[0]);
-      if (!el) return;
-      el.innerHTML = '<iframe src="' + escapeHtml(trendEmbedUrl(pair[1], product, geo)) + '" '
-        + 'style="width:100%;height:340px;border:0;display:block;" loading="lazy" '
-        + 'title="Google Trends: ' + escapeHtml(product) + '"></iframe>';
-    });
+  var base = 'https://trends.google.com/trends/explore?q=' + encodeURIComponent(product)
+           + '&date=today%2012-m' + (geo ? '&geo=' + geo : '');
+
+  var t = document.getElementById('sig-tr-time');
+  var g = document.getElementById('sig-tr-geo');
+  var r = document.getElementById('sig-tr-rel');
+  if (t) t.href = base;
+  if (g) g.href = base;
+  if (r) r.href = base;
 
   var link = document.getElementById('sig-tr-link');
-  if (link) {
-    link.href = 'https://trends.google.com/trends/explore?q=' + encodeURIComponent(product)
-      + '&date=today 12-m' + (geo ? '&geo=' + geo : '');
+  if (link) link.href = base;
+
+  renderKeywords();
+}
+
+function renderKeywords() {
+  var wrap = document.getElementById('sig-keywords-wrap');
+  if (!wrap) return;
+  var kws = (_sigData && _sigData.youtube && _sigData.youtube.keywords) || [];
+
+  if (!kws.length) {
+    wrap.innerHTML = '<div style="color:var(--text3);font-size:12.5px;">'
+      + 'No shared keywords found on the top videos for this product.</div>';
+    return;
   }
+
+  wrap.innerHTML =
+    '<div style="font-size:12.5px;font-weight:700;color:var(--text2);margin-bottom:4px;">'
+      + 'Keywords the winning videos are using</div>'
+    + '<p style="color:var(--text3);font-size:11.5px;margin:0 0 10px;">'
+      + 'Taken from the tags on the most-watched videos about this product. '
+      + 'Click one to analyze it, or copy them all as hashtags.</p>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">'
+    + kws.map(function (k) {
+        var safe = escapeHtml(k.term);
+        return '<button onclick="analyzeKeyword(' + JSON.stringify(k.term).replace(/"/g, '&quot;') + ')" '
+          + 'title="Used by ' + k.count + ' of the top videos" '
+          + 'style="background:rgba(109,94,248,.09);border:1px solid var(--border);border-radius:20px;'
+          + 'padding:5px 12px;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">'
+          + safe + ' <span style="color:var(--text3);font-size:10.5px;">' + k.count + '</span></button>';
+      }).join('')
+    + '</div>'
+    + '<button onclick="copyHashtags()" '
+      + 'style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;'
+      + 'padding:8px 14px;color:var(--text2);font-size:12.5px;font-weight:700;cursor:pointer;">'
+      + '📋 Copy top 10 as hashtags</button>';
+}
+
+function analyzeKeyword(term) {
+  var input = document.getElementById('sig-product');
+  if (input) { input.value = term; runSignals(); }
+}
+
+function copyHashtags() {
+  var kws = (_sigData && _sigData.youtube && _sigData.youtube.keywords) || [];
+  var tags = kws.slice(0, 10).map(function (k) {
+    return '#' + k.term.replace(/[^a-z0-9]+/gi, '');
+  }).filter(function (t) { return t.length > 2; }).join(' ');
+  if (!tags) return;
+
+  function done() { if (typeof showToast === 'function') showToast('Hashtags copied', 'success'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(tags).then(done, function () { fallbackCopy(tags, done); });
+  } else {
+    fallbackCopy(tags, done);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); cb(); } catch (e) {}
+  document.body.removeChild(ta);
 }
 
 function toggleSigTable() {
