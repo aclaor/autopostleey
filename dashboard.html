@@ -590,6 +590,11 @@
         <span data-i18n="nav_signals">Market Signals</span>
         <span style="margin-left:auto;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
       </a>
+      <a class="nav-item" onclick="showPage('adscout');closeAPSidebar();return false;" href="#">
+        <span style="font-size:16px;">🕵️</span>
+        <span data-i18n="nav_adscout">Ads Scout</span>
+        <span style="margin-left:auto;background:linear-gradient(135deg,#EA580C,#EC4899);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
+      </a>
       <a class="nav-item" onclick="showPage('scheduled');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📅</span> <span data-i18n="nav_scheduled">Scheduled</span>
       </a>
@@ -1323,6 +1328,39 @@
           <ul id="sig-gaps" style="margin:0;padding-left:18px;color:var(--text3);font-size:12.5px;line-height:1.7;"></ul>
         </div>
       </div>
+    </div>
+
+    <div class="page" id="page-adscout">
+      <div style="margin-bottom:18px;">
+        <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">Ads Scout 🕵️</h1>
+        <p style="color:var(--text2);font-size:14px;margin:0;max-width:660px;">
+          See the ads your customer is competing against right now, and turn what's working into a post of their own.
+        </p>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+        <input class="form-input" id="as-q" placeholder="e.g. graphic t shirt"
+               onkeydown="if(event.key==='Enter')runAdsScout()"
+               style="flex:1;min-width:200px;max-width:340px;">
+        <select id="as-country" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px;color:var(--text);font-size:13px;outline:none;cursor:pointer;">
+          <option value="PH">🇵🇭 Philippines</option>
+          <option value="US">🇺🇸 United States</option>
+          <option value="SG">🇸🇬 Singapore</option>
+          <option value="MY">🇲🇾 Malaysia</option>
+          <option value="ID">🇮🇩 Indonesia</option>
+          <option value="AU">🇦🇺 Australia</option>
+          <option value="GB">🇬🇧 United Kingdom</option>
+          <option value="CA">🇨🇦 Canada</option>
+          <option value="IN">🇮🇳 India</option>
+        </select>
+        <button onclick="runAdsScout()" id="as-btn"
+                style="background:linear-gradient(135deg,#EA580C,#EC4899);color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;">
+          Find ads
+        </button>
+      </div>
+
+      <div id="as-status" style="color:var(--text2);font-size:13px;margin-bottom:14px;"></div>
+      <div id="as-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;"></div>
     </div>
 
     <div class="page" id="page-scheduled">
@@ -5501,6 +5539,7 @@ function showPage(name) {
   var main = document.querySelector('.main');
   if(main) main.scrollTop = 0;
   if (name === 'discover' && !_trendLoaded) { _trendLoaded = true; loadTrending(false); }
+  if (name === 'adscout') { var _aq = document.getElementById('as-q'); if (_aq && !_aq.value && _bizProfile && _bizProfile.name) _aq.placeholder = 'e.g. what ' + _bizProfile.name + ' sells'; }
   if (name === 'signals' && !_sigLoaded) { _sigLoaded = true; autoDetectProduct(); }
   if(name === 'autoposter' && typeof loadAutoConfig === 'function' && !_autoConfigLoaded) { loadAutoConfig(); _autoConfigLoaded = true; }
   if(name === 'videoad' && typeof initVideoAdPage === 'function') {
@@ -15981,6 +16020,130 @@ function fallbackCopy(text, cb) {
   ta.select();
   try { document.execCommand('copy'); cb(); } catch (e) {}
   document.body.removeChild(ta);
+}
+
+// ── Ads Scout ─────────────────────────────────────────────────────
+var _adsData = null;
+
+async function runAdsScout() {
+  var q = (document.getElementById('as-q').value || '').trim();
+  if (!q) { if (typeof showToast === 'function') showToast('Type a product first', 'error'); return; }
+  var country = document.getElementById('as-country').value || 'PH';
+
+  var status = document.getElementById('as-status');
+  var grid   = document.getElementById('as-grid');
+  var btn    = document.getElementById('as-btn');
+
+  btn.disabled = true;
+  grid.innerHTML = '';
+  status.textContent = 'Looking through the Meta Ad Library for "' + q + '"… this takes a few seconds.';
+
+  try {
+    var r = await fetch(AP_WORKER + '/ads-scout?q=' + encodeURIComponent(q) + '&country=' + encodeURIComponent(country));
+    var d = await r.json();
+
+    if (!d.available) {
+      status.innerHTML = '<span style="color:var(--text3);">' + escapeHtml(d.reason || 'Not available.') + '</span>';
+      return;
+    }
+    if (!d.ads || !d.ads.length) {
+      status.innerHTML = '<span style="color:var(--text3);">' + escapeHtml(d.note || 'No ads found.') + '</span>';
+      return;
+    }
+
+    _adsData = d;
+    status.innerHTML = '<strong>' + d.ads.length + '</strong> active ads found in ' + escapeHtml(d.country)
+      + ' · <span style="color:var(--text3);">read from Meta\'s public Ad Library</span>';
+    renderAds(d.ads);
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--text3);">Couldn\'t reach the Ad Library right now.</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderAds(ads) {
+  var grid = document.getElementById('as-grid');
+  grid.innerHTML = ads.map(function (a, i) {
+    var text = a.ad_text || '';
+    var short = text.length > 260 ? text.slice(0, 260) + '…' : text;
+
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+        + '<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#EA580C,#EC4899);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">'
+          + escapeHtml((a.advertiser || '?').slice(0, 1).toUpperCase()) + '</div>'
+        + '<div style="min-width:0;">'
+          + '<div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(a.advertiser) + '</div>'
+          + (a.started ? '<div style="color:var(--text3);font-size:10.5px;">' + escapeHtml(a.started) + '</div>' : '')
+        + '</div>'
+      + '</div>'
+      + (short ? '<p style="font-size:12.5px;line-height:1.55;color:var(--text2);margin:0 0 12px;white-space:pre-wrap;">' + escapeHtml(short) + '</p>' : '<div style="flex:1;"></div>')
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'
+        + (a.cta ? '<span style="background:rgba(234,88,12,.1);color:#EA580C;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;">' + escapeHtml(a.cta) + '</span>' : '')
+        + (a.platforms ? '<span style="background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;">' + escapeHtml(a.platforms) + '</span>' : '')
+      + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:auto;align-items:center;">'
+        + '<button onclick="writeMyVersion(' + i + ')" '
+          + 'style="flex:1;padding:10px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">'
+          + '✍️ Write my own version</button>'
+        // Provenance: lets anyone confirm this ad is real, on Meta's own site.
+        + (a.library_id
+            ? '<a href="https://www.facebook.com/ads/library/?id=' + encodeURIComponent(a.library_id) + '" target="_blank" rel="noopener noreferrer" '
+              + 'title="Verify this ad on Meta" style="color:var(--text3);font-size:10.5px;text-decoration:none;flex-shrink:0;">verify ↗</a>'
+            : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+async function writeMyVersion(i) {
+  var ad = _adsData && _adsData.ads[i];
+  if (!ad) return;
+
+  if (!_bizProfile || !_bizProfile.name) {
+    if (typeof showToast === 'function') showToast('Set up your business profile first', 'error');
+    showPage('business');
+    return;
+  }
+
+  showPage('compose');
+  var contentEl = document.getElementById('post-content');
+  if (contentEl) { contentEl.value = 'Writing your version…'; contentEl.dispatchEvent(new Event('input')); }
+
+  // Deliberately asks for the ANGLE, not the words. Copying a
+  // competitor's ad copy is both plagiarism and a legal risk for the
+  // customer, so the prompt forbids reusing their phrasing.
+  var prompt = [
+    'You are the social media manager for ' + (_bizProfile.name || 'this business')
+      + (_bizProfile.description ? ' — ' + _bizProfile.description : '') + '.',
+    'A competitor is running this ad: "' + String(ad.ad_text || '').slice(0, 400) + '"',
+    'Identify the ANGLE it uses (the benefit, offer, emotion or objection it targets).',
+    'Then write a COMPLETELY ORIGINAL post for our business using that same angle.',
+    'STRICT RULES:',
+    '1. Do NOT reuse their sentences, slogans, or distinctive phrases. Write fresh copy.',
+    '2. Never mention the competitor or their brand name.',
+    '3. Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
+    '4. First person as the business owner. Tone: ' + (_bizProfile.tone || 'friendly') + '.',
+    '5. End with 2-3 relevant hashtags.',
+  ].join(' ');
+
+  try {
+    var res = await fetch(AP_WORKER + '/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt }),
+    });
+    var data = await res.json();
+    if (contentEl) {
+      contentEl.value = data.post || '';
+      contentEl.dispatchEvent(new Event('input'));
+    }
+    if (!data.post) throw new Error('empty');
+    if (typeof showToast === 'function') showToast('Your own version is ready — review it before posting ✨', 'success');
+  } catch (e) {
+    if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
+    if (typeof showToast === 'function') showToast('Couldn\'t write that one — try again', 'error');
+  }
 }
 
 function toggleSigTable() {
