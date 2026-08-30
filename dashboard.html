@@ -1937,7 +1937,6 @@
           </div>
 
         </div>
-        </div>
 
       </div>
     </div>
@@ -15605,12 +15604,20 @@ function fmtMonth(key) {
 }
 
 async function autoDetectProduct() {
+  var chips = document.getElementById('sig-chips');
+  // Clicking a nav item should never throw you onto a different page.
+  // Explain what's missing, in place, with a way to go fix it.
   if (!_bizProfile || !_bizProfile.name) {
-    if (typeof showToast === 'function') showToast('Set up your business profile first', 'error');
-    showPage('business');
+    if (chips) {
+      chips.innerHTML = '<span style="color:var(--text3);font-size:12px;">'
+        + 'Set up your business profile and I can detect your products automatically — '
+        + 'or just type a product above. </span>'
+        + '<button onclick="showPage(\'business\')" style="background:rgba(109,94,248,.1);border:1px solid var(--accent);'
+        + 'border-radius:20px;padding:4px 11px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">'
+        + 'Set up profile</button>';
+    }
     return;
   }
-  var chips = document.getElementById('sig-chips');
   chips.innerHTML = '<span style="color:var(--text3);font-size:12px;">Reading your profile…</span>';
   try {
     var r = await fetch(AP_WORKER + '/detect-product', {
@@ -16159,7 +16166,7 @@ async function writeMyVersion(i) {
   if (!ad) return;
 
   if (!_bizProfile || !_bizProfile.name) {
-    if (typeof showToast === 'function') showToast('Set up your business profile first', 'error');
+    if (typeof showToast === 'function') showToast('Set up your business profile first, so posts sound like you', 'error');
     showPage('business');
     return;
   }
@@ -16167,6 +16174,7 @@ async function writeMyVersion(i) {
   showPage('compose');
   var contentEl = document.getElementById('post-content');
   if (contentEl) { contentEl.value = 'Writing your version…'; contentEl.dispatchEvent(new Event('input')); }
+
 
   // Deliberately asks for the ANGLE, not the words. Copying a
   // competitor's ad copy is both plagiarism and a legal risk for the
