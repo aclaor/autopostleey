@@ -651,9 +651,10 @@
     <div class="sidebar-footer">
       <div class="plan-badge">
         <div class="plan-badge-name" id="sidebar-plan">FREE PLAN</div>
-        <div class="plan-badge-desc" id="sidebar-plan-desc">10 posts/month</div>
+        <div class="plan-badge-desc" id="sidebar-plan-desc">60 posts/month · with ads</div>
       </div>
-      <a href="#" onclick="showPage('billing');return false;" class="upgrade-btn" data-i18n="nav_upgrade">Upgrade Plan ⚡</a>
+      <a href="#" onclick="showPage('billing');return false;" class="upgrade-btn" id="sidebar-upgrade" data-i18n="nav_upgrade">Go Pro — remove ads ⚡</a>
+      <div class="ap-ad-slot" style="margin-top:12px;"></div>
     </div>
   </aside>
 
@@ -662,6 +663,7 @@
 
     <!-- ── OVERVIEW ───────────────── -->
     <div class="page active" id="page-overview">
+      <div class="ap-ad-slot" style="margin-bottom:16px;"></div>
       <div class="page-header">
         <div>
           <div class="page-title" data-i18n="ov_title">Good morning! 👋</div>
@@ -1879,7 +1881,7 @@
             <div>
               <div style="font-size:11px;color:#a855f7;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Current Plan</div>
               <div style="font-size:20px;font-weight:800;color:var(--text);" id="billing-plan-name">Free Plan</div>
-              <div style="font-size:13px;color:var(--text2);margin-top:2px;" id="billing-plan-desc">30 posts/month · All platforms</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:2px;" id="billing-plan-desc">60 posts/month · All platforms · with ads</div>
             </div>
           </div>
           <div style="text-align:right;">
@@ -1897,66 +1899,44 @@
         </div>
 
         <!-- Plan Cards -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:28px;">
 
-          <!-- Starter -->
-          <div onclick="selectBillingPlan('starter')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#a855f7';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
-            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🌱 Starter</div>
-            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$9<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Perfect to get started</div>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 500 posts/month</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All features included</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> AI AutoPoster</div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;">
+            <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Free</div>
+            <div style="font-size:34px;font-weight:900;line-height:1;">$0<span style="font-size:13px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="color:var(--text3);font-size:12px;margin:6px 0 16px;">Free forever, supported by ads</div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> 60 posts per month</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> AI caption writer</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> Discover, Market Signals &amp; Ads Scout</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text3);"><span style="color:var(--text3);">•</span> Shows ads</div>
             </div>
-            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">Get Started →</button>
+            <button disabled id="billing-free-btn"
+                    style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text3);font-size:13px;font-weight:700;cursor:default;">
+              Your current plan
+            </button>
           </div>
 
-          <!-- Growth — POPULAR -->
-          <div onclick="selectBillingPlan('growth')" style="background:linear-gradient(160deg,#1e0a3c,#2d1065);border:2px solid #a855f7;border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;box-shadow:0 8px 32px rgba(168,85,247,0.2);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 48px rgba(168,85,247,0.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(168,85,247,0.2)'">
-            <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:10px;font-weight:700;padding:4px 14px;border-radius:20px;white-space:nowrap;letter-spacing:0.5px;">⚡ MOST POPULAR</div>
-            <div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:12px;">🚀 Growth</div>
-            <div style="font-size:32px;font-weight:900;color:#fff;line-height:1;margin-bottom:4px;">$19<span style="font-size:14px;font-weight:400;color:#c084fc;">/mo</span></div>
-            <div style="font-size:12px;color:#9d78d4;margin-bottom:16px;">Best for growing businesses</div>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> AI AutoPoster</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Reels & Shorts creator</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e9d5ff;"><span style="color:#22c55e;font-size:14px;">✓</span> Priority support</div>
+          <div style="background:var(--bg2);border:2px solid var(--accent);border-radius:14px;padding:22px;position:relative;">
+            <div style="position:absolute;top:-11px;left:22px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;font-size:10px;font-weight:800;letter-spacing:.5px;padding:4px 12px;border-radius:20px;">RECOMMENDED</div>
+            <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Pro</div>
+            <div style="font-size:34px;font-weight:900;line-height:1;">$99<span style="font-size:13px;font-weight:400;color:var(--text2);">/mo</span></div>
+            <div style="color:var(--text3);font-size:12px;margin:6px 0 16px;">Everything, with no ads</div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> <strong>Unlimited posts</strong></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> <strong>No ads, anywhere</strong></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> All 13 platforms</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> AI AutoPoster &amp; Reels</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);"><span style="color:#059669;">✓</span> Priority support</div>
             </div>
-            <button style="width:100%;padding:10px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(168,85,247,0.4);">Upgrade Now ⚡</button>
-          </div>
-
-          <!-- Agency -->
-          <div onclick="selectBillingPlan('agency')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .2s;position:relative;" onmouseover="this.style.borderColor='#f59e0b';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
-            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;">🏢 Agency</div>
-            <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;">$49<span style="font-size:14px;font-weight:400;color:var(--text2);">/mo</span></div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">For teams & agencies</div>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Unlimited posts</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> All 13 platforms</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> 5 businesses</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Team members</div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;font-size:14px;">✓</span> Dedicated support</div>
-            </div>
-            <button style="width:100%;padding:10px;background:var(--bg3);border:1.5px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:13px;font-weight:600;cursor:pointer;">Contact Sales →</button>
+            <button onclick="selectBillingPlan('pro')" id="billing-pro-btn"
+                    style="width:100%;padding:11px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;">
+              Upgrade to Pro
+            </button>
           </div>
 
         </div>
-
-        <!-- Free plan details -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🎁 Your Free Plan includes:</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> 30 posts/month</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> All platforms</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> AI caption generation</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Bulk scheduler</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);"><span style="color:#22c55e;">✓</span> Content types</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);"><span style="color:#6b7280;">✗</span> AI AutoPoster</div>
-          </div>
         </div>
 
       </div>
@@ -5770,7 +5750,7 @@ function setBestTime() {
 async function generateAIPost() {
   var limits = getPlanLimit();
   if(!limits.autoposter) {
-    showUpgradeModal('The AI AutoPoster is available on Growth ($19/mo) and Agency ($49/mo) plans. Upgrade to automate your posting!');
+    showUpgradeModal('The AI AutoPoster is available on the Pro plan ($99/mo). Upgrade to automate your posting!');
     return;
   }
   if(!_bizProfile || !_bizProfile.name) {
@@ -5821,12 +5801,52 @@ async function generateAIPost() {
 
 
 // ── PLAN LIMITS ───────────────────────────────────────────
+// Two plans. The old tier names stay mapped to pro so anyone who
+// already paid keeps their access instead of silently dropping to free.
 var PLAN_LIMITS = {
-  free:    { posts: 60,       platforms: 999, autoposter: true, bulk: true, reels: true },
-  starter: { posts: 500,      platforms: 999, autoposter: true,  bulk: true,  reels: true  },
-  growth:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true },
-  agency:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true }
+  free: { posts: 60,       platforms: 999, autoposter: true, bulk: true, reels: true, ads: true  },
+  pro:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true, ads: false },
+  // legacy
+  starter: { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true, ads: false },
+  growth:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true, ads: false },
+  agency:  { posts: Infinity, platforms: 999, autoposter: true, bulk: true, reels: true, ads: false }
 };
+
+var PLAN_NAMES = { free: 'FREE PLAN', pro: 'PRO PLAN', starter: 'PRO PLAN', growth: 'PRO PLAN', agency: 'PRO PLAN' };
+var PLAN_DESCS = { free: '60 posts/month', pro: 'Unlimited · ad-free', starter: 'Unlimited · ad-free', growth: 'Unlimited · ad-free', agency: 'Unlimited · ad-free' };
+
+function isFreePlan() { return (getPlanLimit() || {}).ads === true; }
+
+// Ad slots. Empty containers on purpose — drop your ad network's snippet
+// (AdSense, a direct advertiser's creative, whatever) into AD_SLOT_HTML
+// and it appears for free users only. Pro users never render these at
+// all, so "no ads" is true rather than just hidden with CSS.
+var AD_SLOT_HTML = '';   // <-- paste your ad code here
+
+function renderAdSlot(el) {
+  if (!el) return;
+  if (!AD_SLOT_HTML) {
+    el.innerHTML = '<div style="border:1px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;color:var(--text3);font-size:11.5px;background:var(--bg3);">'
+      + 'Ad space — available to advertisers</div>';
+  } else {
+    el.innerHTML = AD_SLOT_HTML;
+  }
+}
+
+function applyPlanAds() {
+  var free = isFreePlan();
+  var slots = document.querySelectorAll('.ap-ad-slot');
+  for (var i = 0; i < slots.length; i++) {
+    if (free) {
+      slots[i].style.display = '';
+      renderAdSlot(slots[i]);
+    } else {
+      // Remove the markup entirely for paying users.
+      slots[i].style.display = 'none';
+      slots[i].innerHTML = '';
+    }
+  }
+}
 
 function getUserPlan() {
   return (_user && _user.user_metadata && _user.user_metadata.plan) || "free";
@@ -5856,10 +5876,8 @@ function showUpgradeModal(reason) {
   if (existing) existing.remove();
   var plan = getUserPlan();
   var msg = reason || "You have reached your plan limit.";
-  var nextPlan = plan === "free" ? "Starter ($9/mo)" : "Growth ($19/mo)";
-  var nextFeatures = plan === "free"
-    ? "✓ 200 posts/month<br>✓ 3 platforms<br>✓ AI captions"
-    : "✓ Unlimited posts<br>✓ All 13 platforms<br>✓ AI AutoPoster<br>✓ Reels & Shorts";
+  var nextPlan = "Pro ($99/mo)";
+  var nextFeatures = "✓ Unlimited posts<br>✓ No ads<br>✓ All 13 platforms<br>✓ AI AutoPoster<br>✓ Reels &amp; Shorts";
 
   var overlay = document.createElement("div");
   overlay.id = "upgrade-overlay";
@@ -7465,9 +7483,11 @@ var _selectedPlan = 'free';
 function selectBillingPlan(plan) {
   _selectedPlan = plan;
   var plans = {
-    starter: { name: 'Starter Plan', price: '9.00',  desc: 'Autopostleey Starter - Monthly' },
-    growth:  { name: 'Growth Plan',  price: '19.00', desc: 'Autopostleey Growth - Monthly'  },
-    agency:  { name: 'Agency Plan',  price: '49.00', desc: 'Autopostleey Agency - Monthly'  },
+    pro: { name: 'Pro Plan', price: '99.00', desc: 'Autopostleey Pro - Monthly' },
+    // legacy links / old emails still resolve
+    starter: { name: 'Pro Plan', price: '99.00', desc: 'Autopostleey Pro - Monthly' },
+    growth:  { name: 'Pro Plan', price: '99.00', desc: 'Autopostleey Pro - Monthly' },
+    agency:  { name: 'Pro Plan', price: '99.00', desc: 'Autopostleey Pro - Monthly' },
   };
   var p = plans[plan];
   if(!p) return;
@@ -7551,12 +7571,16 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 function updatePlanUI(plan) {
-  var limits = { free: '30 posts/month', starter: '200 posts/month', growth: 'Unlimited posts', agency: 'Unlimited posts' };
-  var names  = { free: 'FREE PLAN', starter: 'STARTER PLAN', growth: 'GROWTH PLAN', agency: 'AGENCY PLAN' };
+  var limits = PLAN_DESCS;
+  var names  = PLAN_NAMES;
+  // Paid users should never be nagged to upgrade.
+  var upBtn = document.getElementById('sidebar-upgrade');
+  if (upBtn) upBtn.style.display = (plan === 'free') ? '' : 'none';
+  if (typeof applyPlanAds === 'function') applyPlanAds();
   var el1 = document.getElementById('sidebar-plan');
   var el2 = document.getElementById('sidebar-plan-desc');
   if(el1) el1.textContent = names[plan]  || 'FREE PLAN';
-  if(el2) el2.textContent = limits[plan] || '10 posts/month';
+  if(el2) el2.textContent = limits[plan] || '60 posts/month · with ads';
   var limitEl = document.getElementById('stat-limit');
   if(limitEl) limitEl.textContent = plan==='free' ? '60' : plan==='starter' ? '500' : '∞';
   if(_user) getPostsThisMonth().then(function(n){ var el=document.getElementById('stat-posts'); if(el) el.textContent=n; });
@@ -8728,8 +8752,8 @@ function addToAPHistory(text, type, status) {
     <button onclick="document.getElementById('paypal-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;">×</button>
     <div style="text-align:center;margin-bottom:24px;">
       <div style="font-size:32px;margin-bottom:8px;">⚡</div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;" id="paypal-plan-name">Growth Plan — $19/mo</div>
-      <div style="font-size:13px;color:var(--text2);" id="paypal-plan-price">$19/month</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;" id="paypal-plan-name">Pro Plan — $99/mo</div>
+      <div style="font-size:13px;color:var(--text2);" id="paypal-plan-price">$99/month</div>
     </div>
     <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:16px;margin-bottom:20px;">
       <div style="font-size:12px;color:var(--text2);line-height:1.8;">
