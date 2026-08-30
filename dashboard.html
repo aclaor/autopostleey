@@ -16076,14 +16076,36 @@ async function runAdsScout() {
     }
 
     _adsData = d;
-    status.innerHTML = '<strong>' + d.ads.length + '</strong> active ads found in ' + escapeHtml(d.country)
-      + ' · <span style="color:var(--text3);">read from Meta\'s public Ad Library</span>';
+    status.innerHTML = '<strong>' + d.ads.length + '</strong> active ads in ' + escapeHtml(d.country)
+      + ' · <span style="color:var(--text3);">longest-running first</span>'
+      + '<div style="color:var(--text3);font-size:11.5px;margin-top:5px;max-width:640px;">'
+      + 'Meta does not publish likes, shares or spend for these ads — nobody can see that. '
+      + 'What we can see is how long each one has run, and advertisers switch off ads that lose money. '
+      + 'So the ones at the top have most likely been working.</div>';
     renderAds(d.ads);
   } catch (e) {
     status.innerHTML = '<span style="color:var(--text3);">Couldn\'t reach the Ad Library right now.</span>';
   } finally {
     btn.disabled = false;
   }
+}
+
+// Runtime tiers. Meta publishes no engagement data for commercial ads,
+// so this is the only public signal — and it is an inference about the
+// advertiser's behaviour, never a measurement. Labelled accordingly.
+function runtimeBadge(days) {
+  if (days == null) return '';
+  var label, bg, fg;
+  if (days >= 180)      { label = 'Running ' + days + ' days'; bg = 'rgba(5,150,105,.12)';  fg = '#059669'; }
+  else if (days >= 60)  { label = 'Running ' + days + ' days'; bg = 'rgba(109,94,248,.12)'; fg = '#6D5EF8'; }
+  else                  { label = 'New — ' + days + ' days';   bg = 'var(--bg3)';           fg = 'var(--text3)'; }
+  var tip = days >= 180
+    ? 'Still running after ' + days + ' days. Advertisers stop ads that lose money, so long runners are usually working.'
+    : (days >= 60
+        ? 'Running ' + days + ' days — has survived past the usual testing window.'
+        : 'Only ' + days + ' days old — may still be a test that gets switched off.');
+  return '<span title="' + escapeHtml(tip) + '" style="background:' + bg + ';color:' + fg
+    + ';font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;">' + escapeHtml(label) + '</span>';
 }
 
 function renderAds(ads) {
@@ -16110,12 +16132,15 @@ function renderAds(ads) {
         + logo
         + '<div style="min-width:0;">'
           + '<div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(a.advertiser) + '</div>'
-          + (a.started ? '<div style="color:var(--text3);font-size:10.5px;">Running since ' + escapeHtml(a.started) + '</div>' : '')
+          + (a.started ? '<div style="color:var(--text3);font-size:10.5px;">Since ' + escapeHtml(a.started) + '</div>' : '')
         + '</div>'
       + '</div>'
       + creative
       + (short ? '<p style="font-size:12.5px;line-height:1.55;color:var(--text2);margin:0 0 12px;white-space:pre-wrap;">' + escapeHtml(short) + '</p>' : '<div style="flex:1;min-height:8px;"></div>')
-      + (a.platforms ? '<div style="margin-bottom:11px;"><span style="background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;">' + escapeHtml(a.platforms) + '</span></div>' : '')
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;">'
+        + runtimeBadge(a.days_running)
+        + (a.platforms ? '<span style="background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;">' + escapeHtml(a.platforms) + '</span>' : '')
+      + '</div>'
       + '<div style="display:flex;gap:8px;margin-top:auto;align-items:center;">'
         + '<button onclick="writeMyVersion(' + i + ')" '
           + 'style="flex:1;padding:10px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">'
