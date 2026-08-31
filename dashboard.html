@@ -1374,14 +1374,14 @@
       <div style="margin-bottom:18px;">
         <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">Lead Scout 🎯</h1>
         <p style="color:var(--text2);font-size:14px;margin:0;max-width:660px;">
-          Find real businesses to reach out to — name, phone, website and address. Free and unlimited, using OpenStreetMap.
+          Find real businesses to reach out to — name, phone, website and address. Works anywhere in the world: type any city, suburb or postcode. Free and unlimited, using OpenStreetMap.
         </p>
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
         <input class="form-input" id="ld-q" placeholder="Who are you looking for? e.g. coffee shop"
                onkeydown="if(event.key==='Enter')runLeadScout()" style="flex:1;min-width:190px;max-width:280px;">
-        <input class="form-input" id="ld-loc" placeholder="Where? e.g. Makati, Manila"
+        <input class="form-input" id="ld-loc" placeholder="Where? e.g. Austin, Texas"
                onkeydown="if(event.key==='Enter')runLeadScout()" style="flex:1;min-width:170px;max-width:240px;">
         <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);cursor:pointer;">
           <input type="checkbox" id="ld-emails" checked style="width:15px;height:15px;cursor:pointer;">
@@ -16271,6 +16271,7 @@ async function runLeadScout() {
   var q = (document.getElementById('ld-q').value || '').trim();
   if (!q) { if (typeof showToast === 'function') showToast('Say what kind of business to look for', 'error'); return; }
   var loc = (document.getElementById('ld-loc').value || '').trim();
+  if (!loc) { if (typeof showToast === 'function') showToast('Add a city or area to search in', 'error'); return; }
   var wantEmails = document.getElementById('ld-emails').checked;
 
   var status = document.getElementById('ld-status');
