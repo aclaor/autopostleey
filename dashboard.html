@@ -1374,7 +1374,7 @@
       <div style="margin-bottom:18px;">
         <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">Lead Scout 🎯</h1>
         <p style="color:var(--text2);font-size:14px;margin:0;max-width:660px;">
-          Find real businesses to reach out to — name, phone, website and address, straight from Google Maps.
+          Find real businesses to reach out to — name, phone, website and address. Free and unlimited, using OpenStreetMap.
         </p>
       </div>
 
@@ -1386,6 +1386,11 @@
         <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);cursor:pointer;">
           <input type="checkbox" id="ld-emails" checked style="width:15px;height:15px;cursor:pointer;">
           Look for emails
+        </label>
+        <label title="OpenStreetMap is free and unlimited. Google Maps has wider coverage but spends a SerpApi credit per search."
+               style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" id="ld-deep" style="width:15px;height:15px;cursor:pointer;">
+          Deeper search <span style="color:var(--text3);font-size:11px;">(uses a credit)</span>
         </label>
         <button onclick="runLeadScout()" id="ld-btn"
                 style="background:linear-gradient(135deg,#059669,#6D5EF8);color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;">
@@ -16280,8 +16285,10 @@ async function runLeadScout() {
     : 'Searching…';
 
   try {
+    var deep = document.getElementById('ld-deep').checked;
     var r = await fetch(AP_WORKER + '/lead-scout?q=' + encodeURIComponent(q)
-      + '&location=' + encodeURIComponent(loc) + '&emails=' + (wantEmails ? '1' : '0'));
+      + '&location=' + encodeURIComponent(loc) + '&emails=' + (wantEmails ? '1' : '0')
+      + '&source=' + (deep ? 'maps' : 'osm'));
     var d = await r.json();
 
     if (!d.available) {
@@ -16289,16 +16296,22 @@ async function runLeadScout() {
       return;
     }
     if (!d.leads || !d.leads.length) {
-      status.innerHTML = '<span style="color:var(--text3);">No businesses found. Try a broader search or a bigger area.</span>';
+      status.innerHTML = '<span style="color:var(--text3);">Nothing found. Try a broader term ("cafe" rather than "specialty espresso bar"), '
+        + 'a larger area, or tick <strong>Deeper search</strong> to try Google Maps.</span>';
       return;
     }
 
     _leadsData = d;
     var withEmail = d.leads.filter(function (l) { return l.emails && l.emails.length; }).length;
     status.innerHTML = '<strong>' + d.leads.length + '</strong> businesses found'
-      + (loc ? ' in ' + escapeHtml(loc) : '')
+      + (d.place ? ' near ' + escapeHtml(String(d.place).split(',').slice(0, 2).join(',')) : '')
       + (wantEmails ? ' · <strong>' + withEmail + '</strong> with a contact email' : '')
-      + ' · <span style="color:var(--text3);">best prospects first</span>';
+      + ' · <span style="color:var(--text3);">via ' + escapeHtml(d.source || '') + ', best prospects first</span>'
+      + ((d.source === 'OpenStreetMap' && d.leads.length < 8)
+          ? '<div style="color:var(--text3);font-size:11.5px;margin-top:5px;">'
+            + 'Thin results? OpenStreetMap covers cities well and rural areas less so. '
+            + 'Tick <strong>Deeper search</strong> to use Google Maps instead — wider coverage, one credit per search.</div>'
+          : '');
     renderLeads(d.leads);
     document.getElementById('ld-actions').style.display = 'block';
     document.getElementById('ld-legal').style.display = 'block';
@@ -16336,7 +16349,11 @@ function renderLeads(leads) {
         + '<div style="font-size:14px;font-weight:800;line-height:1.3;">' + escapeHtml(l.name) + '</div>'
         + leadBadge(l.score)
       + '</div>'
-      + (l.category ? '<div style="color:var(--text3);font-size:11.5px;margin-bottom:6px;">' + escapeHtml(l.category) + (stars ? ' · ' + stars : '') + '</div>' : (stars ? '<div style="font-size:11.5px;margin-bottom:6px;">' + stars + '</div>' : ''))
+      + '<div style="color:var(--text3);font-size:11.5px;margin-bottom:6px;">'
+        + (l.category ? escapeHtml(l.category) : 'Business')
+        + (stars ? ' · ' + stars : '')
+        + (l.source ? ' · <span style="opacity:.75;">' + escapeHtml(l.source) + '</span>' : '')
+      + '</div>'
       + (l.address ? '<div style="color:var(--text2);font-size:12px;line-height:1.5;margin-bottom:8px;">📍 ' + escapeHtml(l.address) + '</div>' : '')
       + '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">'
         + (l.phone ? '<a href="tel:' + escapeHtml(l.phone.replace(/[^0-9+]/g, '')) + '" style="color:var(--text2);font-size:12.5px;text-decoration:none;">📞 ' + escapeHtml(l.phone) + '</a>' : '')
