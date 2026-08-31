@@ -14091,7 +14091,9 @@ async function testAdPostNow(type) {
 
   try {
     // Get schedule from Supabase
-    var table = type==='photoad' ? 'autopostleey_photo_schedules' : 'autopostleey_ad_schedules';
+    var table = type==='photoad' ? 'autopostleey_photo_schedules'
+              : type==='videoenhancer' ? 'autopostleey_video_schedules'
+              : 'autopostleey_ad_schedules';
     var res = await _db.from(table).select('*').eq('user_id', _user.id).single();
     if (!res.data) { showToast('No schedule found. Set up auto-posting first.','error'); return; }
     var s = res.data;
@@ -14259,6 +14261,11 @@ async function restoreAdScheduleStatus() {
     if (padRes.data && padRes.data.enabled) {
       applyActiveState('pad', padRes.data);
       try { localStorage.setItem('ap_pad_schedule_'+_user.id, JSON.stringify(padRes.data)); } catch(e) {}
+    }
+    var vehRes = await _db.from('autopostleey_video_schedules')
+      .select('enabled,interval_hours,next_post_at').eq('user_id', _user.id).single();
+    if (vehRes.data && vehRes.data.enabled) {
+      try { localStorage.setItem('ap_veh_schedule_'+_user.id, JSON.stringify(vehRes.data)); } catch(e) {}
     }
   } catch(e) {
     // Supabase tables may not exist yet - localStorage still works
@@ -15260,20 +15267,27 @@ async function startVehAutoPost() {
   var connections = {};
   platforms.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
 
-  // If no public URL yet, use a placeholder — Cloudflare will use whatever URL is saved
+  // The schedule posts THIS video, over and over. With no public URL there
+  // is nothing to post, and the schedule would sit saying ACTIVE while
+  // publishing nothing — which is exactly what used to happen.
   var adUrl = _vehPublicUrl || '';
+  if (!adUrl) {
+    showToast('Upload and enhance a video first — auto-posting needs a video to post', 'error');
+    if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
+    return;
+  }
 
   var schedData = {
-    user_id: _user.id, type: 'videoad', ad_url: adUrl,
+    user_id: _user.id, type: 'videoenhancer', ad_url: adUrl,
     caption: caption, platforms: platforms, connections: connections,
     interval_hours: hrs, enabled: true,
     next_post_at: new Date(Date.now() + hrs*3600000).toISOString()
   };
   try { localStorage.setItem('ap_veh_schedule_'+_user.id, JSON.stringify(schedData)); } catch(e) {}
 
-  var upsertRes = await _db.from('autopostleey_ad_schedules').upsert({
+  var upsertRes = await _db.from('autopostleey_video_schedules').upsert({
     user_id:       schedData.user_id,
-    type:          'videoad',
+    type:          'videoenhancer',
     ad_url:        schedData.ad_url,
     caption:       schedData.caption,
     platforms:     schedData.platforms,
@@ -15324,7 +15338,7 @@ function vehExportAndSave() {
           _vehPublicUrl = url;
           // Update the schedule row with the real URL
           if (_user) {
-            _db.from('autopostleey_ad_schedules').update({ad_url:url}).eq('user_id',_user.id).then(function(){
+            _db.from('autopostleey_video_schedules').update({ad_url:url}).eq('user_id',_user.id).then(function(){
               showToast('✅ Video uploaded for auto-posting!','success');
             });
           }
@@ -15362,7 +15376,7 @@ async function stopVehAutoPost() {
   var info = document.getElementById('veh-schedule-info');
   if (info) info.style.display='none';
   if (_user) {
-    _db.from('autopostleey_ad_schedules').update({enabled:false}).eq('user_id',_user.id).then(function(){}).catch(function(){});
+    _db.from('autopostleey_video_schedules').update({enabled:false}).eq('user_id',_user.id).then(function(){}).catch(function(){});
     try { localStorage.removeItem('ap_veh_schedule_'+_user.id); } catch(e) {}
   }
   showToast('Video Enhancer auto-posting stopped.','success');
