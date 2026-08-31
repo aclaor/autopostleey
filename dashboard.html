@@ -16296,8 +16296,15 @@ async function runLeadScout() {
       return;
     }
     if (!d.leads || !d.leads.length) {
-      status.innerHTML = '<span style="color:var(--text3);">Nothing found. Try a broader term ("cafe" rather than "specialty espresso bar"), '
-        + 'a larger area, or tick <strong>Deeper search</strong> to try Google Maps.</span>';
+      var ft = d.found_total || 0;
+      status.innerHTML = '<span style="color:var(--text3);">'
+        + (ft > 0
+            ? 'Found ' + ft + ' businesses nearby, but none of them listed a phone, website or email. '
+              + 'OpenStreetMap records where a business is far more often than how to contact it. '
+              + 'Tick <strong>Deeper search</strong> to use Google Maps, which lists a phone for almost every business.'
+            : 'Nothing found. Try a broader term (\'cafe\' rather than \'specialty espresso bar\'), '
+              + 'a larger area, or tick <strong>Deeper search</strong> to try Google Maps.')
+        + '</span>';
       return;
     }
 
