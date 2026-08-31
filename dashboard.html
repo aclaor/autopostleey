@@ -15270,9 +15270,15 @@ async function startVehAutoPost() {
   // The schedule posts THIS video, over and over. With no public URL there
   // is nothing to post, and the schedule would sit saying ACTIVE while
   // publishing nothing — which is exactly what used to happen.
+  // The schedule posts THIS video over and over, so it needs a public URL.
+  // That URL may not exist yet: the video is exported and uploaded in the
+  // background just below. So we allow starting without one, but we save the
+  // row DISABLED until the upload finishes and fills ad_url in. Otherwise the
+  // schedule sits there saying ACTIVE with nothing to post — which is what
+  // used to happen.
   var adUrl = _vehPublicUrl || '';
-  if (!adUrl) {
-    showToast('Upload and enhance a video first — auto-posting needs a video to post', 'error');
+  if (!adUrl && !_vehVideo) {
+    showToast('Load a video first — auto-posting needs a video to post', 'error');
     if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
     return;
   }
@@ -15293,7 +15299,7 @@ async function startVehAutoPost() {
     platforms:     schedData.platforms,
     connections:   schedData.connections,
     interval_hours: schedData.interval_hours,
-    enabled:       true,
+    enabled:       !!adUrl,
     next_post_at:  schedData.next_post_at,
     created_at:    new Date().toISOString()
   });
@@ -15307,16 +15313,24 @@ async function startVehAutoPost() {
   document.getElementById('veh-autopost-start-btn').style.display='none';
   document.getElementById('veh-autopost-stop-btn').style.display='block';
   var status = document.getElementById('veh-autopost-status');
-  if (status) { status.textContent='🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+  if (status) {
+    if (adUrl) { status.textContent='🟢 ACTIVE'; status.style.background='rgba(16,185,129,0.2)'; status.style.color='#10b981'; }
+    else { status.textContent='⏳ PREPARING'; status.style.background='rgba(234,88,12,0.2)'; status.style.color='#EA580C'; }
+  }
   var info = document.getElementById('veh-schedule-info');
   var time = document.getElementById('veh-next-post-time');
   if (info) info.style.display='block';
-  if (time) time.textContent='Next post: '+new Date(schedData.next_post_at).toLocaleString()+' · Every '+hrs+'h';
-  showToast('✅ Video Enhancer auto-posting scheduled every '+hrs+'h!','success');
+  if (time) time.textContent = adUrl
+    ? 'Next post: '+new Date(schedData.next_post_at).toLocaleString()+' · Every '+hrs+'h'
+    : 'Uploading your video — auto-posting starts as soon as it finishes.';
+  showToast(adUrl
+    ? '✅ Video Enhancer auto-posting scheduled every '+hrs+'h!'
+    : '⏳ Uploading your video — auto-posting starts once it is ready.',
+    'success');
   if (btn) { btn.textContent='▶ Start Auto-Posting'; btn.disabled=false; }
 
   // Upload video in background for next auto-post cycle
-  if (!_vehPublicUrl && _vehVideo && _vehOverlays.length) {
+  if (!_vehPublicUrl && _vehVideo) {
     vehExportAndSave();
   }
 }
@@ -15338,8 +15352,9 @@ function vehExportAndSave() {
           _vehPublicUrl = url;
           // Update the schedule row with the real URL
           if (_user) {
-            _db.from('autopostleey_video_schedules').update({ad_url:url}).eq('user_id',_user.id).then(function(){
-              showToast('✅ Video uploaded for auto-posting!','success');
+            _db.from('autopostleey_video_schedules')
+               .update({ad_url:url, enabled:true}).eq('user_id',_user.id).then(function(){
+              showToast('✅ Video uploaded — auto-posting is now live.','success');
             });
           }
         }
