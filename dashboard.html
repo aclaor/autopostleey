@@ -15322,7 +15322,7 @@ async function startVehAutoPost() {
   if (info) info.style.display='block';
   if (time) time.textContent = adUrl
     ? 'Next post: '+new Date(schedData.next_post_at).toLocaleString()+' · Every '+hrs+'h'
-    : 'Uploading your video — auto-posting starts as soon as it finishes.';
+    : 'Preparing your video — this takes about as long as the video runs. Keep this tab open.';
   showToast(adUrl
     ? '✅ Video Enhancer auto-posting scheduled every '+hrs+'h!'
     : '⏳ Uploading your video — auto-posting starts once it is ready.',
@@ -15335,7 +15335,25 @@ async function startVehAutoPost() {
   }
 }
 
+function vehSetPreparingFailed(msg) {
+  var st = document.getElementById('veh-autopost-status');
+  if (st) { st.textContent='● OFF'; st.style.background='var(--bg3)'; st.style.color='var(--text3)'; }
+  var tm = document.getElementById('veh-next-post-time');
+  if (tm) tm.textContent = msg;
+  showToast(msg, 'error');
+}
+
 function vehExportAndSave() {
+  // The export records the canvas in REAL TIME, so it takes as long as the
+  // video plays. It also needs this tab open and in front — browsers throttle
+  // background tabs and the recording stalls. If it never finishes, say so
+  // instead of leaving the badge on PREPARING forever.
+  var _vehWatchdog = setTimeout(function () {
+    if (!_vehPublicUrl) {
+      vehSetPreparingFailed('Upload did not finish — keep this tab open and press Start Auto-Posting again.');
+    }
+  }, 10 * 60 * 1000);
+  var _vehClear = function () { clearTimeout(_vehWatchdog); };
   try {
     var canvas3 = document.getElementById('veh-canvas');
     if (!canvas3) return;
@@ -15348,12 +15366,21 @@ function vehExportAndSave() {
       var ext3=mime3.includes('mp4')?'mp4':'webm';
       var blob3=new Blob(chunks3,{type:mime3});
       uploadFileToR2(new File([blob3],'veh-auto-'+Date.now()+'.'+ext3,{type:mime3}),'video-ads').then(function(url){
+        _vehClear();
+        if (!url) {
+          vehSetPreparingFailed('Could not upload the video — press Start Auto-Posting to try again.');
+        }
         if (url) {
           _vehPublicUrl = url;
           // Update the schedule row with the real URL
           if (_user) {
             _db.from('autopostleey_video_schedules')
                .update({ad_url:url, enabled:true}).eq('user_id',_user.id).then(function(){
+              var st2 = document.getElementById('veh-autopost-status');
+              if (st2) { st2.textContent='🟢 ACTIVE'; st2.style.background='rgba(16,185,129,0.2)'; st2.style.color='#10b981'; }
+              var tm2 = document.getElementById('veh-next-post-time');
+              if (tm2) tm2.textContent='Auto-posting is live. First post within the next '
+                + (document.getElementById('veh-interval') ? '' : '') + 'cycle.';
               showToast('✅ Video uploaded — auto-posting is now live.','success');
             });
           }
