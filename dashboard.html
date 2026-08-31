@@ -3051,6 +3051,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <button onclick="stopVadAutoPost()" id="vad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
                 ⏹ Stop Auto-Posting
               </button>
+              <button onclick="diagnoseAutoPost()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--text3);color:var(--text2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
+                🩺 Why is it not posting?
+              </button>
+              <div id="ap-diag-out" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.55;"></div>
               <button onclick="testAdPostNow('videoad')" id="vad-test-post-btn" style="display:none;width:100%;padding:10px;background:var(--bg3);border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
                 ⚡ Test: Post Right Now
               </button>
@@ -3321,6 +3325,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <button onclick="stopVehAutoPost()" id="veh-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
                   ⏹ Stop Auto-Posting
                 </button>
+              <button onclick="diagnoseAutoPost()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--text3);color:var(--text2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
+                🩺 Why is it not posting?
+              </button>
+              <div id="ap-diag-out" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.55;"></div>
               </div>
             </div>
 
@@ -3588,6 +3596,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 <button onclick="stopPadAutoPost()" id="pad-autopost-stop-btn" style="display:none;width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;">
                   ⏹ Stop Auto-Posting
                 </button>
+              <button onclick="diagnoseAutoPost()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--text3);color:var(--text2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
+                🩺 Why is it not posting?
+              </button>
+              <div id="ap-diag-out" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.55;"></div>
                 <button onclick="testAdPostNow('photoad')" id="pad-test-post-btn" style="display:none;width:100%;padding:10px;background:var(--bg3);border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">
                   ⚡ Test: Post Right Now
                 </button>
@@ -14417,6 +14429,70 @@ async function startVadAutoPost() {
     showToast('Schedule failed: '+e.message,'error');
   }
   if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+}
+
+// ── "Why is it not posting?" ───────────────────────────────────────
+// Calls the worker's read-only checker and prints the answer in plain words.
+// Posts nothing. Built because "shows ACTIVE but nothing appears" was
+// otherwise only diagnosable by reading the database by hand.
+async function diagnoseAutoPost() {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#ap-diag-out'));
+  var box = null;
+  for (var i = 0; i < boxes.length; i++) {
+    if (boxes[i].offsetParent !== null) { box = boxes[i]; break; }
+  }
+  if (!box) box = boxes[0];
+  if (!box) return;
+
+  box.style.display = 'block';
+  box.innerHTML = '<span style="color:var(--text3);">Checking…</span>';
+
+  if (!_user) { box.innerHTML = '<span style="color:#ef4444;">Sign in first.</span>'; return; }
+
+  try {
+    var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev/diagnose-schedules?user_id='
+                        + encodeURIComponent(_user.id));
+    var d = await r.json();
+    if (!d || d.error) {
+      box.innerHTML = '<span style="color:#ef4444;">Could not check: '
+        + escapeHtml((d && d.error) || 'no response') + '</span>';
+      return;
+    }
+    if (!d.schedules || !d.schedules.length) {
+      box.innerHTML = '<span style="color:var(--text3);">No auto-post schedules are saved yet.</span>';
+      return;
+    }
+
+    var html = '';
+    d.schedules.forEach(function (s) {
+      var okState = s.will_post;
+      html += '<div style="border:1px solid var(--border);border-left:3px solid '
+        + (okState ? '#059669' : '#ef4444')
+        + ';border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--bg2);">'
+        + '<div style="font-weight:800;margin-bottom:4px;">' + escapeHtml(s.feature) + ' — '
+        + (okState ? '<span style="color:#059669;">ready to post</span>'
+                   : '<span style="color:#ef4444;">will not post</span>') + '</div>';
+
+      if (!okState) {
+        html += '<ul style="margin:6px 0 0 18px;padding:0;color:var(--text2);">';
+        s.problems.forEach(function (p) { html += '<li style="margin-bottom:3px;">' + escapeHtml(p) + '</li>'; });
+        html += '</ul>';
+      }
+
+      html += '<div style="color:var(--text3);font-size:11.5px;margin-top:6px;">'
+        + 'Every ' + escapeHtml(String(s.every_hours || '?')) + 'h · last posted: '
+        + escapeHtml(String(s.last_posted_at)) + '</div>';
+
+      if (s.media_url) {
+        html += '<div style="margin-top:5px;"><a href="' + escapeHtml(s.media_url)
+          + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:11.5px;">Open the file it will post →</a></div>';
+      }
+      html += '</div>';
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<span style="color:#ef4444;">Could not check: ' + escapeHtml(e.message) + '</span>';
+  }
 }
 
 async function stopVadAutoPost() {
