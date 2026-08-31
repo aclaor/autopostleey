@@ -595,6 +595,11 @@
         <span data-i18n="nav_adscout">Ads Scout</span>
         <span style="margin-left:auto;background:linear-gradient(135deg,#EA580C,#EC4899);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
       </a>
+      <a class="nav-item" onclick="showPage('leads');closeAPSidebar();return false;" href="#">
+        <span style="font-size:16px;">🎯</span>
+        <span data-i18n="nav_leads">Lead Scout</span>
+        <span style="margin-left:auto;background:linear-gradient(135deg,#059669,#6D5EF8);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
+      </a>
       <a class="nav-item" onclick="showPage('scheduled');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📅</span> <span data-i18n="nav_scheduled">Scheduled</span>
       </a>
@@ -1363,6 +1368,48 @@
 
       <div id="as-status" style="color:var(--text2);font-size:13px;margin-bottom:14px;"></div>
       <div id="as-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;"></div>
+    </div>
+
+    <div class="page" id="page-leads">
+      <div style="margin-bottom:18px;">
+        <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">Lead Scout 🎯</h1>
+        <p style="color:var(--text2);font-size:14px;margin:0;max-width:660px;">
+          Find real businesses to reach out to — name, phone, website and address, straight from Google Maps.
+        </p>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+        <input class="form-input" id="ld-q" placeholder="Who are you looking for? e.g. coffee shop"
+               onkeydown="if(event.key==='Enter')runLeadScout()" style="flex:1;min-width:190px;max-width:280px;">
+        <input class="form-input" id="ld-loc" placeholder="Where? e.g. Makati, Manila"
+               onkeydown="if(event.key==='Enter')runLeadScout()" style="flex:1;min-width:170px;max-width:240px;">
+        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" id="ld-emails" checked style="width:15px;height:15px;cursor:pointer;">
+          Look for emails
+        </label>
+        <button onclick="runLeadScout()" id="ld-btn"
+                style="background:linear-gradient(135deg,#059669,#6D5EF8);color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;">
+          Find leads
+        </button>
+      </div>
+
+      <div id="ld-status" style="color:var(--text2);font-size:13px;margin-bottom:14px;"></div>
+      <div id="ld-actions" style="display:none;margin-bottom:14px;">
+        <button onclick="exportLeadsCsv()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text2);font-size:12.5px;font-weight:700;cursor:pointer;">
+          ⬇ Download as CSV
+        </button>
+      </div>
+      <div id="ld-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;"></div>
+
+      <div id="ld-legal" style="display:none;margin-top:22px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;max-width:760px;">
+        <div style="font-size:12.5px;font-weight:800;color:var(--text2);margin-bottom:8px;">Before you contact anyone</div>
+        <ul style="margin:0;padding-left:18px;color:var(--text3);font-size:12px;line-height:1.75;">
+          <li>Only business contact details are collected — published role addresses like info@ and sales@. Personal addresses are filtered out on purpose.</li>
+          <li>Say who you are and why you're writing, and include a real way to opt out. That's required by law in most countries, including the Philippines' Data Privacy Act, the EU's GDPR and the US CAN-SPAM Act.</li>
+          <li>If someone asks you to stop, keep a note and don't contact them again.</li>
+          <li>Canada is stricter — CASL generally requires consent before the first email, so scraped lists are risky there.</li>
+        </ul>
+      </div>
     </div>
 
     <div class="page" id="page-scheduled">
@@ -16210,6 +16257,163 @@ async function writeMyVersion(i) {
     if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
     if (typeof showToast === 'function') showToast('Couldn\'t write that one — try again', 'error');
   }
+}
+
+// ── Lead Scout ────────────────────────────────────────────────────
+var _leadsData = null;
+
+async function runLeadScout() {
+  var q = (document.getElementById('ld-q').value || '').trim();
+  if (!q) { if (typeof showToast === 'function') showToast('Say what kind of business to look for', 'error'); return; }
+  var loc = (document.getElementById('ld-loc').value || '').trim();
+  var wantEmails = document.getElementById('ld-emails').checked;
+
+  var status = document.getElementById('ld-status');
+  var grid = document.getElementById('ld-grid');
+  var btn = document.getElementById('ld-btn');
+  document.getElementById('ld-actions').style.display = 'none';
+  document.getElementById('ld-legal').style.display = 'none';
+  grid.innerHTML = '';
+  btn.disabled = true;
+  status.textContent = wantEmails
+    ? 'Searching, then checking each website for a contact address…'
+    : 'Searching…';
+
+  try {
+    var r = await fetch(AP_WORKER + '/lead-scout?q=' + encodeURIComponent(q)
+      + '&location=' + encodeURIComponent(loc) + '&emails=' + (wantEmails ? '1' : '0'));
+    var d = await r.json();
+
+    if (!d.available) {
+      status.innerHTML = '<span style="color:var(--text3);">' + escapeHtml(d.reason || 'Not available.') + '</span>';
+      return;
+    }
+    if (!d.leads || !d.leads.length) {
+      status.innerHTML = '<span style="color:var(--text3);">No businesses found. Try a broader search or a bigger area.</span>';
+      return;
+    }
+
+    _leadsData = d;
+    var withEmail = d.leads.filter(function (l) { return l.emails && l.emails.length; }).length;
+    status.innerHTML = '<strong>' + d.leads.length + '</strong> businesses found'
+      + (loc ? ' in ' + escapeHtml(loc) : '')
+      + (wantEmails ? ' · <strong>' + withEmail + '</strong> with a contact email' : '')
+      + ' · <span style="color:var(--text3);">best prospects first</span>';
+    renderLeads(d.leads);
+    document.getElementById('ld-actions').style.display = 'block';
+    document.getElementById('ld-legal').style.display = 'block';
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--text3);">Could not search right now.</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function leadBadge(score) {
+  var map = {
+    HIGH:   ['rgba(5,150,105,.12)', '#059669', 'Strong lead'],
+    MEDIUM: ['rgba(109,94,248,.12)', '#6D5EF8', 'Worth a look'],
+    LOW:    ['var(--bg3)', 'var(--text3)', 'Thin details']
+  };
+  var m = map[score] || map.LOW;
+  return '<span style="background:' + m[0] + ';color:' + m[1] + ';font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;">' + m[2] + '</span>';
+}
+
+function renderLeads(leads) {
+  var grid = document.getElementById('ld-grid');
+  grid.innerHTML = leads.map(function (l, i) {
+    var stars = (l.rating != null)
+      ? '<span style="color:#f59e0b;">★</span> ' + l.rating + (l.reviews != null ? ' <span style="color:var(--text3);">(' + l.reviews + ')</span>' : '')
+      : '';
+    var emails = (l.emails && l.emails.length)
+      ? l.emails.map(function (e) {
+          return '<a href="mailto:' + escapeHtml(e) + '" style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;word-break:break-all;">' + escapeHtml(e) + '</a>';
+        }).join('<br>')
+      : '<span style="color:var(--text3);font-size:11.5px;">No public contact address found</span>';
+
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:15px;display:flex;flex-direction:column;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">'
+        + '<div style="font-size:14px;font-weight:800;line-height:1.3;">' + escapeHtml(l.name) + '</div>'
+        + leadBadge(l.score)
+      + '</div>'
+      + (l.category ? '<div style="color:var(--text3);font-size:11.5px;margin-bottom:6px;">' + escapeHtml(l.category) + (stars ? ' · ' + stars : '') + '</div>' : (stars ? '<div style="font-size:11.5px;margin-bottom:6px;">' + stars + '</div>' : ''))
+      + (l.address ? '<div style="color:var(--text2);font-size:12px;line-height:1.5;margin-bottom:8px;">📍 ' + escapeHtml(l.address) + '</div>' : '')
+      + '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">'
+        + (l.phone ? '<a href="tel:' + escapeHtml(l.phone.replace(/[^0-9+]/g, '')) + '" style="color:var(--text2);font-size:12.5px;text-decoration:none;">📞 ' + escapeHtml(l.phone) + '</a>' : '')
+        + (l.website ? '<a href="' + escapeHtml(l.website) + '" target="_blank" rel="noopener noreferrer" style="color:var(--text2);font-size:12.5px;text-decoration:none;word-break:break-all;">🌐 ' + escapeHtml(l.domain || l.website) + '</a>' : '')
+        + '<div>✉️ ' + emails + '</div>'
+      + '</div>'
+      + '<button onclick="writeOutreach(' + i + ')" style="margin-top:auto;padding:9px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">'
+        + '✍️ Draft an intro message</button>'
+      + '</div>';
+  }).join('');
+}
+
+async function writeOutreach(i) {
+  var lead = _leadsData && _leadsData.leads[i];
+  if (!lead) return;
+  if (!_bizProfile || !_bizProfile.name) {
+    if (typeof showToast === 'function') showToast('Set up your business profile first', 'error');
+    showPage('business');
+    return;
+  }
+
+  showPage('compose');
+  var contentEl = document.getElementById('post-content');
+  if (contentEl) { contentEl.value = 'Writing your intro…'; contentEl.dispatchEvent(new Event('input')); }
+
+  var prompt = [
+    'Write a short first-contact message from ' + (_bizProfile.name || 'our business')
+      + (_bizProfile.description ? ' (' + _bizProfile.description + ')' : '') + '.',
+    'It is addressed to a business called "' + lead.name + '"'
+      + (lead.category ? ', which is a ' + lead.category : '') + '.',
+    'STRICT RULES:',
+    '1. Under 90 words. No subject line, no markdown.',
+    '2. Say plainly who we are and one specific way we could help THEM.',
+    '3. No flattery, no fake familiarity, no invented claims about their business.',
+    '4. Do not claim we are existing customers or that we have met.',
+    '5. End with one low-pressure question, not a hard sell.',
+    '6. Sign off as ' + (_bizProfile.name || 'us') + '.',
+  ].join(' ');
+
+  try {
+    var res = await fetch(AP_WORKER + '/generate-caption', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt }),
+    });
+    var data = await res.json();
+    if (contentEl) {
+      contentEl.value = data.post || '';
+      contentEl.dispatchEvent(new Event('input'));
+    }
+    if (!data.post) throw new Error('empty');
+    if (typeof showToast === 'function') showToast('Draft ready — read it before you send it', 'success');
+  } catch (e) {
+    if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
+    if (typeof showToast === 'function') showToast('Could not write that one — try again', 'error');
+  }
+}
+
+function exportLeadsCsv() {
+  if (!_leadsData || !_leadsData.leads) return;
+  var cols = ['name','category','phone','email','website','address','rating','reviews','score'];
+  var esc = function (v) {
+    v = (v == null ? '' : String(v));
+    return '"' + v.replace(/"/g, '""') + '"';
+  };
+  var rows = [cols.join(',')];
+  _leadsData.leads.forEach(function (l) {
+    rows.push([l.name, l.category, l.phone, (l.emails || []).join('; '),
+               l.website, l.address, l.rating, l.reviews, l.score].map(esc).join(','));
+  });
+  // BOM so Excel opens accented characters correctly.
+  var blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'leads-' + (_leadsData.query || 'search').replace(/[^a-z0-9]+/gi, '-') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  if (typeof showToast === 'function') showToast('CSV downloaded', 'success');
 }
 
 function toggleSigTable() {
