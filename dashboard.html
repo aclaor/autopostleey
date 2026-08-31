@@ -13041,9 +13041,11 @@ async function loadSecureKeys() {
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
     if (!token) return;
-    var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev/keys', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+    // The /keys route was removed from the worker on purpose: it handed API
+    // keys to the browser, where anyone could read them. AI now runs entirely
+    // server-side, so there is nothing to fetch. Left as a no-op so the old
+    // call sites keep working.
+    var r = { ok: false };
     if (r.ok) {
       var d = await r.json();
       _GROQ_KEY   = d.groq   || '';
@@ -15344,69 +15346,131 @@ function vehSetPreparingFailed(msg) {
 }
 
 function vehExportAndSave() {
-  // The export records the canvas in REAL TIME, so it takes as long as the
-  // video plays. It also needs this tab open and in front — browsers throttle
-  // background tabs and the recording stalls. If it never finishes, say so
-  // instead of leaving the badge on PREPARING forever.
-  var _vehWatchdog = setTimeout(function () {
-    if (!_vehPublicUrl) {
-      vehSetPreparingFailed('Upload did not finish — keep this tab open and press Start Auto-Posting again.');
-    }
-  }, 10 * 60 * 1000);
-  var _vehClear = function () { clearTimeout(_vehWatchdog); };
+  // Records the canvas in REAL TIME, so it takes as long as the video plays.
+  // Everything below exists because this used to be able to spin forever:
+  //  - video.play() can reject (autoplay policy, decode error). currentTime
+  //    then stays 0, .ended stays false, and the draw loop never stopped.
+  //  - video.duration can be NaN or Infinity, so currentTime >= duration is
+  //    never true and the loop never stopped either.
+  //  - uploadFileToR2 THROWS, and the old .then() had no .catch(), so a failed
+  //    upload vanished with no message and the badge sat on PREPARING.
+  var canvas3 = document.getElementById('veh-canvas');
+  if (!canvas3) { vehSetPreparingFailed('No video canvas found — reload the page and try again.'); return; }
+  if (!_vehVideo) { vehSetPreparingFailed('No video loaded — load a video, then start auto-posting.'); return; }
+
+  var W3 = canvas3.width, H3 = canvas3.height, ctx3 = canvas3.getContext('2d');
+  var chunks3 = [];
+  var stopped = false, watchdog = null, hardStop = null;
+
+  function fail(msg) {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(watchdog); clearTimeout(hardStop);
+    vehSetPreparingFailed(msg);
+  }
+
+  function progress(txt) {
+    var tm = document.getElementById('veh-next-post-time');
+    if (tm) tm.textContent = txt;
+  }
+
+  var stream3, rec3, mime3;
   try {
-    var canvas3 = document.getElementById('veh-canvas');
-    if (!canvas3) return;
-    var W3=canvas3.width, H3=canvas3.height, ctx3=canvas3.getContext('2d');
-    var chunks3=[]; var stream3=canvas3.captureStream(30);
-    var mime3=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9';
-    var rec3=new MediaRecorder(stream3,{mimeType:mime3});
-    rec3.ondataavailable=function(e){if(e.data.size)chunks3.push(e.data);};
-    rec3.onstop=function(){
-      var ext3=mime3.includes('mp4')?'mp4':'webm';
-      var blob3=new Blob(chunks3,{type:mime3});
-      uploadFileToR2(new File([blob3],'veh-auto-'+Date.now()+'.'+ext3,{type:mime3}),'video-ads').then(function(url){
-        _vehClear();
-        if (!url) {
-          vehSetPreparingFailed('Could not upload the video — press Start Auto-Posting to try again.');
-        }
-        if (url) {
-          _vehPublicUrl = url;
-          // Update the schedule row with the real URL
-          if (_user) {
-            _db.from('autopostleey_video_schedules')
-               .update({ad_url:url, enabled:true}).eq('user_id',_user.id).then(function(){
-              var st2 = document.getElementById('veh-autopost-status');
-              if (st2) { st2.textContent='🟢 ACTIVE'; st2.style.background='rgba(16,185,129,0.2)'; st2.style.color='#10b981'; }
-              var tm2 = document.getElementById('veh-next-post-time');
-              if (tm2) tm2.textContent='Auto-posting is live. First post within the next '
-                + (document.getElementById('veh-interval') ? '' : '') + 'cycle.';
-              showToast('✅ Video uploaded — auto-posting is now live.','success');
-            });
-          }
-        }
-        vehStartPreview();
-      });
-    };
+    stream3 = canvas3.captureStream(30);
+    mime3 = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm;codecs=vp9';
+    rec3 = new MediaRecorder(stream3, { mimeType: mime3 });
+  } catch (e) {
+    fail('This browser cannot record the video (' + e.message + '). Try Chrome.');
+    return;
+  }
+
+  rec3.onerror = function (e) { fail('Recording failed: ' + ((e && e.error && e.error.name) || 'unknown')); };
+  rec3.ondataavailable = function (e) { if (e.data && e.data.size) chunks3.push(e.data); };
+
+  rec3.onstop = function () {
+    clearTimeout(watchdog); clearTimeout(hardStop);
+    if (stopped) return;
+    if (!chunks3.length) { fail('Nothing was recorded — reload and try again.'); return; }
+    var ext3 = mime3.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    var blob3 = new Blob(chunks3, { type: mime3 });
+    progress('Uploading your video (' + (blob3.size / 1048576).toFixed(1) + ' MB)…');
+
+    uploadFileToR2(new File([blob3], 'veh-auto-' + Date.now() + '.' + ext3, { type: mime3 }), 'video-ads')
+      .then(function (url) {
+        if (!url) { fail('Upload returned no link — press Start Auto-Posting to try again.'); return; }
+        _vehPublicUrl = url;
+        if (!_user) { fail('Signed out during upload — sign in and try again.'); return; }
+        return _db.from('autopostleey_video_schedules')
+          .update({ ad_url: url, enabled: true }).eq('user_id', _user.id)
+          .then(function (res) {
+            if (res && res.error) { fail('Could not save the video link: ' + res.error.message); return; }
+            stopped = true;
+            var st2 = document.getElementById('veh-autopost-status');
+            if (st2) { st2.textContent = '🟢 ACTIVE'; st2.style.background = 'rgba(16,185,129,0.2)'; st2.style.color = '#10b981'; }
+            progress('Auto-posting is live. You can close the browser now.');
+            showToast('✅ Video uploaded — auto-posting is now live.', 'success');
+          });
+      })
+      .catch(function (e) {
+        fail('Upload failed: ' + (e && e.message ? e.message : 'unknown error'));
+      })
+      .then(function () { try { vehStartPreview(); } catch (e) {} });
+  };
+
+  function beginRecording() {
     rec3.start();
-    _vehVideo.currentTime=0; _vehVideo.play();
-    function rf3(){
-      if(_vehVideo.ended||_vehVideo.currentTime>=_vehVideo.duration){rec3.stop();return;}
-      ctx3.clearRect(0,0,W3,H3);
-      try{ctx3.drawImage(_vehVideo,0,0,W3,H3);}catch(e){}
-      var t3=_vehVideo.currentTime;
-      _vehOverlays.forEach(function(o){
-        if(t3<o.startSec||t3>o.endSec)return;
-        var p=Math.min(1,(t3-o.startSec)/0.4);
-        var savedS=_vehStyle; _vehStyle=o.style||_vehStyle;
-        var y3=o.position==='top'?H3*0.1:o.position==='center'?H3*0.5:H3*0.85;
-        vehDrawOverlay(ctx3,o.text,W3/2,y3,p,W3,o.fontSize||1);
-        _vehStyle=savedS;
+
+    // Hard stop on the clock, not just on the video's own state. A finite
+    // duration gets duration + 5s of slack; an unknown one gets 3 minutes.
+    var dur = _vehVideo.duration;
+    var limitMs = (isFinite(dur) && dur > 0) ? (dur + 5) * 1000 : 180000;
+    hardStop = setTimeout(function () {
+      if (rec3.state === 'recording') rec3.stop();
+    }, limitMs);
+
+    // If nothing has played after 15s, playback never actually started.
+    watchdog = setTimeout(function () {
+      if (_vehVideo.currentTime < 0.2) {
+        try { if (rec3.state === 'recording') rec3.stop(); } catch (e) {}
+        fail('The video would not play, so nothing could be recorded. Reload the page, keep this tab in front, and try again.');
+      }
+    }, 15000);
+
+    function rf3() {
+      if (stopped) return;
+      var d = _vehVideo.duration;
+      var done = _vehVideo.ended || (isFinite(d) && d > 0 && _vehVideo.currentTime >= d - 0.05);
+      if (done) { if (rec3.state === 'recording') rec3.stop(); return; }
+
+      ctx3.clearRect(0, 0, W3, H3);
+      try { ctx3.drawImage(_vehVideo, 0, 0, W3, H3); } catch (e) {}
+      var t3 = _vehVideo.currentTime;
+      _vehOverlays.forEach(function (o) {
+        if (t3 < o.startSec || t3 > o.endSec) return;
+        var p = Math.min(1, (t3 - o.startSec) / 0.4);
+        var savedS = _vehStyle; _vehStyle = o.style || _vehStyle;
+        var y3 = o.position === 'top' ? H3 * 0.1 : o.position === 'center' ? H3 * 0.5 : H3 * 0.85;
+        vehDrawOverlay(ctx3, o.text, W3 / 2, y3, p, W3, o.fontSize || 1);
+        _vehStyle = savedS;
       });
+      if (isFinite(d) && d > 0) {
+        progress('Preparing your video — ' + Math.round((t3 / d) * 100) + '% (keep this tab open)');
+      }
       requestAnimationFrame(rf3);
     }
     rf3();
-  } catch(e) { console.log('VEH export error:', e.message); }
+  }
+
+  try { _vehVideo.currentTime = 0; } catch (e) {}
+  var playPromise = _vehVideo.play();
+  if (playPromise && typeof playPromise.then === 'function') {
+    playPromise.then(beginRecording).catch(function (e) {
+      fail('The browser blocked video playback (' + (e && e.name ? e.name : 'error')
+         + '). Click anywhere on the page, then press Start Auto-Posting again.');
+    });
+  } else {
+    beginRecording();
+  }
 }
 
 
