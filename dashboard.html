@@ -14324,11 +14324,42 @@ async function startVadAutoPost() {
   if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
 
   try {
-    // Upload the video ad HTML to R2 for permanent URL
+    // The ad is built as an HTML page. Posting that .html link is what broke
+    // this feature: Facebook, Telegram and the rest expect an image or a
+    // video, so every scheduled run was rejected. Upload the HTML, then have
+    // the worker render it to a real PNG and post THAT.
     var adUrl = '';
     if (_vadIframeDoc) {
+      if (btn) btn.textContent = '⏳ Uploading…';
       var htmlBlob = new Blob([_vadIframeDoc], {type:'text/html'});
-      adUrl = await uploadFileToR2(new File([htmlBlob], 'video-ad-'+Date.now()+'.html', {type:'text/html'}), 'video-ads');
+      var htmlUrl = await uploadFileToR2(new File([htmlBlob], 'video-ad-'+Date.now()+'.html', {type:'text/html'}), 'video-ads');
+
+      if (btn) btn.textContent = '⏳ Rendering image…';
+      try {
+        var rr = await fetch('https://autopostleey-ai.alexclaor.workers.dev/render-ad', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html_url: htmlUrl, width: 1080, height: 1080 })
+        });
+        var rd = await rr.json();
+        if (rd && rd.url) {
+          adUrl = rd.url;
+        } else {
+          showToast('Could not turn the ad into an image: ' + ((rd && rd.error) || 'unknown error')
+                    + '. Auto-posting not started.', 'error');
+          if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+          return;
+        }
+      } catch (e) {
+        showToast('Could not reach the renderer: ' + e.message + '. Auto-posting not started.', 'error');
+        if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+        return;
+      }
+    }
+    if (!adUrl) {
+      showToast('Generate your video ad first, then start auto-posting.', 'error');
+      if (btn) { btn.textContent = '▶ Start Auto-Posting'; btn.disabled = false; }
+      return;
     }
 
     var caption = (document.getElementById('vad-caption')||{}).value
