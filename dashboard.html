@@ -16631,6 +16631,9 @@ async function runLeadScout() {
       + (d.place ? ' near ' + escapeHtml(String(d.place).split(',').slice(0, 2).join(',')) : '')
       + (wantEmails ? ' · <strong>' + withEmail + '</strong> with a contact email' : '')
       + ' · <span style="color:var(--text3);">via ' + escapeHtml(d.source || '') + ', best prospects first</span>'
+      + (d.degraded ? '<div style="color:#EA580C;font-size:11.5px;margin-top:4px;">'
+          + 'The main map service was busy, so these came from a backup search — fewer results '
+          + 'and fewer phone numbers than usual. Search again shortly for the full list.</div>' : '')
       + ((d.source === 'OpenStreetMap' && d.leads.length < 8)
           ? '<div style="color:var(--text3);font-size:11.5px;margin-top:5px;">'
             + 'Thin results? OpenStreetMap covers cities well and rural areas less so. '
