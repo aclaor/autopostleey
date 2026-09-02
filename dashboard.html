@@ -1501,7 +1501,33 @@
         </div>
         <div class="form-group">
           <label class="form-label">Location (optional)</label>
-          <input class="form-input" id="biz-location" placeholder="e.g. Manila, Philippines">
+          <input class="form-input" id="biz-location" placeholder="e.g. Austin, Texas">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Language for AI writing</label>
+          <select class="form-input" id="biz-language">
+            <option value="">English (default)</option>
+            <option value="English">English</option>
+            <option value="Filipino (Tagalog)">Filipino (Tagalog)</option>
+            <option value="Taglish (Tagalog + English)">Taglish (Tagalog + English)</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Italian">Italian</option>
+            <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+            <option value="Malay">Malay</option>
+            <option value="Thai">Thai</option>
+            <option value="Vietnamese">Vietnamese</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Korean">Korean</option>
+            <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Hindi">Hindi</option>
+          </select>
+          <div style="color:var(--text3);font-size:11.5px;margin-top:4px;">
+            Captions, ad copy and video text overlays are written in this language.
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Website (optional)</label>
@@ -1729,7 +1755,7 @@
 
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">TARGET AUDIENCE</label>
-            <input id="ap-audience" placeholder="e.g. Filipino travelers, small business owners, investors" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+            <input id="ap-audience" placeholder="e.g. new parents, small business owners, investors" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
           </div>
 
           <div style="margin-bottom:14px;">
@@ -4308,7 +4334,8 @@ async function generateBulkRowAI(rowIndex) {
     var endpoint = mediaItem ? '/analyze-image' : '/';
     var payload = mediaItem
       ? { image_base64: mediaItem.dataUrl.split(',')[1], media_type: mediaItem.type, business_name: bizname, description: description }
-      : { business_name: bizname, description: description, topic: 'general promotion', tone: 'friendly and engaging', audience: 'general public', location: 'Philippines' };
+      : { business_name: bizname, description: description, topic: 'general promotion',
+          tone: 'friendly and engaging', audience: 'general public', location: apMarket() };
 
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev' + endpoint, {
       method: 'POST',
@@ -5549,7 +5576,7 @@ async function generateComposePost() {
         business_name: bizname,
         description:   description,
         audience:      'general public',
-        location:      'Philippines',
+        location:      apMarket(),
         topic:         TOPIC_MAP[typeVal] || TOPIC_MAP['random'],
         tone:          'friendly and engaging'
       })
@@ -5631,6 +5658,8 @@ async function loadBizProfile() {
       document.getElementById('biz-tone').value      = data.tone      || 'friendly';
       document.getElementById('biz-audience').value  = data.audience  || '';
       document.getElementById('biz-location').value  = data.location  || '';
+      var bl = document.getElementById('biz-language');
+      if (bl) bl.value = data.language || '';
       document.getElementById('biz-website').value   = data.website   || '';
       if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
       if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
@@ -5652,6 +5681,7 @@ async function saveBusinessProfile() {
     tone:        document.getElementById('biz-tone').value,
     audience:    document.getElementById('biz-audience').value.trim(),
     location:    document.getElementById('biz-location').value.trim(),
+    language:    (document.getElementById('biz-language') || {}).value || '',
     website:     document.getElementById('biz-website').value.trim(),
     email:       document.getElementById('biz-email')  ? document.getElementById('biz-email').value.trim()  : '',
     phone:       document.getElementById('biz-phone')  ? document.getElementById('biz-phone').value.trim()  : '',
@@ -5704,10 +5734,31 @@ function apRecurringCard(f, r) {
     + '<div style="color:var(--text3);font-size:11.5px;margin-top:3px;">'
       + 'Last posted: ' + (r.last_posted_at ? new Date(r.last_posted_at).toLocaleString() : 'never')
     + '</div>'
-    + '<button onclick="showPage(\'' + f.page + '\')" style="margin-top:9px;background:none;'
-      + 'border:1px solid var(--border2);border-radius:8px;padding:6px 12px;font-size:12px;'
-      + 'color:var(--text2);cursor:pointer;">Manage →</button>'
-    + '</div>';
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">'
+      + '<button onclick="stopRecurring(\'' + f.table + '\',\'' + f.name + '\')" '
+        + 'style="background:#ef4444;border:none;border-radius:8px;padding:7px 14px;'
+        + 'font-size:12px;font-weight:700;color:#fff;cursor:pointer;">⏹ Turn off</button>'
+      + '<button onclick="showPage(\'' + f.page + '\')" style="background:none;'
+        + 'border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:12px;'
+        + 'color:var(--text2);cursor:pointer;">Manage →</button>'
+    + '</div></div>';
+}
+
+// Turn a repeating auto-post off from the Scheduled Posts / Calendar page,
+// without having to find the feature it belongs to first.
+async function stopRecurring(table, label) {
+  if (!_user || !_db) return;
+  if (!confirm('Turn off automatic posting for ' + label + '?\n\n'
+             + 'Your video, caption and platforms stay saved — you can switch it back on '
+             + 'from the ' + label + ' page whenever you want.')) return;
+  try {
+    var res = await _db.from(table).update({ enabled: false }).eq('user_id', _user.id);
+    if (res && res.error) { showToast('Could not turn it off: ' + res.error.message, 'error'); return; }
+    showToast(label + ' auto-posting turned off.', 'success');
+    loadRecurringSchedules();
+  } catch (e) {
+    showToast('Could not turn it off: ' + e.message, 'error');
+  }
 }
 
 async function loadRecurringSchedules() {
@@ -8703,7 +8754,7 @@ async function generatePreview() {
           business_name: bizname,
           description:   description,
           audience:      audience || 'general public',
-          location:      'Philippines',
+          location:      apMarket(),
           topic:         picked.emoji + ' ' + picked.label + ' — ' + (picked.topic || 'general promotion'),
           tone:          'friendly and engaging'
         })
@@ -13164,6 +13215,25 @@ async function loadSecureKeys() {
 var _GEMINI_KEY = '';
 var _GROQ_KEY   = '';
 
+// Autopostleey is used worldwide, but every AI prompt was hardcoded to
+// "Filipino small businesses" / "Philippines". Groq took that as an
+// instruction about LANGUAGE and replied in Tagalog. Market and language now
+// come from the customer's own business profile, and English is the default.
+function apMarket() {
+  var loc = (_bizProfile && (_bizProfile.location || _bizProfile.city)) || '';
+  return String(loc).trim();
+}
+function apLangRule() {
+  var lang = (_bizProfile && _bizProfile.language) || '';
+  return lang
+    ? ' Write entirely in ' + lang + '.'
+    : ' Write entirely in English.';
+}
+function apAudienceCtx(extra) {
+  var m = apMarket();
+  return (m ? 'Business location: ' + m + '. ' : '') + (extra || '');
+}
+
 // ── SHARED: Text generation with fallback chain ────────────────────
 // Chain: Groq (free) → Claude Worker → error
 function cleanAIResponse(text) {
@@ -13189,7 +13259,8 @@ async function generateTextWithFallback(prompt, context) {
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile', max_tokens: 500,
           messages: [
-            { role: 'system', content: 'You are an expert social media marketer for Filipino small businesses.' + (context ? ' Context: ' + context : '') },
+            { role: 'system', content: 'You are an expert social media marketer for small businesses.'
+                + apLangRule() + (context ? ' Context: ' + context : '') },
             { role: 'user', content: prompt }
           ]
         })
@@ -13266,7 +13337,7 @@ async function describeImageWithFallback(base64Data, mimeType, extraPrompt) {
     }
   } catch(e) { console.warn('[Worker analyze-image failed]', e.message); }
 
-  return 'A great product for Filipino customers. Quality you can trust at an affordable price.';
+  return 'A great product for our customers. Quality you can trust at an affordable price.';
 }
 
 // ── FEATURE 1: VOICE TO POST ───────────────────────────────────────
@@ -13439,7 +13510,7 @@ async function generateImageToAd() {
     if (btn) btn.textContent = '✍️ Writing ad copy...';
     showToast('✍️ Writing your ad...', 'success');
     var prompt = 'Create a complete social media ad post for ' + biz + ' (' + industry + ').\n\nProduct photo shows: ' + description + '\n\nWrite:\n1. A punchy headline (1 line)\n2. Ad body (3-4 sentences, compelling, use emojis)\n3. Call to action\n4. 5 hashtags\n\nFormat it ready to post.';
-    var adCopy = await generateTextWithFallback(prompt, 'Filipino SMB, ' + industry + ' industry');
+    var adCopy = await generateTextWithFallback(prompt, apAudienceCtx('small business, ' + industry + ' industry'));
 
     // Step 3: Show result
     var output = document.getElementById('img-ad-output');
@@ -14948,7 +15019,8 @@ async function vehGenerateOverlay() {
       + (tagline ? '. Key features: ' + tagline : '')
       + '. Format: one phrase per line, max 5 words each, no numbering.'
       + ' Start with a hook, show key features, end with: ' + cta
-      + '. Make them CAPTIVATING for Filipino social media. Output ONLY the phrases, one per line.';
+      + '. Make them CAPTIVATING for social media.' + apLangRule()
+      + ' Output ONLY the phrases, one per line.';
 
     var raw = await generateTextWithFallback(prompt);
     var lines = raw.split('\n').map(function(l){ return l.replace(/^[-•*\d.]+\s*/,'').trim(); }).filter(Boolean).slice(0, count);
