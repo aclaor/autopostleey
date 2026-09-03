@@ -1418,7 +1418,8 @@
           </button>
         </div>
         <div style="color:var(--text3);font-size:11.5px;margin-top:9px;">
-          Uses one search credit. Reading the company websites afterwards is free.
+          Uses 3 search credits (Google only returns 10 results per page, so we read three).
+          Opening the company websites afterwards is free.
         </div>
       </div>
 
@@ -1443,8 +1444,10 @@
            border-radius:12px;padding:14px 16px;background:var(--bg3);">
         <div style="font-weight:800;font-size:13px;margin-bottom:6px;">Before you email anyone</div>
         <ul style="margin:0 0 0 18px;padding:0;color:var(--text2);font-size:12.5px;line-height:1.6;">
-          <li>These are <strong>company inboxes only</strong> — info@, sales@, partnerships@.
-              Addresses belonging to named people are deliberately left out.</li>
+          <li>These are <strong>company inboxes only</strong> — info@, sales@, reception@,
+              partnerships@. Addresses belonging to named people are deliberately left out.</li>
+          <li>Many businesses publish no address at all, only a phone number or a web form.
+              Those are still leads — a phone call gets through more often than an email does.</li>
           <li>Say who you are, why you are writing, and give a real way to unsubscribe. That is
               required by the EU's GDPR, the US CAN-SPAM Act and the Philippines' Data Privacy Act.</li>
           <li>A short, specific message to ten good companies beats a generic blast to a hundred.</li>
@@ -16738,9 +16741,10 @@ async function writeMyVersion(i) {
 var _b2bData = null;
 
 var B2B_BADGE = {
-  HIGH:   { bg:'rgba(5,150,105,0.16)',  fg:'#059669', label:'Partnership contact' },
-  MEDIUM: { bg:'rgba(109,94,248,0.16)', fg:'#6D5EF8', label:'General inbox' },
-  LOW:    { bg:'var(--bg3)',            fg:'var(--text3)', label:'Phone only' },
+  HIGH:   { bg:'rgba(5,150,105,0.16)',  fg:'#059669', label:'Partnership inbox' },
+  MEDIUM: { bg:'rgba(109,94,248,0.16)', fg:'#6D5EF8', label:'Email' },
+  PHONE:  { bg:'rgba(234,88,12,0.16)',  fg:'#EA580C', label:'Phone' },
+  FORM:   { bg:'var(--bg3)',            fg:'var(--text3)', label:'Contact form' },
 };
 
 function b2bCard(l) {
@@ -16763,7 +16767,15 @@ function b2bCard(l) {
       + ' style="font-size:12.5px;color:var(--text3);text-decoration:none;">'
       + escapeHtml(l.domain) + ' ↗</a>'
     + (mails ? '<div>' + mails + '</div>' : '')
-    + (l.phone ? '<div style="font-size:13px;color:var(--text2);">📞 ' + escapeHtml(l.phone) + '</div>' : '')
+    + (l.phone
+        ? '<div style="font-size:13px;"><a href="tel:' + escapeHtml(l.phone.replace(/[^+0-9]/g,''))
+          + '" style="color:var(--text2);text-decoration:none;">📞 ' + escapeHtml(l.phone) + '</a></div>'
+        : '')
+    + (!(l.emails || []).length && l.contact_form
+        ? '<a href="' + escapeHtml(l.contact_form) + '" target="_blank" rel="noopener"'
+          + ' style="font-size:12.5px;color:var(--accent);text-decoration:none;">'
+          + '📝 No address published — use their contact form ↗</a>'
+        : '')
     + '</div>';
 }
 
@@ -16801,14 +16813,17 @@ async function runB2B() {
 
     _b2bData = d;
     var hi = d.leads.filter(function (l) { return l.score === 'HIGH'; }).length;
+    var withMail = d.leads.filter(function (l) { return l.emails && l.emails.length; }).length;
 
     status.textContent = '';
     var sum = document.getElementById('b2b-summary');
     sum.innerHTML = '<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">'
       + '<div><span style="font-size:26px;font-weight:800;">' + d.leads.length + '</span>'
         + '<span style="color:var(--text3);font-size:13px;"> companies with a contact</span></div>'
+      + '<div><span style="font-size:26px;font-weight:800;color:#6D5EF8;">' + withMail + '</span>'
+        + '<span style="color:var(--text3);font-size:13px;"> with an email address</span></div>'
       + '<div><span style="font-size:26px;font-weight:800;color:#059669;">' + hi + '</span>'
-        + '<span style="color:var(--text3);font-size:13px;"> with a partnership inbox</span></div>'
+        + '<span style="color:var(--text3);font-size:13px;"> partnership inbox</span></div>'
       + '</div>'
       + '<div style="color:var(--text3);font-size:12px;margin-top:6px;">'
       + 'Search found ' + (d.found || 0) + ' companies · opened ' + (d.scanned || 0)
@@ -16850,9 +16865,10 @@ function b2bCopyEmails() {
 function b2bDownloadCsv() {
   if (!_b2bData) return;
   function cell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
-  var rows = [['Company', 'Website', 'Best contact', 'All emails', 'Phone', 'Priority']];
+  var rows = [['Company', 'Website', 'Best contact', 'All emails', 'Phone', 'Contact form', 'Priority']];
   _b2bData.leads.forEach(function (l) {
-    rows.push([l.company, l.website, l.best_email, (l.emails || []).join('; '), l.phone, l.score]);
+    rows.push([l.company, l.website, l.best_email, (l.emails || []).join('; '),
+               l.phone, l.contact_form || '', l.score]);
   });
   var csv = rows.map(function (r) { return r.map(cell).join(','); }).join('\r\n');
   // BOM so Excel opens accented company names correctly.
