@@ -600,6 +600,11 @@
         <span data-i18n="nav_leads">Lead Scout</span>
         <span style="margin-left:auto;background:linear-gradient(135deg,#059669,#6D5EF8);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
       </a>
+      <a class="nav-item" onclick="showPage('b2b');closeAPSidebar();return false;" href="#">
+        <span style="font-size:16px;">🤝</span>
+        <span data-i18n="nav_b2b">B2B Leads</span>
+        <span style="margin-left:auto;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">NEW</span>
+      </a>
       <a class="nav-item" onclick="showPage('scheduled');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">📅</span> <span data-i18n="nav_scheduled">Scheduled</span>
       </a>
@@ -1370,6 +1375,82 @@
       <div id="as-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;"></div>
     </div>
 
+
+    <div class="page" id="page-b2b">
+      <div style="margin-bottom:18px;">
+        <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">B2B Lead Generator 🤝</h1>
+        <p style="color:var(--text2);font-size:14px;margin:0;max-width:680px;">
+          Type the kind of company you want to sell to. Autopostleey searches the web, opens each
+          company's own site, and brings back the address they publish for partnerships and sales.
+        </p>
+      </div>
+
+      <div class="card" style="padding:18px;margin-bottom:16px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:2;min-width:220px;">
+            <label class="form-label">Who do you want to reach?</label>
+            <input class="form-input" id="b2b-niche"
+                   placeholder="e.g. dental clinics, SaaS startups, coffee roasters"
+                   onkeydown="if(event.key==='Enter')runB2B()">
+          </div>
+          <div style="flex:1;min-width:150px;">
+            <label class="form-label">Country</label>
+            <select class="form-input" id="b2b-country">
+              <option value="">Worldwide</option>
+              <option value="US">🇺🇸 United States</option>
+              <option value="GB">🇬🇧 United Kingdom</option>
+              <option value="CA">🇨🇦 Canada</option>
+              <option value="AU">🇦🇺 Australia</option>
+              <option value="SG">🇸🇬 Singapore</option>
+              <option value="PH">🇵🇭 Philippines</option>
+              <option value="IN">🇮🇳 India</option>
+              <option value="DE">🇩🇪 Germany</option>
+              <option value="FR">🇫🇷 France</option>
+              <option value="ES">🇪🇸 Spain</option>
+              <option value="BR">🇧🇷 Brazil</option>
+              <option value="AE">🇦🇪 UAE</option>
+            </select>
+          </div>
+          <button onclick="runB2B()" id="b2b-btn"
+                  style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;
+                         border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;">
+            Find companies
+          </button>
+        </div>
+        <div style="color:var(--text3);font-size:11.5px;margin-top:9px;">
+          Uses one search credit. Reading the company websites afterwards is free.
+        </div>
+      </div>
+
+      <div id="b2b-status" style="font-size:13.5px;margin-bottom:12px;color:var(--text3);"></div>
+      <div id="b2b-summary" style="display:none;margin-bottom:14px;"></div>
+      <div id="b2b-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+
+      <div id="b2b-actions" style="display:none;margin-top:18px;">
+        <button onclick="b2bCopyEmails()"
+                style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
+                       padding:10px 16px;font-size:13px;color:var(--text2);cursor:pointer;margin-right:8px;">
+          📋 Copy all email addresses
+        </button>
+        <button onclick="b2bDownloadCsv()"
+                style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
+                       padding:10px 16px;font-size:13px;color:var(--text2);cursor:pointer;">
+          ⬇ Download as spreadsheet
+        </button>
+      </div>
+
+      <div id="b2b-legal" style="display:none;margin-top:16px;border:1px solid var(--border);
+           border-radius:12px;padding:14px 16px;background:var(--bg3);">
+        <div style="font-weight:800;font-size:13px;margin-bottom:6px;">Before you email anyone</div>
+        <ul style="margin:0 0 0 18px;padding:0;color:var(--text2);font-size:12.5px;line-height:1.6;">
+          <li>These are <strong>company inboxes only</strong> — info@, sales@, partnerships@.
+              Addresses belonging to named people are deliberately left out.</li>
+          <li>Say who you are, why you are writing, and give a real way to unsubscribe. That is
+              required by the EU's GDPR, the US CAN-SPAM Act and the Philippines' Data Privacy Act.</li>
+          <li>A short, specific message to ten good companies beats a generic blast to a hundred.</li>
+        </ul>
+      </div>
+    </div>
     <div class="page" id="page-leads">
       <div style="margin-bottom:18px;">
         <h1 style="font-size:24px;font-weight:800;margin:0 0 6px;">Lead Scout 🎯</h1>
@@ -16650,6 +16731,129 @@ async function writeMyVersion(i) {
     if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
     if (typeof showToast === 'function') showToast('Couldn\'t write that one — try again', 'error');
   }
+}
+
+// ── B2B Lead Generator ─────────────────────────────────────────────
+// Finds COMPANIES in a niche (Lead Scout finds local businesses on a map).
+var _b2bData = null;
+
+var B2B_BADGE = {
+  HIGH:   { bg:'rgba(5,150,105,0.16)',  fg:'#059669', label:'Partnership contact' },
+  MEDIUM: { bg:'rgba(109,94,248,0.16)', fg:'#6D5EF8', label:'General inbox' },
+  LOW:    { bg:'var(--bg3)',            fg:'var(--text3)', label:'Phone only' },
+};
+
+function b2bCard(l) {
+  var b = B2B_BADGE[l.score] || B2B_BADGE.LOW;
+  var mails = (l.emails || []).map(function (e) {
+    var hot = e === l.best_email && l.score === 'HIGH';
+    return '<a href="mailto:' + escapeHtml(e) + '" style="display:block;font-size:13px;'
+      + 'color:' + (hot ? '#059669' : 'var(--accent)') + ';font-weight:' + (hot ? '700' : '500')
+      + ';text-decoration:none;margin-top:3px;word-break:break-all;">' + escapeHtml(e) + '</a>';
+  }).join('');
+
+  return '<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:9px;'
+      + 'border-top:3px solid ' + b.fg + ';">'
+    + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">'
+      + '<div style="font-weight:800;font-size:15px;line-height:1.35;">' + escapeHtml(l.company) + '</div>'
+      + '<span style="flex:none;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;'
+        + 'background:' + b.bg + ';color:' + b.fg + ';">' + b.label + '</span>'
+    + '</div>'
+    + '<a href="' + escapeHtml(l.website) + '" target="_blank" rel="noopener"'
+      + ' style="font-size:12.5px;color:var(--text3);text-decoration:none;">'
+      + escapeHtml(l.domain) + ' ↗</a>'
+    + (mails ? '<div>' + mails + '</div>' : '')
+    + (l.phone ? '<div style="font-size:13px;color:var(--text2);">📞 ' + escapeHtml(l.phone) + '</div>' : '')
+    + '</div>';
+}
+
+async function runB2B() {
+  var niche = (document.getElementById('b2b-niche').value || '').trim();
+  if (!niche) { showToast('Type the kind of company you want to reach', 'error'); return; }
+  var country = document.getElementById('b2b-country').value;
+
+  var status = document.getElementById('b2b-status');
+  var grid = document.getElementById('b2b-grid');
+  var btn = document.getElementById('b2b-btn');
+  document.getElementById('b2b-summary').style.display = 'none';
+  document.getElementById('b2b-actions').style.display = 'none';
+  document.getElementById('b2b-legal').style.display = 'none';
+  grid.innerHTML = '';
+  btn.disabled = true;
+  status.textContent = 'Searching, then opening each company website. This takes 20–40 seconds…';
+
+  try {
+    var r = await fetch(AP_WORKER + '/b2b-leads?niche=' + encodeURIComponent(niche)
+                        + '&country=' + encodeURIComponent(country));
+    var d = await r.json();
+
+    if (!d.available) {
+      status.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(d.reason || 'Not available.') + '</span>';
+      return;
+    }
+    if (!d.leads || !d.leads.length) {
+      status.innerHTML = '<span style="color:var(--text3);">Looked at ' + (d.scanned || 0)
+        + ' companies, but none published a contact address. Try a broader term — '
+        + '"dental clinics" rather than "paediatric dental clinics in Cebu".</span>';
+      return;
+    }
+
+    _b2bData = d;
+    var hi = d.leads.filter(function (l) { return l.score === 'HIGH'; }).length;
+
+    status.textContent = '';
+    var sum = document.getElementById('b2b-summary');
+    sum.innerHTML = '<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">'
+      + '<div><span style="font-size:26px;font-weight:800;">' + d.leads.length + '</span>'
+        + '<span style="color:var(--text3);font-size:13px;"> companies with a contact</span></div>'
+      + '<div><span style="font-size:26px;font-weight:800;color:#059669;">' + hi + '</span>'
+        + '<span style="color:var(--text3);font-size:13px;"> with a partnership inbox</span></div>'
+      + '</div>'
+      + '<div style="color:var(--text3);font-size:12px;margin-top:6px;">'
+      + 'Checked ' + (d.scanned || 0) + ' company sites'
+      + ((d.scanned || 0) > d.found_total
+          ? ' · ' + ((d.scanned || 0) - d.found_total) + ' had no contact page we could read'
+          : '')
+      + '</div>';
+    sum.style.display = 'block';
+
+    grid.innerHTML = d.leads.map(b2bCard).join('');
+    document.getElementById('b2b-actions').style.display = 'block';
+    document.getElementById('b2b-legal').style.display = 'block';
+  } catch (e) {
+    status.innerHTML = '<span style="color:#ef4444;">Could not search: ' + escapeHtml(e.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function b2bCopyEmails() {
+  if (!_b2bData) return;
+  var all = [];
+  _b2bData.leads.forEach(function (l) { (l.emails || []).forEach(function (e) {
+    if (all.indexOf(e) === -1) all.push(e);
+  }); });
+  if (!all.length) { showToast('No email addresses to copy', 'error'); return; }
+  navigator.clipboard.writeText(all.join(', ')).then(function () {
+    showToast('Copied ' + all.length + ' addresses', 'success');
+  }).catch(function () { showToast('Could not copy', 'error'); });
+}
+
+function b2bDownloadCsv() {
+  if (!_b2bData) return;
+  function cell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  var rows = [['Company', 'Website', 'Best contact', 'All emails', 'Phone', 'Priority']];
+  _b2bData.leads.forEach(function (l) {
+    rows.push([l.company, l.website, l.best_email, (l.emails || []).join('; '), l.phone, l.score]);
+  });
+  var csv = rows.map(function (r) { return r.map(cell).join(','); }).join('\r\n');
+  // BOM so Excel opens accented company names correctly.
+  var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'b2b-leads-' + (_b2bData.niche || 'search').replace(/[^a-z0-9]+/gi, '-') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
 }
 
 // ── Lead Scout ────────────────────────────────────────────────────
