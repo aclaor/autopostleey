@@ -1418,8 +1418,7 @@
           </button>
         </div>
         <div style="color:var(--text3);font-size:11.5px;margin-top:9px;">
-          Uses 3 search credits (Google only returns 10 results per page, so we read three).
-          Opening the company websites afterwards is free.
+          Free and unlimited. Nothing here costs a credit.
         </div>
       </div>
 
@@ -16826,7 +16825,8 @@ async function runB2B() {
         + '<span style="color:var(--text3);font-size:13px;"> partnership inbox</span></div>'
       + '</div>'
       + '<div style="color:var(--text3);font-size:12px;margin-top:6px;">'
-      + 'Search found ' + (d.found || 0) + ' companies · opened ' + (d.scanned || 0)
+      + (d.via ? 'Searched with ' + escapeHtml(d.via) + ' · ' : '')
+      + 'found ' + (d.found || 0) + ' companies · opened ' + (d.scanned || 0)
       + ' of them · ' + Math.max(0, (d.scanned || 0) - d.leads.length)
       + ' published no business address'
       + '</div>'
