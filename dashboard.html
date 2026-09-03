@@ -16792,9 +16792,10 @@ async function runB2B() {
       return;
     }
     if (!d.leads || !d.leads.length) {
-      status.innerHTML = '<span style="color:var(--text3);">Looked at ' + (d.scanned || 0)
-        + ' companies, but none published a contact address. Try a broader term — '
-        + '"dental clinics" rather than "paediatric dental clinics in Cebu".</span>';
+      status.innerHTML = '<span style="color:var(--text3);">Opened ' + (d.scanned || 0)
+        + ' of the ' + (d.found || 0) + ' company sites the search found, but none published '
+        + 'a business contact address. Try a broader term — "dental clinics" rather than '
+        + '"paediatric dental clinics in Cebu".</span>';
       return;
     }
 
@@ -16810,11 +16811,18 @@ async function runB2B() {
         + '<span style="color:var(--text3);font-size:13px;"> with a partnership inbox</span></div>'
       + '</div>'
       + '<div style="color:var(--text3);font-size:12px;margin-top:6px;">'
-      + 'Checked ' + (d.scanned || 0) + ' company sites'
-      + ((d.scanned || 0) > d.found_total
-          ? ' · ' + ((d.scanned || 0) - d.found_total) + ' had no contact page we could read'
-          : '')
-      + '</div>';
+      + 'Search found ' + (d.found || 0) + ' companies · opened ' + (d.scanned || 0)
+      + ' of them · ' + Math.max(0, (d.scanned || 0) - d.leads.length)
+      + ' published no business address'
+      + '</div>'
+      + (d.ran_out
+          ? '<div style="margin-top:8px;border-left:3px solid #EA580C;background:#FFF7ED;'
+            + 'border-radius:8px;padding:9px 12px;color:#7C2D12;font-size:12.5px;">'
+            + 'Stopped after ' + (d.scanned || 0) + ' companies — Cloudflare\'s free plan allows '
+            + 'only 50 outbound requests per search, and each company site costs two or three. '
+            + 'The Workers Paid plan ($5/month) raises this to 1,000, which would let one search '
+            + 'cover every company it found.</div>'
+          : '');
     sum.style.display = 'block';
 
     grid.innerHTML = d.leads.map(b2bCard).join('');
