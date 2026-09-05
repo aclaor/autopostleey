@@ -1167,15 +1167,39 @@
           <select id="disc-geo" onchange="loadTrending(true)"
                   style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;cursor:pointer;">
             <option value="US">🇺🇸 United States</option>
+            <option value="PH">🇵🇭 Philippines</option>
             <option value="GB">🇬🇧 United Kingdom</option>
             <option value="CA">🇨🇦 Canada</option>
             <option value="AU">🇦🇺 Australia</option>
             <option value="IN">🇮🇳 India</option>
-            <option value="PH">🇵🇭 Philippines</option>
             <option value="SG">🇸🇬 Singapore</option>
+            <option value="MY">🇲🇾 Malaysia</option>
+            <option value="ID">🇮🇩 Indonesia</option>
+            <option value="TH">🇹🇭 Thailand</option>
+            <option value="VN">🇻🇳 Vietnam</option>
+            <option value="JP">🇯🇵 Japan</option>
+            <option value="KR">🇰🇷 South Korea</option>
+            <option value="TW">🇹🇼 Taiwan</option>
+            <option value="HK">🇭🇰 Hong Kong</option>
             <option value="DE">🇩🇪 Germany</option>
             <option value="FR">🇫🇷 France</option>
+            <option value="ES">🇪🇸 Spain</option>
+            <option value="IT">🇮🇹 Italy</option>
+            <option value="NL">🇳🇱 Netherlands</option>
+            <option value="PL">🇵🇱 Poland</option>
+            <option value="SE">🇸🇪 Sweden</option>
             <option value="BR">🇧🇷 Brazil</option>
+            <option value="MX">🇲🇽 Mexico</option>
+            <option value="AR">🇦🇷 Argentina</option>
+            <option value="ZA">🇿🇦 South Africa</option>
+            <option value="NG">🇳🇬 Nigeria</option>
+            <option value="EG">🇪🇬 Egypt</option>
+            <option value="AE">🇦🇪 UAE</option>
+            <option value="SA">🇸🇦 Saudi Arabia</option>
+            <option value="TR">🇹🇷 Turkey</option>
+            <option value="NZ">🇳🇿 New Zealand</option>
+            <option value="IE">🇮🇪 Ireland</option>
+            <option value="PT">🇵🇹 Portugal</option>
           </select>
           <button onclick="loadTrending(true)"
                   style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;">
@@ -1184,8 +1208,45 @@
         </div>
       </div>
 
+      <!-- Toolbar: one row, above the results, like every filter bar should be. -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <input id="disc-q" oninput="renderTrends()" placeholder="Search within these trends…"
+               style="flex:1;min-width:180px;max-width:280px;background:var(--bg3);border:1px solid var(--border);
+                      border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+        <select id="disc-window" onchange="renderTrends()"
+                style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                       padding:9px 12px;color:var(--text);font-size:13px;cursor:pointer;">
+          <option value="0">Any time</option>
+          <option value="4">Started in the past 4 hours</option>
+          <option value="24">Past 24 hours</option>
+          <option value="48">Past 48 hours</option>
+        </select>
+        <select id="disc-sort" onchange="renderTrends()"
+                style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                       padding:9px 12px;color:var(--text);font-size:13px;cursor:pointer;">
+          <option value="rank">Google's order</option>
+          <option value="volume">Most searches</option>
+          <option value="recent">Newest first</option>
+          <option value="title">A–Z</option>
+        </select>
+        <div style="margin-left:auto;display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <button id="disc-view-list" onclick="discSetView('list')"
+                  style="padding:9px 14px;border:none;background:var(--accent);color:#fff;
+                         font-size:13px;font-weight:700;cursor:pointer;">☰ List</button>
+          <button id="disc-view-cards" onclick="discSetView('cards')"
+                  style="padding:9px 14px;border:none;background:var(--bg3);color:var(--text2);
+                         font-size:13px;font-weight:700;cursor:pointer;">▦ Cards</button>
+        </div>
+      </div>
+
       <div id="disc-status" style="color:var(--text2);font-size:13px;margin-bottom:14px;"></div>
-      <div id="disc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;"></div>
+
+      <div id="disc-list" style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg2);"></div>
+      <div id="disc-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;"></div>
+
+      <div style="color:var(--text3);font-size:11.5px;margin-top:12px;">
+        Live from Google Trends, refreshed hourly. Free — no API key, no credits.
+      </div>
     </div>
 
     <div class="page" id="page-signals">
@@ -15985,13 +16046,18 @@ async function loadTrending(force) {
   var status = document.getElementById('disc-status');
   if (!grid) return;
 
-  if (!force && _trendCache[geo]) { renderTrends(_trendCache[geo]); return; }
+  if (!force && _trendCache[geo]) { renderTrends(); return; }
 
   status.textContent = 'Loading trends…';
   grid.innerHTML = '';
-  // Skeleton placeholders so the page never looks broken while loading.
-  for (var i = 0; i < 6; i++) {
-    grid.innerHTML += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;height:150px;opacity:.45;"></div>';
+  var list = document.getElementById('disc-list');
+  // Skeleton rows so the page never looks broken while loading.
+  if (list) {
+    list.innerHTML = '';
+    for (var k = 0; k < 8; k++) {
+      list.innerHTML += '<div style="height:56px;border-bottom:1px solid var(--border);opacity:.35;'
+        + 'background:linear-gradient(90deg,var(--bg3),var(--bg2),var(--bg3));"></div>';
+    }
   }
 
   try {
@@ -16001,19 +16067,188 @@ async function loadTrending(force) {
       throw new Error(data.error || 'No trends returned');
     }
     _trendCache[geo] = data.trends;
-    renderTrends(data.trends);
-    status.textContent = data.trends.length + ' trends · updated ' +
-      new Date(data.fetched_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    _trendFetched = data.fetched_at;
+    renderTrends();
   } catch (e) {
     grid.innerHTML = '';
+    var l2 = document.getElementById('disc-list'); if (l2) l2.innerHTML = '';
     status.innerHTML = '<span style="color:#ef4444;">Couldn\'t load trends right now.</span> ' +
       '<a href="#" onclick="loadTrending(true);return false;" style="color:var(--accent3);font-weight:600;">Try again</a>';
   }
 }
 
-function renderTrends(trends) {
+// ── Trending Now ───────────────────────────────────────────────────
+// Google's own Trending page is a ranked LIST with search volume and how
+// long ago each one started. Cards are pretty but you cannot scan thirty of
+// them, so the list is the default and cards are the alternative view.
+var _trendFetched = null;
+var _discView = 'list';
+var _discOpen = {};
+
+// "200K+" / "1M+" / "100+" → a number we can sort by. The displayed text is
+// always Google's own string; this is only for ordering.
+function trendVolume(t) {
+  var m = String(t.traffic || '').replace(/[,\s+]/g, '').match(/^(\d+(?:\.\d+)?)([KMB]?)/i);
+  if (!m) return 0;
+  var n = parseFloat(m[1]);
+  var mult = { K: 1e3, M: 1e6, B: 1e9 }[(m[2] || '').toUpperCase()] || 1;
+  return n * mult;
+}
+
+function trendAgo(t) {
+  var ms = Date.parse(t.pubDate || '');
+  if (!ms || isNaN(ms)) return { label: '', hours: 9999 };
+  var mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  var hours = mins / 60;
+  var label = mins < 60 ? mins + 'm ago'
+            : hours < 24 ? Math.round(hours) + 'h ago'
+            : Math.round(hours / 24) + 'd ago';
+  return { label: label, hours: hours };
+}
+
+function discSetView(v) {
+  _discView = v;
+  var a = document.getElementById('disc-view-list');
+  var b = document.getElementById('disc-view-cards');
+  if (a) { a.style.background = v === 'list' ? 'var(--accent)' : 'var(--bg3)';
+           a.style.color = v === 'list' ? '#fff' : 'var(--text2)'; }
+  if (b) { b.style.background = v === 'cards' ? 'var(--accent)' : 'var(--bg3)';
+           b.style.color = v === 'cards' ? '#fff' : 'var(--text2)'; }
+  renderTrends();
+}
+
+function discToggle(i) {
+  _discOpen[i] = !_discOpen[i];
+  renderTrends();
+}
+
+// Filter + sort, then hand off to whichever view is showing.
+function renderTrends() {
+  var geo = (document.getElementById('disc-geo') || {}).value || 'US';
+  var all = _trendCache[geo] || [];
   var grid = document.getElementById('disc-grid');
-  grid.innerHTML = trends.map(function (t, idx) {
+  var list = document.getElementById('disc-list');
+  var status = document.getElementById('disc-status');
+  if (!grid || !list) return;
+
+  var q = ((document.getElementById('disc-q') || {}).value || '').toLowerCase().trim();
+  var win = parseInt((document.getElementById('disc-window') || {}).value || '0', 10);
+  var sort = (document.getElementById('disc-sort') || {}).value || 'rank';
+
+  var rows = all.map(function (t, i) {
+    return { t: t, rank: i, ago: trendAgo(t), vol: trendVolume(t) };
+  });
+
+  if (q) {
+    rows = rows.filter(function (r) {
+      var hay = (r.t.title + ' ' + (r.t.context || '') + ' '
+        + (r.t.news || []).map(function (n) { return n.title + ' ' + n.source; }).join(' ')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+  }
+  if (win) rows = rows.filter(function (r) { return r.ago.hours <= win; });
+
+  if (sort === 'volume') rows.sort(function (a, b) { return b.vol - a.vol; });
+  else if (sort === 'recent') rows.sort(function (a, b) { return a.ago.hours - b.ago.hours; });
+  else if (sort === 'title') rows.sort(function (a, b) { return a.t.title.localeCompare(b.t.title); });
+  else rows.sort(function (a, b) { return a.rank - b.rank; });
+
+  if (status) {
+    status.innerHTML = rows.length
+      ? '<strong>' + rows.length + '</strong> of ' + all.length + ' trends'
+        + (_trendFetched ? ' · updated ' + new Date(_trendFetched).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '')
+      : 'Nothing matches those filters.';
+  }
+
+  if (_discView === 'cards') {
+    list.style.display = 'none';
+    grid.style.display = 'grid';
+    renderTrendCards(rows);
+  } else {
+    grid.style.display = 'none';
+    list.style.display = 'block';
+    renderTrendList(rows);
+  }
+}
+
+function renderTrendList(rows) {
+  var list = document.getElementById('disc-list');
+  if (!rows.length) { list.innerHTML = ''; return; }
+
+  // The widest bar in view is the reference, so the column stays readable
+  // whether the top trend is 100+ or 2M+.
+  var max = Math.max.apply(null, rows.map(function (r) { return r.vol; }).concat([1]));
+
+  var head = '<div style="display:grid;grid-template-columns:44px 1fr 150px 90px 40px;gap:12px;'
+    + 'padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg3);'
+    + 'font-size:11.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;">'
+    + '<div>#</div><div>Trend</div><div>Searches</div><div>Started</div><div></div></div>';
+
+  var body = rows.map(function (r, i) {
+    var t = r.t, idx = r.rank;
+    var pct = Math.max(6, Math.round((r.vol / max) * 100));
+    var open = !!_discOpen[idx];
+    var src = (t.news && t.news[0]) ? escapeHtml(t.news[0].source) : '';
+
+    var row = '<div onclick="discToggle(' + idx + ')" '
+      + 'style="display:grid;grid-template-columns:44px 1fr 150px 90px 40px;gap:12px;align-items:center;'
+      + 'padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;"'
+      + ' onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      + '<div style="font-size:13px;font-weight:800;color:' + (i < 3 ? '#EA580C' : 'var(--text3)') + ';">'
+        + (i + 1) + '</div>'
+      + '<div style="min-width:0;">'
+        + '<div style="font-size:14.5px;font-weight:700;text-transform:capitalize;line-height:1.35;'
+          + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(t.title) + '</div>'
+        + (src ? '<div style="font-size:11.5px;color:var(--text3);margin-top:2px;">' + src
+                 + (t.news && t.news.length > 1 ? ' + ' + (t.news.length - 1) + ' more' : '') + '</div>' : '')
+      + '</div>'
+      + '<div>'
+        + '<div style="font-size:13px;font-weight:700;">' + escapeHtml(t.traffic || '—') + '</div>'
+        + '<div style="height:5px;border-radius:3px;background:var(--bg3);margin-top:4px;overflow:hidden;">'
+          + '<div style="height:100%;width:' + pct + '%;border-radius:3px;background:#6D5EF8;"></div></div>'
+      + '</div>'
+      + '<div style="font-size:12.5px;color:var(--text2);">' + escapeHtml(r.ago.label || '—') + '</div>'
+      + '<div style="text-align:right;color:var(--text3);font-size:12px;">' + (open ? '▾' : '▸') + '</div>'
+      + '</div>';
+
+    if (!open) return row;
+
+    var news = (t.news || []).map(function (n) {
+      return '<a href="' + escapeHtml(n.url || '#') + '" target="_blank" rel="noopener"'
+        + ' style="display:block;padding:9px 0;border-bottom:1px solid var(--border);text-decoration:none;">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.4;">' + escapeHtml(n.title) + '</div>'
+        + '<div style="font-size:11.5px;color:var(--text3);margin-top:2px;">' + escapeHtml(n.source) + ' ↗</div>'
+        + '</a>';
+    }).join('');
+
+    var panel = '<div style="padding:14px 16px 16px 60px;border-bottom:1px solid var(--border);background:var(--bg3);">'
+      + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
+        + (t.image ? '<img src="' + escapeHtml(t.image) + '" alt="" loading="lazy"'
+            + ' onerror="this.style.display=\'none\'"'
+            + ' style="width:120px;height:90px;object-fit:cover;border-radius:8px;flex:none;">' : '')
+        + '<div style="flex:1;min-width:220px;">'
+          + (news || '<div style="color:var(--text3);font-size:12.5px;">No news stories attached to this trend.</div>')
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">'
+        + '<button onclick="event.stopPropagation();useTrend(' + idx + ',true)"'
+          + ' style="padding:9px 16px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;'
+          + 'border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Write a post about this</button>'
+        + '<button onclick="event.stopPropagation();useTrend(' + idx + ',false)"'
+          + ' style="padding:9px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;'
+          + 'color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">✏️ Just send the topic</button>'
+      + '</div></div>';
+
+    return row + panel;
+  }).join('');
+
+  list.innerHTML = head + body;
+}
+
+function renderTrendCards(rows) {
+  var grid = document.getElementById('disc-grid');
+  grid.innerHTML = rows.map(function (r) {
+    var t = r.t, idx = r.rank;
     var safeTitle = escapeHtml(t.title);
     var ctx       = t.context ? escapeHtml(t.context) : '';
     var src       = (t.news && t.news[0]) ? escapeHtml(t.news[0].source) : '';
