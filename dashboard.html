@@ -1417,8 +1417,16 @@
             Find companies
           </button>
         </div>
-        <div style="color:var(--text3);font-size:11.5px;margin-top:9px;">
-          Free and unlimited. Nothing here costs a credit.
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+                    align-items:center;margin-top:10px;">
+          <div style="color:var(--text3);font-size:11.5px;">
+            Free and unlimited. Nothing here costs a credit.
+          </div>
+          <label id="b2b-deep-wrap" style="display:none;align-items:center;gap:7px;
+                 font-size:12.5px;color:var(--text2);cursor:pointer;">
+            <input type="checkbox" id="b2b-deep" checked style="width:15px;height:15px;cursor:pointer;">
+            <span>💻 Use my laptop <span style="color:#059669;font-weight:700;">● online</span></span>
+          </label>
         </div>
       </div>
 
@@ -16778,6 +16786,40 @@ function b2bCard(l) {
     + '</div>';
 }
 
+// Is the laptop helper running? If it is, offer the deeper search that has
+// no request limit. If not, the tickbox stays hidden — no point offering
+// something that cannot happen.
+async function b2bCheckAgent() {
+  try {
+    var r = await fetch(AP_WORKER + '/agent/status');
+    var d = await r.json();
+    var wrap = document.getElementById('b2b-deep-wrap');
+    if (wrap) wrap.style.display = (d && d.online) ? 'flex' : 'none';
+  } catch (e) {}
+}
+
+// The laptop can take a couple of minutes, so the browser polls for the
+// answer instead of holding one request open that long.
+async function b2bWaitForJob(jobId, onTick) {
+  for (var i = 0; i < 150; i++) {          // ~5 minutes
+    await new Promise(function (r) { setTimeout(r, 2000); });
+    var r2 = await fetch(AP_WORKER + '/lead-job?id=' + encodeURIComponent(jobId));
+    var d = await r2.json();
+    if (d.status === 'done') return { leads: d.leads || [] };
+    if (d.status === 'failed') throw new Error(d.error || 'The laptop reported a problem');
+    if (onTick) onTick(d.status, i);
+  }
+  throw new Error('The laptop did not answer in time — is the helper window still open?');
+}
+
+// Re-check whenever the page is opened.
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', function () {
+    setTimeout(function () { try { b2bCheckAgent(); } catch (e) {} }, 1500);
+    setInterval(function () { try { b2bCheckAgent(); } catch (e) {} }, 60000);
+  });
+}
+
 async function runB2B() {
   var niche = (document.getElementById('b2b-niche').value || '').trim();
   if (!niche) { showToast('Type the kind of company you want to reach', 'error'); return; }
@@ -16793,10 +16835,33 @@ async function runB2B() {
   btn.disabled = true;
   status.textContent = 'Searching, then opening each company website. This takes 20–40 seconds…';
 
+  var deepEl = document.getElementById('b2b-deep');
+  var wrapEl = document.getElementById('b2b-deep-wrap');
+  var useLaptop = deepEl && deepEl.checked && wrapEl && wrapEl.style.display !== 'none';
+
   try {
-    var r = await fetch(AP_WORKER + '/b2b-leads?niche=' + encodeURIComponent(niche)
-                        + '&country=' + encodeURIComponent(country));
-    var d = await r.json();
+    var d;
+    if (useLaptop) {
+      status.textContent = 'Sent to your laptop. It has no request limit, so this digs '
+                         + 'much deeper — usually 1 to 3 minutes…';
+      var jr = await fetch(AP_WORKER + '/lead-job', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: _user ? _user.id : 'anon', niche: niche, country: country })
+      });
+      var jd = await jr.json();
+      if (!jd.job_id) throw new Error(jd.error || 'Could not send the job to your laptop');
+      var done = await b2bWaitForJob(jd.job_id, function (st, i) {
+        status.textContent = (st === 'running'
+          ? 'Your laptop is reading company websites… '
+          : 'Waiting for your laptop to pick this up… ') + (i * 2) + 's';
+      });
+      d = { available: true, leads: done.leads, via: 'your laptop',
+            found: done.leads.length, scanned: done.leads.length, niche: niche };
+    } else {
+      var r = await fetch(AP_WORKER + '/b2b-leads?niche=' + encodeURIComponent(niche)
+                          + '&country=' + encodeURIComponent(country));
+      d = await r.json();
+    }
 
     if (!d.available) {
       status.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(d.reason || 'Not available.') + '</span>';
