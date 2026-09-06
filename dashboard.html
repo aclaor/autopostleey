@@ -14193,19 +14193,27 @@ function padPaintPhoto(ctx, W, H, img, zoom) {
   if (!iw || !ih) return;
 
   if (padFitMode() === 'fit') {
-    var coverS = Math.max(W / iw, H / ih);
-    ctx.save();
-    try {
-      // Blurred backdrop so the padding is never a flat grey bar.
-      ctx.filter = 'blur(' + Math.round(W / 28) + 'px)';
-      ctx.globalAlpha = 0.85;
-      var bw = iw * coverS * 1.18, bh = ih * coverS * 1.18;
-      ctx.drawImage(img, (W - bw) / 2, (H - bh) / 2, bw, bh);
-    } catch (e) {
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(0, 0, W, H);
+    // Blurring a 1080px image every single frame is what made the export
+    // crawl. Render the backdrop once per photo and reuse it.
+    var key = W + 'x' + H + '|' + (img.src || '').slice(-40);
+    if (!img.__apBg || img.__apBgKey !== key) {
+      var bg = document.createElement('canvas');
+      bg.width = W; bg.height = H;
+      var bctx = bg.getContext('2d');
+      var coverS = Math.max(W / iw, H / ih);
+      try {
+        bctx.filter = 'blur(' + Math.round(W / 28) + 'px)';
+        bctx.globalAlpha = 0.85;
+        var bw = iw * coverS * 1.18, bh = ih * coverS * 1.18;
+        bctx.drawImage(img, (W - bw) / 2, (H - bh) / 2, bw, bh);
+      } catch (e) {
+        bctx.fillStyle = '#111827';
+        bctx.fillRect(0, 0, W, H);
+      }
+      img.__apBg = bg;
+      img.__apBgKey = key;
     }
-    ctx.restore();
+    ctx.drawImage(img.__apBg, 0, 0, W, H);
 
     var s = Math.min(W / iw, H / ih) * zoom;
     var dw = iw * s, dh = ih * s;
@@ -14311,6 +14319,24 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
   });
 }
 
+// Keeps a whole label inside the frame. A flat 5% margin was not enough:
+// a big emoji is centred on its point, so at y=0.05 half of it sits above
+// the top edge — invisible in the preview (which did not clip) and chopped
+// in the exported video.
+function padClampToFrame(el, cw, ch, label) {
+  var w = el.offsetWidth, h = el.offsetHeight;
+  if (!w || !h) return false;
+  var minX = (w / 2) / cw, maxX = 1 - minX;
+  var minY = (h / 2) / ch, maxY = 1 - minY;
+  var nx = Math.max(minX, Math.min(maxX, label.x));
+  var ny = Math.max(minY, Math.min(maxY, label.y));
+  var moved = (nx !== label.x || ny !== label.y);
+  label.x = nx; label.y = ny;
+  el.style.left = (nx * cw) + 'px';
+  el.style.top = (ny * ch) + 'px';
+  return moved;
+}
+
 function padRenderOverlayLabels(cw, ch) {
   var overlay = document.getElementById('pad-labels-overlay');
   var wrap = document.getElementById('pad-canvas-wrap');
@@ -14325,6 +14351,9 @@ function padRenderOverlayLabels(cw, ch) {
   overlay.style.width = cw + 'px';
   overlay.style.height = ch + 'px';
   overlay.style.position = 'absolute';
+  // The video frame clips anything past its edge. The preview did not, so a
+  // label hanging off the top looked fine here and came out chopped there.
+  overlay.style.overflow = 'hidden';
 
   overlay.innerHTML = '';
   photo.labels.forEach(function(label, i) {
@@ -14333,6 +14362,16 @@ function padRenderOverlayLabels(cw, ch) {
     if (label.bgcolor) st.bg       = label.bgcolor;
     if (label.size)    st.fontSize = label.size;
     var fontFamily = label.font || 'Inter, sans-serif';
+
+    // The canvas multiplies every size by (frame width / 500). The preview
+    // overlay did not, so on a tall 9:16 preview the canvas is only ~292px
+    // wide while the HTML label still drew at its raw pixel size — the label
+    // looked far bigger in the preview than it came out in the export.
+    var k = cw / PAD_REF_W;
+    st.fontSize = st.fontSize * k;
+    var padScaled = (st.pad || '0').replace(/(\d+(?:\.\d+)?)px/g, function (m, n) {
+      return (parseFloat(n) * k) + 'px';
+    });
 
     var x = label.x * cw, y = label.y * ch;
     var el = document.createElement('div');
@@ -14352,8 +14391,8 @@ function padRenderOverlayLabels(cw, ch) {
       'font-size:' + st.fontSize + 'px',
       'font-family:' + fontFamily,
       'font-weight:' + (isEmoji ? 'normal' : st.fontWeight),
-      'padding:' + (isEmoji ? '0' : st.pad),
-      'border-radius:' + st.radius + 'px',
+      'padding:' + (isEmoji ? '0' : padScaled),
+      'border-radius:' + (st.radius * k) + 'px',
       isEmoji ? '' : (st.border && st.border !== 'none' ? 'border:' + st.border : ''),
       'box-shadow:' + (isEmoji ? 'none' : st.shadow),
       'cursor:grab',
@@ -14383,6 +14422,8 @@ function padRenderOverlayLabels(cw, ch) {
     el.addEventListener('touchstart', function(e) { padStartDragTouch(e, i); }, {passive:false});
 
     overlay.appendChild(el);
+    // Measure once it is in the DOM, then pull it back inside if it hangs off.
+    padClampToFrame(el, cw, ch, label);
   });
 }
 
@@ -14394,12 +14435,18 @@ function padStartDrag(e, labelIdx) {
   if (!overlay || !canvas) return;
   var cw = parseInt(canvas.style.width), ch = parseInt(canvas.style.height);
 
+  var dragEl = overlay.querySelector('[data-idx="' + labelIdx + '"]');
+  var hw = dragEl ? (dragEl.offsetWidth / 2) / cw : 0.05;
+  var hh = dragEl ? (dragEl.offsetHeight / 2) / ch : 0.05;
+
   function onMove(ev) {
     var rect = overlay.getBoundingClientRect();
     var x = (ev.clientX - rect.left) / cw;
     var y = (ev.clientY - rect.top) / ch;
-    x = Math.max(0.05, Math.min(0.95, x));
-    y = Math.max(0.05, Math.min(0.95, y));
+    // Stop at the point where the label's own edge meets the frame's edge,
+    // so nothing can be dragged half out of shot.
+    x = Math.max(hw, Math.min(1 - hw, x));
+    y = Math.max(hh, Math.min(1 - hh, y));
     _padPhotos[_padCurrentIdx].labels[_padDragging].x = x;
     _padPhotos[_padCurrentIdx].labels[_padDragging].y = y;
     padDrawCanvas();
@@ -14420,11 +14467,15 @@ function padStartDragTouch(e, labelIdx) {
   var canvas = document.getElementById('pad-canvas');
   if (!overlay || !canvas) return;
   var cw = parseInt(canvas.style.width), ch = parseInt(canvas.style.height);
+  var dragElT = overlay.querySelector('[data-idx="' + labelIdx + '"]');
+  var hwT = dragElT ? (dragElT.offsetWidth / 2) / cw : 0.05;
+  var hhT = dragElT ? (dragElT.offsetHeight / 2) / ch : 0.05;
+
   function onMove(ev) {
     var touch = ev.touches[0];
     var rect = overlay.getBoundingClientRect();
-    var x = Math.max(0.05, Math.min(0.95, (touch.clientX - rect.left) / cw));
-    var y = Math.max(0.05, Math.min(0.95, (touch.clientY - rect.top) / ch));
+    var x = Math.max(hwT, Math.min(1 - hwT, (touch.clientX - rect.left) / cw));
+    var y = Math.max(hhT, Math.min(1 - hhT, (touch.clientY - rect.top) / ch));
     _padPhotos[_padCurrentIdx].labels[_padDragging].x = x;
     _padPhotos[_padCurrentIdx].labels[_padDragging].y = y;
     padDrawCanvas();
@@ -14628,17 +14679,25 @@ function padExportSlideshow() {
   };
 
   recorder.start();
-  var FPS = 30;
   var secs = padSlideSeconds();
-  var frame = 0, totalFrames = Math.round(_padPhotos.length * secs * FPS);
+  var totalMs = _padPhotos.length * secs * 1000;
+  var t0 = performance.now();
 
+  // Driven by the REAL clock, not a frame counter.
+  //
+  // captureStream records in real time, but the old loop advanced the
+  // animation by 1/30th of a second per pass and assumed each pass took
+  // 33ms. Drawing a 1080px frame with a blurred backdrop takes far longer
+  // than that, so twelve seconds of animation was recorded over thirty —
+  // slow motion, and a video 2.5x longer than the setting said. Both of the
+  // test videos came out 30.6 seconds when they should have been 12.
   function renderFrame() {
-    if (frame >= totalFrames) { recorder.stop(); return; }
-    padDrawSlideAt(recCtx, cw, ch, frame / FPS, secs);
-    frame++;
-    setTimeout(renderFrame, 1000 / FPS);
+    var t = (performance.now() - t0) / 1000;
+    if (t * 1000 >= totalMs) { recorder.stop(); return; }
+    padDrawSlideAt(recCtx, cw, ch, t, secs);
+    requestAnimationFrame(renderFrame);
   }
-  renderFrame();
+  requestAnimationFrame(renderFrame);
 }
 
 async function padPostToSocial() {
@@ -14687,7 +14746,7 @@ async function padPostToSocial() {
       var ctx2 = tempCanvas.getContext('2d');
 
       var chunks = [];
-      var stream2 = tempCanvas.captureStream(15);
+      var stream2 = tempCanvas.captureStream(30);
       var mimeType2 = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm;codecs=vp9';
       var recorder2 = new MediaRecorder(stream2, {mimeType: mimeType2});
       recorder2.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
@@ -14707,20 +14766,17 @@ async function padPostToSocial() {
 
       recorder2.start();
       var slideSecs = padSlideSeconds();
-      var SFPS = 30;
-      var frameIdx = 0;
-      var slideTotal = Math.round(count * slideSecs * SFPS);
+      var slideTotalMs = count * slideSecs * 1000;
+      var st0 = performance.now();
 
-      // Timed off the clock rather than requestAnimationFrame. The old loop
-      // assumed 15fps but rAF runs at 60, so every photo flashed past in
-      // three quarters of a second.
+      // Real clock, same reason as the download path above.
       function renderSlideFrame() {
-        if (frameIdx >= slideTotal) { recorder2.stop(); return; }
-        padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, frameIdx / SFPS, slideSecs);
-        frameIdx++;
-        setTimeout(renderSlideFrame, 1000 / SFPS);
+        var t = (performance.now() - st0) / 1000;
+        if (t * 1000 >= slideTotalMs) { recorder2.stop(); return; }
+        padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, t, slideSecs);
+        requestAnimationFrame(renderSlideFrame);
       }
-      renderSlideFrame();
+      requestAnimationFrame(renderSlideFrame);
 
     } catch(e) {
       showToast('Slideshow creation failed: ' + e.message, 'error');
