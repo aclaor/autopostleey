@@ -3889,6 +3889,21 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <!-- Export options -->
             <div class="card">
               <div class="card-title">📤 Export</div>
+              <div style="background:var(--bg3);border-radius:10px;padding:11px 13px;margin-bottom:10px;">
+                <label style="font-size:11.5px;color:var(--text3);">Shape</label>
+                <select id="pad-aspect" onchange="padSetAspect()"
+                        style="width:100%;background:var(--bg2);border:1px solid var(--border);
+                               border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;margin-top:5px;">
+                  <option value="1:1">■ Square 1:1 — feed posts</option>
+                  <option value="4:5">▯ Portrait 4:5 — best for feeds</option>
+                  <option value="9:16">▮ Story / Reel 9:16 — full screen</option>
+                  <option value="16:9">▭ Landscape 16:9 — YouTube</option>
+                </select>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;">
+                  The preview shows this exact shape, so labels and emojis land
+                  where you put them.
+                </div>
+              </div>
               <div id="pad-speed-row" style="background:var(--bg3);border-radius:10px;padding:11px 13px;margin-bottom:12px;">
                 <label style="font-size:11.5px;color:var(--text3);">Seconds per photo</label>
                 <select id="pad-slide-secs" onchange="padSlideTotalLabel()"
@@ -14138,6 +14153,32 @@ function padCopyLabelsToAll() {
 function padPrevPhoto() { if (_padPhotos.length) padSetCurrentPhoto((_padCurrentIdx - 1 + _padPhotos.length) % _padPhotos.length); }
 function padNextPhoto() { if (_padPhotos.length) padSetCurrentPhoto((_padCurrentIdx + 1) % _padPhotos.length); }
 
+// ── Output shape ───────────────────────────────────────────────────
+// The preview used the PHOTO's own shape, but the slideshow always exported
+// a 720x720 square. A sticker dropped at 80% down a tall preview landed at
+// 80% down a square frame — a completely different spot on the picture,
+// because the square crops the top and bottom away. That is why dragged
+// emojis moved.
+//
+// Now one shape drives both, so what you place is what you get.
+var PAD_ASPECTS = {
+  '1:1':  { r: 1,        w: 1080, h: 1080, label: 'Square' },
+  '4:5':  { r: 4 / 5,    w: 1080, h: 1350, label: 'Portrait' },
+  '9:16': { r: 9 / 16,   w: 1080, h: 1920, label: 'Story / Reel' },
+  '16:9': { r: 16 / 9,   w: 1920, h: 1080, label: 'Landscape' },
+};
+
+function padAspect() {
+  var el = document.getElementById('pad-aspect');
+  return PAD_ASPECTS[(el && el.value) || '1:1'] || PAD_ASPECTS['1:1'];
+}
+
+function padSetAspect() {
+  padDrawCanvas();
+  padRenderLabelsList();
+  padSlideTotalLabel();
+}
+
 function padDrawCanvas() {
   var wrap = document.getElementById('pad-canvas-wrap');
   var emptyState = document.getElementById('pad-empty-state');
@@ -14158,13 +14199,12 @@ function padDrawCanvas() {
   var photo = _padPhotos[_padCurrentIdx];
   var img = photo.img;
 
-  // Size canvas to fit container while preserving aspect ratio
+  // The preview is the OUTPUT shape, not the photo's shape. The photo is
+  // cover-cropped into it, exactly as the export does.
   var wrapW = wrap.offsetWidth || 500;
-  var maxH = 500;
-  var ratio = img.naturalWidth / img.naturalHeight;
-  var cw, ch;
-  if (ratio >= 1) { cw = Math.min(wrapW, img.naturalWidth); ch = cw / ratio; }
-  else { ch = Math.min(maxH, img.naturalHeight); cw = ch * ratio; }
+  var maxH = 520;
+  var ratio = padAspect().r;
+  var cw = Math.min(wrapW, 500), ch = cw / ratio;
   if (ch > maxH) { ch = maxH; cw = ch * ratio; }
   cw = Math.round(cw); ch = Math.round(ch);
 
@@ -14198,6 +14238,7 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
     if (label.color)   st.color    = label.color;
     if (label.bgcolor) st.bg       = label.bgcolor;
     if (label.size)    st.fontSize = label.size;
+    st.fontSize = st.fontSize * k;
     var x = label.x * cw, y = label.y * ch;
     var fontFamily = label.font || 'Inter, sans-serif';
     ctx.font = st.fontWeight + ' ' + st.fontSize + 'px ' + fontFamily;
@@ -14516,16 +14557,13 @@ function padExportSlideshow() {
   if (_padPhotos.length < 2) { showToast('Upload at least 2 photos for a slideshow!', 'error'); return; }
   showToast('🎬 Creating slideshow... this may take a moment', 'success');
 
-  var canvas = document.getElementById('pad-canvas');
-  if (!canvas) return;
-  var cw = parseInt(canvas.style.width) || 500;
-  var ch = parseInt(canvas.style.height) || 500;
+  // Export in the shape shown in the preview, at full resolution.
+  var asp = padAspect();
+  var cw = asp.w, ch = asp.h;
 
-  // Create recording canvas
   var recCanvas = document.createElement('canvas');
-  recCanvas.width = cw * 2; recCanvas.height = ch * 2;
+  recCanvas.width = cw; recCanvas.height = ch;
   var recCtx = recCanvas.getContext('2d');
-  recCtx.scale(2, 2);
 
   var stream = recCanvas.captureStream(30);
   var slideMime = 'video/webm;codecs=vp9';
@@ -14601,7 +14639,8 @@ async function padPostToSocial() {
     try {
       // Build slideshow frames
       var tempCanvas = document.createElement('canvas');
-      tempCanvas.width = 720; tempCanvas.height = 720;
+      var aspAuto = padAspect();
+      tempCanvas.width = aspAuto.w; tempCanvas.height = aspAuto.h;
       var ctx2 = tempCanvas.getContext('2d');
 
       var chunks = [];
@@ -14634,7 +14673,7 @@ async function padPostToSocial() {
       // three quarters of a second.
       function renderSlideFrame() {
         if (frameIdx >= slideTotal) { recorder2.stop(); return; }
-        padDrawSlideAt(ctx2, 720, 720, frameIdx / SFPS, slideSecs);
+        padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, frameIdx / SFPS, slideSecs);
         frameIdx++;
         setTimeout(renderSlideFrame, 1000 / SFPS);
       }
@@ -15318,8 +15357,14 @@ function padApplyLabelEdit() {
 
 // Override padDrawLabels to support custom colors/sizes.
 // This is the definition that actually runs (it is declared last).
+// Label sizes are stored in preview pixels (the preview is ~500 wide).
+// The export is 1080+ wide, so drawing them at their stored size made every
+// label and emoji shrink to a quarter of what the customer placed.
+var PAD_REF_W = 500;
+
 function padDrawLabels(ctx, cw, ch, photoIdx) {
   if (!_padPhotos.length) return;
+  var k = cw / PAD_REF_W;
   // The slideshow draws photo 3 while _padCurrentIdx still says 1, so the
   // index has to be passed in. Without it every slide carried the FIRST
   // photo's labels.
@@ -15330,12 +15375,15 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
     if (label.color)   st.color    = label.color;
     if (label.bgcolor) st.bg       = label.bgcolor;
     if (label.size)    st.fontSize = label.size;
+    st.fontSize = st.fontSize * k;      // scale with the frame
 
     var x = label.x * cw, y = label.y * ch;
 
     if (label.isEmoji) {
-      // Emoji: draw large, no background
-      ctx.font = st.fontSize + 'px serif';
+      // Emoji: draw large, no background. Segoe UI Emoji / Apple Color Emoji
+      // first — "serif" alone renders as a black-and-white glyph on Windows.
+      ctx.font = st.fontSize + 'px "Apple Color Emoji","Segoe UI Emoji",'
+               + '"Noto Color Emoji",sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label.text, x, y);
@@ -15343,21 +15391,21 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
       return;
     }
 
-    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px Inter, sans-serif';
+    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px ' + (label.font || 'Inter, sans-serif');
     var tw = ctx.measureText(label.text).width;
-    var padH = 10, padW = 14;
+    var padH = 10 * k, padW = 14 * k;
     var bw = tw + padW * 2, bh = st.fontSize + padH * 2;
 
     if (st.bg && st.bg !== 'transparent') {
       ctx.fillStyle = st.bg;
-      ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 10 * k;
       ctx.beginPath();
-      if (ctx.roundRect) { ctx.roundRect(x - bw/2, y - bh/2, bw, bh, st.radius || 0); }
+      if (ctx.roundRect) { ctx.roundRect(x - bw/2, y - bh/2, bw, bh, (st.radius || 0) * k); }
       else { ctx.rect(x - bw/2, y - bh/2, bw, bh); }
       ctx.fill();
       ctx.shadowBlur = 0;
     }
-    if (st.textShadow) { ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8; }
+    if (st.textShadow) { ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8 * k; }
     ctx.fillStyle = st.color;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
