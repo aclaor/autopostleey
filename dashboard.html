@@ -3889,6 +3889,23 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <!-- Export options -->
             <div class="card">
               <div class="card-title">📤 Export</div>
+              <div id="pad-speed-row" style="background:var(--bg3);border-radius:10px;padding:11px 13px;margin-bottom:12px;">
+                <label style="font-size:11.5px;color:var(--text3);">Seconds per photo</label>
+                <select id="pad-slide-secs" onchange="padSlideTotalLabel()"
+                        style="width:100%;background:var(--bg2);border:1px solid var(--border);
+                               border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;margin-top:5px;">
+                  <option value="2">2s — quick flick</option>
+                  <option value="3">3s — brisk</option>
+                  <option value="4" selected>4s — recommended</option>
+                  <option value="5">5s — relaxed</option>
+                  <option value="6">6s — lots to read</option>
+                </select>
+                <div id="pad-slide-total" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.5;">
+                  4 seconds gives a viewer time to take in the photo and read a label.
+                  Pick longer if your labels are wordy.
+                </div>
+              </div>
               <div style="display:flex;flex-direction:column;gap:10px;">
                 <button onclick="padExportImage()" style="width:100%;padding:14px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
                   🖼️ Download as Image
@@ -14057,6 +14074,7 @@ function padRenderGrid() {
       + '</div>';
   }).join('');
   if (addBtn) addBtn.style.display = _padPhotos.length >= 10 ? 'none' : 'flex';
+  if (typeof padSlideTotalLabel === 'function') padSlideTotalLabel();
 }
 
 function padRemovePhoto(idx) {
@@ -14169,9 +14187,13 @@ function padDrawCanvas() {
   padRenderOverlayLabels(cw, ch);
 }
 
-function padDrawLabels(ctx, cw, ch) {
-  var photo = _padPhotos[_padCurrentIdx];
-  photo.labels.forEach(function(label) {
+function padDrawLabels(ctx, cw, ch, photoIdx) {
+  // The slideshow draws photo 3 while _padCurrentIdx still says 1, so the
+  // index has to be passed in. Without it every slide showed the FIRST
+  // photo's labels.
+  var photo = _padPhotos[(photoIdx === undefined || photoIdx === null) ? _padCurrentIdx : photoIdx];
+  if (!photo) return;
+  (photo.labels || []).forEach(function(label) {
     var st = JSON.parse(JSON.stringify(PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge));
     if (label.color)   st.color    = label.color;
     if (label.bgcolor) st.bg       = label.bgcolor;
@@ -14418,6 +14440,78 @@ function padExportImage() {
   }, 100);
 }
 
+
+// ── Slideshow pacing ───────────────────────────────────────────────
+// The old timing was wrong twice over.
+//
+//   Download path: 3 seconds a photo, but half a second fading to BLACK on
+//   the way in and another on the way out. So barely two seconds of clear
+//   picture, separated by a black blink — which reads as rushed and cheap.
+//
+//   Auto-post path: 45 frames per photo driven by requestAnimationFrame,
+//   which runs at 60fps, not the 15 the comment assumed. That is 0.75
+//   seconds a photo. Genuinely too fast to see anything.
+//
+// Now: one shared renderer, a real crossfade between photos instead of a
+// blink through black, and a duration the customer sets. Four seconds is the
+// default — about a second to take in the picture and two to read a label,
+// which is the usual advice for social slideshows.
+var _padSlideSecs = 4;
+
+function padSlideSeconds() {
+  var el = document.getElementById('pad-slide-secs');
+  var v = el ? parseFloat(el.value) : _padSlideSecs;
+  return (isFinite(v) && v > 0) ? v : 4;
+}
+
+function padSlideTotalLabel() {
+  var el = document.getElementById('pad-slide-total');
+  if (!el) return;
+  var n = _padPhotos.length;
+  if (!n) { el.textContent = ''; return; }
+  var total = n * padSlideSeconds();
+  el.textContent = n + ' photos · ' + (Math.round(total * 10) / 10) + ' seconds total';
+}
+
+function padDrawPhotoInto(ctx, W, H, idx, progress) {
+  var photo = _padPhotos[idx];
+  if (!photo || !photo.img) return;
+  var img = photo.img;
+  // A gentle drift. The old 5% zoom plus a 10px slide was jumpier than it
+  // needed to be on a short slide.
+  var scale = 1 + progress * 0.035;
+  ctx.save();
+  ctx.translate((1 - scale) * W / 2, (1 - scale) * H / 2);
+  ctx.scale(scale, scale);
+  var s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+  var sw = img.naturalWidth * s, sh = img.naturalHeight * s;
+  ctx.drawImage(img, (W - sw) / 2, (H - sh) / 2, sw, sh);
+  ctx.restore();
+  padDrawLabels(ctx, W, H, idx);
+}
+
+// Paints the whole slideshow at time t (seconds). Used by both exports, so
+// the download and the auto-post are always paced identically.
+function padDrawSlideAt(ctx, W, H, t, secs) {
+  var n = _padPhotos.length;
+  if (!n) return;
+  var FADE = Math.min(0.6, secs * 0.2);
+  var idx = Math.min(n - 1, Math.floor(t / secs));
+  var into = t - idx * secs;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  padDrawPhotoInto(ctx, W, H, idx, into / secs);
+
+  // Crossfade the next photo in over the tail of this one. No black frame.
+  var left = secs - into;
+  if (idx < n - 1 && left < FADE) {
+    ctx.globalAlpha = 1 - (left / FADE);
+    padDrawPhotoInto(ctx, W, H, idx + 1, 0);
+    ctx.globalAlpha = 1;
+  }
+}
+
 function padExportSlideshow() {
   if (_padPhotos.length < 2) { showToast('Upload at least 2 photos for a slideshow!', 'error'); return; }
   showToast('🎬 Creating slideshow... this may take a moment', 'success');
@@ -14451,50 +14545,13 @@ function padExportSlideshow() {
   };
 
   recorder.start();
-  var FPS = 30, durPerPhoto = 3; // 3 seconds per photo
-  var frame = 0, totalFrames = _padPhotos.length * durPerPhoto * FPS;
-  var prevIdx = -1;
+  var FPS = 30;
+  var secs = padSlideSeconds();
+  var frame = 0, totalFrames = Math.round(_padPhotos.length * secs * FPS);
 
   function renderFrame() {
     if (frame >= totalFrames) { recorder.stop(); return; }
-    var pIdx = Math.floor(frame / (durPerPhoto * FPS));
-    var pFrame = frame % (durPerPhoto * FPS);
-    var progress = pFrame / (durPerPhoto * FPS);
-
-    if (pIdx !== prevIdx) {
-      prevIdx = pIdx;
-      _padCurrentIdx = pIdx;
-    }
-
-    var photo = _padPhotos[pIdx];
-    var img = photo.img;
-
-    // Clear
-    recCtx.clearRect(0, 0, cw, ch);
-
-    // Slow Ken Burns effect
-    var scale = 1 + progress * 0.05;
-    var tx = (1 - scale) * cw / 2 - progress * 10;
-    recCtx.save();
-    recCtx.translate(tx, 0);
-    recCtx.scale(scale, scale);
-    var imgScale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-    var sw = img.naturalWidth * imgScale, sh = img.naturalHeight * imgScale;
-    recCtx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
-    recCtx.restore();
-
-    // Fade in/out
-    var fadeIn = Math.min(1, pFrame / (FPS * 0.5));
-    var fadeOut = 1 - Math.max(0, (pFrame - (durPerPhoto * FPS - FPS * 0.5)) / (FPS * 0.5));
-    var alpha = Math.min(fadeIn, fadeOut);
-    recCtx.globalAlpha = 1 - alpha;
-    recCtx.fillStyle = '#000';
-    recCtx.fillRect(0, 0, cw, ch);
-    recCtx.globalAlpha = 1;
-
-    // Draw labels
-    padDrawLabels(recCtx, cw, ch);
-
+    padDrawSlideAt(recCtx, cw, ch, frame / FPS, secs);
     frame++;
     setTimeout(renderFrame, 1000 / FPS);
   }
@@ -14567,21 +14624,19 @@ async function padPostToSocial() {
       };
 
       recorder2.start();
+      var slideSecs = padSlideSeconds();
+      var SFPS = 30;
       var frameIdx = 0;
-      var framesPerPhoto = 45; // 3 seconds at 15fps
+      var slideTotal = Math.round(count * slideSecs * SFPS);
 
+      // Timed off the clock rather than requestAnimationFrame. The old loop
+      // assumed 15fps but rAF runs at 60, so every photo flashed past in
+      // three quarters of a second.
       function renderSlideFrame() {
-        if (frameIdx >= count * framesPerPhoto) { recorder2.stop(); return; }
-        var photoIdx = Math.floor(frameIdx / framesPerPhoto);
-        var photo2 = _padPhotos[photoIdx];
-        ctx2.clearRect(0,0,720,720);
-        if (photo2 && photo2.img) {
-          var s2 = Math.max(720/photo2.img.naturalWidth, 720/photo2.img.naturalHeight);
-          ctx2.drawImage(photo2.img, (720-photo2.img.naturalWidth*s2)/2, (720-photo2.img.naturalHeight*s2)/2, photo2.img.naturalWidth*s2, photo2.img.naturalHeight*s2);
-          padDrawLabels(ctx2, 720, 720);
-        }
+        if (frameIdx >= slideTotal) { recorder2.stop(); return; }
+        padDrawSlideAt(ctx2, 720, 720, frameIdx / SFPS, slideSecs);
         frameIdx++;
-        requestAnimationFrame(renderSlideFrame);
+        setTimeout(renderSlideFrame, 1000 / SFPS);
       }
       renderSlideFrame();
 
@@ -15261,11 +15316,16 @@ function padApplyLabelEdit() {
   showToast('✅ Label updated on preview!', 'success');
 }
 
-// Override padDrawLabels to support custom colors/sizes
-function padDrawLabels(ctx, cw, ch) {
+// Override padDrawLabels to support custom colors/sizes.
+// This is the definition that actually runs (it is declared last).
+function padDrawLabels(ctx, cw, ch, photoIdx) {
   if (!_padPhotos.length) return;
-  var photo = _padPhotos[_padCurrentIdx];
-  photo.labels.forEach(function(label, i) {
+  // The slideshow draws photo 3 while _padCurrentIdx still says 1, so the
+  // index has to be passed in. Without it every slide carried the FIRST
+  // photo's labels.
+  var photo = _padPhotos[(photoIdx === undefined || photoIdx === null) ? _padCurrentIdx : photoIdx];
+  if (!photo) return;
+  (photo.labels || []).forEach(function(label, i) {
     var st = JSON.parse(JSON.stringify(PAD_LABEL_STYLES[label.style] || PAD_LABEL_STYLES.badge));
     if (label.color)   st.color    = label.color;
     if (label.bgcolor) st.bg       = label.bgcolor;
