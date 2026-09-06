@@ -51,7 +51,15 @@
   .logo { font-family: var(--sans); font-size: 15px; font-weight: 800; color: var(--text); display:flex; align-items:center; gap:8px; white-space:nowrap; letter-spacing:-0.2px; }
   .logo-icon-dash { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#6D5EF8,#EC4899); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:900; letter-spacing:-0.5px; }
   .logo span { color: var(--accent); }
-  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  /* The header ran ~55px past the right edge of a 360px phone, which is what
+     pushes every page sideways and makes text look like it overlaps. */
+  @media (max-width: 640px) {
+    .topbar-right { gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+    .topbar-right > button { padding: 6px 10px !important; font-size: 12px !important;
+                             margin-right: 0 !important; white-space: nowrap; }
+    .user-pill { max-width: 96px; font-size: 12px; padding: 5px 9px; }
+  }
   .user-pill { background: linear-gradient(135deg,#EEF2FF,#FCE7F3); border: 1px solid #C7D2FE; border-radius: 20px; padding: 5px 12px; font-size: 13px; color: #5B4ED6; font-weight:600; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .btn-sm { background: none; border: 1px solid var(--border2); border-radius: 6px; padding: 6px 12px; color: var(--text2); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all .15s; }
   .btn-sm:hover { border-color: var(--accent2); color: var(--accent3); }
@@ -343,8 +351,11 @@
   .stat-val { font-size: 36px; }
 }
 #ap-lang-menu.open{display:block!important;}
-30%{transform:translateY(-5px)}}
-30%{transform:translateY(-5px)}}
+/* Two orphan fragments of the apDot keyframes sat here — half a rule, twice.
+   CSS stops parsing at the first stray "}", so EVERY rule below this point
+   was being thrown away by the browser: the AI Assistant button styles, the
+   mobile layout rules, all of it. That is why the phone layout collapsed
+   into a stack. The complete @keyframes apDot is further down and is fine. */
 
 /* ── AP AI ── */
 .ap-ai-btn{padding:10px 26px !important;background:linear-gradient(135deg,#6D5EF8,#EC4899) !important;color:#fff !important;border:none !important;outline:none !important;border-radius:24px !important;font-size:16px !important;font-weight:900 !important;cursor:pointer !important;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(109,94,248,0.5) !important;font-family:inherit !important;text-transform:uppercase;}
@@ -487,12 +498,13 @@
     display:flex !important;flex-direction:column !important;
   }
 }
-}
 
 /* ── VIDEO AD MAKER RESPONSIVE ──────────────────────────── */
 @media(max-width:1024px){
-  #vad-main-grid{
-    #pad-main-grid {
+  /* These two were written nested inside each other, which is not valid CSS
+     and broke the parser here as well. */
+  #vad-main-grid,
+  #pad-main-grid {
     grid-template-columns: 300px 1fr !important;
     gap: 16px !important;
   }
@@ -542,6 +554,55 @@
   #vad-main-grid .card{
     padding:12px !important;
   }
+}
+
+/* ── Trending list ────────────────────────────────────────────────
+   This was a 5-column grid with fixed pixel widths (44+150+90+40 plus
+   gaps ≈ 372px). On a 360px phone the columns had nowhere to go, so the
+   text ran over itself. Below 640px the row becomes two stacked lines
+   instead. */
+.disc-row{
+  display:grid;grid-template-columns:40px 1fr 140px 84px 26px;gap:12px;
+  align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.disc-row:hover{background:var(--bg3);}
+.disc-head{
+  display:grid;grid-template-columns:40px 1fr 140px 84px 26px;gap:12px;
+  padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg3);
+  font-size:11.5px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.disc-title{
+  font-size:14.5px;font-weight:700;text-transform:capitalize;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.disc-src{font-size:11.5px;color:var(--text3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.disc-vol{font-size:13px;font-weight:700;}
+.disc-bar{height:5px;border-radius:3px;background:var(--bg3);margin-top:4px;overflow:hidden;}
+.disc-bar>i{display:block;height:100%;border-radius:3px;background:#6D5EF8;}
+.disc-when{font-size:12.5px;color:var(--text2);white-space:nowrap;}
+.disc-caret{text-align:right;color:var(--text3);font-size:12px;}
+.disc-panel{padding:14px 16px 16px 56px;border-bottom:1px solid var(--border);background:var(--bg3);}
+
+@media (max-width: 640px){
+  .disc-head{display:none;}
+  /* Two rows: rank + title on top, then the numbers underneath. */
+  .disc-row{
+    grid-template-columns:32px 1fr 22px;
+    grid-template-areas:"rank title caret" ". meta meta";
+    row-gap:8px;padding:14px 14px;
+  }
+  .disc-row>.disc-rank{grid-area:rank;}
+  .disc-row>.disc-main{grid-area:title;}
+  .disc-row>.disc-caret{grid-area:caret;}
+  .disc-row>.disc-metrics{
+    grid-area:meta;display:flex;align-items:center;gap:12px;
+  }
+  .disc-row>.disc-metrics .disc-volwrap{flex:1;min-width:0;}
+  .disc-title{white-space:normal;}
+  .disc-panel{padding:14px;}
 }
 
 </style>
@@ -1163,9 +1224,9 @@
             Real-time search trends, refreshed hourly. Pick one that fits your business and turn it into a post in one click.
           </p>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;">
           <select id="disc-geo" onchange="loadTrending(true)"
-                  style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;cursor:pointer;">
+                  style="flex:1 1 auto;min-width:0;max-width:220px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;cursor:pointer;">
             <option value="US">🇺🇸 United States</option>
             <option value="PH">🇵🇭 Philippines</option>
             <option value="GB">🇬🇧 United Kingdom</option>
@@ -1210,11 +1271,11 @@
 
       <!-- Toolbar: one row, above the results, like every filter bar should be. -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-        <input id="disc-q" oninput="renderTrends()" placeholder="Search within these trends…"
-               style="flex:1;min-width:180px;max-width:280px;background:var(--bg3);border:1px solid var(--border);
+        <input id="disc-q" oninput="renderTrends()" placeholder="Search these trends…"
+               style="flex:1 1 150px;min-width:0;max-width:280px;background:var(--bg3);border:1px solid var(--border);
                       border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
         <select id="disc-window" onchange="renderTrends()"
-                style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                style="flex:1 1 auto;min-width:0;max-width:220px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
                        padding:9px 12px;color:var(--text);font-size:13px;cursor:pointer;">
           <option value="0">Any time</option>
           <option value="4">Started in the past 4 hours</option>
@@ -1222,14 +1283,14 @@
           <option value="48">Past 48 hours</option>
         </select>
         <select id="disc-sort" onchange="renderTrends()"
-                style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                style="flex:1 1 auto;min-width:0;max-width:220px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
                        padding:9px 12px;color:var(--text);font-size:13px;cursor:pointer;">
           <option value="rank">Google's order</option>
           <option value="volume">Most searches</option>
           <option value="recent">Newest first</option>
           <option value="title">A–Z</option>
         </select>
-        <div style="margin-left:auto;display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <div style="margin-left:auto;display:flex;flex:none;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
           <button id="disc-view-list" onclick="discSetView('list')"
                   style="padding:9px 14px;border:none;background:var(--accent);color:#fff;
                          font-size:13px;font-weight:700;cursor:pointer;">☰ List</button>
@@ -16179,10 +16240,8 @@ function renderTrendList(rows) {
   // whether the top trend is 100+ or 2M+.
   var max = Math.max.apply(null, rows.map(function (r) { return r.vol; }).concat([1]));
 
-  var head = '<div style="display:grid;grid-template-columns:44px 1fr 150px 90px 40px;gap:12px;'
-    + 'padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg3);'
-    + 'font-size:11.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;">'
-    + '<div>#</div><div>Trend</div><div>Searches</div><div>Started</div><div></div></div>';
+  var head = '<div class="disc-head"><div>#</div><div>Trend</div>'
+    + '<div>Searches</div><div>Started</div><div></div></div>';
 
   var body = rows.map(function (r, i) {
     var t = r.t, idx = r.rank;
@@ -16190,25 +16249,23 @@ function renderTrendList(rows) {
     var open = !!_discOpen[idx];
     var src = (t.news && t.news[0]) ? escapeHtml(t.news[0].source) : '';
 
-    var row = '<div onclick="discToggle(' + idx + ')" '
-      + 'style="display:grid;grid-template-columns:44px 1fr 150px 90px 40px;gap:12px;align-items:center;'
-      + 'padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;"'
-      + ' onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-      + '<div style="font-size:13px;font-weight:800;color:' + (i < 3 ? '#EA580C' : 'var(--text3)') + ';">'
-        + (i + 1) + '</div>'
-      + '<div style="min-width:0;">'
-        + '<div style="font-size:14.5px;font-weight:700;text-transform:capitalize;line-height:1.35;'
-          + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(t.title) + '</div>'
-        + (src ? '<div style="font-size:11.5px;color:var(--text3);margin-top:2px;">' + src
-                 + (t.news && t.news.length > 1 ? ' + ' + (t.news.length - 1) + ' more' : '') + '</div>' : '')
+    var row = '<div class="disc-row" onclick="discToggle(' + idx + ')">'
+      + '<div class="disc-rank" style="font-size:13px;font-weight:800;color:'
+        + (i < 3 ? '#EA580C' : 'var(--text3)') + ';">' + (i + 1) + '</div>'
+      + '<div class="disc-main" style="min-width:0;">'
+        + '<div class="disc-title">' + escapeHtml(t.title) + '</div>'
+        + (src ? '<div class="disc-src">' + src
+                 + (t.news && t.news.length > 1 ? ' + ' + (t.news.length - 1) + ' more' : '')
+                 + '</div>' : '')
       + '</div>'
-      + '<div>'
-        + '<div style="font-size:13px;font-weight:700;">' + escapeHtml(t.traffic || '—') + '</div>'
-        + '<div style="height:5px;border-radius:3px;background:var(--bg3);margin-top:4px;overflow:hidden;">'
-          + '<div style="height:100%;width:' + pct + '%;border-radius:3px;background:#6D5EF8;"></div></div>'
+      + '<div class="disc-metrics">'
+        + '<div class="disc-volwrap">'
+          + '<div class="disc-vol">' + escapeHtml(t.traffic || '—') + '</div>'
+          + '<div class="disc-bar"><i style="width:' + pct + '%;"></i></div>'
+        + '</div>'
+        + '<div class="disc-when">' + escapeHtml(r.ago.label || '—') + '</div>'
       + '</div>'
-      + '<div style="font-size:12.5px;color:var(--text2);">' + escapeHtml(r.ago.label || '—') + '</div>'
-      + '<div style="text-align:right;color:var(--text3);font-size:12px;">' + (open ? '▾' : '▸') + '</div>'
+      + '<div class="disc-caret">' + (open ? '▾' : '▸') + '</div>'
       + '</div>';
 
     if (!open) return row;
@@ -16221,22 +16278,24 @@ function renderTrendList(rows) {
         + '</a>';
     }).join('');
 
-    var panel = '<div style="padding:14px 16px 16px 60px;border-bottom:1px solid var(--border);background:var(--bg3);">'
+    var panel = '<div class="disc-panel">'
       + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
         + (t.image ? '<img src="' + escapeHtml(t.image) + '" alt="" loading="lazy"'
             + ' onerror="this.style.display=\'none\'"'
             + ' style="width:120px;height:90px;object-fit:cover;border-radius:8px;flex:none;">' : '')
-        + '<div style="flex:1;min-width:220px;">'
+        + '<div style="flex:1;min-width:180px;">'
           + (news || '<div style="color:var(--text3);font-size:12.5px;">No news stories attached to this trend.</div>')
         + '</div>'
       + '</div>'
       + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">'
         + '<button onclick="event.stopPropagation();useTrend(' + idx + ',true)"'
-          + ' style="padding:9px 16px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;'
-          + 'border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🚀 Write a post about this</button>'
+          + ' style="flex:1 1 190px;padding:11px 16px;background:linear-gradient(135deg,#6D5EF8,#EC4899);'
+          + 'color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">'
+          + '🚀 Write a post about this</button>'
         + '<button onclick="event.stopPropagation();useTrend(' + idx + ',false)"'
-          + ' style="padding:9px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;'
-          + 'color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">✏️ Just send the topic</button>'
+          + ' style="flex:0 1 auto;padding:11px 14px;background:var(--bg2);border:1px solid var(--border2);'
+          + 'border-radius:8px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">'
+          + '✏️ Just the topic</button>'
       + '</div></div>';
 
     return row + panel;
