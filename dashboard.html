@@ -3771,19 +3771,44 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
 
             <!-- Label list -->
             <div class="card" id="pad-labels-card" style="display:none;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <div class="card-title" style="margin-bottom:0;">📝 Labels on this photo</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+                <div class="card-title" style="margin-bottom:0;">📝 Labels on <span id="pad-labels-which">this photo</span></div>
                 <button onclick="padClearLabels()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;">Clear all</button>
               </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+                Labels belong to one photo. Switch photos above to label a different one.
+              </div>
               <div id="pad-labels-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+              <button id="pad-copy-all" onclick="padCopyLabelsToAll()"
+                      style="display:none;width:100%;margin-top:10px;padding:9px;border-radius:8px;
+                             border:1px dashed var(--border2);background:var(--bg3);color:var(--text2);
+                             font-size:12px;font-weight:600;cursor:pointer;">
+                ⧉ Put these labels on every photo
+              </button>
             </div>
 
-            <!-- Label Editor - always shown, updates on label click -->
+            <!-- Label Editor -->
             <div class="card" id="pad-label-editor">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
                 <div class="card-title" style="margin-bottom:0;">✏️ Customize Label</div>
-                <span style="font-size:11px;color:var(--text3);">Click any label on photo</span>
+                <span id="pad-edit-which" style="font-size:11px;font-weight:700;color:var(--accent);"></span>
               </div>
+
+              <!-- Shown until a label is chosen, so the controls below never look broken -->
+              <div id="pad-edit-empty" style="text-align:center;padding:18px 8px;">
+                <div style="font-size:30px;line-height:1;">🏷️</div>
+                <div style="font-size:13px;font-weight:700;margin-top:8px;">No label selected</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.5;">
+                  Tap a label on the photo to edit it,<br>or add your first one.
+                </div>
+                <button onclick="padAddLabel()"
+                        style="margin-top:12px;padding:9px 18px;background:var(--accent);color:#fff;
+                               border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                  ＋ Add a label
+                </button>
+              </div>
+
+              <div id="pad-edit-fields">
 
               <!-- Text -->
               <div style="margin-bottom:10px;">
@@ -3848,11 +3873,17 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
 
               <!-- Apply -->
-              <button onclick="padApplyLabelEdit()"
-                style="width:100%;padding:12px;background:var(--accent);color:#fff;
-                border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
-                ✅ Apply Changes
-              </button>
+              <div style="display:flex;gap:8px;">
+                <button onclick="padApplyLabelEdit()"
+                  style="flex:1;padding:12px;background:var(--accent);color:#fff;
+                  border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+                  ✅ Apply Changes
+                </button>
+                <button onclick="padRemoveLabel(_padSelectedLabel)" title="Delete this label"
+                  style="padding:12px 15px;background:var(--bg3);border:1px solid var(--border2);
+                  border-radius:10px;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;">🗑</button>
+              </div>
+              </div><!-- /pad-edit-fields -->
             </div>
 
             <!-- Export options -->
@@ -13984,6 +14015,7 @@ function padAddPhotos(input) {
         if (loaded === files.length) {
           padRenderGrid();
           padSetCurrentPhoto(_padPhotos.length - files.length);
+          padRefreshEditor();
         }
       };
       img.src = e.target.result;
@@ -13997,11 +14029,31 @@ function padRenderGrid() {
   var grid = document.getElementById('pad-photos-grid');
   var addBtn = document.getElementById('pad-add-btn');
   if (!grid) return;
+  // Each thumbnail now says which photo it is and how many labels it carries,
+  // and the one being edited is unmistakable. Before, nothing on screen told
+  // the customer that labels attach to ONE photo, so it looked like the
+  // editor was ignoring them.
   grid.innerHTML = _padPhotos.map(function(p, i) {
-    return '<div onclick="padSetCurrentPhoto('+i+')" style="position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid '+(i===_padCurrentIdx?'var(--accent)':'var(--border)')+';">'
-      + '<img src="'+p.dataUrl+'" style="width:100%;height:100%;object-fit:cover;">'
-      + (i===_padCurrentIdx?'<div style="position:absolute;inset:0;border:3px solid var(--accent);border-radius:6px;pointer-events:none;"></div>':'')
-      + '<button onclick="event.stopPropagation();padRemovePhoto('+i+')" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0;">✕</button>'
+    var on = i === _padCurrentIdx;
+    var n = (p.labels || []).length;
+    return '<div onclick="padSetCurrentPhoto('+i+')" title="Photo '+(i+1)+'" '
+      + 'style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;'
+      + 'border:2px solid '+(on?'var(--accent)':'var(--border)')+';'
+      + 'box-shadow:'+(on?'0 0 0 3px rgba(109,94,248,.22)':'none')+';'
+      + 'opacity:'+(on?'1':'.72')+';transition:opacity .15s,box-shadow .15s;">'
+      + '<img src="'+p.dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;">'
+      + '<div style="position:absolute;top:3px;left:4px;background:rgba(0,0,0,.66);color:#fff;'
+        + 'font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:20px;">'+(i+1)+'</div>'
+      + (n ? '<div style="position:absolute;bottom:3px;left:4px;background:#059669;color:#fff;'
+             + 'font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:20px;">'
+             + n + ' label' + (n>1?'s':'') + '</div>'
+           : '<div style="position:absolute;bottom:3px;left:4px;background:rgba(0,0,0,.55);color:#fff;'
+             + 'font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;">no labels</div>')
+      + (on ? '<div style="position:absolute;top:3px;right:24px;background:var(--accent);color:#fff;'
+              + 'font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;">EDITING</div>' : '')
+      + '<button onclick="event.stopPropagation();padRemovePhoto('+i+')" title="Remove this photo" '
+        + 'style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;'
+        + 'border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0;">✕</button>'
       + '</div>';
   }).join('');
   if (addBtn) addBtn.style.display = _padPhotos.length >= 10 ? 'none' : 'flex';
@@ -14016,11 +14068,53 @@ function padRemovePhoto(idx) {
 
 function padSetCurrentPhoto(idx) {
   _padCurrentIdx = idx;
+  // A label index only means something within one photo, so the selection
+  // must not carry across. It used to, which edited the wrong label.
+  _padSelectedLabel = null;
   padRenderGrid();
   padDrawCanvas();
   padRenderLabelsList();
+  padRefreshEditor();
   var counter = document.getElementById('pad-photo-counter');
   if (counter) counter.textContent = (idx+1) + ' / ' + _padPhotos.length;
+}
+
+// Shows the empty state or the controls, and always says which photo and
+// which label you are about to change.
+function padRefreshEditor() {
+  var empty = document.getElementById('pad-edit-empty');
+  var fields = document.getElementById('pad-edit-fields');
+  var which = document.getElementById('pad-edit-which');
+  if (!empty || !fields) return;
+
+  var labels = _padPhotos.length ? (_padPhotos[_padCurrentIdx].labels || []) : [];
+  var sel = _padSelectedLabel;
+  var has = sel !== null && sel !== undefined && labels[sel];
+
+  empty.style.display = has ? 'none' : 'block';
+  fields.style.display = has ? 'block' : 'none';
+  if (which) {
+    which.textContent = has
+      ? 'Label ' + (sel + 1) + ' of ' + labels.length + ' · Photo ' + (_padCurrentIdx + 1)
+      : (_padPhotos.length ? 'Photo ' + (_padCurrentIdx + 1) : '');
+  }
+}
+
+// Multi-photo ads usually want the same price or offer on every shot.
+function padCopyLabelsToAll() {
+  if (_padPhotos.length < 2) return;
+  var src = _padPhotos[_padCurrentIdx].labels || [];
+  if (!src.length) return;
+  if (!confirm('Put these ' + src.length + ' label' + (src.length > 1 ? 's' : '')
+             + ' on all ' + _padPhotos.length + ' photos?\n\n'
+             + 'Labels already on the other photos are kept.')) return;
+  _padPhotos.forEach(function (p, i) {
+    if (i === _padCurrentIdx) return;
+    p.labels = (p.labels || []).concat(JSON.parse(JSON.stringify(src)));
+  });
+  padRenderGrid();
+  padRenderLabelsList();
+  showToast('Copied to ' + (_padPhotos.length - 1) + ' other photos', 'success');
 }
 
 function padPrevPhoto() { if (_padPhotos.length) padSetCurrentPhoto((_padCurrentIdx - 1 + _padPhotos.length) % _padPhotos.length); }
@@ -14246,6 +14340,7 @@ function padAddLabel(style, text) {
     y: 0.3 + Math.random() * 0.4
   });
   padDrawCanvas();
+  padRenderGrid();
   padRenderLabelsList();
   var card = document.getElementById('pad-labels-card');
   if (card) card.style.display = 'block';
@@ -14256,14 +14351,23 @@ function padAddLabel(style, text) {
 
 function padRemoveLabel(idx) {
   if (!_padPhotos.length) return;
+  if (idx === null || idx === undefined) return;
   _padPhotos[_padCurrentIdx].labels.splice(idx, 1);
+  // Keep the selection pointing at a label that still exists.
+  if (_padSelectedLabel === idx) _padSelectedLabel = null;
+  else if (_padSelectedLabel > idx) _padSelectedLabel--;
   padDrawCanvas();
+  padRenderGrid();
   padRenderLabelsList();
+  padRefreshEditor();
 }
 
 function padClearLabels() {
   if (!_padPhotos.length) return;
   _padPhotos[_padCurrentIdx].labels = [];
+  _padSelectedLabel = null;
+  padRenderGrid();
+  padRefreshEditor();
   padDrawCanvas();
   padRenderLabelsList();
 }
@@ -14271,15 +14375,32 @@ function padClearLabels() {
 function padRenderLabelsList() {
   var list = document.getElementById('pad-labels-list');
   var card = document.getElementById('pad-labels-card');
+  var which = document.getElementById('pad-labels-which');
+  var copy = document.getElementById('pad-copy-all');
   if (!list || !_padPhotos.length) return;
-  var labels = _padPhotos[_padCurrentIdx].labels;
+  var labels = _padPhotos[_padCurrentIdx].labels || [];
   card.style.display = labels.length ? 'block' : 'none';
+  if (which) which.textContent = 'Photo ' + (_padCurrentIdx + 1) + ' of ' + _padPhotos.length;
+  if (copy) copy.style.display = (labels.length && _padPhotos.length > 1) ? 'block' : 'none';
+
+  // Rows are clickable. Tapping a small label on the photo is fiddly on a
+  // phone; this list is the reliable way to pick one.
   list.innerHTML = labels.map(function(l, i) {
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:8px;">'
-      + '<span style="font-size:12px;color:var(--text);">'+l.text+'</span>'
-      + '<div style="display:flex;gap:6px;">'
-      + '<button onclick="padRemoveLabel('+i+')" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:#ef4444;cursor:pointer;">✕ Remove</button>'
-      + '</div>'
+    var on = i === _padSelectedLabel;
+    return '<div onclick="padSelectLabel('+i+')" '
+      + 'style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;'
+      + 'background:'+(on?'rgba(109,94,248,.12)':'var(--bg3)')+';border-radius:8px;cursor:pointer;'
+      + 'border:1px solid '+(on?'var(--accent)':'transparent')+';">'
+      + '<span style="display:flex;align-items:center;gap:8px;min-width:0;">'
+        + '<span style="flex:none;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:800;'
+          + 'display:grid;place-items:center;background:'+(on?'var(--accent)':'var(--border2)')+';color:#fff;">'
+          + (i+1) + '</span>'
+        + '<span style="font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;'
+          + 'white-space:nowrap;">' + escapeHtml(l.text || '(empty)') + '</span>'
+      + '</span>'
+      + '<button onclick="event.stopPropagation();padRemoveLabel('+i+')" title="Remove"'
+        + ' style="flex:none;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;'
+        + 'background:transparent;color:#ef4444;cursor:pointer;">✕</button>'
       + '</div>';
   }).join('');
 }
@@ -15071,6 +15192,8 @@ var _padSelectedLabel = null; // index of selected label
 function padSelectLabel(idx) {
   _padSelectedLabel = idx;
   padShowLabelEditor(idx);
+  padRenderLabelsList();
+  padRefreshEditor();
 }
 
 function padShowLabelEditor(idx) {
@@ -15081,6 +15204,7 @@ function padShowLabelEditor(idx) {
 
   editor.style.display = 'block';
   _padSelectedLabel = idx; // always keep in sync
+  padRefreshEditor();
   editor.style.border = '2px solid var(--accent)';
   setTimeout(function() { editor.style.border = '1px solid var(--border)'; }, 800);
 
