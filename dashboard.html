@@ -3517,6 +3517,61 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
             </div>
 
+            <!-- Auto captions from the video's own speech -->
+            <div class="card" style="padding:14px 16px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="min-width:0;">
+                  <div style="font-weight:800;font-size:14px;">💬 Auto captions</div>
+                  <div style="font-size:11.5px;color:var(--text3);margin-top:2px;">
+                    Listens to the video and writes captions that follow the speech.
+                  </div>
+                </div>
+                <button id="veh-cc-toggle" onclick="vehToggleCaptions()" role="switch"
+                        aria-checked="false" aria-label="Auto captions"
+                        style="flex:none;width:50px;height:28px;border-radius:20px;border:none;
+                               background:var(--border2);cursor:pointer;position:relative;
+                               transition:background .18s;">
+                  <span id="veh-cc-knob"
+                        style="position:absolute;top:3px;left:3px;width:22px;height:22px;
+                               border-radius:50%;background:#fff;transition:left .18s;
+                               box-shadow:0 1px 3px rgba(0,0,0,.3);"></span>
+                </button>
+              </div>
+              <div id="veh-cc-status" style="font-size:12px;color:var(--text3);margin-top:9px;"></div>
+              <div id="veh-cc-opts" style="display:none;margin-top:10px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  <select id="veh-cc-lang" class="form-input"
+                          style="flex:1;min-width:0;max-width:200px;padding:8px 10px;font-size:12.5px;">
+                    <option value="auto">Detect the language</option>
+                    <option value="en">English</option>
+                    <option value="tl">Filipino / Tagalog</option>
+                    <option value="es">Spanish</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="id">Indonesian</option>
+                    <option value="ms">Malay</option>
+                    <option value="th">Thai</option>
+                    <option value="vi">Vietnamese</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="zh">Chinese</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ar">Arabic</option>
+                  </select>
+                  <button onclick="vehMakeCaptions()" id="veh-cc-btn"
+                          style="padding:9px 16px;background:var(--accent);color:#fff;border:none;
+                                 border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">
+                    Write captions
+                  </button>
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:7px;">
+                  Captions sit at the bottom and are burned into the downloaded video.
+                  Turning this off hides them without deleting your other overlays.
+                </div>
+              </div>
+            </div>
+
             <!-- Generate & Export -->
             <button onclick="vehGenerateOverlay()" id="veh-gen-btn"
               style="width:100%;padding:16px;background:linear-gradient(135deg,#a855f7,#6d5ef8);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(168,85,247,0.4);">
@@ -15131,6 +15186,7 @@ function padDrawLabels(ctx, cw, ch) {
 
 // ── VIDEO AD ENHANCER ────────────────────────────────────────────
 var _vehVideo = null;       // HTMLVideoElement source
+var _vehFile = null;        // the uploaded File — auto captions read its audio
 var _vehFileName = '';
 var _vehStyle = 'bold';
 var _vehOverlays = [];      // [{text, startSec, endSec, position}]
@@ -15143,7 +15199,13 @@ function vehLoadVideo(input) {
   if (!file) return;
   if (file.size > 200 * 1024 * 1024) { showToast('File too large — max 200MB', 'error'); return; }
 
+  _vehFile = file;
   _vehFileName = file.name;
+  // A new video invalidates the captions written for the previous one.
+  _vehCaptions = [];
+  vehSetToggle(false);
+  var ccs = document.getElementById('veh-cc-status');
+  if (ccs) ccs.textContent = '';
   var url = URL.createObjectURL(file);
 
   var vid = document.getElementById('veh-source-video');
@@ -15184,7 +15246,7 @@ function vehLoadVideo(input) {
 }
 
 function vehClearVideo() {
-  _vehVideo = null; _vehOverlays = [];
+  _vehVideo = null; _vehOverlays = []; _vehFile = null; _vehCaptions = [];
   var vid = document.getElementById('veh-source-video');
   var wrap = document.getElementById('veh-video-wrap');
   var drop = document.getElementById('veh-drop');
@@ -15553,6 +15615,186 @@ function vehSeekFromTimeline(e) {
 }
 
 // Override vehStartPreview to use per-overlay style settings
+// ── Auto captions ──────────────────────────────────────────────────
+// The video's audio is decoded in the browser, downmixed to 16kHz mono and
+// sent as a small WAV. A 3-minute clip lands around 6MB that way, where the
+// original mp4 could be 60MB — small enough for one request, and Whisper
+// wants 16kHz mono anyway.
+var _vehCaptions = [];
+var _vehCaptionsOn = false;
+
+function vehSetToggle(on) {
+  _vehCaptionsOn = on;
+  var btn = document.getElementById('veh-cc-toggle');
+  var knob = document.getElementById('veh-cc-knob');
+  var opts = document.getElementById('veh-cc-opts');
+  if (btn) { btn.style.background = on ? '#059669' : 'var(--border2)';
+             btn.setAttribute('aria-checked', on ? 'true' : 'false'); }
+  if (knob) knob.style.left = on ? '25px' : '3px';
+  if (opts) opts.style.display = on ? 'block' : 'none';
+}
+
+function vehToggleCaptions() {
+  vehSetToggle(!_vehCaptionsOn);
+  var st = document.getElementById('veh-cc-status');
+  if (_vehCaptionsOn && !_vehCaptions.length && st) {
+    st.textContent = 'Pick a language and press "Write captions".';
+  }
+  if (!_vehCaptionsOn && st && _vehCaptions.length) {
+    st.textContent = _vehCaptions.length + ' captions ready — switch on to show them.';
+  }
+}
+
+// 16-bit PCM WAV, mono. Small, and every speech model accepts it.
+function vehEncodeWav(samples, rate) {
+  var buf = new ArrayBuffer(44 + samples.length * 2);
+  var v = new DataView(buf);
+  function str(off, s) { for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); }
+  str(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, 'data'); v.setUint32(40, samples.length * 2, true);
+  var o = 44;
+  for (var i = 0; i < samples.length; i++, o += 2) {
+    var x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(o, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+  }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+async function vehExtractAudio(file) {
+  var Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) throw new Error('This browser cannot read the video audio. Try Chrome.');
+  var ctx = new Ctx();
+  var decoded;
+  try {
+    decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+  } catch (e) {
+    throw new Error('No sound track found in this video, or the format is not supported.');
+  } finally { try { ctx.close(); } catch (e) {} }
+
+  var RATE = 16000;
+  var off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+    1, Math.ceil(decoded.duration * RATE), RATE);
+  var src = off.createBufferSource();
+  src.buffer = decoded;
+  src.connect(off.destination);
+  src.start(0);
+  var rendered = await off.startRendering();
+  return vehEncodeWav(rendered.getChannelData(0), RATE);
+}
+
+// Whisper returns whole sentences. A sentence is too much to read at once on
+// a phone, so long ones are split into short lines, timed by their share of
+// the sentence's words.
+function vehSplitCaption(seg) {
+  var words = seg.text.split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  var MAX = 7;
+  var chunks = [];
+  for (var i = 0; i < words.length; i += MAX) chunks.push(words.slice(i, i + MAX));
+  var span = Math.max(0.4, seg.end - seg.start);
+  var per = span / words.length;
+  var out = [], used = 0;
+  chunks.forEach(function (c) {
+    var st = seg.start + used * per;
+    used += c.length;
+    out.push({ text: c.join(' '), startSec: st, endSec: seg.start + used * per });
+  });
+  return out;
+}
+
+async function vehMakeCaptions() {
+  if (!_vehFile && !_vehVideo) { showToast('Upload a video first', 'error'); return; }
+  var st = document.getElementById('veh-cc-status');
+  var btn = document.getElementById('veh-cc-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Listening…'; }
+
+  try {
+    if (st) st.textContent = 'Reading the audio out of your video…';
+    var wav = await vehExtractAudio(_vehFile);
+
+    if (st) st.textContent = 'Transcribing (' + (wav.size / 1048576).toFixed(1) + ' MB)…';
+    var lang = (document.getElementById('veh-cc-lang') || {}).value || 'auto';
+    var r = await fetch(AP_WORKER + '/transcribe?lang=' + encodeURIComponent(lang), {
+      method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav
+    });
+    var d = await r.json();
+    if (!d || d.error) throw new Error((d && d.error) || 'No response');
+    if (!d.segments || !d.segments.length) {
+      throw new Error('No speech was found in this video.');
+    }
+
+    _vehCaptions = [];
+    d.segments.forEach(function (seg) {
+      vehSplitCaption(seg).forEach(function (c) { _vehCaptions.push(c); });
+    });
+
+    vehSetToggle(true);
+    if (st) st.innerHTML = '<span style="color:#059669;font-weight:700;">'
+      + _vehCaptions.length + ' captions ready</span>'
+      + (d.language ? ' · detected ' + escapeHtml(d.language) : '');
+    showToast('✅ Captions added', 'success');
+    vehStartPreview();
+  } catch (e) {
+    if (st) st.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(e.message) + '</span>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Write captions'; }
+  }
+}
+
+// Drawn by both the preview and the export, so what you see is what downloads.
+function vehDrawCaptions(ctx, t, W, H) {
+  if (!_vehCaptionsOn || !_vehCaptions.length) return;
+  var cur = null;
+  for (var i = 0; i < _vehCaptions.length; i++) {
+    if (t >= _vehCaptions[i].startSec && t <= _vehCaptions[i].endSec) { cur = _vehCaptions[i]; break; }
+  }
+  if (!cur) return;
+
+  var size = Math.round(W / 22);
+  ctx.save();
+  ctx.font = '700 ' + size + 'px system-ui, -apple-system, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Wrap to the video width rather than running off the edge.
+  var words = cur.text.split(' ');
+  var lines = [], line = '';
+  words.forEach(function (w) {
+    var test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > W * 0.86 && line) { lines.push(line); line = w; }
+    else line = test;
+  });
+  if (line) lines.push(line);
+
+  var lh = size * 1.28;
+  var baseY = H * 0.88 - (lines.length - 1) * lh;
+
+  lines.forEach(function (ln, i) {
+    var y = baseY + i * lh;
+    var w = ctx.measureText(ln).width;
+    // A dark plate behind the words keeps them readable over any footage.
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    var padX = size * 0.5, padY = size * 0.28;
+    var bx = W / 2 - w / 2 - padX, by = y - size / 2 - padY;
+    var bw = w + padX * 2, bh = size + padY * 2, rr = size * 0.28;
+    ctx.beginPath();
+    ctx.moveTo(bx + rr, by);
+    ctx.arcTo(bx + bw, by, bx + bw, by + bh, rr);
+    ctx.arcTo(bx + bw, by + bh, bx, by + bh, rr);
+    ctx.arcTo(bx, by + bh, bx, by, rr);
+    ctx.arcTo(bx, by, bx + bw, by, rr);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(ln, W / 2, y);
+  });
+  ctx.restore();
+}
+
 function vehStartPreview() {
   if (!_vehVideo) return;
   if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
@@ -15594,6 +15836,7 @@ function vehStartPreview() {
       if (savedTextColor   && document.getElementById('veh-text-color'))   document.getElementById('veh-text-color').value   = savedTextColor;
       if (savedAccentColor && document.getElementById('veh-accent-color')) document.getElementById('veh-accent-color').value = savedAccentColor;
     });
+    vehDrawCaptions(ctx, t, W, H);
     _vehAnimFrame = requestAnimationFrame(drawFrame);
   }
   drawFrame();
@@ -15713,6 +15956,7 @@ async function vehExportVideo() {
       var y = o.position === 'top' ? H * 0.12 : o.position === 'center' ? H * 0.5 : H * 0.82;
       vehDrawOverlay(ctx, o.text, W/2, y, prog, W);
     });
+    vehDrawCaptions(ctx, t, W, H);
     _vehAnimFrame = requestAnimationFrame(renderExportFrame);
   }
   renderExportFrame();
@@ -15934,6 +16178,7 @@ function vehExportAndSave() {
         vehDrawOverlay(ctx3, o.text, W3 / 2, y3, p, W3, o.fontSize || 1);
         _vehStyle = savedS;
       });
+      vehDrawCaptions(ctx3, t3, W3, H3);
       if (isFinite(d) && d > 0) {
         progress('Preparing your video — ' + Math.round((t3 / d) * 100) + '% (keep this tab open)');
       }
@@ -16037,6 +16282,7 @@ async function vehPostToSocial() {
       vehDrawOverlay(ctx, o.text, W/2, y, p, W, o.fontSize||1);
       _vehStyle = savedStyle;
     });
+    vehDrawCaptions(ctx, t, W, H);
     requestAnimationFrame(renderFr);
   }
   renderFr();
