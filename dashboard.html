@@ -3674,7 +3674,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         <div class="page-header">
           <div>
             <div class="page-title">🖼️ Photo Ad Maker</div>
-            <div class="page-sub">Add text & labels to your product photos · Export as image or slideshow</div>
+            <div class="page-sub">Add text &amp; labels to your product photos · Export as image or slideshow
+              <span id="pad-build" style="margin-left:8px;font-size:10.5px;color:var(--text3);
+                    background:var(--bg3);border-radius:20px;padding:2px 8px;"></span>
+            </div>
           </div>
         </div>
 
@@ -14179,6 +14182,12 @@ var PAD_ASPECTS = {
 // wrong for anything with words on it — a tall infographic loses its heading
 // and its bottom third. Fit shows the whole photo and fills the gap with a
 // blurred copy of itself, which is what Reels and Stories do.
+// Bumped whenever Photo Ads changes. Shown in the header and printed with
+// every export, so a video can always be traced back to the build that made
+// it — several rounds of this were spent unable to tell whether a file came
+// from the newest code or a cached page.
+var AP_BUILD = '2026-09-06.1';
+
 function padFitMode() {
   var el = document.getElementById('pad-fit');
   return (el && el.value) || 'fill';
@@ -14186,13 +14195,17 @@ function padFitMode() {
 
 // One place that paints a photo into a frame, used by the preview and both
 // exports, so they can never drift apart again.
-function padPaintPhoto(ctx, W, H, img, zoom) {
+function padPaintPhoto(ctx, W, H, img, zoom, fitMode) {
   if (!img) return;
   zoom = zoom || 1;
+  // Read once at export time and pass it down, rather than each frame asking
+  // the dropdown again. If the two ever disagree you get a preview showing
+  // the whole photo and a video that crops it, which is impossible to spot.
+  var fit = fitMode || padFitMode();
   var iw = img.naturalWidth, ih = img.naturalHeight;
   if (!iw || !ih) return;
 
-  if (padFitMode() === 'fit') {
+  if (fit === 'fit') {
     // Blurring a 1080px image every single frame is what made the export
     // crawl. Render the backdrop once per photo and reuse it.
     var key = W + 'x' + H + '|' + (img.src || '').slice(-40);
@@ -14603,6 +14616,18 @@ function padSlideSeconds() {
   return (isFinite(v) && v > 0) ? v : 4;
 }
 
+// Puts the build number on screen so you can tell at a glance whether the
+// page you are looking at is the one I last sent.
+function padShowBuild() {
+  var el = document.getElementById('pad-build');
+  if (el) el.textContent = 'build ' + AP_BUILD;
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', function () {
+    setTimeout(function () { try { padShowBuild(); } catch (e) {} }, 600);
+  });
+}
+
 function padSlideTotalLabel() {
   var el = document.getElementById('pad-slide-total');
   if (!el) return;
@@ -14612,7 +14637,7 @@ function padSlideTotalLabel() {
   el.textContent = n + ' photos · ' + (Math.round(total * 10) / 10) + ' seconds total';
 }
 
-function padDrawPhotoInto(ctx, W, H, idx, progress) {
+function padDrawPhotoInto(ctx, W, H, idx, progress, fitMode) {
   var photo = _padPhotos[idx];
   if (!photo || !photo.img) return;
   var img = photo.img;
@@ -14622,14 +14647,14 @@ function padDrawPhotoInto(ctx, W, H, idx, progress) {
   ctx.save();
   ctx.translate((1 - scale) * W / 2, (1 - scale) * H / 2);
   ctx.scale(scale, scale);
-  padPaintPhoto(ctx, W, H, img, 1);
+  padPaintPhoto(ctx, W, H, img, 1, fitMode);
   ctx.restore();
   padDrawLabels(ctx, W, H, idx);
 }
 
 // Paints the whole slideshow at time t (seconds). Used by both exports, so
 // the download and the auto-post are always paced identically.
-function padDrawSlideAt(ctx, W, H, t, secs) {
+function padDrawSlideAt(ctx, W, H, t, secs, fitMode) {
   var n = _padPhotos.length;
   if (!n) return;
   var FADE = Math.min(0.6, secs * 0.2);
@@ -14638,13 +14663,13 @@ function padDrawSlideAt(ctx, W, H, t, secs) {
 
   ctx.clearRect(0, 0, W, H);
   ctx.globalAlpha = 1;
-  padDrawPhotoInto(ctx, W, H, idx, into / secs);
+  padDrawPhotoInto(ctx, W, H, idx, into / secs, fitMode);
 
   // Crossfade the next photo in over the tail of this one. No black frame.
   var left = secs - into;
   if (idx < n - 1 && left < FADE) {
     ctx.globalAlpha = 1 - (left / FADE);
-    padDrawPhotoInto(ctx, W, H, idx + 1, 0);
+    padDrawPhotoInto(ctx, W, H, idx + 1, 0, fitMode);
     ctx.globalAlpha = 1;
   }
 }
@@ -14680,6 +14705,9 @@ function padExportSlideshow() {
 
   recorder.start();
   var secs = padSlideSeconds();
+  var fitSnap = padFitMode();
+  console.log('[PhotoAds] build ' + AP_BUILD + ' · download · '
+    + cw + 'x' + ch + ' · ' + fitSnap + ' · ' + secs + 's/photo');
   var totalMs = _padPhotos.length * secs * 1000;
   var t0 = performance.now();
 
@@ -14694,7 +14722,7 @@ function padExportSlideshow() {
   function renderFrame() {
     var t = (performance.now() - t0) / 1000;
     if (t * 1000 >= totalMs) { recorder.stop(); return; }
-    padDrawSlideAt(recCtx, cw, ch, t, secs);
+    padDrawSlideAt(recCtx, cw, ch, t, secs, fitSnap);
     requestAnimationFrame(renderFrame);
   }
   requestAnimationFrame(renderFrame);
@@ -14718,7 +14746,7 @@ async function padPostToSocial() {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.scale(2,2);
-    padPaintPhoto(ctx, cw, ch, photo.img, 1);
+    padPaintPhoto(ctx, cw, ch, photo.img, 1, padFitMode());
     padDrawLabels(ctx, cw, ch);
 
     canvas.toBlob(async function(blob) {
@@ -14766,6 +14794,12 @@ async function padPostToSocial() {
 
       recorder2.start();
       var slideSecs = padSlideSeconds();
+      var fitSnap2 = padFitMode();
+      console.log('[PhotoAds] build ' + AP_BUILD + ' · post to social · '
+        + aspAuto.w + 'x' + aspAuto.h + ' · ' + fitSnap2 + ' · ' + slideSecs + 's/photo');
+      showToast('Making a ' + aspAuto.w + '×' + aspAuto.h + ' video · '
+        + (fitSnap2 === 'fit' ? 'whole photo' : 'filled frame') + ' · '
+        + (count * slideSecs) + 's', 'success');
       var slideTotalMs = count * slideSecs * 1000;
       var st0 = performance.now();
 
@@ -14773,7 +14807,7 @@ async function padPostToSocial() {
       function renderSlideFrame() {
         var t = (performance.now() - st0) / 1000;
         if (t * 1000 >= slideTotalMs) { recorder2.stop(); return; }
-        padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, t, slideSecs);
+        padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, t, slideSecs, fitSnap2);
         requestAnimationFrame(renderSlideFrame);
       }
       requestAnimationFrame(renderSlideFrame);
