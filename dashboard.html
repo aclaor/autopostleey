@@ -3899,9 +3899,16 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                   <option value="9:16">▮ Story / Reel 9:16 — full screen</option>
                   <option value="16:9">▭ Landscape 16:9 — YouTube</option>
                 </select>
+                <label style="font-size:11.5px;color:var(--text3);display:block;margin-top:10px;">Photo fitting</label>
+                <select id="pad-fit" onchange="padSetAspect()"
+                        style="width:100%;background:var(--bg2);border:1px solid var(--border);
+                               border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;margin-top:5px;">
+                  <option value="fill">Fill the frame — crops the edges</option>
+                  <option value="fit">Show the whole photo — blurred edges</option>
+                </select>
                 <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;">
-                  The preview shows this exact shape, so labels and emojis land
-                  where you put them.
+                  Use <strong>whole photo</strong> for screenshots, posters or anything with
+                  writing on it — filling the frame cuts the top and bottom off.
                 </div>
               </div>
               <div id="pad-speed-row" style="background:var(--bg3);border-radius:10px;padding:11px 13px;margin-bottom:12px;">
@@ -14168,6 +14175,49 @@ var PAD_ASPECTS = {
   '16:9': { r: 16 / 9,   w: 1920, h: 1080, label: 'Landscape' },
 };
 
+// Fill crops the photo to the frame. That is right for product shots and
+// wrong for anything with words on it — a tall infographic loses its heading
+// and its bottom third. Fit shows the whole photo and fills the gap with a
+// blurred copy of itself, which is what Reels and Stories do.
+function padFitMode() {
+  var el = document.getElementById('pad-fit');
+  return (el && el.value) || 'fill';
+}
+
+// One place that paints a photo into a frame, used by the preview and both
+// exports, so they can never drift apart again.
+function padPaintPhoto(ctx, W, H, img, zoom) {
+  if (!img) return;
+  zoom = zoom || 1;
+  var iw = img.naturalWidth, ih = img.naturalHeight;
+  if (!iw || !ih) return;
+
+  if (padFitMode() === 'fit') {
+    var coverS = Math.max(W / iw, H / ih);
+    ctx.save();
+    try {
+      // Blurred backdrop so the padding is never a flat grey bar.
+      ctx.filter = 'blur(' + Math.round(W / 28) + 'px)';
+      ctx.globalAlpha = 0.85;
+      var bw = iw * coverS * 1.18, bh = ih * coverS * 1.18;
+      ctx.drawImage(img, (W - bw) / 2, (H - bh) / 2, bw, bh);
+    } catch (e) {
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+
+    var s = Math.min(W / iw, H / ih) * zoom;
+    var dw = iw * s, dh = ih * s;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    return;
+  }
+
+  var cs = Math.max(W / iw, H / ih) * zoom;
+  var cwd = iw * cs, chd = ih * cs;
+  ctx.drawImage(img, (W - cwd) / 2, (H - chd) / 2, cwd, chd);
+}
+
 function padAspect() {
   var el = document.getElementById('pad-aspect');
   return PAD_ASPECTS[(el && el.value) || '1:1'] || PAD_ASPECTS['1:1'];
@@ -14218,10 +14268,7 @@ function padDrawCanvas() {
   _padCanvas = canvas;
   _padCtx = ctx;
 
-  // Draw photo with cover fill
-  var scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-  var sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
-  ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+  padPaintPhoto(ctx, cw, ch, img, 1);
 
   // HTML overlay handles display (prevents text doubling on canvas)
   padRenderOverlayLabels(cw, ch);
@@ -14524,9 +14571,7 @@ function padDrawPhotoInto(ctx, W, H, idx, progress) {
   ctx.save();
   ctx.translate((1 - scale) * W / 2, (1 - scale) * H / 2);
   ctx.scale(scale, scale);
-  var s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-  var sw = img.naturalWidth * s, sh = img.naturalHeight * s;
-  ctx.drawImage(img, (W - sw) / 2, (H - sh) / 2, sw, sh);
+  padPaintPhoto(ctx, W, H, img, 1);
   ctx.restore();
   padDrawLabels(ctx, W, H, idx);
 }
@@ -14614,9 +14659,7 @@ async function padPostToSocial() {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.scale(2,2);
-    var scale = Math.max(cw/photo.img.naturalWidth, ch/photo.img.naturalHeight);
-    var sw = photo.img.naturalWidth*scale, sh = photo.img.naturalHeight*scale;
-    ctx.drawImage(photo.img, (cw-sw)/2, (ch-sh)/2, sw, sh);
+    padPaintPhoto(ctx, cw, ch, photo.img, 1);
     padDrawLabels(ctx, cw, ch);
 
     canvas.toBlob(async function(blob) {
