@@ -12956,6 +12956,65 @@ window.addEventListener('message', function(e) {
   }
 });
 
+// ── Reading the AI's answer ──────────────────────────────────
+// The old parser used /BENEFIT1:\s*(.+)/ and the model replies on ONE line:
+//
+//   TAGLINE: Style Meets Comfort BENEFIT1: Premium fabrics BENEFIT2: ...
+//
+// "." matches everything up to the end of the LINE, so benefit 1 swallowed
+// benefits 2, 3 and 4 along with their labels — which is exactly why
+// "BENEFIT2:" was appearing inside the finished video.
+//
+// This stops at the next label instead, and cleans up the decorations models
+// like to add: [brackets], "quotes", **bold**, 1. numbering, - bullets.
+function vadTidy(str) {
+  return String(str || '')
+    .replace(/\*\*/g, '')
+    .replace(/^[\s\-•*]+/, '')
+    .replace(/^\d+[.)]\s*/, '')
+    .replace(/^\[|\]$/g, '')
+    .replace(/^["'“”]+|["'“”]+$/g, '')
+    // A trailing "1." or "-" is the start of the NEXT line bleeding in.
+    .replace(/[\s\-•*]*\d+[.)]\s*$/, '')
+    .replace(/[\s\-•*]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function vadParseAdCopy(text) {
+  text = String(text || '').replace(/\r/g, ' ');
+  var out = { tagline: '', benefits: [] };
+
+  // Stop each capture at the next label, wherever it is — same line or not.
+  var NEXT = '(?=\\s*(?:TAGLINE|BENEFIT)\\s*\\d*\\s*[:\\-]|$)';
+  var tm = text.match(new RegExp('TAGLINE\\s*[:\\-]\\s*([\\s\\S]*?)' + NEXT, 'i'));
+  if (tm) out.tagline = vadTidy(tm[1]);
+
+  for (var i = 1; i <= 4; i++) {
+    var m = text.match(new RegExp('BENEFIT\\s*' + i + '\\s*[:\\-]\\s*([\\s\\S]*?)' + NEXT, 'i'));
+    out.benefits.push(m ? vadTidy(m[1]) : '');
+  }
+
+  // No labels at all? Treat it as plain lines: first is the tagline.
+  if (!out.tagline && !out.benefits.some(Boolean)) {
+    var lines = text.split('\n').map(vadTidy).filter(function (l) { return l.length > 1; });
+    out.tagline = lines[0] || '';
+    out.benefits = [lines[1] || '', lines[2] || '', lines[3] || '', lines[4] || ''];
+  }
+
+  // Anything that still carries a label, or runs to a paragraph, is unusable.
+  out.benefits = out.benefits.map(function (b) {
+    if (/BENEFIT\s*\d/i.test(b) || /TAGLINE/i.test(b)) b = b.split(/BENEFIT\s*\d|TAGLINE/i)[0];
+    b = vadTidy(b);
+    if (b.length > 42) b = b.slice(0, 42).replace(/\s+\S*$/, '');
+    return b;
+  });
+  if (/BENEFIT\s*\d/i.test(out.tagline)) out.tagline = vadTidy(out.tagline.split(/BENEFIT\s*\d/i)[0]);
+  if (out.tagline.length > 44) out.tagline = out.tagline.slice(0, 44).replace(/\s+\S*$/, '');
+
+  return out;
+}
+
 // ── BENEFITS GENERATOR ───────────────────────────────────────
 async function generateVadBenefits() {
   var biz     = (document.getElementById('vad-bizname')  || {}).value || (_bizProfile && _bizProfile.name) || '';
@@ -12992,8 +13051,11 @@ async function generateVadBenefits() {
     });
     var data = await resp.json();
     var lines = (data.post || '').split('\n')
-      .map(function(l){ return l.replace(/^[-•*\d.]+\s*/,'').trim(); })
-      .filter(function(l){ return l.length > 2 && l.length < 40; })
+      .map(vadTidy)
+      // Drop anything that came back still wearing a label, or a whole
+      // sentence of explanation.
+      .map(function (l) { return l.replace(/^(BENEFIT\s*\d|TAGLINE)\s*[:\-]\s*/i, ''); })
+      .filter(function (l) { return l.length > 2 && l.length < 42 && !/BENEFIT\s*\d/i.test(l); })
       .slice(0, 4);
 
     // Assign icons based on industry
@@ -13468,22 +13530,22 @@ async function autoFillVadFromProfile() {
             + '. Description: ' + desc
             + (industry ? '. Industry: ' + industry : '')
             + (audience ? '. Audience: ' + audience : '')
-            + '. Output FORMAT: TAGLINE: [tagline] BENEFIT1: [b1] BENEFIT2: [b2] BENEFIT3: [b3] BENEFIT4: [b4]. Nothing else.'
+            + '.\n\nAnswer on FIVE separate lines, in this exact form, and nothing else.'
+            + ' No brackets, no quotes, no bullets, no extra words:\n'
+            + 'TAGLINE: your tagline here\n'
+            + 'BENEFIT1: first benefit\n'
+            + 'BENEFIT2: second benefit\n'
+            + 'BENEFIT3: third benefit\n'
+            + 'BENEFIT4: fourth benefit'
         })
       });
       var data = await resp.json();
       var text = (data.post || '').trim();
 
-      // Parse structured output
-      var taglineMatch = text.match(/TAGLINE:\s*(.+)/i);
-      var b1Match = text.match(/BENEFIT1:\s*(.+)/i);
-      var b2Match = text.match(/BENEFIT2:\s*(.+)/i);
-      var b3Match = text.match(/BENEFIT3:\s*(.+)/i);
-      var b4Match = text.match(/BENEFIT4:\s*(.+)/i);
-
-      if (taglineMatch) {
+      var parsed = vadParseAdCopy(text);
+      if (parsed.tagline) {
         var tagEl = document.getElementById('vad-tagline');
-        if (tagEl && !tagEl.value) tagEl.value = taglineMatch[1].trim().replace(/^["']|["']$/g,'');
+        if (tagEl && !tagEl.value) tagEl.value = parsed.tagline;
       }
 
       // Industry-specific benefit icons
@@ -13499,14 +13561,14 @@ async function autoFillVadFromProfile() {
       };
       var bIcons = ICONS_FOR_THEME[autoTheme] || ICONS_FOR_THEME.default;
 
-      [[b1Match,'vad-b1','vad-b1-ico'],[b2Match,'vad-b2','vad-b2-ico'],
-       [b3Match,'vad-b3','vad-b3-ico'],[b4Match,'vad-b4','vad-b4-ico']].forEach(function(arr,i){
-        if (arr[0]) {
-          var el = document.getElementById(arr[1]);
-          var ico = document.getElementById(arr[2]);
-          if (el) el.value = arr[0][1].trim().replace(/^["']|["']$/g,'');
-          if (ico) ico.textContent = bIcons[i] || '✅';
-        }
+      [['vad-b1','vad-b1-ico'],['vad-b2','vad-b2-ico'],
+       ['vad-b3','vad-b3-ico'],['vad-b4','vad-b4-ico']].forEach(function(arr,i){
+        var val = parsed.benefits[i];
+        if (!val) return;
+        var el = document.getElementById(arr[0]);
+        var ico = document.getElementById(arr[1]);
+        if (el) el.value = val;
+        if (ico) ico.textContent = bIcons[i] || '✅';
       });
 
       showToast('✅ Business profile loaded! Review and generate your ad.', 'success');
@@ -14186,7 +14248,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-06.2';
+var AP_BUILD = '2026-09-06.3';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
