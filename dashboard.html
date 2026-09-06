@@ -14186,7 +14186,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-06.1';
+var AP_BUILD = '2026-09-06.2';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -14290,6 +14290,11 @@ function padDrawCanvas() {
   _padCtx = ctx;
 
   padPaintPhoto(ctx, cw, ch, img, 1);
+  // Draw the labels with the SAME function the video uses. Previously the
+  // preview showed HTML elements and the video drew on canvas — two renderers
+  // that had to be kept in step by hand, and repeatedly were not. Now there is
+  // one renderer, so the preview cannot disagree with the export.
+  padDrawLabels(ctx, cw, ch, _padCurrentIdx);
 
   // HTML overlay handles display (prevents text doubling on canvas)
   padRenderOverlayLabels(cw, ch);
@@ -14394,25 +14399,25 @@ function padRenderOverlayLabels(cw, ch) {
     var isSelected = (_padSelectedLabel === i);
     var isEmoji = label.isEmoji;
 
+    // Invisible: the canvas underneath already shows the real label. This
+    // element only has to be the right SIZE and PLACE so it can be grabbed.
     el.style.cssText = [
       'position:absolute',
       'left:' + x + 'px',
       'top:' + y + 'px',
       'transform:translate(-50%,-50%)',
-      'background:' + (isEmoji ? 'transparent' : st.bg),
-      'color:' + st.color,
+      'background:transparent',
+      'color:transparent',
       'font-size:' + st.fontSize + 'px',
       'font-family:' + fontFamily,
       'font-weight:' + (isEmoji ? 'normal' : st.fontWeight),
       'padding:' + (isEmoji ? '0' : padScaled),
       'border-radius:' + (st.radius * k) + 'px',
-      isEmoji ? '' : (st.border && st.border !== 'none' ? 'border:' + st.border : ''),
-      'box-shadow:' + (isEmoji ? 'none' : st.shadow),
       'cursor:grab',
       'user-select:none',
       'white-space:nowrap',
-      st.textShadow ? 'text-shadow:0 2px 8px rgba(0,0,0,0.9)' : '',
-      'outline:' + (isSelected ? '2px solid var(--accent)' : '2px solid transparent'),
+      'outline:' + (isSelected ? '2px dashed var(--accent)' : '2px solid transparent'),
+      'outline-offset:3px',
       'outline-offset:3px',
       'transition:outline-color .15s',
       'touch-action:none',
