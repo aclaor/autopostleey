@@ -2,6 +2,18 @@
 <!-- Autopostleey v2.7 - photos vivid, label editor fixed -->
 <html lang="en">
 <head>
+<!-- ── Installable app (PWA) ────────────────────────────────────────
+     Turns the site into something a customer can add to their home
+     screen. No app store, no rewrite, no cost. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#6D5EF8">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Autopostleey">
+<meta name="mobile-web-app-capable" content="yes">
+
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2XFM46EZCC"></script>
 <script>
@@ -17889,7 +17901,7 @@ async function submitIntel() {
     showToast('Request sent', 'success');
 
     // If the email failed, say so rather than letting them wait for nothing.
-    if (d.emailed === false) {
+    if (d.notified === false) {
       status.innerHTML = '<span style="color:#EA580C;">Saved, but our notification did not send. '
         + 'Email support@autopostleey.com with reference ' + escapeHtml(d.reference || '') + '.</span>';
     }
@@ -18430,6 +18442,123 @@ function wireSigChart(months) {
   hit.addEventListener('touchmove', function (e) { if (e.touches[0]) show(e.touches[0]); });
   hit.addEventListener('touchend', hide);
 }
+</script>
+
+<!-- ── Install prompt ───────────────────────────────────────────────
+     Android fires beforeinstallprompt and we show our own button.
+     iPhone never fires it, so Safari visitors get a short banner telling
+     them where the option lives. Without that, iPhone users simply never
+     discover they can install it. -->
+<script>
+(function () {
+  var deferred = null;
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+  }
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent)
+        && !window.MSStream;
+  }
+  function dismissed() {
+    try { return localStorage.getItem('ap_install_dismissed') === '1'; } catch (e) { return false; }
+  }
+  function dismiss() {
+    try { localStorage.setItem('ap_install_dismissed', '1'); } catch (e) {}
+    var b = document.getElementById('ap-install-bar');
+    if (b) b.remove();
+  }
+
+  function bar(inner) {
+    if (document.getElementById('ap-install-bar')) return;
+    var d = document.createElement('div');
+    d.id = 'ap-install-bar';
+    d.setAttribute('role', 'region');
+    d.setAttribute('aria-label', 'Install Autopostleey');
+    d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;'
+      + 'background:#fff;border:1px solid #E2E6EA;border-radius:14px;'
+      + 'box-shadow:0 10px 34px rgba(13,17,23,.18);padding:13px 14px;'
+      + 'display:flex;align-items:center;gap:12px;max-width:520px;margin:0 auto;'
+      + 'font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#0D1117';
+    d.innerHTML = inner;
+    document.body.appendChild(d);
+    var x = d.querySelector('[data-x]');
+    if (x) x.onclick = dismiss;
+  }
+
+  var LOGO = '<div style="width:42px;height:42px;border-radius:11px;flex:none;'
+    + 'background:linear-gradient(135deg,#6D5EF8,#EC4899);display:grid;place-items:center;'
+    + 'color:#fff;font-weight:800;font-size:15px">AP</div>';
+  var CLOSE = '<button data-x aria-label="Not now" style="flex:none;background:none;border:none;'
+    + 'font-size:19px;line-height:1;color:#9CA3AF;cursor:pointer;padding:2px 4px">&times;</button>';
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    if (isStandalone() || dismissed()) return;
+    bar(LOGO
+      + '<div style="flex:1;min-width:0"><strong>Install Autopostleey</strong>'
+      + '<div style="color:#6B7280;font-size:12.5px">Add it to your home screen</div></div>'
+      + '<button id="ap-install-go" style="flex:none;background:linear-gradient(135deg,#6D5EF8,#EC4899);'
+      + 'color:#fff;border:none;border-radius:9px;padding:10px 17px;font-size:13.5px;font-weight:700;'
+      + 'cursor:pointer">Install</button>' + CLOSE);
+    var go = document.getElementById('ap-install-go');
+    if (go) go.onclick = function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function () { deferred = null; dismiss(); });
+    };
+  });
+
+  window.addEventListener('appinstalled', function () {
+    deferred = null; dismiss();
+    if (typeof gtag === 'function') gtag('event', 'pwa_installed');
+  });
+
+  // iPhone: Safari has no install prompt, so point at the Share menu.
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (!isIOS() || isStandalone() || dismissed()) return;
+      bar(LOGO
+        + '<div style="flex:1;min-width:0"><strong>Add Autopostleey to your Home Screen</strong>'
+        + '<div style="color:#6B7280;font-size:12.5px">Tap '
+        + '<span style="display:inline-block;transform:translateY(2px)">'
+        + '<svg width="13" height="16" viewBox="0 0 20 24" fill="none" aria-hidden="true">'
+        + '<path d="M10 2v13M10 2 6 6M10 2l4 4" stroke="#6D5EF8" stroke-width="2" '
+        + 'stroke-linecap="round" stroke-linejoin="round"/>'
+        + '<path d="M4 11v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="#6D5EF8" stroke-width="2" '
+        + 'stroke-linecap="round"/></svg></span> then '
+        + '<strong>Add to Home Screen</strong></div></div>' + CLOSE);
+      // Sit above the bottom tab bar on phones rather than covering it.
+      var el = document.getElementById('ap-install-bar');
+      if (el && document.querySelector('.mobile-nav, .bottom-nav, #ap-mobile-nav')) {
+        el.style.bottom = '76px';
+      }
+    }, 3500);
+  });
+
+  // Service worker. Network-first inside, so a deploy always wins.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var w = reg.installing;
+          if (!w) return;
+          w.addEventListener('statechange', function () {
+            if (w.state === 'installed' && navigator.serviceWorker.controller) {
+              w.postMessage('skip-waiting');
+            }
+          });
+        });
+      }).catch(function () { /* an install failing must never break the site */ });
+    });
+    var reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (reloading) return; reloading = true; location.reload();
+    });
+  }
+})();
 </script>
 </body>
 </html>
