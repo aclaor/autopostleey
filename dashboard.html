@@ -68,6 +68,7 @@
      pushes every page sideways and makes text look like it overlaps. */
   @media (max-width: 640px) {
     .topbar-right { gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+    .ap-getapp-label { display: none; }   /* icon only on small screens */
     .topbar-right > button { padding: 6px 10px !important; font-size: 12px !important;
                              margin-right: 0 !important; white-space: nowrap; }
     .user-pill { max-width: 96px; font-size: 12px; padding: 5px 9px; }
@@ -627,7 +628,10 @@
     <button id="ap-hamburger" onclick="toggleAPSidebar()" style="display:none;background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;color:var(--text2);line-height:1;">☰</button>
     <a href="#" onclick="showPage('overview');return false;" style="text-decoration:none;"><div class="logo"><div class="logo-icon-dash">AP</div><span style="font-weight:800;color:#0D1117;white-space:nowrap;">auto<span style="background:linear-gradient(135deg,#6D5EF8,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">postleey</span></span></div></a>
   </div>
-  <div class="topbar-right"><button onclick="toggleAPAI()" style="margin-right:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;letter-spacing:0.01em;">AI Assistant</button>
+  <div class="topbar-right"><button class="ap-getapp-btn" onclick="apShowGetApp()" title="Install Autopostleey"
+      style="margin-right:8px;background:none;border:1px solid var(--border2);border-radius:20px;
+             padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);">
+      📱 <span class="ap-getapp-label">Get the app</span></button><button onclick="toggleAPAI()" style="margin-right:8px;background:linear-gradient(135deg,#6D5EF8,#EC4899);border:none;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;letter-spacing:0.01em;">AI Assistant</button>
     <div style="position:relative;margin-right:8px;display:inline-block;">
       <button id="ap-lang-btn" onclick="toggleAPLang()" style="background:none;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#6B7280;">🌐 <span id="ap-lang-label">EN</span></button>
       <div id="ap-lang-menu" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:6px;min-width:110px;z-index:9999;"></div>
@@ -730,6 +734,9 @@
       </a>
       <a class="nav-item" onclick="showPage('aitools');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🤖</span> <span>AI Tools</span>
+      </a>
+      <a class="nav-item ap-getapp-btn" onclick="apShowGetApp();closeAPSidebar();return false;" href="#">
+        <span class="nav-icon">📱</span> <span>Get the app</span>
       </a>
       <a class="nav-item" onclick="showPage('support');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">💬</span> <span data-i18n="nav_support">Support</span>
@@ -18496,6 +18503,7 @@ function wireSigChart(months) {
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
     deferred = e;
+    window.__apDeferredPrompt = e;   // the "Get the app" button uses this too
     if (isStandalone() || dismissed()) return;
     bar(LOGO
       + '<div style="flex:1;min-width:0"><strong>Install Autopostleey</strong>'
@@ -18507,7 +18515,9 @@ function wireSigChart(months) {
     if (go) go.onclick = function () {
       if (!deferred) return;
       deferred.prompt();
-      deferred.userChoice.then(function () { deferred = null; dismiss(); });
+      deferred.userChoice.then(function () {
+        deferred = null; window.__apDeferredPrompt = null; dismiss();
+      });
     };
   });
 
@@ -18558,6 +18568,150 @@ function wireSigChart(months) {
       if (reloading) return; reloading = true; location.reload();
     });
   }
+})();
+</script>
+
+<!-- ── Get the app ──────────────────────────────────────────────────
+     An explicit button, because Chrome's own install prompt only appears
+     when IT decides to, never on iPhone, and never on desktop Firefox.
+     Waiting for the browser to offer it means most people never find out
+     the app exists. -->
+<div id="ap-getapp" style="display:none;position:fixed;inset:0;z-index:100000;
+     background:rgba(13,17,23,.55);align-items:center;justify-content:center;padding:18px;">
+  <div role="dialog" aria-modal="true" aria-labelledby="ap-getapp-h"
+       style="background:#fff;border-radius:18px;max-width:430px;width:100%;
+              box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden;
+              font:15px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0D1117;
+              max-height:90vh;overflow-y:auto;">
+    <div style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;padding:22px 22px 20px;
+                display:flex;gap:14px;align-items:center;">
+      <div style="width:52px;height:52px;border-radius:13px;flex:none;background:rgba(255,255,255,.2);
+                  display:grid;place-items:center;font-weight:800;font-size:18px;">AP</div>
+      <div><div id="ap-getapp-h" style="font-size:18px;font-weight:800;">Get the Autopostleey app</div>
+        <div style="font-size:13px;opacity:.93;">Free · no app store · installs in a second</div></div>
+    </div>
+    <div style="padding:20px 22px 22px;">
+      <div id="ap-getapp-body"></div>
+      <button onclick="apCloseGetApp()"
+              style="width:100%;margin-top:16px;padding:12px;border:1px solid #E2E6EA;background:#F0F2F5;
+                     border-radius:10px;font-size:14px;font-weight:700;color:#3D4451;cursor:pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  function standalone() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+  }
+  function ua() { return navigator.userAgent; }
+  function isIOS() { return /iphone|ipad|ipod/i.test(ua()) && !window.MSStream; }
+  function isAndroid() { return /android/i.test(ua()); }
+  function isFirefox() { return /firefox/i.test(ua()); }
+  function isSafariDesktop() { return /safari/i.test(ua()) && !/chrome|chromium|edg/i.test(ua()) && !isIOS(); }
+
+  var STEP = 'display:flex;gap:11px;margin-bottom:13px;align-items:flex-start;';
+  var NUM = 'flex:none;width:23px;height:23px;border-radius:50%;background:#6D5EF8;color:#fff;'
+          + 'font-size:12px;font-weight:800;display:grid;place-items:center;margin-top:1px;';
+
+  function step(n, html) {
+    return '<div style="' + STEP + '"><span style="' + NUM + '">' + n + '</span>'
+         + '<div style="flex:1;font-size:14px;">' + html + '</div></div>';
+  }
+  var SHARE = '<span style="display:inline-block;vertical-align:-3px;">'
+    + '<svg width="15" height="18" viewBox="0 0 20 24" fill="none" aria-hidden="true">'
+    + '<path d="M10 2v13M10 2 6 6M10 2l4 4" stroke="#6D5EF8" stroke-width="2" '
+    + 'stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<path d="M4 11v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="#6D5EF8" stroke-width="2" '
+    + 'stroke-linecap="round"/></svg></span>';
+
+  window.apCloseGetApp = function () {
+    var m = document.getElementById('ap-getapp');
+    if (m) m.style.display = 'none';
+  };
+
+  window.apShowGetApp = function () {
+    var m = document.getElementById('ap-getapp');
+    var b = document.getElementById('ap-getapp-body');
+    if (!m || !b) return;
+
+    var html = '';
+
+    if (standalone()) {
+      html = '<div style="text-align:center;padding:6px 0 2px;">'
+        + '<div style="font-size:34px;line-height:1;">✅</div>'
+        + '<div style="font-weight:800;margin-top:8px;">You already have it</div>'
+        + '<div style="color:#6B7280;font-size:13.5px;margin-top:4px;">'
+        + 'You are using the installed app right now.</div></div>';
+    }
+    // The real prompt is available — one button does everything.
+    else if (window.__apDeferredPrompt) {
+      html = '<div style="color:#3D4451;font-size:14px;margin-bottom:14px;">'
+        + 'Autopostleey will be added to your home screen. It opens without a browser bar and '
+        + 'updates itself — nothing to download from a store.</div>'
+        + '<button id="ap-getapp-install" style="width:100%;padding:14px;border:none;border-radius:11px;'
+        + 'background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;font-size:15px;font-weight:800;'
+        + 'cursor:pointer;">Install now</button>';
+    }
+    else if (isIOS()) {
+      html = '<div style="color:#3D4451;font-size:14px;margin-bottom:15px;">'
+        + 'On iPhone and iPad, Apple asks you to add it yourself. Three taps:</div>'
+        + step(1, 'Tap the <strong>Share</strong> button ' + SHARE
+                + ' at the bottom of Safari')
+        + step(2, 'Scroll down and tap <strong>Add to Home Screen</strong>')
+        + step(3, 'Tap <strong>Add</strong>')
+        + '<div style="background:#F0F2F5;border-radius:10px;padding:11px 13px;font-size:13px;'
+        + 'color:#3D4451;margin-top:4px;">This only works in <strong>Safari</strong>. '
+        + 'If you are in Chrome on iPhone, open autopostleey.com in Safari first.</div>';
+    }
+    else if (isFirefox() || isSafariDesktop()) {
+      html = '<div style="color:#3D4451;font-size:14px;margin-bottom:14px;">'
+        + 'This browser cannot install web apps. Open <strong>autopostleey.com</strong> in '
+        + '<strong>Chrome</strong> or <strong>Edge</strong> and the option will appear.</div>'
+        + '<div style="background:#F0F2F5;border-radius:10px;padding:11px 13px;font-size:13px;'
+        + 'color:#3D4451;">Everything works normally here — you just cannot add the icon.</div>';
+    }
+    else if (isAndroid()) {
+      html = '<div style="color:#3D4451;font-size:14px;margin-bottom:15px;">'
+        + 'Chrome will offer to install Autopostleey once you have visited a couple of times. '
+        + 'You can also do it now:</div>'
+        + step(1, 'Tap the <strong>⋮</strong> menu, top right')
+        + step(2, 'Tap <strong>Add to Home screen</strong> or <strong>Install app</strong>')
+        + step(3, 'Tap <strong>Install</strong>');
+    }
+    else {
+      html = '<div style="color:#3D4451;font-size:14px;margin-bottom:15px;">'
+        + 'On a computer, Chrome and Edge put the install button in the address bar:</div>'
+        + step(1, 'Look at the right-hand end of the address bar for the '
+                + '<strong>install icon</strong> — a small screen with a downward arrow')
+        + step(2, 'Click it, then click <strong>Install</strong>')
+        + '<div style="background:#F0F2F5;border-radius:10px;padding:11px 13px;font-size:13px;'
+        + 'color:#3D4451;margin-top:4px;">No icon there? Open the <strong>⋮</strong> menu and look '
+        + 'for <strong>Cast, save and share → Install page as app</strong>.</div>';
+    }
+
+    b.innerHTML = html;
+    m.style.display = 'flex';
+
+    var go = document.getElementById('ap-getapp-install');
+    if (go) go.onclick = function () {
+      var d = window.__apDeferredPrompt;
+      if (!d) return;
+      d.prompt();
+      d.userChoice.then(function () { window.__apDeferredPrompt = null; apCloseGetApp(); });
+    };
+  };
+
+  // Hide every "Get the app" button once it is installed.
+  window.addEventListener('load', function () {
+    if (!standalone()) return;
+    document.querySelectorAll('.ap-getapp-btn').forEach(function (el) { el.style.display = 'none'; });
+  });
+  window.addEventListener('appinstalled', function () {
+    document.querySelectorAll('.ap-getapp-btn').forEach(function (el) { el.style.display = 'none'; });
+  });
 })();
 </script>
 </body>
