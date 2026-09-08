@@ -18627,6 +18627,123 @@ function wireSigChart(months) {
     + '<path d="M4 11v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="#6D5EF8" stroke-width="2" '
     + 'stroke-linecap="round"/></svg></span>';
 
+
+  // Chrome only offers a one-click install when EVERY condition below is
+  // met. When it refuses it says nothing at all, so this checks each one and
+  // reports which is missing — rather than leaving you to guess.
+  async function apInstallCheck() {
+    var out = [];
+
+    // 1 — secure context
+    var https = location.protocol === 'https:' || location.hostname === 'localhost';
+    out.push({ ok: https, name: 'Served over HTTPS',
+               fix: 'Open the site as https://autopostleey.com, not http://' });
+
+    // 2 — manifest link present and the file actually fetches
+    var link = document.querySelector('link[rel="manifest"]');
+    var man = null, manOk = false, manMsg = 'No <link rel="manifest"> in the page';
+    if (link) {
+      try {
+        var r = await fetch(link.href, { cache: 'no-store' });
+        if (!r.ok) { manMsg = link.getAttribute('href') + ' returned ' + r.status
+                     + ' — the file is not at that address'; }
+        else {
+          man = await r.json();
+          manOk = true; manMsg = '';
+        }
+      } catch (e) { manMsg = 'manifest.webmanifest could not be read: ' + e.message; }
+    }
+    out.push({ ok: manOk, name: 'manifest.webmanifest found', fix: manMsg
+               || 'Upload manifest.webmanifest to the ROOT of the site' });
+
+    // 3 — the icons Chrome insists on
+    var need192 = false, need512 = false, iconMsg = 'No manifest, so no icons';
+    if (man && man.icons) {
+      man.icons.forEach(function (i) {
+        var s = String(i.sizes || '');
+        if (s.indexOf('192x192') !== -1) need192 = true;
+        if (s.indexOf('512x512') !== -1) need512 = true;
+      });
+      iconMsg = 'Manifest needs a 192x192 and a 512x512 icon';
+    }
+    var iconsOk = need192 && need512;
+
+    // and they have to actually load
+    var iconLoads = false;
+    if (iconsOk) {
+      try {
+        var base = new URL(link.href, location.href);
+        var src = new URL(man.icons.find(function (i) {
+          return String(i.sizes).indexOf('192x192') !== -1; }).src, base);
+        var ir = await fetch(src.href, { cache: 'no-store' });
+        iconLoads = ir.ok;
+        if (!ir.ok) iconMsg = src.pathname + ' returned ' + ir.status
+                    + ' — the icons folder is missing or in the wrong place';
+      } catch (e) { iconMsg = 'Icon could not be loaded: ' + e.message; }
+    }
+    out.push({ ok: iconsOk && iconLoads, name: 'Icons present and loading', fix: iconMsg });
+
+    // 4 — service worker registered AND controlling this page
+    var swOk = false, swMsg = 'This browser has no service worker support';
+    if ('serviceWorker' in navigator) {
+      try {
+        var reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) swMsg = 'sw.js is not registered. Usually it is not at the root of the site '
+                          + '— it must sit beside index.html, not in a folder.';
+        else if (!reg.active) swMsg = 'Service worker found but not active yet. Reload the page once.';
+        else { swOk = true; swMsg = ''; }
+      } catch (e) { swMsg = e.message; }
+    }
+    out.push({ ok: swOk, name: 'Service worker running', fix: swMsg });
+
+    // 5 — start_url must be inside scope, or Chrome silently refuses
+    var scopeOk = true, scopeMsg = '';
+    if (man) {
+      try {
+        var b2 = new URL(link.href, location.href);
+        var su = new URL(man.start_url || '/', b2);
+        var sc = new URL(man.scope || '/', b2);
+        scopeOk = su.href.indexOf(sc.href) === 0;
+        if (!scopeOk) scopeMsg = 'start_url ' + su.pathname + ' sits outside scope ' + sc.pathname;
+        else {
+          var sr = await fetch(su.href, { method: 'GET', cache: 'no-store' });
+          scopeOk = sr.ok;
+          if (!sr.ok) scopeMsg = 'start_url ' + su.pathname + ' returned ' + sr.status;
+        }
+      } catch (e) { scopeOk = false; scopeMsg = e.message; }
+    } else { scopeOk = false; scopeMsg = 'No manifest to check'; }
+    out.push({ ok: scopeOk, name: 'Start page reachable', fix: scopeMsg });
+
+    return out;
+  }
+
+  function apCheckHtml(rows) {
+    var bad = rows.filter(function (r) { return !r.ok; });
+    var html = '';
+    if (!bad.length) {
+      html += '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;'
+        + 'padding:12px 14px;font-size:13.5px;color:#065F46;margin-bottom:14px;">'
+        + '<strong>Everything checks out.</strong> Chrome installs on its own timetable — it '
+        + 'usually waits until your second visit. Use the address bar icon to do it now.</div>';
+    } else {
+      html += '<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;'
+        + 'padding:12px 14px;font-size:13.5px;color:#7C2D12;margin-bottom:14px;">'
+        + '<strong>One-click install is not available yet.</strong> '
+        + bad.length + ' thing' + (bad.length > 1 ? 's need' : ' needs') + ' fixing:</div>';
+    }
+    html += '<div style="font-size:13px;">';
+    rows.forEach(function (r) {
+      html += '<div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid #F0F2F5;">'
+        + '<span style="flex:none;color:' + (r.ok ? '#059669' : '#EF4444') + ';font-weight:800;">'
+        + (r.ok ? '✓' : '✕') + '</span>'
+        + '<div><div style="font-weight:' + (r.ok ? '400' : '700') + ';">' + r.name + '</div>'
+        + (r.ok ? '' : '<div style="color:#7C2D12;font-size:12.5px;margin-top:2px;">' + r.fix + '</div>')
+        + '</div></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   window.apCloseGetApp = function () {
     var m = document.getElementById('ap-getapp');
     if (m) m.style.display = 'none';
@@ -18638,6 +18755,7 @@ function wireSigChart(months) {
     if (!m || !b) return;
 
     var html = '';
+    var runDiag = false;
 
     if (standalone()) {
       html = '<div style="text-align:center;padding:6px 0 2px;">'
@@ -18689,11 +18807,24 @@ function wireSigChart(months) {
         + step(2, 'Click it, then click <strong>Install</strong>')
         + '<div style="background:#F0F2F5;border-radius:10px;padding:11px 13px;font-size:13px;'
         + 'color:#3D4451;margin-top:4px;">No icon there? Open the <strong>⋮</strong> menu and look '
-        + 'for <strong>Cast, save and share → Install page as app</strong>.</div>';
+        + 'for <strong>Cast, save and share → Install page as app</strong>.</div>'
+        + '<div id="ap-diag" style="margin-top:16px;padding-top:14px;border-top:1px solid #E2E6EA;">'
+        + '<div style="font-size:12px;font-weight:800;letter-spacing:.5px;color:#6B7280;'
+        + 'text-transform:uppercase;margin-bottom:8px;">Checking this site…</div></div>';
+      runDiag = true;
     }
 
     b.innerHTML = html;
     m.style.display = 'flex';
+
+    if (runDiag) {
+      apInstallCheck().then(function (rows) {
+        var d = document.getElementById('ap-diag');
+        if (d) d.innerHTML = '<div style="font-size:12px;font-weight:800;letter-spacing:.5px;'
+          + 'color:#6B7280;text-transform:uppercase;margin-bottom:10px;">This site</div>'
+          + apCheckHtml(rows);
+      }).catch(function () {});
+    }
 
     var go = document.getElementById('ap-getapp-install');
     if (go) go.onclick = function () {
