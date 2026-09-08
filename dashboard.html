@@ -18530,16 +18530,22 @@ function wireSigChart(months) {
   window.addEventListener('load', function () {
     setTimeout(function () {
       if (!isIOS() || isStandalone() || dismissed()) return;
+      // The banner used to be a wall of text you could not tap, which reads as
+      // broken. It is now a button that opens the full steps.
       bar(LOGO
         + '<div style="flex:1;min-width:0"><strong>Add Autopostleey to your Home Screen</strong>'
-        + '<div style="color:#6B7280;font-size:12.5px">Tap '
-        + '<span style="display:inline-block;transform:translateY(2px)">'
-        + '<svg width="13" height="16" viewBox="0 0 20 24" fill="none" aria-hidden="true">'
-        + '<path d="M10 2v13M10 2 6 6M10 2l4 4" stroke="#6D5EF8" stroke-width="2" '
-        + 'stroke-linecap="round" stroke-linejoin="round"/>'
-        + '<path d="M4 11v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="#6D5EF8" stroke-width="2" '
-        + 'stroke-linecap="round"/></svg></span> then '
-        + '<strong>Add to Home Screen</strong></div></div>' + CLOSE);
+        + '<div style="color:#6B7280;font-size:12.5px">Tap here for the steps</div></div>'
+        + '<button id="ap-ios-how" style="flex:none;background:linear-gradient(135deg,#6D5EF8,#EC4899);'
+        + 'color:#fff;border:none;border-radius:9px;padding:10px 15px;font-size:13px;font-weight:700;'
+        + 'cursor:pointer">Show me</button>' + CLOSE);
+      var howBtn = document.getElementById('ap-ios-how');
+      var howBar = document.getElementById('ap-install-bar');
+      var openHow = function (ev) {
+        if (ev && ev.target && ev.target.hasAttribute('data-x')) return;
+        if (typeof window.apShowGetApp === 'function') window.apShowGetApp();
+      };
+      if (howBtn) howBtn.onclick = openHow;
+      if (howBar) { howBar.style.cursor = 'pointer'; howBar.onclick = openHow; }
       // Sit above the bottom tab bar on phones rather than covering it.
       var el = document.getElementById('ap-install-bar');
       if (el && document.querySelector('.mobile-nav, .bottom-nav, #ap-mobile-nav')) {
@@ -18774,15 +18780,25 @@ function wireSigChart(months) {
         + 'cursor:pointer;">Install now</button>';
     }
     else if (isIOS()) {
+      // iOS 26 moved Share INSIDE the "..." menu and added an
+      // "Open as Web App" switch. Older iPhones still show the Share arrow
+      // directly in the bar, so both routes are spelled out — otherwise
+      // people look for a button that is not on their screen.
       html = '<div style="color:#3D4451;font-size:14px;margin-bottom:15px;">'
-        + 'On iPhone and iPad, Apple asks you to add it yourself. Three taps:</div>'
-        + step(1, 'Tap the <strong>Share</strong> button ' + SHARE
-                + ' at the bottom of Safari')
-        + step(2, 'Scroll down and tap <strong>Add to Home Screen</strong>')
-        + step(3, 'Tap <strong>Add</strong>')
+        + 'Apple does not allow a one-tap install, so you add it yourself. '
+        + 'It takes about ten seconds:</div>'
+        + step(1, 'At the bottom right of Safari, tap <strong style="font-size:16px;">•••</strong>'
+                + '<br><span style="color:#6B7280;font-size:12.5px;">On older iPhones, tap the '
+                + 'Share arrow ' + SHARE + ' instead and skip to step 3</span>')
+        + step(2, 'Tap <strong>Share</strong>')
+        + step(3, 'Scroll down the list and tap <strong>Add to Home Screen</strong>')
+        + step(4, 'Make sure <strong>Open as Web App</strong> is switched on, then tap '
+                + '<strong>Add</strong>'
+                + '<br><span style="color:#6B7280;font-size:12.5px;">That switch is what makes it '
+                + 'open like an app instead of a browser tab</span>')
         + '<div style="background:#F0F2F5;border-radius:10px;padding:11px 13px;font-size:13px;'
-        + 'color:#3D4451;margin-top:4px;">This only works in <strong>Safari</strong>. '
-        + 'If you are in Chrome on iPhone, open autopostleey.com in Safari first.</div>';
+        + 'color:#3D4451;margin-top:4px;">Has to be <strong>Safari</strong> — Chrome on iPhone '
+        + 'cannot add apps to the Home Screen.</div>';
     }
     else if (isFirefox() || isSafariDesktop()) {
       html = '<div style="color:#3D4451;font-size:14px;margin-bottom:14px;">'
