@@ -7824,7 +7824,10 @@ window.addEventListener('load', function() {
         else { showFacebookPageSelector(d.pages,''); }
       } else {
         showToast('Could not get pages. Use manual token below.','error');
-        setTimeout(function(){ openConnModal('facebook'); },500);
+        // The function is called connectPlatform. openConnModal never existed,
+        // so this line threw and the customer saw "openConnModal is not
+        // defined" instead of the manual-token form.
+        setTimeout(function(){ connectPlatform('facebook'); },500);
       }
     }).catch(function(e){ showToast('Error: '+e.message,'error'); });
     return;
@@ -12928,6 +12931,31 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 }
 
 
+// ── Video Ad Maker progress bar ────────────────────────────────────
+// These three are called from twelve places — the download flow, the MP4
+// conversion and the post-to-social flow — but the definitions were missing
+// from the file entirely. Every one of those calls threw
+// "setVadProgressBar is not defined", which killed the function halfway
+// through: the video uploaded fine and then the posting step never ran, so
+// the button sat on "Uploading" forever.
+function showVadProgress(on) {
+  var el = document.getElementById('vad-progress');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+function setVadProgressBar(pct) {
+  var el = document.getElementById('vad-progress-bar');
+  if (!el) return;
+  var n = Number(pct);
+  if (!isFinite(n)) n = 0;
+  el.style.width = Math.max(0, Math.min(100, n)) + '%';
+}
+
+function setVadProgressText(msg) {
+  var el = document.getElementById('vad-progress-text');
+  if (el) el.textContent = String(msg == null ? '' : msg);
+}
+
 async function downloadVadVideo() {
   if (!_vadIframeDoc) { showToast('Generate an ad first!', 'error'); return; }
   var btn = document.getElementById('vad-download-btn');
@@ -13024,8 +13052,13 @@ async function downloadVadVideo() {
     if(!mimeType.includes('mp4') && rawBlob.size>0){
       setVadProgressText('Converting to MP4...');
       try{
-        finalBlob = await convertWebmToMp4(rawBlob,function(p){setVadProgressBar(87+Math.round(p*12));});
-        finalExt='mp4';
+        // convertWebmToMp4 is not part of this build. The guard keeps the
+        // download working — it just stays WebM, which every platform we
+        // post to accepts.
+        if (typeof convertWebmToMp4 === 'function') {
+          finalBlob = await convertWebmToMp4(rawBlob,function(p){setVadProgressBar(87+Math.round(p*12));});
+          finalExt='mp4';
+        }
       }catch(e){console.warn('MP4 skip:',e.message);}
     }
 
@@ -14488,7 +14521,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.2';
+var AP_BUILD = '2026-09-10.3';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
