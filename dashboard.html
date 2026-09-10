@@ -12144,10 +12144,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       var t = clamp(fr / dur, 0, 1);
       return { alpha: easeOut(t), y: (1-easeOut(t)) * 22 };
     }
-    function drawFloatingIcons(alpha, frameInScene) {
-      var positions=[{x:.08,y:.12},{x:.88,y:.18},{x:.05,y:.42},{x:.90,y:.48},
-        {x:.07,y:.70},{x:.87,y:.72},{x:.15,y:.86},{x:.82,y:.84}];
-      var icons=({ecommerce:['🛍️','👗','👟','💎','✨','🛒'],
+    // drawS4() also needs this list, but it was declared inside
+    // drawFloatingIcons() — so drawS4 threw "icons is not defined" at the
+    // 23-second mark, every time. Hoisted to the shared scope.
+    var icons=({ecommerce:['🛍️','👗','👟','💎','✨','🛒'],
         realestate:['🏠','🔑','🏡','🏢','📍','🌳'],
         food:['🍔','🍕','☕','🍜','🥗','🍰'],
         fitness:['💪','🏋️','🥊','⚡','🏃','🎯'],
@@ -12164,6 +12164,9 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         finance:['💰','📈','🏦','💳','🪙','📊'],
         marketing:['📱','🎯','📊','✨','🚀','📣']
       })[typeof _vadTheme!=='undefined'?_vadTheme:'ecommerce']||['✨','🚀','📅','🌐','⚡','💡'];
+    function drawFloatingIcons(alpha, frameInScene) {
+      var positions=[{x:.08,y:.12},{x:.88,y:.18},{x:.05,y:.42},{x:.90,y:.48},
+        {x:.07,y:.70},{x:.87,y:.72},{x:.15,y:.86},{x:.82,y:.84}];
       ctx.globalAlpha = alpha * 0.28;
       ctx.font = '26px serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -12755,12 +12758,12 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
             ctx.fillStyle = 'rgba(255,255,255,0.65)';
             ctx.font = '10px system-ui,sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(item.label.toUpperCase(), 22, y+14);
+            ctx.fillText(String(item.label||'').toUpperCase(), 22, y+14);
             // Value
             ctx.fillStyle = '#fff';
             ctx.font = 'bold ' + Math.min(15, Math.max(11, Math.floor(itemH*0.32))) + 'px system-ui,sans-serif';
             ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowBlur=4;
-            ctx.fillText(item.value, 22, y+32);
+            ctx.fillText(String(item.value||''), 22, y+32);
             ctx.shadowBlur=0;
             // Accent dot
             ctx.fillStyle = c.accent || '#a855f7';
@@ -12770,7 +12773,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
           } else if (style === 'badge') {
             // Bold pill badge
-            var badgeW = Math.min(W-24, ctx.measureText(item.value).width + 80);
+            var badgeW = Math.min(W-24, ctx.measureText(String(item.value||'')).width + 80);
             var bx = i%2===0 ? 12 : W-12-badgeW;
             ctx.fillStyle = c.accent || '#a855f7';
             ctx.shadowColor = c.accent || '#a855f7';
@@ -12782,12 +12785,12 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 13px system-ui,sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(item.value, bx+badgeW/2, y+itemH/2+4);
+            ctx.fillText(String(item.value||''), bx+badgeW/2, y+itemH/2+4);
             // Small label above
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
             ctx.font = '9px system-ui,sans-serif';
             ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=4;
-            ctx.fillText(item.label, bx+badgeW/2, y+2);
+            ctx.fillText(String(item.label||''), bx+badgeW/2, y+2);
             ctx.shadowBlur=0;
 
           } else {
@@ -12802,10 +12805,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
             ctx.font = '10px system-ui,sans-serif';
             ctx.textAlign = 'left';
             ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=4;
-            ctx.fillText(item.label.toUpperCase(), 26, y+itemH/2-4);
+            ctx.fillText(String(item.label||'').toUpperCase(), 26, y+itemH/2-4);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px system-ui,sans-serif';
-            ctx.fillText(item.value, 26, y+itemH/2+12);
+            ctx.fillText(String(item.value||''), 26, y+itemH/2+12);
             ctx.shadowBlur=0;
           }
 
@@ -14589,7 +14592,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.5';
+var AP_BUILD = '2026-09-10.6';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
