@@ -12119,7 +12119,10 @@ function buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, 
     +'var st=Date.now();var pi=setInterval(function(){var p=Math.min(100,((Date.now()-st)/33000)*100);var e=q("prog");if(e)e.style.width=p+"%";if(p>=100){clearInterval(pi);try{window.parent.postMessage({type:"vadDone"},"*");}catch(x){}}},100);'
     +'<\/script></body></html>';
 }
-function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, bgPhotoUrl, floatingInfo, onProgress, vadBackground) {
+// NOTE: the last two parameters used to be (onProgress, vadBackground) while
+// every caller passes (vadBackground, onProgress). onProgress was therefore
+// the background object and never fired, and vadBackground was a function.
+function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, platforms, productImageUrl, benefits, website, problems, music, bgPhotoUrl, floatingInfo, vadBackground, onProgress) {
   return new Promise(function(resolve) {
     var W = canvas.width / 2, H = canvas.height / 2;
     var ctx = canvas.getContext('2d');
@@ -12210,6 +12213,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     }
 
       function startRender() {
+      // These two drive the whole render loop but were never declared, so the
+      // very first line of renderFrame() threw "frame is not defined".
+      var frame = 0;
+      var totalFrames = Math.round(TOTAL_MS / 1000 * FPS);
       function drawS1(f) {
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
@@ -14582,7 +14589,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.4';
+var AP_BUILD = '2026-09-10.5';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
