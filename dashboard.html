@@ -3501,6 +3501,9 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </div>
               <!-- Ad iframe -->
               <iframe id="vad-iframe" style="display:none;width:500px;height:500px;border:none;transform-origin:top left;position:absolute;top:0;left:0;" allow="autoplay"></iframe>
+            <!-- The preview is now the SAME canvas the video is recorded from,
+                 so what you see here is exactly what gets posted. -->
+            <canvas id="vad-canvas" style="display:none;width:100%;height:auto;"></canvas>
             </div>
           </div>
 
@@ -11393,6 +11396,7 @@ var _vadFormat = 'square';
 var _vadBlob = null;
 var _vadRecorder = null;
 var _vadIframeDoc = null;
+var _vadRenderArgs = null;   // the settings the preview is playing
 
 function selectVadTheme(t, silent) {
   _vadTheme = t;
@@ -11807,11 +11811,13 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
 
   var platforms = ['📱 Telegram','💼 LinkedIn','📘 Facebook','🎮 Discord','🐦 Bluesky','▶️ YouTube','🧵 Threads','👥 FB Groups'];
 
+  // _vadIframeDoc is still built: it is the fallback link post when a
+  // browser cannot record video. It is no longer what you see, though —
+  // the preview below plays the real canvas render.
   var adHTML = buildAdHTML(biz, product, tagline, emoji, caption, c, w, h, platforms, productImageUrl || '', previewBenefits || [], previewWebsite || '', previewProblems || [], previewMusic || '', previewThumb || _vadBgPhotoUrl || _vadThumbnailUrl || '', photosList || []);
   _vadIframeDoc = adHTML;
-  if (iframe) {
-    iframe.srcdoc = adHTML;
-  }
+  if (iframe) { iframe.style.display = 'none'; iframe.srcdoc = ''; }
+  playVadPreview();
 
   // Pre-fill caption textarea
   var capEl = document.getElementById('vad-caption');
@@ -11827,7 +11833,40 @@ function buildVadIframe(biz, product, tagline, emoji, caption, c, w, h, displayH
   showToast('✅ Video ad generated! Download or auto-post below.', 'success');
 }
 
+// Plays the ad on the visible canvas — the identical code path the video
+// recorder uses, from the identical settings object.
+function playVadPreview() {
+  var wrap = document.getElementById('vad-preview-wrap');
+  var cvs  = document.getElementById('vad-canvas');
+  if (!cvs) return;
+
+  _vadRenderArgs = vadCollectRenderArgs();
+  var a = _vadRenderArgs;
+
+  cvs.width  = a.adW * 2;
+  cvs.height = a.adH * 2;
+  cvs.style.display = 'block';
+  cvs.style.width   = '100%';
+  cvs.style.height  = 'auto';
+  cvs.style.position = 'relative';
+  if (wrap) { wrap.style.height = 'auto'; wrap.style.minHeight = '0'; }
+
+  // Retire whatever was playing, then start.
+  window.__vadRenderGen = (window.__vadRenderGen || 0) + 1;
+  vadRenderArgsToCanvas(cvs, a, null);
+}
+
 function replayVadAd() {
+  var cvs = document.getElementById('vad-canvas');
+  if (cvs && _vadRenderArgs) {
+    window.__vadRenderGen = (window.__vadRenderGen || 0) + 1;
+    vadRenderArgsToCanvas(cvs, _vadRenderArgs, null);
+    return;
+  }
+  return _replayVadAdLegacy();
+}
+
+function _replayVadAdLegacy() {
   var iframe = document.getElementById('vad-iframe');
   var wrap = document.getElementById('vad-preview-wrap');
   if (iframe && _vadIframeDoc) {
@@ -12220,6 +12259,9 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
       // very first line of renderFrame() threw "frame is not defined".
       var frame = 0;
       var totalFrames = Math.round(TOTAL_MS / 1000 * FPS);
+      // Only one render may run at a time. Starting a new preview (or a
+      // recording) bumps this counter, which retires whatever was playing.
+      var myGen = (window.__vadRenderGen = (window.__vadRenderGen || 0));
       function drawS1(f) {
         ctx.fillStyle = c.bg || '#08061a';
         ctx.fillRect(0, 0, W, H);
@@ -12597,21 +12639,39 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.fillStyle = c.accent || '#a855f7';
         ctx.font = 'bold 10px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('FOR SMALL BUSINESSES', W/2, H*0.12 + su.y);
+        // This closing scene used to be a hardcoded advert for Autopostleey
+        // itself — "One post. 8 platforms. / AI Captions / Auto-Schedule".
+        // Every customer's ad ended with our sales pitch instead of theirs.
+        // It now closes on the customer's own name, tagline and benefits,
+        // the same way the preview does.
+        ctx.fillText('GET STARTED TODAY', W/2, H*0.12 + su.y);
         ctx.globalAlpha = 1;
 
         su = slideUp(f - FPS*0.3, FPS*0.6);
         ctx.globalAlpha = clamp(su.alpha, 0, 1);
         ctx.fillStyle = c.text || '#fff';
-        ctx.font = 'bold ' + (W>500?46:32) + 'px Inter, sans-serif';
+        var closeName = String(biz || product || '').trim();
+        var closeSize = W > 500 ? 46 : 32;
+        ctx.font = 'bold ' + closeSize + 'px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('One post.', W/2, H*0.24 + su.y);
-        ctx.fillStyle = c.accent || '#a855f7';
-        ctx.fillText(platforms.length + ' platforms.', W/2, H*0.24 + (W>500?54:40) + su.y);
+        // Shrink a long business name rather than letting it run off frame.
+        while (closeName && ctx.measureText(closeName).width > W - 32 && closeSize > 16) {
+          closeSize -= 2;
+          ctx.font = 'bold ' + closeSize + 'px Inter, sans-serif';
+        }
+        ctx.fillText(closeName, W/2, H*0.24 + su.y);
+        if (tagline) {
+          ctx.fillStyle = c.accent || '#a855f7';
+          ctx.font = 'bold ' + Math.round(closeSize * 0.42) + 'px Inter, sans-serif';
+          ctx.fillText(String(tagline), W/2, H*0.24 + closeSize*0.85 + su.y);
+        }
         ctx.globalAlpha = 1;
 
-        // Feature cards
-        var feats = [['AI','AI Captions'],['~',platforms.length+' Platforms'],['Cal','Auto-Schedule'],['Vid','Video+Reels']];
+        // Feature cards — the customer's benefits, not our feature list.
+        var feats = (benefits && benefits.length)
+          ? benefits.slice(0,4).map(function(b){ return [b.icon || '\u2b50', String(b.text||'')]; })
+          : [];
+        if (!feats.length && product) feats = [['\u2b50', String(product)]];
         var fcW = (W-28)/2, fcH = 52;
         feats.forEach(function(ft, i) {
           var iAlpha = clamp((f - FPS*0.55 - i*FPS*0.1) / (FPS*0.4), 0, 1);
@@ -12626,7 +12686,10 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.fillText(ft[0], fcX+10, fcY+34);
           ctx.fillStyle = c.text || '#fff';
           ctx.font = 'bold 12px Inter, sans-serif';
-          ctx.fillText(ft[1], fcX+38, fcY+33);
+          var lbl = String(ft[1] || '');
+          while (lbl.length > 4 && ctx.measureText(lbl).width > fcW - 48) lbl = lbl.slice(0, -1);
+          if (lbl !== ft[1]) lbl = lbl.replace(/\s+\S*$/, '') + '\u2026';
+          ctx.fillText(lbl, fcX+38, fcY+33);
           ctx.globalAlpha = 1;
         });
 
@@ -12652,8 +12715,16 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
         ctx.globalAlpha = 1;
 
         // Pills
-        var pillLabels = ['✓ Free trial','✓ No credit card','✓ 60 sec setup'];
-        var pillW = (W-24)/3;
+        // Also Autopostleey's own SaaS pitch. A t-shirt shop does not offer
+        // a free trial or a 60-second setup. Use the customer's call to
+        // action, and fall back to wording that suits any business.
+        var _cta = (floatingInfo && floatingInfo.cta) ? String(floatingInfo.cta).trim() : '';
+        var pillLabels = _cta
+          ? ['\u2713 ' + _cta]
+          : ['\u2713 Get in touch','\u2713 Fast replies','\u2713 Trusted service'];
+        // Width follows the count, so a single CTA pill centres instead of
+        // sitting in the left third.
+        var pillW = (W-24)/Math.max(1, pillLabels.length);
         pillLabels.forEach(function(pl, i) {
           var pAlpha = clamp((f - FPS*1.25 - i*FPS*0.08) / (FPS*0.35), 0, 1);
           if (pAlpha <= 0) return;
@@ -12661,7 +12732,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
           ctx.globalAlpha = pAlpha;
           drawGlass(px, H*0.89, pillW-4, 26, 13);
           ctx.fillStyle = c.sub || 'rgba(255,255,255,0.5)';
-          ctx.font = '9px Inter, sans-serif';
+          ctx.font = (pillLabels.length === 1 ? '12px' : '9px') + ' Inter, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(pl, px+(pillW-4)/2, H*0.89+17);
           ctx.globalAlpha = 1;
@@ -12870,6 +12941,7 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
 
       // Main render loop — uses setTimeout for consistent timing
       function renderFrame() {
+        if ((window.__vadRenderGen || 0) !== myGen) { resolve(); return; }
         if (frame > totalFrames) {
           resolve();
           return;
@@ -12976,59 +13048,94 @@ function setVadProgressText(msg) {
 //                 stays under Telegram's 50 MB bot limit.
 // opts.progress — fn(pct 0..1, label)
 // Returns { blob, mimeType, ext }. Throws on failure; callers handle it.
+// ── One source of truth for what the ad contains ──────────────────────
+// The preview and the video used to gather their settings separately, from
+// different variables, which is a large part of why they never matched.
+// Both now call this and render from the identical object.
+function vadCollectRenderArgs() {
+  var adW = _vadFormat === 'reel' ? 607 : 500;
+  var adH = _vadFormat === 'reel' ? 1080 : 500;
+
+  var biz     = (document.getElementById('vad-bizname')||{}).value||'';
+  var product = (document.getElementById('vad-product')||{}).value||'';
+  var tagline = (document.getElementById('vad-tagline')||{}).value||'';
+  var emojiVal= (document.getElementById('vad-emoji')  ||{}).value||'\u2728';
+  var capEl   = document.getElementById('vad-caption');
+  var cap     = capEl ? capEl.value.split('\n\n\ud83c\udf10')[0].trim()
+                      : ('Discover ' + product + ' by ' + biz);
+
+  var c;
+  if (_vadThemeMode === 'custom' && _vadCustomTheme) {
+    var baseC = getVadThemeColors(_vadTheme);
+    var ct = _vadCustomTheme || { bg: '#08061a', accent: '#a855f7', text: '#ffffff' };
+    c = Object.assign({}, baseC, {
+      bg: ct.bg, accent: ct.accent, text: ct.text,
+      sub: ct.text + '99', text2: ct.text + 'cc',
+      photoUrl: null, meshes: [],
+    });
+  } else {
+    c = getVadThemeColors(_vadTheme);
+  }
+
+  var plats = ['\u2708\ufe0f Telegram','\ud83d\udcbc LinkedIn','\ud83d\udcd8 Facebook','\ud83c\udfae Discord',
+               '\ud83e\udd8b Bluesky','\u25b6\ufe0f YouTube','\ud83e\uddf5 Threads','\ud83d\udc65 FB Groups'];
+
+  var benefits = [
+    {icon:(document.getElementById('vad-b1-ico')||{}).textContent||'\u2b50',text:(document.getElementById('vad-b1')||{}).value||''},
+    {icon:(document.getElementById('vad-b2-ico')||{}).textContent||'\u2705',text:(document.getElementById('vad-b2')||{}).value||''},
+    {icon:(document.getElementById('vad-b3-ico')||{}).textContent||'\ud83d\udc8e',text:(document.getElementById('vad-b3')||{}).value||''},
+    {icon:(document.getElementById('vad-b4-ico')||{}).textContent||'\ud83d\ude80',text:(document.getElementById('vad-b4')||{}).value||''},
+  ].filter(function(b){ return b.text.trim(); });
+
+  var problems = [
+    (document.getElementById('vad-p1')||{}).value||'',
+    (document.getElementById('vad-p2')||{}).value||'',
+    (document.getElementById('vad-p3')||{}).value||'',
+    (document.getElementById('vad-p4')||{}).value||'',
+  ].filter(function(p){ return p.trim(); });
+
+  var music = (document.getElementById('vad-music')||{}).value||'';
+
+  // website must be resolved BEFORE floatingInfo — the old code read it one
+  // line too early, so the fallback there always saw undefined.
+  var website = (document.getElementById('vad-website')||{}).value
+              || (_bizProfile && _bizProfile.website)
+              || (_autoConfig && _autoConfig.website) || '';
+  if (!website && biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
+
+  var floatingInfo = (typeof getVadFloatingInfo === 'function')
+    ? getVadFloatingInfo()
+    : { style:'glass', items:[], website: website, cta:'Contact Us Today' };
+  var vadBackground = (typeof getVadBackground === 'function') ? getVadBackground() : { mode:'photo' };
+
+  var bgPhoto = _vadBgPhotoUrl || _vadCustomBgDataUrl || _vadThumbnailUrl || '';
+
+  return {
+    adW: adW, adH: adH, c: c, biz: biz, product: product, tagline: tagline,
+    emoji: emojiVal, caption: cap, platforms: plats,
+    productImageUrl: _vadProductImageUrl || '', benefits: benefits,
+    website: website, problems: problems, music: music, bgPhoto: bgPhoto,
+    floatingInfo: floatingInfo, vadBackground: vadBackground,
+  };
+}
+
+// Renders one ad onto one canvas from a settings object. Preview and
+// recording both go through here, so they cannot diverge.
+function vadRenderArgsToCanvas(canvas, a, onProgress) {
+  return renderAdToCanvas(canvas, a.c, a.biz, a.product, a.tagline, a.emoji,
+    a.caption, a.platforms, a.productImageUrl, a.benefits, a.website,
+    a.problems, a.music, a.bgPhoto, a.floatingInfo, a.vadBackground, onProgress);
+}
+
 async function recordVadAdVideo(opts) {
   opts = opts || {};
   var bitrate  = opts.bitrate || 16000000;
   var progress = opts.progress || function(){};
-  var adW = _vadFormat === 'reel' ? 607 : 500;
-  var adH = _vadFormat === 'reel' ? 1080 : 500;
+  // Record exactly what the preview is showing.
+  var a = _vadRenderArgs || vadCollectRenderArgs();
+  var adW = a.adW, adH = a.adH;
   var FPS = 30;
   {
-    var biz     = (document.getElementById('vad-bizname')||{}).value||'';
-    var product = (document.getElementById('vad-product')||{}).value||'';
-    var tagline = (document.getElementById('vad-tagline')||{}).value||'';
-    var emojiVal= (document.getElementById('vad-emoji')  ||{}).value||'✨';
-    var capEl   = document.getElementById('vad-caption');
-    var cap     = capEl ? capEl.value.split('\n\n??')[0].trim() : ('Discover '+product+' by '+biz);
-    // Theme colors — industry theme OR custom brand colors
-    var c;
-    if (_vadThemeMode === 'custom' && _vadCustomTheme) {
-      // Custom mode: use brand colors, no industry photo
-      var baseC = getVadThemeColors(_vadTheme);
-      var ct = _vadCustomTheme || { bg: '#08061a', accent: '#a855f7', text: '#ffffff' };
-      c = Object.assign({}, baseC, {
-        bg:       ct.bg,
-        accent:   ct.accent,
-        text:     ct.text,
-        sub:      ct.text + '99',
-        text2:    ct.text + 'cc',
-        photoUrl: null,
-        meshes:   [],
-      });
-    } else {
-      // Industry mode: full theme
-      c = getVadThemeColors(_vadTheme);
-    }
-    var plats = ['?? Telegram','?? LinkedIn','?? Facebook','?? Discord','?? Bluesky','▶️ YouTube','?? Threads','?? FB Groups'];
-    var benefits = [
-      {icon:(document.getElementById('vad-b1-ico')||{}).textContent||'⭐',text:(document.getElementById('vad-b1')||{}).value||''},
-      {icon:(document.getElementById('vad-b2-ico')||{}).textContent||'✅',text:(document.getElementById('vad-b2')||{}).value||''},
-      {icon:(document.getElementById('vad-b3-ico')||{}).textContent||'??',text:(document.getElementById('vad-b3')||{}).value||''},
-      {icon:(document.getElementById('vad-b4-ico')||{}).textContent||'??',text:(document.getElementById('vad-b4')||{}).value||''},
-    ].filter(function(b){return b.text.trim();});
-    var problems = [
-      (document.getElementById('vad-p1')||{}).value||'',
-      (document.getElementById('vad-p2')||{}).value||'',
-      (document.getElementById('vad-p3')||{}).value||'',
-      (document.getElementById('vad-p4')||{}).value||'',
-    ].filter(function(p){return p.trim();});
-    var music    = (document.getElementById('vad-music')||{}).value||'';
-    var floatingInfo = (typeof getVadFloatingInfo === 'function') ? getVadFloatingInfo() : {style:'glass',items:[],website:website,cta:'Contact Us Today'};
-    var vadBackground = (typeof getVadBackground === 'function') ? getVadBackground() : {mode:'photo'};
-    var thumbUrl = _vadThumbnailUrl||'';
-    var website  = (document.getElementById('vad-website')||{}).value||(_bizProfile&&_bizProfile.website)||(_autoConfig&&_autoConfig.website)||'';
-    if(!website&&biz) website = biz.toLowerCase().replace(/[^a-z0-9]/g,'') + '.com';
-
     var SCALE = 2;
     var canvas = document.createElement('canvas');
     canvas.width = adW * SCALE; canvas.height = adH * SCALE;
@@ -13042,15 +13149,10 @@ async function recordVadAdVideo(opts) {
     recorder.ondataavailable = function(e){if(e.data&&e.data.size>0)chunks.push(e.data);};
     recorder.start(100);
 
-    // Debug logging
-    console.log('[VAD] mode:', _vadThemeMode, 'customTheme:', _vadCustomTheme, 'bgDataUrl:', _vadCustomBgDataUrl ? 'SET('+_vadCustomBgDataUrl.length+'chars)' : 'EMPTY');
+    console.log('[VAD] recording', a.adW+'x'+a.adH, 'bg:', a.bgPhoto ? 'yes' : 'none');
 
-    var _bgForRender = _vadBgPhotoUrl || _vadCustomBgDataUrl || thumbUrl || '';
-    console.log('[VAD] bgPhotoSet:', !!_bgForRender, 'len:', _bgForRender.length);
-    console.log('[VAD Download] mode='+_vadThemeMode+' bgPhoto='+(_bgForRender?'YES('+_bgForRender.substring(0,30)+'...)':'EMPTY')+' customBg='+(_vadCustomBgDataUrl?'SET':'null'));
-
-    await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
-      _vadProductImageUrl||'', benefits, website, problems, music, _bgForRender, floatingInfo, vadBackground,
+    window.__vadRenderGen = (window.__vadRenderGen || 0) + 1;  // stop the preview
+    await vadRenderArgsToCanvas(canvas, a,
       function(p){ progress(p, 'Recording... ' + Math.round(p*33) + 's / 33s'); }
     );
 
@@ -14592,7 +14694,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.6';
+var AP_BUILD = '2026-09-10.8';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
