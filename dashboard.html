@@ -12956,15 +12956,24 @@ function setVadProgressText(msg) {
   if (el) el.textContent = String(msg == null ? '' : msg);
 }
 
-async function downloadVadVideo() {
-  if (!_vadIframeDoc) { showToast('Generate an ad first!', 'error'); return; }
-  var btn = document.getElementById('vad-download-btn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">⏳</div><div style="font-size:11px;font-weight:700;color:var(--text);">Preparing...</div>'; }
-  showVadProgress(true); setVadProgressBar(2); setVadProgressText('Setting up...');
+// ── Shared ad recorder ───────────────────────────────────────────────
+// The Download button and the Post-to-social button both need the SAME
+// video. This used to live only inside downloadVadVideo(), so posting had
+// no video to send and fell back to uploading the raw .html page and
+// posting a "Watch the ad" link instead. Now both call this.
+//
+// opts.bitrate  — download uses 16 Mbps; posting uses ~5 Mbps so the file
+//                 stays under Telegram's 50 MB bot limit.
+// opts.progress — fn(pct 0..1, label)
+// Returns { blob, mimeType, ext }. Throws on failure; callers handle it.
+async function recordVadAdVideo(opts) {
+  opts = opts || {};
+  var bitrate  = opts.bitrate || 16000000;
+  var progress = opts.progress || function(){};
   var adW = _vadFormat === 'reel' ? 607 : 500;
   var adH = _vadFormat === 'reel' ? 1080 : 500;
   var FPS = 30;
-  try {
+  {
     var biz     = (document.getElementById('vad-bizname')||{}).value||'';
     var product = (document.getElementById('vad-product')||{}).value||'';
     var tagline = (document.getElementById('vad-tagline')||{}).value||'';
@@ -13016,10 +13025,10 @@ async function downloadVadVideo() {
     var ctx = canvas.getContext('2d'); ctx.scale(SCALE, SCALE);
 
     var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){return MediaRecorder.isTypeSupported(t);})||'video/webm';
-    setVadProgressBar(5); setVadProgressText('Recording...');
+    progress(0.02, 'Recording...');
     var stream = canvas.captureStream(FPS);
     var chunks = [];
-    var recorder = new MediaRecorder(stream, {mimeType:mimeType, videoBitsPerSecond:16000000});
+    var recorder = new MediaRecorder(stream, {mimeType:mimeType, videoBitsPerSecond:bitrate});
     recorder.ondataavailable = function(e){if(e.data&&e.data.size>0)chunks.push(e.data);};
     recorder.start(100);
 
@@ -13032,20 +13041,39 @@ async function downloadVadVideo() {
 
     await renderAdToCanvas(canvas, c, biz, product, tagline, emojiVal, cap, plats,
       _vadProductImageUrl||'', benefits, website, problems, music, _bgForRender, floatingInfo, vadBackground,
-      function(progress){
-        setVadProgressBar(5+Math.round(progress*80));
-        setVadProgressText('Recording... '+Math.round(progress*33)+'s / 33s');
-        if(btn) btn.innerHTML='<div style="font-size:18px;margin-bottom:4px;">??</div><div style="font-size:11px;font-weight:700;color:var(--text);">Recording '+Math.round(progress*33)+'s</div>';
-      }
+      function(p){ progress(p, 'Recording... ' + Math.round(p*33) + 's / 33s'); }
     );
 
     recorder.stop(); stream.getTracks().forEach(function(t){t.stop();});
-    setVadProgressBar(87); setVadProgressText('Saving...');
+    progress(0.87, 'Saving...');
 
     var rawBlob = await new Promise(function(res){
       recorder.onstop = function(){res(new Blob(chunks,{type:mimeType}));};
       setTimeout(function(){res(new Blob(chunks,{type:mimeType}));},3000);
     });
+
+    if (!rawBlob || !rawBlob.size) throw new Error('Recorder produced an empty video');
+    return { blob: rawBlob, mimeType: mimeType, ext: mimeType.indexOf('mp4') !== -1 ? 'mp4' : 'webm' };
+  }
+}
+
+async function downloadVadVideo() {
+  if (!_vadIframeDoc) { showToast('Generate an ad first!', 'error'); return; }
+  var btn = document.getElementById('vad-download-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div style="font-size:22px;margin-bottom:4px;">⏳</div><div style="font-size:11px;font-weight:700;color:var(--text);">Preparing...</div>'; }
+  showVadProgress(true); setVadProgressBar(2); setVadProgressText('Setting up...');
+  try {
+    var rec = await recordVadAdVideo({
+      bitrate: 16000000,
+      progress: function (p, label) {
+        setVadProgressBar(5 + Math.round(p * 80));
+        setVadProgressText(label);
+        if (btn) btn.innerHTML = '<div style="font-size:18px;margin-bottom:4px;">🎬</div>'
+          + '<div style="font-size:11px;font-weight:700;color:var(--text);">' + label + '</div>';
+      }
+    });
+    var rawBlob = rec.blob, mimeType = rec.mimeType;
+    setVadProgressBar(87); setVadProgressText('Saving...');
 
     var finalBlob = rawBlob;
     var finalExt  = mimeType.includes('mp4') ? 'mp4' : 'webm';
@@ -13166,30 +13194,63 @@ async function confirmAutoPostVad() {
   if (!_vadIframeDoc) { showToast('Generate an ad first', 'error'); return; }
 
   var btn = document.getElementById('vad-confirm-post');
-  if (btn) { btn.textContent = '⏳ Uploading...'; btn.disabled = true; }
-  document.getElementById('vad-progress').style.display = 'block';
-  setVadProgressBar(10);
+  if (btn) { btn.textContent = '⏳ Recording...'; btn.disabled = true; }
+  showVadProgress(true);
+  setVadProgressBar(2);
 
   try {
-    // Create HTML blob as a "video file" — upload to R2
-    document.getElementById('vad-progress-text').textContent = 'Preparing your video ad...';
-    setVadProgressBar(20);
+    // Record the ad as a REAL video, exactly the way the Download button
+    // does — same canvas, same renderer. This used to upload the raw .html
+    // page instead and post a "Watch the ad" link, which is why Telegram
+    // showed a link rather than a player.
+    //
+    // 5 Mbps, not the download's 16: a 33-second ad at 16 Mbps is ~65 MB and
+    // Telegram's bot API refuses anything over 50 MB.
+    var videoUrl = '';
+    var recErr   = null;
+    try {
+      var rec = await recordVadAdVideo({
+        bitrate: 5000000,
+        progress: function (p, label) {
+          setVadProgressBar(2 + Math.round(p * 68));
+          setVadProgressText(label);
+        }
+      });
 
-    // Upload the HTML ad to R2 as a shareable link
-    var htmlBlob = new Blob([_vadIframeDoc], {type:'text/html'});
-    var htmlFile = new File([htmlBlob], 'video-ad-' + Date.now() + '.html', {type:'text/html'});
-    document.getElementById('vad-progress-text').textContent = 'Uploading to cloud...';
-    setVadProgressBar(40);
-
-    var adUrl = await uploadFileToR2(htmlFile, 'video-ads');
-    setVadProgressBar(60);
-
-    // Now post to platforms as a link post with the caption
-    document.getElementById('vad-progress-text').textContent = 'Publishing to ' + platforms.join(', ') + '...';
+      setVadProgressBar(72);
+      setVadProgressText('Uploading your video...');
+      var vidFile = new File([rec.blob], 'video-ad-' + Date.now() + '.' + rec.ext,
+                             { type: rec.mimeType });
+      videoUrl = await uploadFileToR2(vidFile, 'video-ads');
+      if (btn) btn.textContent = '⏳ Publishing...';
+    } catch (e) {
+      recErr = e;
+      console.warn('[VAD] video record/upload failed, falling back to link post:', e && e.message);
+    }
 
     var sess = await _db.auth.getSession();
     var token = sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var postCaption = caption + (adUrl ? '\n\n🎬 Watch the ad: ' + adUrl : '');
+    var postCaption = caption;
+
+    // Fallback: if the browser could not record (very old browser, tab
+    // backgrounded, upload refused), post the HTML link the old way rather
+    // than failing outright. The customer always gets a post.
+    if (!videoUrl) {
+      setVadProgressBar(50);
+      setVadProgressText('Preparing a link post instead...');
+      try {
+        var htmlBlob = new Blob([_vadIframeDoc], { type: 'text/html' });
+        var htmlFile = new File([htmlBlob], 'video-ad-' + Date.now() + '.html', { type: 'text/html' });
+        var adUrl = await uploadFileToR2(htmlFile, 'video-ads');
+        if (adUrl) postCaption = caption + '\n\n🎬 Watch the ad: ' + adUrl;
+      } catch (e2) {
+        if (recErr) throw recErr;
+        throw e2;
+      }
+    }
+
+    setVadProgressBar(85);
+    setVadProgressText('Publishing to ' + platforms.join(', ') + '...');
 
     await fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
       method: 'POST',
@@ -13198,7 +13259,7 @@ async function confirmAutoPostVad() {
         content: postCaption,
         platforms: platforms,
         user_id: _user ? _user.id : '',
-        image_url: '',
+        image_url: videoUrl,
         connections: _connectionsFull
       })
     });
@@ -14521,7 +14582,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.3';
+var AP_BUILD = '2026-09-10.4';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
