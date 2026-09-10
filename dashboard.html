@@ -3756,6 +3756,32 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               </button>
             </div>
 
+            <!-- Platform picker.
+                 The JavaScript has always looked for #veh-platform-section and
+                 #veh-platform-list, but neither existed in the page — so the
+                 code that shows the picker found nothing and did nothing, with
+                 no error. This is that missing markup. -->
+            <div class="card" id="veh-platform-section" style="display:none;">
+              <div class="card-title" style="margin-bottom:6px;">🚀 Where should this go?</div>
+              <div id="veh-platform-note" style="font-size:11.5px;color:var(--text3);margin-bottom:12px;">
+                Your video is uploaded. Pick the accounts to post it to.
+              </div>
+              <div id="veh-platform-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <div style="margin-top:12px;">
+                <label style="font-size:11px;color:var(--text3);font-weight:700;">Caption</label>
+                <textarea id="veh-caption-input" rows="3"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                         padding:10px;color:var(--text);font-size:13px;margin-top:5px;resize:vertical;
+                         box-sizing:border-box;font-family:inherit;"
+                  placeholder="Leave blank and we'll use your overlay text"></textarea>
+              </div>
+              <button onclick="vehPostNow()" id="veh-post-now-btn"
+                style="width:100%;margin-top:12px;padding:13px;background:linear-gradient(135deg,#6D5EF8,#EC4899);
+                       color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;">
+                🚀 Post Now
+              </button>
+            </div>
+
             <div class="card" id="veh-autopost-card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <div class="card-title" style="margin-bottom:0;">🔄 Auto-Post Schedule</div>
@@ -14462,7 +14488,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.1';
+var AP_BUILD = '2026-09-10.2';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -16861,11 +16887,23 @@ async function stopVehAutoPost() {
 }
 
 async function vehPostToSocial() {
-  if (!_vehVideo || !_vehOverlays.length) { showToast('Generate overlays first!', 'error'); return; }
+  // Overlays used to be required. Captions arrived later, and a plain
+  // enhanced clip is a perfectly good post too — so only the video is needed.
+  if (!_vehVideo) { showToast('Upload a video first', 'error'); return; }
 
   var btn = document.querySelector('[onclick="vehPostToSocial()"]');
   if (btn) { btn.textContent = '⏳ Uploading video...'; btn.disabled = true; }
   showToast('📤 Rendering & uploading video...', 'success');
+
+  // Open the picker now and load the accounts while the video renders, so the
+  // customer can choose during the wait instead of staring at a button.
+  var earlySection = document.getElementById('veh-platform-section');
+  if (earlySection) {
+    earlySection.style.display = 'block';
+    var note = document.getElementById('veh-platform-note');
+    if (note) note.textContent = 'Preparing your video — pick the accounts while you wait.';
+    vehRenderPlatformList();
+  }
 
   if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
   var canvas = document.getElementById('veh-canvas');
@@ -16901,6 +16939,8 @@ async function vehPostToSocial() {
         var section = document.getElementById('veh-platform-section');
         if (section) {
           section.style.display = 'block';
+          var n2 = document.getElementById('veh-platform-note');
+          if (n2) n2.textContent = 'Your video is uploaded. Pick the accounts to post it to.';
           vehRenderPlatformList();
           section.scrollIntoView({behavior:'smooth', block:'center'});
         }
@@ -16936,29 +16976,76 @@ async function vehPostToSocial() {
 
 var _vehPublicUrl = '';
 
-function vehRenderPlatformList() {
+// Reads the connections, and FETCHES them if they are not loaded yet rather
+// than reporting an empty account. Same fix as Video Ad Maker — this was
+// showing "No platforms connected yet" purely because a background load had
+// not finished.
+async function vehRenderPlatformList() {
   var list = document.getElementById('veh-platform-list');
   if (!list) return;
-  var plats = {
-    facebook:{label:'Facebook',icon:'📘'},instagram:{label:'Instagram',icon:'📸'},
-    telegram:{label:'Telegram',icon:'✈️'},discord:{label:'Discord',icon:'🎮'},
-    bluesky:{label:'Bluesky',icon:'🦋'},
+
+  var META = {
+    facebook:  { label:'Facebook',  icon:'📘', color:'#1877f2' },
+    instagram: { label:'Instagram', icon:'📸', color:'#e1306c' },
+    telegram:  { label:'Telegram',  icon:'✈️', color:'#26a5e4' },
+    discord:   { label:'Discord',   icon:'🎮', color:'#5865f2' },
+    bluesky:   { label:'Bluesky',   icon:'🦋', color:'#0085ff' },
+    linkedin:  { label:'LinkedIn',  icon:'💼', color:'#0a66c2' },
+    threads:   { label:'Threads',   icon:'🧵', color:'#111111' },
+    twitter:   { label:'X',         icon:'✖️', color:'#111111' },
+    youtube:   { label:'YouTube',   icon:'▶️', color:'#ff0000' },
+    tiktok:    { label:'TikTok',    icon:'🎵', color:'#111111' },
   };
-  list.innerHTML = Object.keys(plats).map(function(k) {
-    var m = plats[k];
-    var conn = _connectionsFull && _connectionsFull[k];
-    if (!conn) return '';
-    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;cursor:pointer;">'
-      + '<input type="checkbox" value="'+k+'" checked style="width:16px;height:16px;accent-color:var(--accent);">'
-      + '<span style="font-size:18px;">'+m.icon+'</span>'
-      + '<span style="font-size:13px;font-weight:700;color:var(--text);">'+m.label+'</span>'
-      + '<span style="font-size:10px;color:#22c55e;margin-left:auto;">● Connected</span></label>';
-  }).filter(Boolean).join('') || '<div style="font-size:12px;color:var(--text3);padding:12px;">No platforms connected yet.</div>';
+
+  function have() {
+    return (_connectionsFull && Object.keys(_connectionsFull).length) ? _connectionsFull
+         : (_connections && Object.keys(_connections).length) ? _connections : null;
+  }
+
+  if (!have()) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 2px;">'
+      + 'Loading your connected accounts…</div>';
+    try { if (typeof loadConnections === 'function' && _user) await loadConnections(); } catch (e) {}
+  }
+
+  var conns = have();
+  if (!conns) {
+    list.innerHTML = '<div style="font-size:12.5px;color:var(--text2);padding:10px 2px;line-height:1.55;">'
+      + 'No accounts connected yet.<br>'
+      + '<a href="#" onclick="showPage(\'connections\');return false;" '
+      + 'style="color:var(--accent);font-weight:700;">Connect a platform →</a></div>';
+    return;
+  }
+
+  var keys = Object.keys(META).filter(function (k) { return conns[k]; });
+  Object.keys(conns).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
+
+  list.innerHTML = keys.map(function (k) {
+    var m = META[k] || { label: k, icon: '🔗', color: 'var(--accent)' };
+    var c = conns[k] || {};
+    var name = c.page_name || '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;'
+      + 'background:var(--bg3);border-radius:10px;cursor:pointer;min-width:0;">'
+      + '<input type="checkbox" value="' + k + '" checked '
+      + 'style="width:16px;height:16px;accent-color:' + m.color + ';flex:none;">'
+      + '<span style="font-size:18px;flex:none;">' + m.icon + '</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;">'
+      + m.label + '</span>'
+      + (name ? '<span style="font-size:11px;color:var(--text3);overflow:hidden;'
+                + 'text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(String(name))
+                + '</span>' : '')
+      + '<span style="font-size:10px;color:#22c55e;margin-left:auto;flex:none;">● Connected</span>'
+      + '</label>';
+  }).join('');
 }
 
 async function vehPostNow() {
   var list = document.getElementById('veh-platform-list');
-  if (!list || !_vehPublicUrl) return;
+  if (!list) return;
+  if (!_vehPublicUrl) {
+    showToast('Still preparing your video — one moment', 'error');
+    return;
+  }
   var checked = Array.from(list.querySelectorAll('input:checked')).map(function(el){return el.value;});
   if (!checked.length) { showToast('Select at least one platform!','error'); return; }
   var caption = (document.getElementById('veh-caption-input')||{}).value || _vehOverlays.map(function(o){return o.text;}).join(' · ');
