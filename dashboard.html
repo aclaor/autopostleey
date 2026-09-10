@@ -522,6 +522,27 @@
     gap: 16px !important;
   }
 }
+/* A 300px settings column plus a preview is too tight on a small laptop or a
+   tablet in landscape — the theme cards and format buttons end up squeezed.
+   Stack them from 900px rather than waiting for 768. */
+@media(max-width:900px){
+  #vad-main-grid,
+  #pad-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #vad-main-grid > div:last-child,
+  #pad-main-grid > div:last-child {
+    position: relative !important;
+    top: auto !important;
+  }
+}
+/* The platform checkboxes wrap instead of running off the edge, and each one
+   can shrink rather than forcing the row wider. */
+#vad-plat-list { flex-wrap: wrap; }
+#vad-plat-list > label { flex: 0 1 auto; max-width: 100%; }
+@media(max-width:520px){
+  #vad-plat-list > label { flex: 1 1 100%; }
+}
 @media(max-width:768px){
   #pad-main-grid {
     grid-template-columns: 1fr !important;
@@ -12997,17 +13018,75 @@ async function downloadVadVideo() {
   if(btn) resetDownloadBtn(btn);
 }
 
+// Video Ad Maker used to read _connections, which is filled in by
+// loadConnections() at sign-in. If that had not finished — or had failed —
+// this quietly showed "No platforms connected yet", even though the account
+// had five platforms connected and Photo Ads listed them fine.
+//
+// Two changes: fetch the connections if they are missing instead of giving
+// up, and read _connectionsFull, the same source Photo Ads and Video
+// Enhancer use, so all three features can never disagree again.
 async function loadVadPlatforms() {
   var list = document.getElementById('vad-plat-list');
   if (!list) return;
-  var platforms = typeof getConnectedPlatforms === 'function' ? getConnectedPlatforms() : [];
-  if (!platforms || !platforms.length) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--text2);">No platforms connected yet. Go to Connections to add platforms.</div>';
+
+  var META = {
+    facebook:  { label:'Facebook',  icon:'📘', color:'#1877f2' },
+    instagram: { label:'Instagram', icon:'📸', color:'#e1306c' },
+    telegram:  { label:'Telegram',  icon:'✈️', color:'#26a5e4' },
+    discord:   { label:'Discord',   icon:'🎮', color:'#5865f2' },
+    bluesky:   { label:'Bluesky',   icon:'🦋', color:'#0085ff' },
+    linkedin:  { label:'LinkedIn',  icon:'💼', color:'#0a66c2' },
+    threads:   { label:'Threads',   icon:'🧵', color:'#000000' },
+    twitter:   { label:'X',         icon:'✖️', color:'#111111' },
+    youtube:   { label:'YouTube',   icon:'▶️', color:'#ff0000' },
+    tiktok:    { label:'TikTok',    icon:'🎵', color:'#111111' },
+    pinterest: { label:'Pinterest', icon:'📌', color:'#e60023' },
+  };
+
+  function have() {
+    return _connectionsFull && Object.keys(_connectionsFull).length
+      ? _connectionsFull
+      : (_connections && Object.keys(_connections).length ? _connections : null);
+  }
+
+  // Nothing yet? Load it rather than telling the customer they have nothing.
+  if (!have()) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 2px;">'
+      + 'Loading your connected accounts…</div>';
+    try {
+      if (typeof loadConnections === 'function' && _user) await loadConnections();
+    } catch (e) {}
+  }
+
+  var conns = have();
+  if (!conns) {
+    list.innerHTML = '<div style="font-size:12.5px;color:var(--text2);padding:10px 2px;line-height:1.55;">'
+      + 'No accounts connected yet.<br>'
+      + '<a href="#" onclick="showPage(\'connections\');return false;" '
+      + 'style="color:var(--accent);font-weight:700;">Connect a platform →</a></div>';
     return;
   }
-  list.innerHTML = platforms.map(function(p) {
-    return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--text2);">'
-      + '<input type="checkbox" value="' + p + '" checked style="accent-color:var(--accent);"> ' + p + '</label>';
+
+  // Fixed order, so the list does not reshuffle between visits.
+  var keys = Object.keys(META).filter(function (k) { return conns[k]; });
+  Object.keys(conns).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
+
+  list.innerHTML = keys.map(function (k) {
+    var m = META[k] || { label: k, icon: '🔗', color: 'var(--accent)' };
+    var c = conns[k] || {};
+    var name = c.page_name || (c.platform && c.platform !== k ? c.platform : '');
+    return '<label style="display:flex;align-items:center;gap:9px;cursor:pointer;background:var(--bg3);'
+      + 'border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:12.5px;'
+      + 'color:var(--text);min-width:0;">'
+      + '<input type="checkbox" value="' + k + '" checked '
+      + 'style="width:15px;height:15px;accent-color:' + m.color + ';flex:none;">'
+      + '<span style="font-size:16px;flex:none;">' + m.icon + '</span>'
+      + '<span style="font-weight:700;white-space:nowrap;">' + m.label + '</span>'
+      + (name ? '<span style="color:var(--text3);font-size:11px;overflow:hidden;'
+                + 'text-overflow:ellipsis;white-space:nowrap;max-width:110px;">'
+                + escapeHtml(String(name)) + '</span>' : '')
+      + '</label>';
   }).join('');
 }
 
@@ -14383,7 +14462,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-06.3';
+var AP_BUILD = '2026-09-10.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
