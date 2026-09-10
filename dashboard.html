@@ -12170,10 +12170,21 @@ function renderAdToCanvas(canvas, c, biz, product, tagline, emoji, caption, plat
     var FPS = 30;
     var TOTAL_MS = 33000;
 
-    var S1_END = 7   * FPS;
-    var S2_END = 14  * FPS;
-    var S3_END = 23  * FPS;
-    var S4_END = 27.5* FPS;
+    // Scene lengths in seconds. When the customer has not written any
+    // problem statements, the problem scene would be an empty frame with a
+    // generic line in it — so it is dropped entirely and its seven seconds
+    // go to the hook and the offer, which are the parts that sell. The
+    // closing scenes keep their timing either way, so the ad is always 33s.
+    var _hasProblems = !!(problems && problems.length);
+    var S1_LEN = _hasProblems ? 7 : 9;
+    var S2_LEN = _hasProblems ? 7 : 0;
+    var S3_LEN = _hasProblems ? 9 : 12;
+    var S4_LEN = _hasProblems ? 4.5 : 6.5;
+
+    var S1_END = S1_LEN * FPS;
+    var S2_END = S1_END + S2_LEN * FPS;
+    var S3_END = S2_END + S3_LEN * FPS;
+    var S4_END = S3_END + S4_LEN * FPS;
 
     var captionChars = caption ? caption.split('') : [];
 
@@ -14731,7 +14742,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.10';
+var AP_BUILD = '2026-09-10.11';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
