@@ -10633,16 +10633,25 @@ async function uploadFileToR2(file, folder) {
       var xhr = new XMLHttpRequest();
       xhr.open('PUT', presignData.upload_url, true);
       var t0 = Date.now();
+      // Speed is measured over a moving window, not from the very start.
+      // Averaging from t0 includes connection setup, which made the first
+      // readings absurdly pessimistic — "0.1 Mbps, 50:41 left" at 2%.
+      var samples = [{ t: t0, loaded: 0 }];
       xhr.upload.onprogress = function (ev) {
         if (!onProg || !ev.lengthComputable) return;
-        var secs  = Math.max(0.001, (Date.now() - t0) / 1000);
-        var bps   = ev.loaded / secs;
-        var left  = bps > 0 ? (ev.total - ev.loaded) / bps : 0;
+        var now = Date.now();
+        samples.push({ t: now, loaded: ev.loaded });
+        while (samples.length > 2 && now - samples[0].t > 8000) samples.shift();
+        var first = samples[0];
+        var secs  = Math.max(0.25, (now - first.t) / 1000);
+        var bps   = Math.max(1, (ev.loaded - first.loaded) / secs);
+        var left  = (ev.total - ev.loaded) / bps;
         onProg({
           loaded: ev.loaded, total: ev.total,
           pct: Math.round((ev.loaded / ev.total) * 100),
           mbps: (bps * 8) / 1e6,
-          secondsLeft: left,
+          // Do not show a time until there is enough data to mean anything.
+          secondsLeft: (now - t0 > 3000) ? left : 0,
         });
       };
       xhr.onload = function () {
@@ -14799,7 +14808,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-11.11';
+var AP_BUILD = '2026-09-11.13';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -16563,7 +16572,7 @@ var _vehAnimFrame = null;
 // finished file near targetMB however long the video is, within sensible
 // quality bounds. A 10-minute video now lands around the same size a
 // 90-second one used to.
-function vehPickBitrate(W, H, durationSec, targetMB) {
+function vehPickBitrate(W, H, durationSec, targetMB, floorBps) {
   targetMB = targetMB || 90;
   var pixels  = (W || 720) * (H || 1280);
   // Quality ceiling by resolution — never spend more than the picture needs.
@@ -16574,8 +16583,11 @@ function vehPickBitrate(W, H, durationSec, targetMB) {
   if (!durationSec || !isFinite(durationSec) || durationSec <= 0) return quality;
   // Leave ~15% of the budget for the audio track and container overhead.
   var budget = (targetMB * 1024 * 1024 * 8 * 0.85) / durationSec;
-  // Never go below a floor, or the video turns to mush.
-  return Math.max(700000, Math.min(quality, Math.round(budget)));
+  // Never go below a floor, or the video turns to mush. The floor is lower
+  // for videos being posted: past a few minutes, holding 700kbps means a
+  // 50MB upload, and on a slow connection the wait hurts far more than the
+  // extra sharpness helps.
+  return Math.max(floorBps || 700000, Math.min(quality, Math.round(budget)));
 }
 
 function vehFmtDuration(sec) {
@@ -16589,6 +16601,10 @@ function vehFmtDuration(sec) {
 // NEVER uploaded — it is read locally with createObjectURL and only the
 // finished video goes to R2 — so this is a memory limit, not a storage cost.
 var VEH_MAX_INPUT_MB = 2048;
+
+// Target size for a video that is going to be POSTED. Telegram's 50MB is a
+// hard limit, not a goal — aiming at it meant every post was a ~45MB upload.
+var VEH_POST_TARGET_MB = 18;
 
 function vehLoadVideo(input) {
   var file = input.files[0];
@@ -17699,7 +17715,7 @@ function vehExportAndSaveImpl(skipFast) {
   if (!skipFast && vehFastEncodeSupported() && isFinite(_vehVideo.duration) && _vehVideo.duration > 0) {
     vehMakeVideoFast({
       width: W3, height: H3,
-      bitrate: vehPickBitrate(W3, H3, _vehVideo.duration, 45),
+      bitrate: vehPickBitrate(W3, H3, _vehVideo.duration, VEH_POST_TARGET_MB, 400000),
       name: 'veh-auto-' + Date.now(),
       onProgress: function (pr) {
         if (pr.stage === 'audio') { progress('Adding the sound\u2026'); return; }
@@ -17710,8 +17726,12 @@ function vehExportAndSaveImpl(skipFast) {
       if (!res || !res.file) throw new Error('no output');
       if (stopped) return;
       vehWarnIfOversize(res.file);
+      // Upload errors are handled inside vehUploadAndActivate, which reports
+      // them instead of throwing — so a slow upload can never bounce us into
+      // re-encoding the whole video and uploading it a second time.
       return vehUploadAndActivate(res.file, progress, fail, function () { stopped = true; });
     }).catch(function (e) {
+      // Only an ENCODE failure gets here, and only that is worth retrying.
       console.warn('[VEH] fast encode failed, using the slower method:', e && e.message);
       if (!stopped) { progress('Preparing your video the slower way\u2026'); vehExportAndSaveLegacy(); }
     });
@@ -17868,11 +17888,17 @@ async function vehPostToSocial() {
   // Fast path #2: encode with WebCodecs instead of replaying the video.
   // Typically 10-20x faster, and it cannot stall the way the real-time
   // recorder did on phones.
-  var _fastRate = vehPickBitrate(W, H, _vehVideo.duration, 45);
+  var _fastRate = vehPickBitrate(W, H, _vehVideo.duration, VEH_POST_TARGET_MB, 400000);
   var _fastNote = document.getElementById('veh-platform-note');
   if (vehFastEncodeSupported()) {
+    // The encode and the upload are in SEPARATE try blocks on purpose.
+    // They used to share one, so a slow or failed upload was treated as an
+    // encode failure: the page fell back to the real-time recorder, encoded
+    // the whole video again, and uploaded a SECOND time — the second upload
+    // being the slow one. An upload problem must never re-encode.
+    var fastRes = null;
     try {
-      var fastRes = await vehMakeVideoFast({
+      fastRes = await vehMakeVideoFast({
         width: W, height: H, bitrate: _fastRate,
         onProgress: function (pr) {
           if (pr.stage === 'audio') {
@@ -17885,37 +17911,46 @@ async function vehPostToSocial() {
           if (btn) btn.textContent = '\u23f3 Preparing ' + pr.pct + '%';
         },
       });
-      if (fastRes && fastRes.file) {
-        vehWarnIfOversize(fastRes.file);
-        var _fMB = (fastRes.file.size / 1048576).toFixed(1);
-        window.__apUploadProgress = function (pr) {
-          var lf = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
-          if (_fastNote) _fastNote.textContent = 'Uploading ' + pr.pct + '% of ' + _fMB + ' MB \u00b7 '
-            + pr.mbps.toFixed(1) + ' Mbps' + lf;
-          if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
-        };
-        var fastUrl = await uploadFileToR2(fastRes.file, 'video-ads');
-        window.__apUploadProgress = null;
-        if (fastUrl) {
-          _vehPublicUrl = fastUrl;
-          var secA = document.getElementById('veh-platform-section');
-          if (secA) {
-            secA.style.display = 'block';
-            if (_fastNote) _fastNote.textContent = 'Your video is uploaded. Pick the accounts to post it to.';
-            vehRenderPlatformList();
-            secA.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-          showToast('\u2705 Video uploaded! Select platforms below.', 'success');
-          if (btn) { btn.textContent = '\ud83d\ude80 Post to Social Media'; btn.disabled = false; }
-          try { vehStartPreview(); } catch (e) {}
-          return;
-        }
-      }
     } catch (e) {
-      // Not fatal — fall through to the original recorder.
-      window.__apUploadProgress = null;
+      // ENCODE failed — this one is worth retrying the old way.
+      fastRes = null;
       console.warn('[VEH] fast encode failed, using the slower method:', e && e.message);
       if (_fastNote) _fastNote.textContent = 'Preparing your video the slower way\u2026';
+    }
+
+    if (fastRes && fastRes.file) {
+      vehWarnIfOversize(fastRes.file);
+      var _fMB = (fastRes.file.size / 1048576).toFixed(1);
+      window.__apUploadProgress = function (pr) {
+        var lf = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
+        if (_fastNote) _fastNote.textContent = 'Uploading ' + pr.pct + '% of ' + _fMB + ' MB \u00b7 '
+          + pr.mbps.toFixed(1) + ' Mbps' + lf;
+        if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+      };
+      try {
+        var fastUrl = await uploadFileToR2(fastRes.file, 'video-ads');
+        window.__apUploadProgress = null;
+        if (!fastUrl) throw new Error('Upload returned no link');
+        _vehPublicUrl = fastUrl;
+        var secA = document.getElementById('veh-platform-section');
+        if (secA) {
+          secA.style.display = 'block';
+          if (_fastNote) _fastNote.textContent = 'Your video is uploaded. Pick the accounts to post it to.';
+          vehRenderPlatformList();
+          secA.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showToast('\u2705 Video uploaded! Select platforms below.', 'success');
+      } catch (e) {
+        // UPLOAD failed. The video is fine — re-encoding it would be pure
+        // waste. Say what happened and let them press the button again.
+        window.__apUploadProgress = null;
+        if (_fastNote) _fastNote.textContent = 'Upload failed \u2014 check your connection and press the button again.';
+        showToast('Upload failed: ' + (e && e.message ? e.message : 'connection problem')
+          + '. Your video is ready — press Post to Social Media to try the upload again.', 'error');
+      }
+      if (btn) { btn.textContent = '\ud83d\ude80 Post to Social Media'; btn.disabled = false; }
+      try { vehStartPreview(); } catch (e) {}
+      return;
     }
   }
 
@@ -17932,9 +17967,11 @@ async function vehPostToSocial() {
     stream.addTrack(dest.stream.getAudioTracks()[0]);
   } catch(e) {}
 
-  // Posting budget is tighter than the download: Telegram's bot API refuses
-  // anything over 50MB, and the other platforms prefer small.
-  var _postRate = vehPickBitrate(W, H, _vehVideo.duration, 45);
+  // 45MB was Telegram's hard ceiling being used as a target, which produced
+  // 45MB uploads. On a slow connection that is a 50-minute wait for a file
+  // nobody needed at that size. 18MB looks the same on a phone screen and
+  // uploads two and a half times faster.
+  var _postRate = vehPickBitrate(W, H, _vehVideo.duration, VEH_POST_TARGET_MB, 400000);
   var _estMB = (_postRate * (_vehVideo.duration || 0) / 8) / 1048576;
   if (_estMB > 48) {
     // Past a certain length no bitrate is both watchable and under 50MB.
