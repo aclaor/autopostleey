@@ -10621,7 +10621,15 @@ async function uploadFileMultipart(file, folder) {
       folder: folder, parts: partCount,
     }),
   });
-  if (!startRes.ok) return null;
+  if (!startRes.ok) {
+    // 404 here means the worker still has the old code. Say so plainly —
+    // this is the difference between a 30-minute upload and a fast one.
+    console.warn('[R2] /mpu-create returned ' + startRes.status
+      + '. The worker has NOT been deployed with the parallel-upload routes, so uploads '
+      + 'are using a single connection. Deploy worker-final.js in Cloudflare, then check '
+      + AP_WORKER + '/version in a browser — it should say parallel_upload: true.');
+    return null;
+  }
   var start = await startRes.json();
   if (!start || !start.upload_id || !start.part_urls || start.part_urls.length !== partCount) return null;
 
@@ -10751,7 +10759,8 @@ async function uploadFileToR2(file, folder) {
       var mp = await uploadFileMultipart(file, folder);
       if (mp) return mp;
     } catch (e) {
-      console.warn('[R2] parallel upload unavailable (' + (e && e.message) + '), using one connection');
+      console.warn('[R2] parallel upload unavailable (' + (e && e.message)
+        + ') — falling back to one connection, which is the slow path.');
     }
   }
 
@@ -14951,7 +14960,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-11.16';
+var AP_BUILD = '2026-09-11.17';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
