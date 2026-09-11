@@ -10603,6 +10603,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function uploadFileToR2(file, folder) {
   folder = folder || 'media';
   var fileMB = (file.size / 1024 / 1024).toFixed(1);
+  // Numbered so a duplicate upload is obvious in the console instead of
+  // something we have to infer from a screenshot.
+  window.__apUploadSeq = (window.__apUploadSeq || 0) + 1;
+  var _seq = window.__apUploadSeq;
+  console.log('[R2] === upload attempt #' + _seq + ' === ' + folder + ' ' + fileMB + 'MB');
   // Uploads go straight to R2 with a presigned PUT, so the old 200MB ceiling
   // was not a technical limit — it was a guess. Bitrate is now capped when
   // videos are made, which is the real control on size.
@@ -14808,7 +14813,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-11.13';
+var AP_BUILD = '2026-09-11.15';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -16411,10 +16416,18 @@ async function vehFastEncode(opts) {
     output: function (chunk, meta) { try { muxer.addVideoChunk(chunk, meta); } catch (e) { encErr = e; } },
     error:  function (e) { encErr = e; },
   });
-  encoder.configure({
+  // 'constant' keeps the encoder near the bitrate we asked for. Without it
+  // a hardware H.264 encoder happily overshoots — an 18MB target came back
+  // as a 24MB file, which on a slow connection is several extra minutes.
+  var encCfg = {
     codec: pick.codec, width: W, height: H, bitrate: bitrate, framerate: fps,
-    latencyMode: 'quality',
-  });
+    latencyMode: 'quality', bitrateMode: 'constant',
+  };
+  try {
+    var ok = await VideoEncoder.isConfigSupported(encCfg);
+    if (!ok || !ok.supported) delete encCfg.bitrateMode;
+  } catch (e) { delete encCfg.bitrateMode; }
+  encoder.configure(encCfg);
 
   var canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -16605,6 +16618,21 @@ var VEH_MAX_INPUT_MB = 2048;
 // Target size for a video that is going to be POSTED. Telegram's 50MB is a
 // hard limit, not a goal — aiming at it meant every post was a ~45MB upload.
 var VEH_POST_TARGET_MB = 18;
+
+// Nothing stopped a second click starting a SECOND encode and upload while
+// the first was still running. Two uploads then share the connection: the
+// first finishes at a normal speed and the second crawls — which is exactly
+// what "it uploaded twice and the second was very slow" looks like.
+var _vehBusy = false;
+function vehBeginJob(what) {
+  if (_vehBusy) {
+    showToast('Already ' + (what || 'working') + ' — one moment.', 'error');
+    return false;
+  }
+  _vehBusy = true;
+  return true;
+}
+function vehEndJob() { _vehBusy = false; }
 
 function vehLoadVideo(input) {
   var file = input.files[0];
@@ -17378,7 +17406,10 @@ function vehDrawOverlay(ctx, text, x, y, alpha, W, fontScale) {
   ctx.textAlign = 'left';
 }
 
-async function vehExportVideo() { return vehExportVideoImpl(false); }
+async function vehExportVideo() {
+  if (!vehBeginJob('preparing your video')) return;
+  try { return await vehExportVideoImpl(false); } finally { vehEndJob(); }
+}
 function vehExportVideoLegacy() { return vehExportVideoImpl(true); }
 
 async function vehExportVideoImpl(skipFast) {
@@ -17641,8 +17672,8 @@ function vehUploadAndActivate(file, progress, fail, markStopped) {
   var totalMB = (file.size / 1048576).toFixed(1);
   window.__apUploadProgress = function (p) {
     var left = p.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(p.secondsLeft) + ' left') : '';
-    progress('Uploading ' + p.pct + '% of ' + totalMB + ' MB \u00b7 '
-             + p.mbps.toFixed(1) + ' Mbps' + left);
+    progress('Step 2 of 2 \u00b7 Sending to the cloud \u2014 ' + p.pct + '% of ' + totalMB
+             + ' MB \u00b7 ' + p.mbps.toFixed(1) + ' Mbps' + left);
   };
   return uploadFileToR2(file, 'video-ads')
     .then(function (url) {
@@ -17669,7 +17700,17 @@ function vehUploadAndActivate(file, progress, fail, markStopped) {
     });
 }
 
-function vehExportAndSave() { return vehExportAndSaveImpl(false); }
+function vehExportAndSave() {
+  if (!vehBeginJob('preparing your video')) return;
+  var done = function () { vehEndJob(); };
+  // This one is callback-driven, so release the lock when it settles.
+  setTimeout(function releaseWhenIdle() {
+    if (document.getElementById('veh-autopost-status') &&
+        /ACTIVE|OFF/.test(document.getElementById('veh-autopost-status').textContent || '')) { done(); return; }
+    setTimeout(releaseWhenIdle, 2000);
+  }, 2000);
+  return vehExportAndSaveImpl(false);
+}
 function vehExportAndSaveLegacy() { return vehExportAndSaveImpl(true); }
 
 function vehExportAndSaveImpl(skipFast) {
@@ -17719,7 +17760,7 @@ function vehExportAndSaveImpl(skipFast) {
       name: 'veh-auto-' + Date.now(),
       onProgress: function (pr) {
         if (pr.stage === 'audio') { progress('Adding the sound\u2026'); return; }
-        progress('Preparing your video \u2014 ' + pr.pct + '%'
+        progress('Step 1 of 2 \u00b7 Preparing your video \u2014 ' + pr.pct + '%'
           + (pr.secondsLeft > 1 ? ' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left' : ''));
       },
     }).then(function (res) {
@@ -17828,7 +17869,13 @@ async function vehPostToSocial() {
   // Overlays used to be required. Captions arrived later, and a plain
   // enhanced clip is a perfectly good post too — so only the video is needed.
   if (!_vehVideo) { showToast('Upload a video first', 'error'); return; }
+  if (!vehBeginJob('preparing your video')) return;
+  try {
+    return await vehPostToSocialImpl();
+  } finally { vehEndJob(); }
+}
 
+async function vehPostToSocialImpl() {
   var btn = document.querySelector('[onclick="vehPostToSocial()"]');
   if (btn) { btn.textContent = '⏳ Uploading video...'; btn.disabled = true; }
   showToast('📤 Rendering & uploading video...', 'success');
@@ -17839,7 +17886,7 @@ async function vehPostToSocial() {
   if (earlySection) {
     earlySection.style.display = 'block';
     var note = document.getElementById('veh-platform-note');
-    if (note) note.textContent = 'Preparing your video — pick the accounts while you wait.';
+    if (note) note.textContent = 'Step 1 of 2 \u00b7 Preparing your video — pick the accounts while you wait.';
     vehRenderPlatformList();
   }
 
@@ -17859,9 +17906,9 @@ async function vehPostToSocial() {
     var _noteEl = document.getElementById('veh-platform-note');
     window.__apUploadProgress = function (pr) {
       var lft = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
-      if (_noteEl) _noteEl.textContent = 'Uploading ' + pr.pct + '% of ' + _ptMB + ' MB \u00b7 '
-        + pr.mbps.toFixed(1) + ' Mbps' + lft;
-      if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+      if (_noteEl) _noteEl.textContent = 'Sending to the cloud \u2014 ' + pr.pct + '% of '
+        + _ptMB + ' MB \u00b7 ' + pr.mbps.toFixed(1) + ' Mbps' + lft;
+      if (btn) btn.textContent = '\u23f3 Sending ' + pr.pct + '%';
     };
     uploadFileToR2(_pt, 'video-ads').then(function (url) {
       window.__apUploadProgress = null;
@@ -17905,10 +17952,10 @@ async function vehPostToSocial() {
             if (_fastNote) _fastNote.textContent = 'Adding the sound\u2026';
             return;
           }
-          if (_fastNote) _fastNote.textContent = 'Preparing your video \u2014 ' + pr.pct + '%'
+          if (_fastNote) _fastNote.textContent = 'Step 1 of 2 \u00b7 Preparing your video \u2014 ' + pr.pct + '%'
             + (pr.secondsLeft > 1 ? ' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left' : '')
             + ' \u00b7 pick the accounts while you wait';
-          if (btn) btn.textContent = '\u23f3 Preparing ' + pr.pct + '%';
+          if (btn) btn.textContent = '\u23f3 Step 1 of 2 \u00b7 Preparing ' + pr.pct + '%';
         },
       });
     } catch (e) {
@@ -17921,11 +17968,13 @@ async function vehPostToSocial() {
     if (fastRes && fastRes.file) {
       vehWarnIfOversize(fastRes.file);
       var _fMB = (fastRes.file.size / 1048576).toFixed(1);
+      // Labelled as a distinct step. Two unlabelled bars running 0-100 back to
+      // back read as the same thing happening twice.
       window.__apUploadProgress = function (pr) {
         var lf = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
-        if (_fastNote) _fastNote.textContent = 'Uploading ' + pr.pct + '% of ' + _fMB + ' MB \u00b7 '
-          + pr.mbps.toFixed(1) + ' Mbps' + lf;
-        if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+        if (_fastNote) _fastNote.textContent = 'Step 2 of 2 \u00b7 Sending to the cloud \u2014 '
+          + pr.pct + '% of ' + _fMB + ' MB \u00b7 ' + pr.mbps.toFixed(1) + ' Mbps' + lf;
+        if (btn) btn.textContent = '\u23f3 Step 2 of 2 \u00b7 Sending ' + pr.pct + '%';
       };
       try {
         var fastUrl = await uploadFileToR2(fastRes.file, 'video-ads');
@@ -17991,9 +18040,9 @@ async function vehPostToSocial() {
       var _n3 = document.getElementById('veh-platform-note');
       window.__apUploadProgress = function (pr) {
         var lft = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
-        if (_n3) _n3.textContent = 'Uploading ' + pr.pct + '% of ' + _upMB + ' MB \u00b7 '
-          + pr.mbps.toFixed(1) + ' Mbps' + lft;
-        if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+        if (_n3) _n3.textContent = 'Step 2 of 2 \u00b7 Sending to the cloud \u2014 '
+          + pr.pct + '% of ' + _upMB + ' MB \u00b7 ' + pr.mbps.toFixed(1) + ' Mbps' + lft;
+        if (btn) btn.textContent = '\u23f3 Step 2 of 2 \u00b7 Sending ' + pr.pct + '%';
       };
       var url = await uploadFileToR2(file, 'video-ads');
       window.__apUploadProgress = null;
@@ -18039,9 +18088,9 @@ async function vehPostToSocial() {
       if (_d2 > 0) {
         var _p2 = Math.round((t / _d2) * 100);
         var _n4 = document.getElementById('veh-platform-note');
-        if (_n4) _n4.textContent = 'Preparing your video \u2014 ' + _p2 + '% \u00b7 '
+        if (_n4) _n4.textContent = 'Step 1 of 2 \u00b7 Preparing your video \u2014 ' + _p2 + '% \u00b7 '
           + vehFmtDuration(Math.max(0, _d2 - t)) + ' left \u00b7 pick the accounts while you wait';
-        if (btn) btn.textContent = '\u23f3 Preparing ' + _p2 + '%';
+        if (btn) btn.textContent = '\u23f3 Step 1 of 2 \u00b7 Preparing ' + _p2 + '%';
       }
     }
     requestAnimationFrame(renderFr);
