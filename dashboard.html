@@ -10623,17 +10623,36 @@ async function uploadFileToR2(file, folder) {
     console.log('[R2] Presign response:', JSON.stringify(presignData).slice(0, 200));
     if (!presignData.upload_url) throw new Error(presignData.error || 'Presign failed');
 
-    // Upload directly to R2 - no extra headers needed for presigned URL
+    // Upload directly to R2. This uses XMLHttpRequest rather than fetch for
+    // one reason: fetch cannot report upload progress, so a 50MB upload was
+    // a completely dead-looking minute. XHR fires progress events, which
+    // feeds the percentage, speed and time-remaining readout below.
     console.log('[R2] Starting direct upload to R2...');
-    var r2Res = await fetch(presignData.upload_url, {
-      method: 'PUT',
-      body: file
+    var onProg = (typeof window.__apUploadProgress === 'function') ? window.__apUploadProgress : null;
+    await new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', presignData.upload_url, true);
+      var t0 = Date.now();
+      xhr.upload.onprogress = function (ev) {
+        if (!onProg || !ev.lengthComputable) return;
+        var secs  = Math.max(0.001, (Date.now() - t0) / 1000);
+        var bps   = ev.loaded / secs;
+        var left  = bps > 0 ? (ev.total - ev.loaded) / bps : 0;
+        onProg({
+          loaded: ev.loaded, total: ev.total,
+          pct: Math.round((ev.loaded / ev.total) * 100),
+          mbps: (bps * 8) / 1e6,
+          secondsLeft: left,
+        });
+      };
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error('R2 upload failed ' + xhr.status + ': ' + String(xhr.responseText || '').slice(0,200)));
+      };
+      xhr.onerror = function () { reject(new Error('R2 upload failed — connection lost')); };
+      xhr.onabort = function () { reject(new Error('Upload cancelled')); };
+      xhr.send(file);
     });
-    console.log('[R2] R2 PUT response:', r2Res.status, r2Res.statusText);
-    if (!r2Res.ok) {
-      var errText = await r2Res.text();
-      throw new Error('R2 upload failed ' + r2Res.status + ': ' + errText.slice(0,200));
-    }
     console.log('[R2] Direct upload success:', presignData.public_url);
     return presignData.public_url;
   }
@@ -14765,7 +14784,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-11.1';
+var AP_BUILD = '2026-09-11.4';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17093,6 +17112,75 @@ function vehSetPreparingFailed(msg) {
   showToast(msg, 'error');
 }
 
+// Re-encoding exists for one reason: to burn overlays and captions into the
+// picture. When the customer has added neither, the finished video is a
+// pixel-for-pixel copy of the file they already have — so we upload THAT and
+// skip the render completely. Ten minutes of waiting becomes a few seconds,
+// which is the difference between this feeling like TikTok and feeling broken.
+function vehNothingToBurnIn() {
+  var hasOverlays = !!(_vehOverlays && _vehOverlays.length);
+  var hasCaptions = !!(typeof _vehCaptionsOn !== 'undefined' && _vehCaptionsOn
+                       && typeof _vehCaptions !== 'undefined' && _vehCaptions && _vehCaptions.length);
+  return !hasOverlays && !hasCaptions;
+}
+
+// A file the browser already has, ready to upload untouched.
+function vehOriginalAsFile() {
+  if (!_vehFile) return null;
+  var t = _vehFile.type || '';
+  // Only pass through formats the platforms actually accept.
+  if (t.indexOf('video/mp4') !== 0 && t.indexOf('video/webm') !== 0 && t.indexOf('video/quicktime') !== 0) return null;
+  // A huge original would be a huge upload — past this point re-encoding is
+  // genuinely faster overall, because it shrinks the file a lot more than the
+  // render costs in time.
+  if (_vehFile.size > 300 * 1024 * 1024) return null;
+  return _vehFile;
+}
+
+// Telegram refuses videos over 50MB. The re-encode path warns about this
+// already; the pass-through path has no bitrate to tune, so it just says so.
+function vehWarnIfOversize(file) {
+  var mb = file.size / 1048576;
+  if (mb > 50) {
+    showToast('This video is ' + mb.toFixed(0) + 'MB. Telegram only accepts up to 50MB, '
+      + 'so it will receive a link instead. The other platforms are fine.', 'error');
+  }
+}
+
+// Shared by the fast path and the re-encode path. Shows real upload progress
+// — percentage, speed and time left — instead of a frozen "Uploading…".
+function vehUploadAndActivate(file, progress, fail, markStopped) {
+  var totalMB = (file.size / 1048576).toFixed(1);
+  window.__apUploadProgress = function (p) {
+    var left = p.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(p.secondsLeft) + ' left') : '';
+    progress('Uploading ' + p.pct + '% of ' + totalMB + ' MB \u00b7 '
+             + p.mbps.toFixed(1) + ' Mbps' + left);
+  };
+  return uploadFileToR2(file, 'video-ads')
+    .then(function (url) {
+      if (!url) { fail('Upload returned no link — press Start Auto-Posting to try again.'); return; }
+      _vehPublicUrl = url;
+      if (!_user) { fail('Signed out during upload — sign in and try again.'); return; }
+      return _db.from('autopostleey_video_schedules')
+        .update({ ad_url: url, enabled: true }).eq('user_id', _user.id)
+        .then(function (res) {
+          if (res && res.error) { fail('Could not save the video link: ' + res.error.message); return; }
+          if (markStopped) markStopped();
+          var st2 = document.getElementById('veh-autopost-status');
+          if (st2) { st2.textContent = '\ud83d\udfe2 ACTIVE'; st2.style.background = 'rgba(16,185,129,0.2)'; st2.style.color = '#10b981'; }
+          progress('Auto-posting is live. You can close the browser now.');
+          showToast('\u2705 Video uploaded — auto-posting is now live.', 'success');
+        });
+    })
+    .catch(function (e) {
+      fail('Upload failed: ' + (e && e.message ? e.message : 'unknown error'));
+    })
+    .then(function () {
+      window.__apUploadProgress = null;
+      try { vehStartPreview(); } catch (e) {}
+    });
+}
+
 function vehExportAndSave() {
   // Records the canvas in REAL TIME, so it takes as long as the video plays.
   // Everything below exists because this used to be able to spin forever:
@@ -17110,6 +17198,9 @@ function vehExportAndSave() {
   var chunks3 = [];
   var stopped = false, watchdog = null, hardStop = null;
 
+  // Fast path: nothing to burn in, so send the original and skip the render.
+  var _passThrough = vehNothingToBurnIn() ? vehOriginalAsFile() : null;
+
   function fail(msg) {
     if (stopped) return;
     stopped = true;
@@ -17120,6 +17211,13 @@ function vehExportAndSave() {
   function progress(txt) {
     var tm = document.getElementById('veh-next-post-time');
     if (tm) tm.textContent = txt;
+  }
+
+  if (_passThrough) {
+    vehWarnIfOversize(_passThrough);
+    progress('Uploading your video (' + (_passThrough.size / 1048576).toFixed(1) + ' MB)\u2026');
+    vehUploadAndActivate(_passThrough, progress, fail);
+    return;
   }
 
   var stream3, rec3, mime3;
@@ -17141,28 +17239,9 @@ function vehExportAndSave() {
     if (!chunks3.length) { fail('Nothing was recorded — reload and try again.'); return; }
     var ext3 = mime3.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
     var blob3 = new Blob(chunks3, { type: mime3 });
-    progress('Uploading your video (' + (blob3.size / 1048576).toFixed(1) + ' MB)…');
-
-    uploadFileToR2(new File([blob3], 'veh-auto-' + Date.now() + '.' + ext3, { type: mime3 }), 'video-ads')
-      .then(function (url) {
-        if (!url) { fail('Upload returned no link — press Start Auto-Posting to try again.'); return; }
-        _vehPublicUrl = url;
-        if (!_user) { fail('Signed out during upload — sign in and try again.'); return; }
-        return _db.from('autopostleey_video_schedules')
-          .update({ ad_url: url, enabled: true }).eq('user_id', _user.id)
-          .then(function (res) {
-            if (res && res.error) { fail('Could not save the video link: ' + res.error.message); return; }
-            stopped = true;
-            var st2 = document.getElementById('veh-autopost-status');
-            if (st2) { st2.textContent = '🟢 ACTIVE'; st2.style.background = 'rgba(16,185,129,0.2)'; st2.style.color = '#10b981'; }
-            progress('Auto-posting is live. You can close the browser now.');
-            showToast('✅ Video uploaded — auto-posting is now live.', 'success');
-          });
-      })
-      .catch(function (e) {
-        fail('Upload failed: ' + (e && e.message ? e.message : 'unknown error'));
-      })
-      .then(function () { try { vehStartPreview(); } catch (e) {} });
+    progress('Uploading your video (' + (blob3.size / 1048576).toFixed(1) + ' MB)\u2026');
+    vehUploadAndActivate(new File([blob3], 'veh-auto-' + Date.now() + '.' + ext3, { type: mime3 }),
+                         progress, fail, function () { stopped = true; });
   };
 
   function beginRecording() {
@@ -17263,6 +17342,41 @@ async function vehPostToSocial() {
   var ctx = canvas.getContext('2d');
   var chunks = [];
 
+  // Fast path: no overlays and no captions means the finished video would be
+  // a copy of the file they already gave us. Upload that and skip the render.
+  var _pt = vehNothingToBurnIn() ? vehOriginalAsFile() : null;
+  if (_pt) {
+    vehWarnIfOversize(_pt);
+    var _ptMB = (_pt.size / 1048576).toFixed(1);
+    var _noteEl = document.getElementById('veh-platform-note');
+    window.__apUploadProgress = function (pr) {
+      var lft = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
+      if (_noteEl) _noteEl.textContent = 'Uploading ' + pr.pct + '% of ' + _ptMB + ' MB \u00b7 '
+        + pr.mbps.toFixed(1) + ' Mbps' + lft;
+      if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+    };
+    uploadFileToR2(_pt, 'video-ads').then(function (url) {
+      window.__apUploadProgress = null;
+      if (!url) throw new Error('Upload returned no link');
+      _vehPublicUrl = url;
+      var section = document.getElementById('veh-platform-section');
+      if (section) {
+        section.style.display = 'block';
+        if (_noteEl) _noteEl.textContent = 'Your video is uploaded. Pick the accounts to post it to.';
+        vehRenderPlatformList();
+        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      showToast('\u2705 Video uploaded! Select platforms below.', 'success');
+    }).catch(function (e) {
+      window.__apUploadProgress = null;
+      showToast('Upload failed: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+    }).then(function () {
+      if (btn) { btn.textContent = '\ud83d\ude80 Post to Social Media'; btn.disabled = false; }
+      try { vehStartPreview(); } catch (e) {}
+    });
+    return;
+  }
+
   // Try mp4 first, fallback to webm
   var mimeType = 'video/webm;codecs=vp9';
   if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
@@ -17294,7 +17408,16 @@ async function vehPostToSocial() {
     var blob = new Blob(chunks, { type: mimeType });
     var file = new File([blob], 'enhanced-ad-' + Date.now() + '.' + ext, { type: mimeType });
     try {
+      var _upMB = (file.size / 1048576).toFixed(1);
+      var _n3 = document.getElementById('veh-platform-note');
+      window.__apUploadProgress = function (pr) {
+        var lft = pr.secondsLeft > 1 ? (' \u00b7 ' + vehFmtDuration(pr.secondsLeft) + ' left') : '';
+        if (_n3) _n3.textContent = 'Uploading ' + pr.pct + '% of ' + _upMB + ' MB \u00b7 '
+          + pr.mbps.toFixed(1) + ' Mbps' + lft;
+        if (btn) btn.textContent = '\u23f3 Uploading ' + pr.pct + '%';
+      };
       var url = await uploadFileToR2(file, 'video-ads');
+      window.__apUploadProgress = null;
       if (url) {
         _vehPublicUrl = url;
         // Show platform picker
@@ -17308,7 +17431,7 @@ async function vehPostToSocial() {
         }
         showToast('✅ Video uploaded! Select platforms below.', 'success');
       }
-    } catch(e) { showToast('Upload failed: ' + e.message, 'error'); }
+    } catch(e) { window.__apUploadProgress = null; showToast('Upload failed: ' + e.message, 'error'); }
     if (btn) { btn.textContent = '🚀 Post to Social Media'; btn.disabled = false; }
     vehStartPreview();
   };
@@ -17331,8 +17454,20 @@ async function vehPostToSocial() {
       _vehStyle = savedStyle;
     });
     vehDrawCaptions(ctx, t, W, H);
+    if (performance.now() - _rfNote > 500) {
+      _rfNote = performance.now();
+      var _d2 = _vehVideo.duration || 0;
+      if (_d2 > 0) {
+        var _p2 = Math.round((t / _d2) * 100);
+        var _n4 = document.getElementById('veh-platform-note');
+        if (_n4) _n4.textContent = 'Preparing your video \u2014 ' + _p2 + '% \u00b7 '
+          + vehFmtDuration(Math.max(0, _d2 - t)) + ' left \u00b7 pick the accounts while you wait';
+        if (btn) btn.textContent = '\u23f3 Preparing ' + _p2 + '%';
+      }
+    }
     requestAnimationFrame(renderFr);
   }
+  var _rfNote = 0;
   renderFr();
 }
 
