@@ -3591,7 +3591,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
             <!-- Upload video -->
             <div class="card">
               <div class="card-title">🎥 Upload Your Video</div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Upload any product video · MP4, MOV or WebM · Max 200MB</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Upload any product video · MP4, MOV or WebM · Up to 2GB · any length</div>
 
               <div id="veh-drop" onclick="document.getElementById('veh-input').click()"
                 style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;"
@@ -3599,7 +3599,7 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
                 onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
                 <div style="font-size:40px;margin-bottom:10px;">🎥</div>
                 <div style="font-size:14px;font-weight:700;color:var(--text);">Click or drag your video here</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:6px;">MP4 · MOV · WebM · Max 200MB</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;">MP4 · MOV · WebM · Up to 2GB · any length</div>
               </div>
               <input type="file" id="veh-input" accept="video/*" style="display:none" onchange="vehLoadVideo(this)">
 
@@ -10603,8 +10603,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function uploadFileToR2(file, folder) {
   folder = folder || 'media';
   var fileMB = (file.size / 1024 / 1024).toFixed(1);
-  if (file.size > 200 * 1024 * 1024) {
-    throw new Error('File is ' + fileMB + 'MB — max 200MB. Please trim your video first.');
+  // Uploads go straight to R2 with a presigned PUT, so the old 200MB ceiling
+  // was not a technical limit — it was a guess. Bitrate is now capped when
+  // videos are made, which is the real control on size.
+  if (file.size > 600 * 1024 * 1024) {
+    throw new Error('File is ' + fileMB + 'MB — max 600MB.');
   }
   var ext = (file.name || 'file').split('.').pop() || 'bin';
   console.log('[R2] Uploading:', folder, file.type, fileMB + 'MB');
@@ -13109,8 +13112,7 @@ function vadCollectRenderArgs() {
   var tagline = (document.getElementById('vad-tagline')||{}).value||'';
   var emojiVal= (document.getElementById('vad-emoji')  ||{}).value||'\u2728';
   var capEl   = document.getElementById('vad-caption');
-  var cap     = capEl ? capEl.value.split('\n\n\ud83c\udf10')[0].trim()
-                      : ('Discover ' + product + ' by ' + biz);
+  var cap     = capEl ? capEl.value.split('\n\n\ud83c\udf10')[0].trim() : '';
 
   var c;
   if (_vadThemeMode === 'custom' && _vadCustomTheme) {
@@ -13134,6 +13136,27 @@ function vadCollectRenderArgs() {
     {icon:(document.getElementById('vad-b3-ico')||{}).textContent||'\ud83d\udc8e',text:(document.getElementById('vad-b3')||{}).value||''},
     {icon:(document.getElementById('vad-b4-ico')||{}).textContent||'\ud83d\ude80',text:(document.getElementById('vad-b4')||{}).value||''},
   ].filter(function(b){ return b.text.trim(); });
+
+  // Scene 3 is the offer, and its message box used to sit empty when the
+  // customer never wrote a caption. Fall back through what they HAVE given
+  // us, so the box always says something true about their business.
+  if (!cap) {
+    var _benTexts = benefits.map(function (b) { return String(b.text || '').trim(); })
+                            .filter(Boolean);
+    if (tagline && _benTexts.length) {
+      cap = tagline + '. ' + _benTexts.slice(0,3).join(', ') + '.';
+    } else if (tagline) {
+      cap = tagline + (product ? '. ' + product + ', done properly.' : '.');
+    } else if (_benTexts.length) {
+      cap = (product ? product + ' \u2014 ' : '') + _benTexts.slice(0,3).join(', ') + '.';
+    } else if (product && biz) {
+      cap = product + ' from ' + biz + '. Get in touch today and see the difference.';
+    } else if (product || biz) {
+      cap = (product || biz) + '. Get in touch today.';
+    } else {
+      cap = 'Get in touch today \u2014 we would love to hear from you.';
+    }
+  }
 
   var problems = [
     (document.getElementById('vad-p1')||{}).value||'',
@@ -14742,7 +14765,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-10.11';
+var AP_BUILD = '2026-09-11.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -16120,10 +16143,49 @@ var _vehRecorder = null;
 var _vehChunks = [];
 var _vehAnimFrame = null;
 
+// The enhanced video is re-encoded in the browser. MediaRecorder's default
+// bitrate is fixed, so a long video produced a proportionally huge file —
+// which is what the old 200MB ceiling was really guarding against.
+//
+// Instead of capping the LENGTH, cap the SIZE: pick a bitrate that keeps the
+// finished file near targetMB however long the video is, within sensible
+// quality bounds. A 10-minute video now lands around the same size a
+// 90-second one used to.
+function vehPickBitrate(W, H, durationSec, targetMB) {
+  targetMB = targetMB || 90;
+  var pixels  = (W || 720) * (H || 1280);
+  // Quality ceiling by resolution — never spend more than the picture needs.
+  var quality = pixels >= 1920*1080 ? 5000000
+              : pixels >= 1280*720  ? 3000000
+              : pixels >= 854*480   ? 1800000
+              :                       1200000;
+  if (!durationSec || !isFinite(durationSec) || durationSec <= 0) return quality;
+  // Leave ~15% of the budget for the audio track and container overhead.
+  var budget = (targetMB * 1024 * 1024 * 8 * 0.85) / durationSec;
+  // Never go below a floor, or the video turns to mush.
+  return Math.max(700000, Math.min(quality, Math.round(budget)));
+}
+
+function vehFmtDuration(sec) {
+  if (!isFinite(sec) || sec <= 0) return '';
+  var m = Math.floor(sec / 60), ss = Math.round(sec % 60);
+  if (ss === 60) { m += 1; ss = 0; }
+  return m + ':' + (ss < 10 ? '0' : '') + ss;
+}
+
+// How long a video the browser can realistically hold. The source file is
+// NEVER uploaded — it is read locally with createObjectURL and only the
+// finished video goes to R2 — so this is a memory limit, not a storage cost.
+var VEH_MAX_INPUT_MB = 2048;
+
 function vehLoadVideo(input) {
   var file = input.files[0];
   if (!file) return;
-  if (file.size > 200 * 1024 * 1024) { showToast('File too large — max 200MB', 'error'); return; }
+  if (file.size > VEH_MAX_INPUT_MB * 1024 * 1024) {
+    showToast('That file is ' + (file.size/1024/1024/1024).toFixed(1) + 'GB — the browser cannot hold it. Max '
+              + (VEH_MAX_INPUT_MB/1024) + 'GB.', 'error');
+    return;
+  }
 
   _vehFile = file;
   _vehFileName = file.name;
@@ -16152,6 +16214,19 @@ function vehLoadVideo(input) {
   if (status) status.textContent = 'Video loaded · Click Generate';
 
   vid.onloadedmetadata = function() {
+    // Enhancing replays the video in real time, so a 10-minute clip takes
+    // 10 minutes. Say so up front rather than leaving them wondering.
+    var _d = vid.duration || 0;
+    var _st = document.getElementById('veh-status');
+    if (_st && isFinite(_d) && _d > 0) {
+      var _note = 'Video loaded \u00b7 ' + vehFmtDuration(_d);
+      if (_d > 120) _note += ' \u00b7 enhancing takes about ' + vehFmtDuration(_d) + ', keep this tab open';
+      _note += ' \u00b7 Click Generate';
+      _st.textContent = _note;
+    }
+    if (_d > 15 * 60) {
+      showToast('That is ' + vehFmtDuration(_d) + ' long. It will work, but it takes that long to enhance and captions only cover the first 12 minutes.', 'error');
+    }
     var canvas = document.getElementById('veh-canvas');
     if (canvas) {
       canvas.width  = vid.videoWidth  || 720;
@@ -16639,6 +16714,15 @@ async function vehMakeCaptions() {
 
   try {
     if (st) st.textContent = 'Reading the audio out of your video…';
+    // 16kHz mono WAV is ~1.9MB per minute and the transcriber refuses
+    // anything over 25MB, so past about 12 minutes this fails with an
+    // unhelpful error. Say what is happening instead.
+    var _cdur = (_vehVideo && _vehVideo.duration) || 0;
+    if (_cdur > 12 * 60) {
+      throw new Error('Captions work up to 12 minutes of audio — this video is '
+        + vehFmtDuration(_cdur) + '. Everything else still works; turn captions off, '
+        + 'or split the video.');
+    }
     var wav = await vehExtractAudio(_vehFile);
 
     if (st) st.textContent = 'Transcribing (' + (wav.size / 1048576).toFixed(1) + ' MB)…';
@@ -16850,7 +16934,10 @@ async function vehExportVideo() {
     stream.addTrack(dest.stream.getAudioTracks()[0]);
   } catch(e) { /* no audio */ }
 
-  _vehRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  _vehRecorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm;codecs=vp9',
+    videoBitsPerSecond: vehPickBitrate(W, H, _vehVideo.duration, 140),
+  });
   _vehRecorder.ondataavailable = function(e) { if (e.data.size) _vehChunks.push(e.data); };
   _vehRecorder.onstop = function() {
     var blob = new Blob(_vehChunks, { type: 'video/webm' });
@@ -16868,10 +16955,20 @@ async function vehExportVideo() {
   _vehVideo.currentTime = 0;
   _vehVideo.play();
 
+  var _expLastNote = 0;
   function renderExportFrame() {
     if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) {
       _vehRecorder.stop();
       return;
+    }
+    // A long video used to render with no sign of progress at all.
+    if (performance.now() - _expLastNote > 500) {
+      _expLastNote = performance.now();
+      var _pct = Math.round((_vehVideo.currentTime / (_vehVideo.duration || 1)) * 100);
+      var _left = Math.max(0, (_vehVideo.duration || 0) - _vehVideo.currentTime);
+      var _se = document.getElementById('veh-status');
+      if (_se) _se.textContent = 'Rendering ' + _pct + '% \u00b7 ' + vehFmtDuration(_left) + ' left';
+      if (btn) btn.textContent = '\u23f3 Rendering ' + _pct + '%';
     }
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(_vehVideo, 0, 0, W, H);
@@ -17179,7 +17276,18 @@ async function vehPostToSocial() {
     stream.addTrack(dest.stream.getAudioTracks()[0]);
   } catch(e) {}
 
-  var recorder = new MediaRecorder(stream, { mimeType: mimeType });
+  // Posting budget is tighter than the download: Telegram's bot API refuses
+  // anything over 50MB, and the other platforms prefer small.
+  var _postRate = vehPickBitrate(W, H, _vehVideo.duration, 45);
+  var _estMB = (_postRate * (_vehVideo.duration || 0) / 8) / 1048576;
+  if (_estMB > 48) {
+    // Past a certain length no bitrate is both watchable and under 50MB.
+    // Say so now rather than letting Telegram reject it silently.
+    showToast('This video is ' + vehFmtDuration(_vehVideo.duration) + ' (about '
+      + Math.round(_estMB) + 'MB). Telegram only accepts videos up to 50MB, so it will '
+      + 'receive a link instead. The other platforms are fine.', 'error');
+  }
+  var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: _postRate });
   recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = async function() {
     var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
