@@ -10599,6 +10599,128 @@ document.addEventListener('DOMContentLoaded', function() {
   renderAPLangMenu();
 });
 
+// Splits the file into parts and sends several at once. Returns the public
+// URL, or null if the worker does not support it yet (older deploy), in
+// which case the caller falls back to the single-connection upload.
+async function uploadFileMultipart(file, folder) {
+  var MIN_PART = 5 * 1024 * 1024;          // R2 requires >= 5MB per part
+  var CONCURRENCY = 6;
+  // FLOOR, not ceil. Dividing 24MB by ceil(24/5)=5 gives 4.8MB parts, and S3
+  // rejects any part under 5MB except the last — every upload would have been
+  // refused. floor(24/5)=4 gives 6MB parts, which is valid.
+  var partCount = Math.max(1, Math.min(64, Math.floor(file.size / MIN_PART)));
+  if (partCount < 2) return null;          // too small to be worth it
+  var partSize = Math.ceil(file.size / partCount);
+  if (partSize < MIN_PART) return null;    // belt and braces
+
+  var startRes = await fetch(AP_WORKER + '/mpu-create', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      filename: file.name || 'upload.mp4',
+      content_type: file.type || 'application/octet-stream',
+      folder: folder, parts: partCount,
+    }),
+  });
+  if (!startRes.ok) return null;
+  var start = await startRes.json();
+  if (!start || !start.upload_id || !start.part_urls || start.part_urls.length !== partCount) return null;
+
+  console.log('[R2] parallel upload: ' + partCount + ' parts of '
+    + (partSize/1048576).toFixed(1) + 'MB, ' + CONCURRENCY + ' at a time');
+
+  var onProg = (typeof window.__apUploadProgress === 'function') ? window.__apUploadProgress : null;
+  var sentPerPart = new Array(partCount).fill(0);
+  var t0 = Date.now();
+  var samples = [{ t: t0, loaded: 0 }];
+
+  function report() {
+    if (!onProg) return;
+    var loaded = 0;
+    for (var i = 0; i < partCount; i++) loaded += sentPerPart[i];
+    var now = Date.now();
+    samples.push({ t: now, loaded: loaded });
+    while (samples.length > 2 && now - samples[0].t > 8000) samples.shift();
+    var first = samples[0];
+    var secs = Math.max(0.25, (now - first.t) / 1000);
+    var bps  = Math.max(1, (loaded - first.loaded) / secs);
+    onProg({
+      loaded: loaded, total: file.size,
+      pct: Math.min(99, Math.round((loaded / file.size) * 100)),
+      mbps: (bps * 8) / 1e6,
+      secondsLeft: (now - t0 > 3000) ? (file.size - loaded) / bps : 0,
+    });
+  }
+
+  function putPart(index) {
+    return new Promise(function (resolve, reject) {
+      var startByte = index * partSize;
+      var endByte   = Math.min(file.size, startByte + partSize);
+      var blob = file.slice(startByte, endByte);
+      var attempt = 0;
+      function go() {
+        attempt++;
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', start.part_urls[index], true);
+        xhr.upload.onprogress = function (ev) {
+          if (!ev.lengthComputable) return;
+          sentPerPart[index] = ev.loaded;
+          report();
+        };
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            sentPerPart[index] = endByte - startByte;
+            report();
+            resolve();
+          } else if (attempt < 3) { setTimeout(go, 800 * attempt); }
+          else { reject(new Error('Part ' + (index+1) + ' failed (' + xhr.status + ')')); }
+        };
+        xhr.onerror = function () {
+          // A dropped part is normal on a flaky connection — retry it rather
+          // than throwing away the whole upload.
+          if (attempt < 3) { sentPerPart[index] = 0; setTimeout(go, 800 * attempt); }
+          else { reject(new Error('Part ' + (index+1) + ' could not be sent')); }
+        };
+        xhr.send(blob);
+      }
+      go();
+    });
+  }
+
+  // Run CONCURRENCY parts at a time.
+  var next = 0;
+  async function worker() {
+    while (next < partCount) {
+      var mine = next++;
+      await putPart(mine);
+    }
+  }
+  var runners = [];
+  for (var w = 0; w < Math.min(CONCURRENCY, partCount); w++) runners.push(worker());
+
+  try {
+    await Promise.all(runners);
+  } catch (e) {
+    fetch(AP_WORKER + '/mpu-abort', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: start.key, upload_id: start.upload_id }),
+    }).catch(function () {});
+    throw e;
+  }
+
+  var doneRes = await fetch(AP_WORKER + '/mpu-complete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: start.key, upload_id: start.upload_id }),
+  });
+  var done = await doneRes.json();
+  if (!doneRes.ok || !done.url) throw new Error(done.error || 'Could not finish the upload');
+
+  var secs = (Date.now() - t0) / 1000;
+  console.log('[R2] parallel upload finished in ' + secs.toFixed(1) + 's ('
+    + (((file.size * 8) / 1e6) / secs).toFixed(1) + ' Mbps)');
+  if (onProg) onProg({ loaded: file.size, total: file.size, pct: 100, mbps: ((file.size*8)/1e6)/secs, secondsLeft: 0 });
+  return done.url;
+}
+
 // -- R2 Upload Helpers --
 async function uploadFileToR2(file, folder) {
   folder = folder || 'media';
@@ -10616,6 +10738,22 @@ async function uploadFileToR2(file, folder) {
   }
   var ext = (file.name || 'file').split('.').pop() || 'bin';
   console.log('[R2] Uploading:', folder, file.type, fileMB + 'MB');
+
+  // Big files go up in PARALLEL PARTS.
+  //
+  // A single PUT is one TCP connection, and one connection over a
+  // long-distance link is limited by latency rather than by the bandwidth
+  // the customer actually has. That is why a 24MB upload sat at 0.1 Mbps on
+  // a connection that is otherwise perfectly fine. Six parts at once use the
+  // capacity that was already there.
+  if (file.size > 10 * 1024 * 1024) {
+    try {
+      var mp = await uploadFileMultipart(file, folder);
+      if (mp) return mp;
+    } catch (e) {
+      console.warn('[R2] parallel upload unavailable (' + (e && e.message) + '), using one connection');
+    }
+  }
 
   // For files over 5MB use presigned URL (direct to R2, bypasses worker limit)
   if (file.size > 5 * 1024 * 1024) {
@@ -14813,7 +14951,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-11.15';
+var AP_BUILD = '2026-09-11.16';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
