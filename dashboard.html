@@ -5409,7 +5409,7 @@ async function createReel() {
 
     // Try MP4 first (better compatibility with Telegram/Instagram/YouTube)
     var mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2') ? 'video/mp4;codecs=avc1,mp4a.40.2'
-                 : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+                 : MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4;codecs=avc1'
                  : MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
                  : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
                  : 'video/webm';
@@ -13475,7 +13475,9 @@ async function recordVadAdVideo(opts) {
     canvas.width = adW * SCALE; canvas.height = adH * SCALE;
     var ctx = canvas.getContext('2d'); ctx.scale(SCALE, SCALE);
 
-    var mimeType = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(function(t){return MediaRecorder.isTypeSupported(t);})||'video/webm';
+    // 'video/mp4' with no codec was in this list too: it reports supported and
+    // then produces VP9-in-MP4. Dropped in favour of the shared chooser.
+    var mimeType = apPickVideoMime(false).mime || 'video/webm';
     progress(0.02, 'Recording...');
     var stream = canvas.captureStream(FPS);
     var chunks = [];
@@ -15130,7 +15132,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.10';
+var AP_BUILD = '2026-09-13.11';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -15682,6 +15684,34 @@ function padDrawSlideAt(ctx, W, H, t, secs, fitMode) {
   }
 }
 
+// ── Choosing a recording format ───────────────────────────────────────
+// NEVER ask for bare 'video/mp4'. MediaRecorder.isTypeSupported('video/mp4')
+// returns true in Chrome, but with no codec named Chrome fills the MP4
+// container with VP9 — and VP9-in-MP4 is a file Windows Media Player,
+// QuickTime, phone galleries and most social platforms refuse to open. The
+// customer downloads a .mp4 that will not play, which is exactly what
+// happened to the slideshow export.
+//
+// Ask for H.264 explicitly. If the browser cannot do it, fall back to WebM
+// and NAME the file .webm, so the extension always matches the contents.
+function apPickVideoMime(wantAudio) {
+  var candidates = wantAudio
+    ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2',
+       'video/mp4;codecs=h264,aac', 'video/webm;codecs=vp9,opus',
+       'video/webm;codecs=vp8,opus', 'video/webm']
+    : ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1',
+       'video/mp4;codecs=h264', 'video/webm;codecs=vp9',
+       'video/webm;codecs=vp8', 'video/webm'];
+  for (var i = 0; i < candidates.length; i++) {
+    try {
+      if (MediaRecorder.isTypeSupported(candidates[i])) {
+        return { mime: candidates[i], ext: candidates[i].indexOf('mp4') !== -1 ? 'mp4' : 'webm' };
+      }
+    } catch (e) {}
+  }
+  return { mime: '', ext: 'webm' };
+}
+
 function padExportSlideshow() {
   if (_padPhotos.length < 2) { showToast('Upload at least 2 photos for a slideshow!', 'error'); return; }
   showToast('🎬 Creating slideshow... this may take a moment', 'success');
@@ -15695,19 +15725,31 @@ function padExportSlideshow() {
   var recCtx = recCanvas.getContext('2d');
 
   var stream = recCanvas.captureStream(30);
-  var slideMime = 'video/webm;codecs=vp9';
-  if (MediaRecorder.isTypeSupported('video/mp4')) slideMime = 'video/mp4';
-  else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) slideMime = 'video/webm;codecs=h264';
-  var recorder = new MediaRecorder(stream, { mimeType: slideMime });
+  var pick = apPickVideoMime(false);
+  var recorder = pick.mime ? new MediaRecorder(stream, { mimeType: pick.mime })
+                           : new MediaRecorder(stream);
   var chunks = [];
   recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = function() {
-    var blob = new Blob(chunks, { type: 'video/webm' });
+    // The blob type used to be hardcoded to video/webm even when the data was
+    // MP4. It now matches what was actually recorded, and so does the file name.
+    if (!chunks.length) {
+      showToast('Nothing was recorded — reload the page and try again.', 'error');
+      return;
+    }
+    var actual = (recorder.mimeType || pick.mime || 'video/webm').split(';')[0];
+    var blob = new Blob(chunks, { type: actual });
+    var slideExt = actual.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    console.log('[PhotoAds] slideshow ' + (blob.size/1048576).toFixed(2) + 'MB · '
+      + (recorder.mimeType || pick.mime) + ' · .' + slideExt);
     var link = document.createElement('a');
-    var slideExt = slideMime.includes('mp4') ? 'mp4' : 'webm';
     link.download = 'product-slideshow-' + Date.now() + '.' + slideExt;
     link.href = URL.createObjectURL(blob);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    setTimeout(function(){ URL.revokeObjectURL(link.href); }, 8000);
+    try { stream.getTracks().forEach(function(t){ t.stop(); }); } catch (e) {}
     showToast('✅ Slideshow downloaded!', 'success');
   };
 
@@ -15783,7 +15825,9 @@ async function padPostToSocial() {
 
       var chunks = [];
       var stream2 = tempCanvas.captureStream(30);
-      var mimeType2 = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm;codecs=vp9';
+      // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
+      var pick2 = apPickVideoMime(false);
+      var mimeType2 = pick2.mime || 'video/webm;codecs=vp9';
       var recorder2 = new MediaRecorder(stream2, {mimeType: mimeType2});
       recorder2.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
 
@@ -18271,7 +18315,8 @@ function vehExportAndSaveImpl(skipFast) {
   var stream3, rec3, mime3;
   try {
     stream3 = canvas3.captureStream(30);
-    mime3 = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm;codecs=vp9';
+    // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
+    mime3 = apPickVideoMime(true).mime || 'video/webm;codecs=vp9';
     rec3 = new MediaRecorder(stream3, { mimeType: mime3 });
   } catch (e) {
     fail('This browser cannot record the video (' + e.message + '). Try Chrome.');
@@ -18494,7 +18539,8 @@ async function vehPostToSocialImpl() {
 
   // Try mp4 first, fallback to webm
   var mimeType = 'video/webm;codecs=vp9';
-  if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+  // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
+  mimeType = apPickVideoMime(true).mime || mimeType;
 
   var stream = canvas.captureStream(30);
   try {
