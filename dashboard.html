@@ -13479,6 +13479,10 @@ async function recordVadAdVideo(opts) {
     // then produces VP9-in-MP4. Dropped in favour of the shared chooser.
     var mimeType = apPickVideoMime(false).mime || 'video/webm';
     progress(0.02, 'Recording...');
+    // Paint frame 0 before capture begins, so the first recorded frame is the
+    // ad rather than an empty canvas. Same black-first-frame problem the
+    // slideshow had.
+    try { ctx.fillStyle = (c && c.bg) || '#08061a'; ctx.fillRect(0, 0, adW, adH); } catch (e) {}
     var stream = canvas.captureStream(FPS);
     var chunks = [];
     var recorder = new MediaRecorder(stream, {mimeType:mimeType, videoBitsPerSecond:bitrate});
@@ -15068,52 +15072,58 @@ function padRenderGrid() {
     var on = i === _padCurrentIdx;
     var n = (p.labels || []).length;
     var many = _padPhotos.length > 1;
-    return '<div data-pad-idx="'+i+'" onpointerdown="padDragStart(event,'+i+')" '
-      + 'onclick="padTileClick('+i+')" title="Photo '+(i+1)+' — drag to reorder" '
-      + 'style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:grab;'
-      + 'touch-action:none;-webkit-user-select:none;user-select:none;'
-      + 'border:2px solid '+(on?'var(--accent)':'var(--border)')+';'
-      + 'box-shadow:'+(on?'0 0 0 3px rgba(109,94,248,.22)':'none')+';'
-      + 'opacity:'+(i===_padDragIdx?'.35':(on?'1':'.72'))+';transition:opacity .15s,box-shadow .15s;">'
-      // draggable="false" matters: an <img> is natively draggable, and that
-      // native drag swallows the pointermove events, so reordering worked with
-      // a finger but did nothing with a mouse.
-      + '<img src="'+p.dataUrl+'" draggable="false" ondragstart="return false" '
-        + 'style="width:100%;height:100%;object-fit:cover;display:block;'
-        + '-webkit-user-drag:none;user-drag:none;pointer-events:none;">'
-      + '<div style="position:absolute;top:3px;left:4px;background:rgba(0,0,0,.66);color:#fff;'
-        + 'font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:20px;">'+(i+1)+'</div>'
-      + (n ? '<div style="position:absolute;bottom:3px;left:4px;background:#059669;color:#fff;'
-             + 'font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:20px;">'
-             + n + ' label' + (n>1?'s':'') + '</div>'
-           : '<div style="position:absolute;bottom:3px;left:4px;background:rgba(0,0,0,.55);color:#fff;'
-             + 'font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;">no labels</div>')
-      + (on ? '<div style="position:absolute;top:3px;right:24px;background:var(--accent);color:#fff;'
-              + 'font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;">EDITING</div>' : '')
-      // The cover is the still image platforms show before the video plays.
-      + (i === _padCoverIdx
-          ? '<div style="position:absolute;bottom:3px;right:3px;background:#f59e0b;color:#111;'
-            + 'font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;">\u2605 COVER</div>'
-          : '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padSetCover('+i+')" '
-            + 'title="Use this photo as the cover" '
-            + 'style="position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,.62);color:#fff;border:none;'
-            + 'border-radius:20px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;line-height:1.4;">'
-            + '\u2606 cover</button>')
-      + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padRemovePhoto('+i+')" title="Remove this photo" '
-        + 'style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;'
-        + 'border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0;">✕</button>'
-      // Arrows as well as dragging. Dragging is fiddly on a small screen, and
-      // the hint under this grid has always promised arrows that did not exist.
-      + (many ? '<div style="position:absolute;bottom:2px;left:2px;display:flex;gap:2px;">'
-          + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padMovePhoto('+i+',-1)" '
-            + 'title="Move earlier" ' + (i === 0 ? 'disabled ' : '')
-            + 'style="background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:5px;width:19px;height:19px;'
-            + 'cursor:pointer;font-size:11px;line-height:1;padding:0;opacity:' + (i===0?'.3':'1') + ';">\u2039</button>'
-          + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padMovePhoto('+i+',1)" '
-            + 'title="Move later" ' + (i === _padPhotos.length-1 ? 'disabled ' : '')
-            + 'style="background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:5px;width:19px;height:19px;'
-            + 'cursor:pointer;font-size:11px;line-height:1;padding:0;opacity:' + (i===_padPhotos.length-1?'.3':'1') + ';">\u203a</button>'
-          + '</div>' : '')
+    var isCover = i === _padCoverIdx;
+
+    // Everything except the number and the ✕ now lives in a strip BELOW the
+    // picture. Piling the label count, the reorder arrows and the cover
+    // button on top of a 106px thumbnail made them overlap into an unreadable
+    // mess on a phone — which is why the cover control could not be found.
+    return '<div style="display:flex;flex-direction:column;gap:4px;">'
+      + '<div data-pad-idx="' + i + '" onpointerdown="padDragStart(event,' + i + ')" '
+        + 'onclick="padTileClick(' + i + ')" title="Photo ' + (i+1) + ' — drag to reorder" '
+        + 'style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:grab;'
+        + 'touch-action:none;-webkit-user-select:none;user-select:none;'
+        + 'border:2px solid ' + (on ? 'var(--accent)' : 'var(--border)') + ';'
+        + 'box-shadow:' + (on ? '0 0 0 3px rgba(109,94,248,.22)' : 'none') + ';'
+        + 'opacity:' + (i === _padDragIdx ? '.35' : (on ? '1' : '.72')) + ';transition:opacity .15s,box-shadow .15s;">'
+        + '<img src="' + p.dataUrl + '" draggable="false" ondragstart="return false" '
+          + 'style="width:100%;height:100%;object-fit:cover;display:block;'
+          + '-webkit-user-drag:none;user-drag:none;pointer-events:none;">'
+        + '<div style="position:absolute;top:3px;left:4px;background:rgba(0,0,0,.66);color:#fff;'
+          + 'font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:20px;">' + (i+1) + '</div>'
+        + (isCover ? '<div style="position:absolute;bottom:4px;left:4px;background:#f59e0b;color:#111;'
+              + 'font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;">\u2605 COVER</div>' : '')
+        + (on ? '<div style="position:absolute;bottom:4px;right:4px;background:var(--accent);color:#fff;'
+              + 'font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;">EDITING</div>' : '')
+        + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padRemovePhoto(' + i + ')" '
+          + 'title="Remove this photo" '
+          + 'style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;'
+          + 'border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;line-height:1;padding:0;">\u2715</button>'
+      + '</div>'
+
+      // Control strip: real tap targets, nothing overlapping.
+      + '<div style="display:flex;align-items:center;gap:3px;">'
+        + (many
+            ? '<button onclick="padMovePhoto(' + i + ',-1)" title="Move earlier" ' + (i === 0 ? 'disabled ' : '')
+              + 'style="flex:none;width:26px;height:26px;border:1px solid var(--border);border-radius:7px;'
+              + 'background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;line-height:1;padding:0;'
+              + 'opacity:' + (i === 0 ? '.35' : '1') + ';">\u2039</button>'
+            : '')
+        + '<button onclick="padSetCover(' + i + ')" title="Use this photo as the cover" '
+          + 'style="flex:1;min-width:0;height:26px;border:1px solid ' + (isCover ? '#f59e0b' : 'var(--border)') + ';'
+          + 'border-radius:7px;background:' + (isCover ? 'rgba(245,158,11,.16)' : 'var(--bg3)') + ';'
+          + 'color:' + (isCover ? '#f59e0b' : 'var(--text2)') + ';cursor:pointer;font-size:10px;font-weight:800;'
+          + 'padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+          + (isCover ? '\u2605 Cover' : '\u2606 Cover') + '</button>'
+        + (many
+            ? '<button onclick="padMovePhoto(' + i + ',1)" title="Move later" ' + (i === _padPhotos.length-1 ? 'disabled ' : '')
+              + 'style="flex:none;width:26px;height:26px;border:1px solid var(--border);border-radius:7px;'
+              + 'background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;line-height:1;padding:0;'
+              + 'opacity:' + (i === _padPhotos.length-1 ? '.35' : '1') + ';">\u203a</button>'
+            : '')
+      + '</div>'
+      + '<div style="font-size:9.5px;color:' + (n ? '#059669' : 'var(--text3)') + ';text-align:center;'
+        + 'font-weight:700;line-height:1;">' + (n ? n + ' label' + (n>1?'s':'') : 'no labels') + '</div>'
       + '</div>';
   }).join('');
   if (addBtn) addBtn.style.display = _padPhotos.length >= 10 ? 'none' : 'flex';
@@ -15207,7 +15217,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.13';
+var AP_BUILD = '2026-09-13.15';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -15828,9 +15838,19 @@ function padExportSlideshow() {
     showToast('✅ Slideshow downloaded!', 'success');
   };
 
-  recorder.start();
   var secs = padSlideSeconds();
   var fitSnap = padFitMode();
+  // PAINT THE FIRST FRAME BEFORE RECORDING STARTS.
+  //
+  // captureStream grabs whatever is on the canvas the moment recording
+  // begins. The first draw used to happen inside requestAnimationFrame,
+  // AFTER recorder.start() — so at least one frame of a blank (black)
+  // canvas was recorded first. On a fast desktop that gap is a few
+  // milliseconds and often produces nothing; on a phone it is long enough
+  // to record real black frames, which is why the saved video showed a
+  // black thumbnail in the gallery.
+  padDrawSlideAt(recCtx, cw, ch, 0, secs, fitSnap);
+  recorder.start();
   console.log('[PhotoAds] build ' + AP_BUILD + ' · download · '
     + cw + 'x' + ch + ' · ' + fitSnap + ' · ' + secs + 's/photo');
   var totalMs = _padPhotos.length * secs * 1000;
@@ -15922,9 +15942,12 @@ async function padPostToSocial() {
         if (btn) { btn.textContent = '🚀 Post to Social Media'; btn.disabled = false; }
       };
 
-      recorder2.start();
       var slideSecs = padSlideSeconds();
       var fitSnap2 = padFitMode();
+      // Same reason as the download path: paint before recording, or the
+      // first frame captured is a blank canvas.
+      padDrawSlideAt(ctx2, aspAuto.w, aspAuto.h, 0, slideSecs, fitSnap2);
+      recorder2.start();
       console.log('[PhotoAds] build ' + AP_BUILD + ' · post to social · '
         + aspAuto.w + 'x' + aspAuto.h + ' · ' + fitSnap2 + ' · ' + slideSecs + 's/photo');
       showToast('Making a ' + aspAuto.w + '×' + aspAuto.h + ' video · '
@@ -18100,6 +18123,9 @@ async function vehExportVideoImpl(skipFast) {
     vehStartPreview(); // resume preview
   };
 
+  // Draw the current video frame before capture starts, so the recording does
+  // not open on a blank canvas.
+  try { ctx.drawImage(_vehVideo, 0, 0, W, H); } catch (e) {}
   _vehRecorder.start();
   _vehVideo.currentTime = 0;
   _vehVideo.play();
@@ -18416,6 +18442,7 @@ function vehExportAndSaveImpl(skipFast) {
   };
 
   function beginRecording() {
+    try { ctx3.drawImage(_vehVideo, 0, 0, W3, H3); } catch (e) {}
     rec3.start();
 
     // Hard stop on the clock, not just on the video's own state. A finite
@@ -18677,6 +18704,7 @@ async function vehPostToSocialImpl() {
     vehStartPreview();
   };
 
+  try { ctx.drawImage(_vehVideo, 0, 0, W, H); } catch (e) {}
   recorder.start();
   _vehVideo.currentTime = 0;
   _vehVideo.play();
