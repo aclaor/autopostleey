@@ -15217,7 +15217,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.15';
+var AP_BUILD = '2026-09-13.18';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -19272,6 +19272,20 @@ async function tvUse(idx) {
   var contentEl = document.getElementById('post-content');
   if (contentEl) contentEl.value = 'Writing your post…';
 
+  // Prefer the video's OWN tags — those are the real ones the trending video
+  // is filed under. Fall back to its title if the channel published none.
+  var vidTags;
+  if (v.tags && v.tags.length) {
+    vidTags = apMakeHashtags(v.tags, 4);
+  } else {
+    var vPhrase = apPhraseHashtag(v.title);
+    vidTags = [vPhrase].filter(Boolean).concat(
+      apMakeHashtags([v.title], 6).filter(function (tag) {
+        return vPhrase.toLowerCase().indexOf(tag.slice(1).toLowerCase()) === -1;
+      }));
+  }
+  vidTags = vidTags.filter(function (x, i, a) { return a.indexOf(x) === i; }).slice(0, 4);
+
   var prompt = [
     'You are the social media manager for ' + (_bizProfile.name || 'this business') +
       (_bizProfile.description ? ' — ' + _bizProfile.description : '') + '.',
@@ -19283,7 +19297,11 @@ async function tvUse(idx) {
     'Tone: ' + (_bizProfile.tone || 'friendly') + '.',
     (typeof apLangRule === 'function' ? apLangRule() : ''),
     'STRICT RULES: Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
-    'First person as the business owner. End with 2-3 relevant hashtags.',
+    'First person as the business owner.',
+    vidTags.length
+      ? 'End with exactly these hashtags and no others: ' + vidTags.join(' ') + '.'
+      : 'End with 2-3 relevant hashtags.',
+    'Do NOT write the website, email or phone number — those are added afterwards.',
   ].filter(Boolean).join(' ');
 
   try {
@@ -19294,7 +19312,7 @@ async function tvUse(idx) {
     });
     var data = await res.json();
     if (contentEl) {
-      contentEl.value = data.post || '';
+      contentEl.value = data.post ? apAppendContact(data.post) : '';
       contentEl.dispatchEvent(new Event('input'));
     }
     if (!data.post) throw new Error(data.error || 'empty');
@@ -19307,6 +19325,90 @@ async function tvUse(idx) {
       showToast('Couldn\'t write that one — try again', 'error');
     }
   }
+}
+
+// ── Contact details and hashtags for trend-driven posts ───────────────
+// Two things every trend post was missing: a way for a reader to actually
+// reach the business, and the hashtags that put the post in front of people
+// following the trend.
+//
+// The hashtags are derived from REAL data — a YouTube video's own tags, or
+// the trending search phrase itself. Nothing here invents a hashtag or claims
+// a popularity figure we do not have.
+var AP_TAG_STOPWORDS = ('the a an and or of for to in on at is are was were be been with '
+  + 'from by this that these those it its as how what why when who new latest best top '
+  + 'video shorts official full hd vs my your our their you we i').split(' ');
+
+function apMakeHashtags(sources, max) {
+  max = max || 4;
+  var seen = {}, out = [];
+  (sources || []).forEach(function (src) {
+    String(src == null ? '' : src)
+      .split(/[^\p{L}\p{N}]+/u)
+      .forEach(function (w) {
+        if (out.length >= max) return;
+        if (!w || w.length < 3 || w.length > 20) return;
+        var low = w.toLowerCase();
+        if (AP_TAG_STOPWORDS.indexOf(low) !== -1) return;
+        if (/^\d+$/.test(w)) return;
+        if (seen[low]) return;
+        seen[low] = true;
+        out.push('#' + w.charAt(0).toUpperCase() + w.slice(1));
+      });
+  });
+  return out;
+}
+
+// Phrases stay whole where they make a better tag than single words
+// ("BlackFriday" beats "#Black #Friday").
+function apPhraseHashtag(phrase) {
+  var parts = String(phrase == null ? '' : phrase)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(function (w) { return w && AP_TAG_STOPWORDS.indexOf(w.toLowerCase()) === -1; })
+    .slice(0, 3);
+  if (!parts.length) return '';
+  var joined = parts.map(function (w) {
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join('');
+  return joined.length >= 3 && joined.length <= 30 ? '#' + joined : '';
+}
+
+// The customer's own website and email, skipping anything they left blank.
+function apContactLines() {
+  var p = _bizProfile || {};
+  var lines = [];
+  var site = String(p.website || '').trim();
+  var mail = String(p.email || '').trim();
+  if (site) {
+    lines.push('🌐 ' + site.replace(/^https?:\/\//i, '').replace(/\/+$/, ''));
+  }
+  if (mail) lines.push('✉️ ' + mail);
+  return lines;
+}
+
+// Appends the contact block to a finished caption, without duplicating
+// anything the AI already wrote in.
+function apAppendContact(text) {
+  var lines = apContactLines();
+  if (!lines.length) return text;
+  var body = String(text || '').replace(/\s+$/, '');
+  var add = lines.filter(function (l) {
+    var bare = l.replace(/^[^\w]+/, '').trim();
+    return bare && body.toLowerCase().indexOf(bare.toLowerCase()) === -1;
+  });
+  if (!add.length) return body;
+
+  // X allows 280 characters and Bluesky 300. Two extra lines can push a post
+  // past that and get it rejected, so drop the email first and the website
+  // second rather than returning something that cannot be posted.
+  var LIMIT = 280;
+  var full = body + '\n\n' + add.join('\n');
+  if (full.length <= LIMIT || body.length > LIMIT) return full;
+  if (add.length > 1) {
+    var siteOnly = body + '\n\n' + add[0];
+    if (siteOnly.length <= LIMIT) return siteOnly;
+  }
+  return body;
 }
 
 async function useTrend(idx, autoWrite) {
@@ -19337,6 +19439,17 @@ async function useTrend(idx, autoWrite) {
   var contentEl = document.getElementById('post-content');
   if (contentEl) contentEl.value = 'Writing your post…';
 
+  // Hashtags built from the trending phrase itself, so the post lands in the
+  // same feeds people following the trend are looking at.
+  var phraseTag = apPhraseHashtag(t.title);
+  // Words already inside the phrase tag must not come back as their own tags,
+  // or you get "#BlackFridayDeals #Black #Friday #Deals".
+  var extra = apMakeHashtags([t.context, t.title], 6).filter(function (tag) {
+    return phraseTag.toLowerCase().indexOf(tag.slice(1).toLowerCase()) === -1;
+  });
+  var trendTags = [phraseTag].filter(Boolean).concat(extra);
+  trendTags = trendTags.filter(function (v, i, a) { return a.indexOf(v) === i; }).slice(0, 4);
+
   var prompt = [
     'You are the social media manager for ' + (_bizProfile.name || 'this business') +
       (_bizProfile.description ? ' — ' + _bizProfile.description : '') + '.',
@@ -19345,8 +19458,13 @@ async function useTrend(idx, autoWrite) {
     'Write ONE social media caption that ties this trend to the business in a way that feels natural.',
     'If the trend has NOTHING to do with the business, do not force it — write a light, tasteful post that simply nods to the moment.',
     'Tone: ' + (_bizProfile.tone || 'friendly') + '.',
+    (typeof apLangRule === 'function' ? apLangRule() : ''),
     'STRICT RULES: Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
-    'First person as the business owner. End with 2-3 relevant hashtags.',
+    'First person as the business owner.',
+    trendTags.length
+      ? 'End with exactly these hashtags and no others: ' + trendTags.join(' ') + '.'
+      : 'End with 2-3 relevant hashtags.',
+    'Do NOT write the website, email or phone number — those are added afterwards.',
   ].filter(Boolean).join(' ');
 
   try {
@@ -19357,7 +19475,7 @@ async function useTrend(idx, autoWrite) {
     });
     var data = await res.json();
     if (contentEl) {
-      contentEl.value = data.post || '';
+      contentEl.value = data.post ? apAppendContact(data.post) : '';
       contentEl.dispatchEvent(new Event('input'));
       if (!data.post) throw new Error(data.error || 'empty');
     }
