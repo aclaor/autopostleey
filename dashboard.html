@@ -15028,7 +15028,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.1';
+var AP_BUILD = '2026-09-13.2';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -18810,9 +18810,16 @@ async function loadTrendingVideos() {
   }
 }
 
-// Sends a trending video into the post composer as a topic. It does NOT
-// copy the video — it gives the customer the subject to write about.
-function tvUse(idx) {
+// Sends a trending video into the composer and WRITES the post.
+//
+// The first version only filled in the topic box and told the customer to
+// press Generate, which is not what "Make a post" says on the button. The
+// Google Trends cards next to it have always written the post themselves;
+// this now does the same thing, through the same /generate-caption route.
+//
+// It does NOT copy the video — it writes the customer's own post about the
+// subject.
+async function tvUse(idx) {
   var geo = (document.getElementById('tv-geo') || {}).value || 'PH';
   var cat = (document.getElementById('tv-cat') || {}).value || '';
   var d = _tvCache[_tvPlatform + '|' + geo + '|' + cat];
@@ -18821,15 +18828,58 @@ function tvUse(idx) {
 
   var topicEl = document.getElementById('post-topic');
   if (topicEl) {
-    topicEl.value = 'Trending on YouTube right now: "' + v.title + '" by ' + v.channel
-      + (v.views ? ' (' + tvFmtViews(v.views) + ')' : '')
-      + '. Write a post for my business that ties into this topic naturally — '
-      + 'do not pretend to be the video or claim any connection to it.';
+    topicEl.value = 'Trending on YouTube: "' + v.title + '" by ' + v.channel
+      + (v.views ? ' (' + tvFmtViews(v.views) + ')' : '');
     topicEl.dispatchEvent(new Event('input'));
   }
   showPage('compose');
-  if (typeof showToast === 'function') {
-    showToast('Topic added — hit Generate ✨', 'success');
+
+  // The caption is only any good if the AI knows whose voice it is writing in.
+  if (!_bizProfile || !_bizProfile.name) {
+    if (typeof showToast === 'function') {
+      showToast('Set up your business profile first so posts sound like you!', 'error');
+    }
+    showPage('business');
+    return;
+  }
+
+  var contentEl = document.getElementById('post-content');
+  if (contentEl) contentEl.value = 'Writing your post…';
+
+  var prompt = [
+    'You are the social media manager for ' + (_bizProfile.name || 'this business') +
+      (_bizProfile.description ? ' — ' + _bizProfile.description : '') + '.',
+    'A video is trending on YouTube right now: "' + v.title + '" by ' + v.channel +
+      (v.views ? ' (' + tvFmtViews(v.views) + ')' : '') + '.',
+    'Write ONE social media caption that ties this trending topic to the business in a way that feels natural.',
+    'If the trend has NOTHING to do with the business, do not force it — write a light, tasteful post that simply nods to the moment.',
+    'NEVER imply the business made that video, appears in it, or is connected to its creator.',
+    'Tone: ' + (_bizProfile.tone || 'friendly') + '.',
+    (typeof apLangRule === 'function' ? apLangRule() : ''),
+    'STRICT RULES: Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
+    'First person as the business owner. End with 2-3 relevant hashtags.',
+  ].filter(Boolean).join(' ');
+
+  try {
+    var res = await fetch(AP_WORKER + '/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt }),
+    });
+    var data = await res.json();
+    if (contentEl) {
+      contentEl.value = data.post || '';
+      contentEl.dispatchEvent(new Event('input'));
+    }
+    if (!data.post) throw new Error(data.error || 'empty');
+    if (typeof showToast === 'function') {
+      showToast('Post written — review and schedule it! ✨', 'success');
+    }
+  } catch (e) {
+    if (contentEl) contentEl.value = '';
+    if (typeof showToast === 'function') {
+      showToast('Couldn\'t write that one — try again', 'error');
+    }
   }
 }
 
