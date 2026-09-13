@@ -15130,7 +15130,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.6';
+var AP_BUILD = '2026-09-13.10';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -15336,6 +15336,11 @@ function padRenderOverlayLabels(cw, ch) {
     });
 
     var x = label.x * cw, y = label.y * ch;
+    // Measure with the same code the canvas uses, on a scratch context.
+    var lay = label.isEmoji
+      ? { bw: 0, bh: 0, fontSize: st.fontSize }
+      : padLabelLayout(padMeasureCtx(), label,
+          { fontSize: st.fontSize, fontWeight: st.fontWeight }, k, cw, ch);
     var el = document.createElement('div');
     el.setAttribute('data-idx', i);
     el.className = 'pad-label-drag';
@@ -15355,20 +15360,30 @@ function padRenderOverlayLabels(cw, ch) {
       'transform:translate(-50%,-50%)',
       'background:transparent',
       'color:transparent',
-      'font-size:' + st.fontSize + 'px',
+      // Match the canvas exactly: same wrapped width, same shrunk font size.
+      // If the grab area does not match what is drawn, dragging feels off and
+      // the edge-clamping stops at the wrong place.
+      'font-size:' + (isEmoji ? st.fontSize : lay.fontSize) + 'px',
       'font-family:' + fontFamily,
       'font-weight:' + (isEmoji ? 'normal' : st.fontWeight),
       'padding:' + (isEmoji ? '0' : padScaled),
+      'width:' + (isEmoji ? 'auto' : Math.ceil(lay.bw) + 'px'),
+      'box-sizing:border-box',
+      'text-align:center',
       'border-radius:' + (st.radius * k) + 'px',
       'cursor:grab',
       'user-select:none',
-      'white-space:nowrap',
+      // pre-wrap, not nowrap — the canvas wraps now, so the grab area must too.
+      'white-space:' + (isEmoji ? 'nowrap' : 'pre-wrap'),
+      'overflow-wrap:anywhere',
       'outline:' + (isSelected ? '2px solid var(--accent)' : '1.5px dashed rgba(255,255,255,.45)'),
       'outline-offset:3px',
       'box-shadow:' + (isSelected ? '0 0 0 4px rgba(109,94,248,.25)' : 'none'),
       'transition:outline-color .15s, box-shadow .15s',
       'touch-action:none',
-      'line-height:1',
+      // Match the canvas line height, or a multi-line label's grab area is
+      // shorter than what is drawn and the edge-clamping stops too early.
+      'line-height:' + (isEmoji ? 1 : PAD_LABEL_LINE_H),
     ].filter(Boolean).join(';') + ';';
 
     el.textContent = label.text;
@@ -16492,6 +16507,109 @@ function padApplyLabelEdit() {
 // label and emoji shrink to a quarter of what the customer placed.
 var PAD_REF_W = 500;
 
+// ── Laying out label text ─────────────────────────────────────────────
+// A label used to be drawn with one fillText and white-space:nowrap, so the
+// moment the customer typed more than a few words it ran straight off the
+// edge of the frame and got cropped. Shrinking the font by hand was the only
+// escape, and that made it unreadable.
+//
+// Now the text wraps to as many lines as it needs, and if the block still
+// does not fit the frame the font shrinks — down to a floor, so it never
+// becomes unreadable — until it does.
+var PAD_LABEL_MAX_LINES = 4;
+var PAD_LABEL_LINE_H    = 1.24;   // multiples of the font size
+
+function padWrapLines(ctx, text, maxW) {
+  var out = [];
+  String(text == null ? '' : text).split(/\r?\n/).forEach(function (para) {
+    var words = para.split(/\s+/).filter(function (w) { return w.length; });
+    if (!words.length) { out.push(''); return; }
+    var line = '';
+    words.forEach(function (w) {
+      // A single word longer than the line has to be broken by character,
+      // or it sticks out no matter how the rest wraps.
+      while (ctx.measureText(w).width > maxW && w.length > 1) {
+        var cut = w.length - 1;
+        while (cut > 1 && ctx.measureText(w.slice(0, cut)).width > maxW) cut--;
+        if (line) { out.push(line); line = ''; }
+        out.push(w.slice(0, cut));
+        w = w.slice(cut);
+      }
+      var test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; }
+      else { line = test; }
+    });
+    if (line) out.push(line);
+  });
+  return out.length ? out : [''];
+}
+
+// Returns everything both the canvas and the drag overlay need, so the grab
+// area always matches what is actually drawn.
+function padLabelLayout(ctx, label, st, k, cw, ch) {
+  var family = label.font || 'Inter, sans-serif';
+  var weight = st.fontWeight || '700';
+  var size   = st.fontSize;          // already scaled by k
+  var padH   = 10 * k, padW = 14 * k;
+  var maxBoxW = cw * 0.88;           // keep a margin at both edges
+  var maxBoxH = ch * 0.55;           // never let one label eat the photo
+  var minSize = Math.max(9 * k, st.fontSize * 0.45);
+
+  var lines, bw, bh;
+  for (;;) {
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    lines = padWrapLines(ctx, label.text, maxBoxW - padW * 2);
+    // Balance the lines. A greedy wrap fills each line to the brim and leaves
+    // a stray word on the last one ("…one thousand / pesos"), which looks
+    // amateurish. Find the narrowest width that still gives the same number of
+    // lines, and the text settles into even lines instead.
+    if (lines.length > 1) {
+      var want = lines.length;
+      var lo = 40, hi = maxBoxW - padW * 2, best = hi;
+      for (var b = 0; b < 12; b++) {
+        var mid = (lo + hi) / 2;
+        if (padWrapLines(ctx, label.text, mid).length <= want) { best = mid; hi = mid; }
+        else { lo = mid; }
+      }
+      var balanced = padWrapLines(ctx, label.text, best);
+      if (balanced.length === want) lines = balanced;
+    }
+    if (lines.length > PAD_LABEL_MAX_LINES) {
+      // Past four lines a label stops being a label. Cut it, but end with an
+      // ellipsis so it is obvious some text did not fit rather than it just
+      // vanishing.
+      lines = lines.slice(0, PAD_LABEL_MAX_LINES);
+      var last = lines[PAD_LABEL_MAX_LINES - 1];
+      while (last.length > 1 && ctx.measureText(last + '\u2026').width > maxBoxW - padW * 2) {
+        last = last.slice(0, -1);
+      }
+      lines[PAD_LABEL_MAX_LINES - 1] = last.replace(/\s+$/, '') + '\u2026';
+    }
+    var widest = 0;
+    lines.forEach(function (l) { widest = Math.max(widest, ctx.measureText(l).width); });
+    bw = widest + padW * 2;
+    bh = lines.length * size * PAD_LABEL_LINE_H + padH * 2;
+    var tooWide = bw > maxBoxW;
+    var tooTall = bh > maxBoxH;
+    var overflowed = padWrapLines(ctx, label.text, maxBoxW - padW * 2).length > PAD_LABEL_MAX_LINES;
+    if ((!tooWide && !tooTall && !overflowed) || size <= minSize) break;
+    size = Math.max(minSize, size * 0.92);
+  }
+  return { lines: lines, fontSize: size, bw: bw, bh: bh,
+           lineH: size * PAD_LABEL_LINE_H, family: family, weight: weight };
+}
+
+// A scratch canvas so the overlay can measure text the same way.
+var _padMeasureCtx = null;
+function padMeasureCtx() {
+  if (!_padMeasureCtx) {
+    var c = document.createElement('canvas');
+    c.width = c.height = 8;
+    _padMeasureCtx = c.getContext('2d');
+  }
+  return _padMeasureCtx;
+}
+
 function padDrawLabels(ctx, cw, ch, photoIdx) {
   if (!_padPhotos.length) return;
   var k = cw / PAD_REF_W;
@@ -16521,10 +16639,12 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
       return;
     }
 
-    ctx.font = st.fontWeight + ' ' + st.fontSize + 'px ' + (label.font || 'Inter, sans-serif');
-    var tw = ctx.measureText(label.text).width;
-    var padH = 10 * k, padW = 14 * k;
-    var bw = tw + padW * 2, bh = st.fontSize + padH * 2;
+    // Wrap to as many lines as it needs, shrinking only if it still will not
+    // fit. Before this, a long label was drawn as one line and simply ran off
+    // the frame.
+    var lay = padLabelLayout(ctx, label, st, k, cw, ch);
+    var bw = lay.bw, bh = lay.bh;
+    ctx.font = lay.weight + ' ' + lay.fontSize + 'px ' + lay.family;
 
     if (st.bg && st.bg !== 'transparent') {
       ctx.fillStyle = st.bg;
@@ -16539,7 +16659,11 @@ function padDrawLabels(ctx, cw, ch, photoIdx) {
     ctx.fillStyle = st.color;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label.text, x, y);
+    // Centre the block of lines on the label's anchor point.
+    var firstY = y - ((lay.lines.length - 1) * lay.lineH) / 2;
+    lay.lines.forEach(function (ln, li) {
+      ctx.fillText(ln, x, firstY + li * lay.lineH);
+    });
     ctx.shadowBlur = 0;
     ctx.textAlign = 'left';
   });
