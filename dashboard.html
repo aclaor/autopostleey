@@ -14920,15 +14920,78 @@ function padAddPhotos(input) {
 //
 // _padCurrentIdx must follow the photo being edited, not stay on a position,
 // or the label editor silently switches to a different picture mid-drag.
+var _padCoverIdx = 0;        // which photo is the cover (the poster image)
+var _padCoverUrl = '';       // that cover, once uploaded
 var _padDragIdx = -1;        // index currently being dragged, for the ghost
 var _padDidDrag = false;     // suppresses the click that follows a drag
+
+// The cover is the still image a platform shows before the video plays.
+// Telegram and Facebook let us send one explicitly; the others pick their own
+// frame and there is nothing we can do about that.
+function padSetCover(idx) {
+  if (idx < 0 || idx >= _padPhotos.length) return;
+  _padCoverIdx = idx;
+  padRenderGrid();
+  if (typeof showToast === 'function') {
+    showToast(idx === 0
+      ? 'Photo 1 is the cover.'
+      : 'Photo ' + (idx + 1) + ' is the cover. Drag it first if you want it to open the video too.',
+      'success');
+  }
+}
+
+// Renders the cover photo, labels and all, as a small JPEG. Telegram wants
+// JPEG under 200KB and no bigger than 320px, so that is what we make.
+function padBuildCoverBlob() {
+  return new Promise(function (resolve) {
+    var idx = Math.min(Math.max(0, _padCoverIdx), Math.max(0, _padPhotos.length - 1));
+    var photo = _padPhotos[idx];
+    if (!photo || !photo.img) { resolve(null); return; }
+    var asp = padAspect();
+    var scale = 320 / Math.max(asp.w, asp.h);
+    var W = Math.max(2, Math.round(asp.w * scale));
+    var H = Math.max(2, Math.round(asp.h * scale));
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var ctx = c.getContext('2d');
+    try {
+      padPaintPhoto(ctx, W, H, photo.img, 1, padFitMode());
+      padDrawLabels(ctx, W, H, idx);
+    } catch (e) { resolve(null); return; }
+    // Step the quality down until it is comfortably under Telegram's limit.
+    (function tryQuality(q) {
+      c.toBlob(function (blob) {
+        if (!blob) { resolve(null); return; }
+        if (blob.size <= 190 * 1024 || q <= 0.4) { resolve(blob); return; }
+        tryQuality(q - 0.15);
+      }, 'image/jpeg', q);
+    })(0.85);
+  });
+}
+
+async function padUploadCover() {
+  try {
+    var blob = await padBuildCoverBlob();
+    if (!blob) return '';
+    var f = new File([blob], 'cover-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+    var url = await uploadFileToR2(f, 'photo-ads');
+    console.log('[PhotoAds] cover ' + (blob.size / 1024).toFixed(0) + 'KB from photo ' + (_padCoverIdx + 1));
+    return url || '';
+  } catch (e) {
+    console.warn('[PhotoAds] cover upload failed:', e && e.message);
+    return '';   // never block the post over a thumbnail
+  }
+}
 
 function padMovePhoto(idx, delta) {
   var to = idx + delta;
   if (idx < 0 || idx >= _padPhotos.length || to < 0 || to >= _padPhotos.length) return;
   var editing = _padPhotos[_padCurrentIdx];
+  var coverPhoto = _padPhotos[_padCoverIdx];
   var moved = _padPhotos.splice(idx, 1)[0];
   _padPhotos.splice(to, 0, moved);
+  var ci = _padPhotos.indexOf(coverPhoto);
+  if (ci !== -1) _padCoverIdx = ci;
   var ni = _padPhotos.indexOf(editing);
   // padSetCurrentPhoto also redraws, refreshes the label editor and fixes the
   // "3 / 7" counter — all of which go stale if the array is reordered without it.
@@ -15027,12 +15090,21 @@ function padRenderGrid() {
              + 'font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;">no labels</div>')
       + (on ? '<div style="position:absolute;top:3px;right:24px;background:var(--accent);color:#fff;'
               + 'font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;">EDITING</div>' : '')
+      // The cover is the still image platforms show before the video plays.
+      + (i === _padCoverIdx
+          ? '<div style="position:absolute;bottom:3px;right:3px;background:#f59e0b;color:#111;'
+            + 'font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;">\u2605 COVER</div>'
+          : '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padSetCover('+i+')" '
+            + 'title="Use this photo as the cover" '
+            + 'style="position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,.62);color:#fff;border:none;'
+            + 'border-radius:20px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;line-height:1.4;">'
+            + '\u2606 cover</button>')
       + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padRemovePhoto('+i+')" title="Remove this photo" '
         + 'style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;'
         + 'border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0;">✕</button>'
       // Arrows as well as dragging. Dragging is fiddly on a small screen, and
       // the hint under this grid has always promised arrows that did not exist.
-      + (many ? '<div style="position:absolute;bottom:2px;right:2px;display:flex;gap:2px;">'
+      + (many ? '<div style="position:absolute;bottom:2px;left:2px;display:flex;gap:2px;">'
           + '<button onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();padMovePhoto('+i+',-1)" '
             + 'title="Move earlier" ' + (i === 0 ? 'disabled ' : '')
             + 'style="background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:5px;width:19px;height:19px;'
@@ -15049,7 +15121,10 @@ function padRenderGrid() {
 }
 
 function padRemovePhoto(idx) {
+  var coverPhoto = _padPhotos[_padCoverIdx];
   _padPhotos.splice(idx, 1);
+  var ci = _padPhotos.indexOf(coverPhoto);
+  _padCoverIdx = ci === -1 ? 0 : ci;
   if (_padCurrentIdx >= _padPhotos.length) _padCurrentIdx = Math.max(0, _padPhotos.length - 1);
   padRenderGrid();
   padDrawCanvas();
@@ -15132,7 +15207,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.11';
+var AP_BUILD = '2026-09-13.13';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -15835,6 +15910,9 @@ async function padPostToSocial() {
         var ext = mimeType2.includes('mp4') ? 'mp4' : 'webm';
         var blob2 = new Blob(chunks, {type: mimeType2});
         var url2 = await uploadFileToR2(new File([blob2], 'product-slideshow-'+Date.now()+'.'+ext, {type:mimeType2}), 'photo-ads');
+        // The cover goes up too. Telegram and Facebook accept one; the rest
+        // pick their own frame regardless.
+        _padCoverUrl = await padUploadCover();
         if (url2) {
           _padPublicUrl = url2;
           var section2 = document.getElementById('pad-platform-section');
@@ -16034,7 +16112,7 @@ function padPostNow() {
   fetch('https://autopostleey-ai.alexclaor.workers.dev/publish', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({content:caption, platforms:checked, connections:connections, image_url:_padPublicUrl})
+    body: JSON.stringify({content:caption, platforms:checked, connections:connections, image_url:_padPublicUrl, thumb_url:_padCoverUrl||''})
   }).then(function(r){return r.json();})
   .then(function(d){
     var ok = d.results ? d.results.filter(function(r){return r.success;}).length : 0;
@@ -16457,7 +16535,7 @@ function triggerPadAutoPost() {
   checked.forEach(function(p){ if(_connectionsFull&&_connectionsFull[p]) connections[p]=_connectionsFull[p]; });
   fetch('https://autopostleey-ai.alexclaor.workers.dev/publish',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({content:caption,platforms:checked,connections:connections,image_url:_padPublicUrl})
+    body:JSON.stringify({content:caption,platforms:checked,connections:connections,image_url:_padPublicUrl,thumb_url:_padCoverUrl||''})
   }).then(function(r){return r.json();}).then(function(d){
     var ok=d.results?d.results.filter(function(r){return r.success;}).length:0;
     showToast('🔄 Photo ad auto-posted to '+ok+' platform'+(ok!==1?'s':'')+'!','success');
