@@ -6241,8 +6241,18 @@ function showPage(name) {
 // ── BUSINESS PROFILE ───────────────────────────────────────
 async function loadBizProfile() {
   try {
-    var { data } = await _db.from('autopostleey_businesses')
-      .select('*').eq('user_id', _user.id).limit(1);
+    // Newest first. If the table ever ended up with more than one row for a
+    // user (which is exactly what happens when upsert cannot match on
+    // user_id), .limit(1) alone would load an old one and the customer would
+    // think their edits never saved.
+    var q = await _db.from('autopostleey_businesses')
+      .select('*').eq('user_id', _user.id).order('updated_at', { ascending: false }).limit(1);
+    var data = q.data;
+    if (q.error) {
+      // Older rows may predate updated_at; fall back to an unordered read.
+      var q2 = await _db.from('autopostleey_businesses').select('*').eq('user_id', _user.id).limit(1);
+      data = q2.data;
+    }
     if(data && data.length > 0) {
       data = data[0];
       _bizProfile = data;
@@ -6257,13 +6267,10 @@ async function loadBizProfile() {
       document.getElementById('biz-website').value   = data.website   || '';
       if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
       if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
-      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
-      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
-      if (document.getElementById('biz-email')) document.getElementById('biz-email').value = data.email || '';
-      if (document.getElementById('biz-phone')) document.getElementById('biz-phone').value = data.phone || '';
-      document.getElementById('ob1-icon').textContent = '✅';
+      var ob1 = document.getElementById('ob1-icon');
+      if (ob1) ob1.textContent = '✅';
     }
-  } catch(e) { console.log('No biz profile yet'); }
+  } catch(e) { console.log('[biz] no profile yet:', e && e.message); }
 }
 
 async function saveBusinessProfile() {
@@ -6281,14 +6288,67 @@ async function saveBusinessProfile() {
     phone:       document.getElementById('biz-phone')  ? document.getElementById('biz-phone').value.trim()  : '',
     updated_at:  new Date().toISOString()
   };
+  var btn = document.querySelector('[onclick="saveBusinessProfile()"]');
+  var oldLabel = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+  function done(ok, msg) {
+    if (btn) { btn.textContent = oldLabel || '💾 Save Business Profile'; btn.disabled = false; }
+    if (ok) {
+      _bizProfile = profile;
+      var ob = document.getElementById('ob1-icon');
+      if (ob) ob.textContent = '✅';
+      showToast('✅ Business profile saved!', 'success');
+    } else {
+      console.error('[biz] save failed:', msg);
+      showToast(msg, 'error');
+    }
+  }
+
+  // UPDATE first, INSERT only if there is nothing to update.
+  //
+  // This used to be a single upsert with onConflict:'user_id', which only
+  // works if the table has a UNIQUE constraint on user_id. Without one,
+  // Postgres refuses the whole statement (42P10 "no unique or exclusion
+  // constraint matching the ON CONFLICT specification") and every save after
+  // the first one fails — the profile loads fine but will not update, which
+  // is exactly the symptom. This path needs no constraint at all.
   try {
-    var { error } = await _db.from('autopostleey_businesses').upsert([profile], { onConflict: 'user_id' });
-    if(error) throw error;
-    _bizProfile = profile;
-    document.getElementById('ob1-icon').textContent = '✅';
-    showToast('✅ Business profile saved!', 'success');
-  } catch(e) {
-    showToast('Error saving: ' + e.message, 'error');
+    var T = 'autopostleey_businesses';
+    var found = await _db.from(T).select('user_id').eq('user_id', _user.id).limit(1);
+    if (found.error) { done(false, 'Could not read your profile: ' + found.error.message); return; }
+
+    if (found.data && found.data.length) {
+      var upd = await _db.from(T).update(profile).eq('user_id', _user.id).select('user_id');
+      if (upd.error) {
+        done(false, upd.error.code === '42501'
+          ? 'The database is blocking updates to your profile (row level security). '
+            + 'Add an UPDATE policy on autopostleey_businesses.'
+          : 'Could not save: ' + upd.error.message);
+        return;
+      }
+      if (!upd.data || !upd.data.length) {
+        // No error and no rows changed is the signature of an RLS policy that
+        // permits reading but not writing.
+        done(false, 'Your profile exists but the database refused the change. '
+          + 'This is usually a missing UPDATE policy on autopostleey_businesses.');
+        return;
+      }
+      done(true);
+      return;
+    }
+
+    var ins = await _db.from(T).insert([profile]).select('user_id');
+    if (ins.error) {
+      done(false, ins.error.code === '42501'
+        ? 'The database is blocking new profiles (row level security). '
+          + 'Add an INSERT policy on autopostleey_businesses.'
+        : 'Could not save: ' + ins.error.message);
+      return;
+    }
+    done(true);
+  } catch (e) {
+    done(false, 'Could not save: ' + (e && e.message ? e.message : 'unknown error'));
   }
 }
 
@@ -15217,7 +15277,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-13.18';
+var AP_BUILD = '2026-09-14.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
