@@ -753,6 +753,9 @@
       <a class="nav-item" onclick="showPage('reels');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🎬</span> <span data-i18n="nav_reels">Reels & Shorts</span>
       </a>
+      <a class="nav-item" onclick="showPage('aistudio');closeAPSidebar();return false;" href="#">
+        <span class="nav-icon">🎨</span> <span>AI Image Studio</span>
+      </a>
       <a class="nav-item" onclick="showPage('aitools');closeAPSidebar();return false;" href="#">
         <span class="nav-icon">🤖</span> <span>AI Tools</span>
       </a>
@@ -3908,6 +3911,70 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
       </div>
 
 
+      <div id="page-aistudio" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🎨 AI Image Studio</div>
+            <div class="page-sub">Make pictures for your posts — then turn them into a video</div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
+          <label style="display:block;font-size:13px;font-weight:800;margin-bottom:6px;">What should the picture show?</label>
+          <textarea id="ais-prompt" class="form-input" rows="3"
+            placeholder="a flat lay of a folded cotton t-shirt on a warm wooden table, morning light"
+            style="width:100%;resize:vertical;margin-bottom:6px;"></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+            <button onclick="aisSuggest()" id="ais-suggest"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;">
+              💡 Suggest one for my business</button>
+            <span style="color:var(--text3);font-size:11.5px;">Plain English is fine — no special wording needed.</span>
+          </div>
+
+          <label style="display:block;font-size:13px;font-weight:800;margin-bottom:8px;">Look</label>
+          <div id="ais-styles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <label style="font-size:13px;font-weight:700;">How many</label>
+            <select id="ais-count" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;cursor:pointer;">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+            <button onclick="aisGenerate()" id="ais-btn"
+              style="background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;">
+              ✨ Generate</button>
+            <span id="ais-quota" style="color:var(--text3);font-size:11.5px;"></span>
+          </div>
+          <div id="ais-status" style="color:var(--text2);font-size:13px;margin-top:12px;"></div>
+        </div>
+
+        <div id="ais-actions" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button onclick="aisSendToVideo()"
+            style="background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:8px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;">
+            🎬 Turn selected into a video</button>
+          <button onclick="aisSendToPhotoAd()"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;">
+            🖼️ Open in Photo Ad Maker</button>
+          <button onclick="aisClear()"
+            style="background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:11px 16px;font-size:12.5px;cursor:pointer;">
+            Clear</button>
+        </div>
+
+        <div id="ais-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:18px;">
+          <h3 style="font-size:13px;font-weight:800;margin:0 0 8px;color:var(--text2);">Worth knowing</h3>
+          <ul style="margin:0;padding-left:18px;color:var(--text3);font-size:12.5px;line-height:1.7;">
+            <li>Pictures are made by AI. They are not photographs of real products — check one looks like what you actually sell before you post it.</li>
+            <li>AI is still poor at readable text inside a picture. Put your words on afterwards with the Photo Ad Maker's labels, where they will be sharp.</li>
+            <li>Faces and hands are where AI models slip. Look closely before posting anything with people in it.</li>
+            <li>There is a daily limit so this stays free for everyone.</li>
+          </ul>
+        </div>
+      </div>
+
       <div id="page-photoad" class="page">
         <div class="page-header">
           <div>
@@ -6299,6 +6366,7 @@ function showPage(name) {
     } catch (e) {}
     if (typeof loadTrendingVideos === 'function') loadTrendingVideos();
   }
+  if (name === 'aistudio' && typeof aisRenderStyles === 'function') aisRenderStyles();
   if (name === 'adscout') { var _aq = document.getElementById('as-q'); if (_aq && !_aq.value && _bizProfile && _bizProfile.name) _aq.placeholder = 'e.g. what ' + _bizProfile.name + ' sells'; }
   if (name === 'signals' && !_sigLoaded) { _sigLoaded = true; autoDetectProduct(); }
   if(name === 'autoposter' && typeof loadAutoConfig === 'function' && !_autoConfigLoaded) { loadAutoConfig(); _autoConfigLoaded = true; }
@@ -15110,6 +15178,240 @@ var PAD_LABEL_STYLES = {
   dark:    { bg:'rgba(0,0,0,0.75)', color:'#fff', border:'none', radius:8, pad:'6px 14px', shadow:'none', fontSize:13, fontWeight:700 },
 };
 
+// ══════════════════════════════════════════════════════════════════
+//  AI Image Studio
+//  Pictures come from Cloudflare Workers AI (flux-1-schnell) through our
+//  own worker. It is genuinely free — about 150-200 images a day across
+//  the whole free allowance — which is why the worker caps each customer.
+//
+//  Video is deliberately NOT generated by AI. Every paid video model
+//  charges per second, and a free signup clicking Generate all afternoon
+//  would be a real bill. Instead these images feed the slideshow renderer
+//  that already exists, which builds the MP4 in the customer's own
+//  browser at no cost to us.
+// ══════════════════════════════════════════════════════════════════
+var _aisImages = [];        // [{url, dataUrl, prompt, on}]
+var _aisStyle  = 'photo';
+
+var AIS_STYLES = [
+  { id:'photo',   label:'📷 Real photo',   hint:'natural product photography, soft daylight, shallow depth of field, high detail' },
+  { id:'studio',  label:'💡 Studio',       hint:'clean studio product shot, seamless background, crisp softbox lighting, commercial photography' },
+  { id:'flatlay', label:'🧺 Flat lay',     hint:'overhead flat lay, tidy arrangement, neutral textured surface, even natural light' },
+  { id:'bold',    label:'🎨 Bold graphic', hint:'bold flat vector illustration, strong shapes, saturated colour blocking, poster style' },
+  { id:'anime',   label:'✏️ Animated',     hint:'clean 2D animation still, cel shaded, expressive, bright palette' },
+  { id:'cinema',  label:'🎬 Cinematic',    hint:'cinematic still, moody directional light, film grain, anamorphic, shallow focus' },
+  { id:'street',  label:'🚶 Real life',    hint:'candid documentary photograph, real people, natural imperfect light, unposed' },
+];
+
+function aisRenderStyles() {
+  var wrap = document.getElementById('ais-styles');
+  if (!wrap) return;
+  wrap.innerHTML = AIS_STYLES.map(function (st) {
+    var on = st.id === _aisStyle;
+    return '<button onclick="aisPickStyle(\'' + st.id + '\')" '
+      + 'style="background:' + (on ? 'linear-gradient(135deg,#6D5EF8,#EC4899)' : 'var(--bg3)') + ';'
+      + 'color:' + (on ? '#fff' : 'var(--text2)') + ';'
+      + 'border:1px solid ' + (on ? 'transparent' : 'var(--border)') + ';'
+      + 'border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;">'
+      + st.label + '</button>';
+  }).join('');
+}
+
+function aisPickStyle(id) { _aisStyle = id; aisRenderStyles(); }
+
+// Writes a starting prompt from the Business Profile, so a customer who
+// has no idea what to type still gets something of their own rather than
+// a blank box.
+async function aisSuggest() {
+  var b = await apBizEnsure();
+  if (!b.name && !b.description) {
+    if (typeof showToast === 'function') showToast('Fill in your business profile first and I can suggest pictures', 'error');
+    showPage('business');
+    return;
+  }
+  var btn = document.getElementById('ais-suggest');
+  if (btn) { btn.disabled = true; btn.textContent = 'Thinking…'; }
+  try {
+    var text = await apAskCaption([
+      'Describe ONE photograph that would work as a social media image for this business:',
+      (b.name || '') + (b.description ? ' — ' + b.description : '') + '.',
+      b.industry ? 'Industry: ' + b.industry + '.' : '',
+      'Describe what is in the frame: the subject, the setting, the light, the mood.',
+      'Write it as a single sentence of plain visual description, 25 words or fewer.',
+      'Do NOT include words, text, logos or signs in the picture.',
+      'Do NOT name the business. Output ONLY the description, nothing else.',
+    ].filter(Boolean).join(' '));
+    var el = document.getElementById('ais-prompt');
+    if (el) { el.value = text.replace(/^["']|["']$/g, ''); el.focus(); }
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('Couldn\'t think of one — try again', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💡 Suggest one for my business'; }
+  }
+}
+
+async function aisGenerate() {
+  var promptEl = document.getElementById('ais-prompt');
+  var raw = (promptEl && promptEl.value || '').trim();
+  if (!raw) {
+    if (typeof showToast === 'function') showToast('Describe the picture first', 'error');
+    if (promptEl) promptEl.focus();
+    return;
+  }
+
+  var style = AIS_STYLES.filter(function (x) { return x.id === _aisStyle; })[0] || AIS_STYLES[0];
+  var count = parseInt((document.getElementById('ais-count') || {}).value, 10) || 2;
+
+  var btn    = document.getElementById('ais-btn');
+  var status = document.getElementById('ais-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Making ' + count + '…'; }
+  if (status) status.textContent = 'Drawing… this usually takes 5 to 15 seconds.';
+
+  try {
+    var res = await fetch(AP_WORKER + '/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: raw + '. ' + style.hint,
+        count: count,
+        user_id: (typeof _user !== 'undefined' && _user) ? _user.id : '',
+      }),
+    });
+    var d = await res.json();
+    if (!d.images || !d.images.length) throw new Error(d.error || 'Nothing came back');
+
+    d.images.forEach(function (im) {
+      _aisImages.unshift({ url: im.url, dataUrl: im.data_url || im.url, prompt: raw, on: true });
+    });
+    aisRenderGrid();
+
+    var q = document.getElementById('ais-quota');
+    if (q && d.cap) q.textContent = d.used + ' of ' + d.cap + ' today';
+    if (status) {
+      status.textContent = d.errors && d.errors.length
+        ? 'Made ' + d.images.length + '. ' + d.errors.length + ' didn\'t come out — try Generate again.'
+        : '';
+    }
+  } catch (e) {
+    if (status) status.innerHTML = '<span style="color:#DC2626;">' + escapeHtml(e.message || 'Could not make that picture') + '</span>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Generate'; }
+  }
+}
+
+function aisRenderGrid() {
+  var grid = document.getElementById('ais-grid');
+  var acts = document.getElementById('ais-actions');
+  if (!grid) return;
+  if (acts) acts.style.display = _aisImages.length ? 'flex' : 'none';
+
+  grid.innerHTML = _aisImages.map(function (im, i) {
+    return '<div style="background:var(--bg2);border:2px solid ' + (im.on ? 'var(--accent)' : 'var(--border)')
+      + ';border-radius:12px;overflow:hidden;">'
+      + '<img src="' + im.dataUrl + '" alt="" onclick="aisToggle(' + i + ')" '
+        + 'style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block;cursor:pointer;background:var(--bg3);">'
+      + '<div style="padding:8px 10px;display:flex;gap:6px;align-items:center;">'
+        + '<button onclick="aisToggle(' + i + ')" '
+          + 'style="flex:1;background:' + (im.on ? 'var(--accent)' : 'var(--bg3)') + ';'
+          + 'color:' + (im.on ? '#fff' : 'var(--text3)') + ';border:none;border-radius:6px;'
+          + 'padding:7px;font-size:11.5px;font-weight:700;cursor:pointer;">'
+          + (im.on ? '✓ Selected' : 'Select') + '</button>'
+        + '<button onclick="aisDownload(' + i + ')" title="Save this picture" '
+          + 'style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;'
+          + 'padding:7px 9px;font-size:11.5px;cursor:pointer;">⬇</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function aisToggle(i) {
+  if (!_aisImages[i]) return;
+  _aisImages[i].on = !_aisImages[i].on;
+  aisRenderGrid();
+}
+
+function aisDownload(i) {
+  var im = _aisImages[i];
+  if (!im) return;
+  var a = document.createElement('a');
+  a.href = im.dataUrl;
+  a.download = 'autopostleey-' + Date.now() + '.jpg';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function aisClear() {
+  _aisImages = [];
+  aisRenderGrid();
+  var q = document.getElementById('ais-quota');
+  if (q) q.textContent = '';
+}
+
+function aisSelected() {
+  return _aisImages.filter(function (im) { return im.on; });
+}
+
+// Hands the chosen pictures to the Photo Ad Maker. They arrive as data
+// URLs, which matters: the slideshow draws every photo onto a canvas and
+// exports an MP4 from it, and a canvas that has touched a cross-origin
+// image refuses to export at all.
+function aisLoadIntoPad(picks) {
+  return new Promise(function (resolve) {
+    if (typeof _padPhotos === 'undefined') { resolve(0); return; }
+    var room = Math.max(0, 10 - _padPhotos.length);
+    var use  = picks.slice(0, room);
+    if (!use.length) { resolve(0); return; }
+
+    var done = 0;
+    use.forEach(function (im) {
+      var img = new Image();
+      img.onload = function () {
+        _padPhotos.push({ dataUrl: im.dataUrl, labels: [], img: img });
+        if (++done === use.length) finish();
+      };
+      // One that fails to decode must not hang the whole thing.
+      img.onerror = function () { if (++done === use.length) finish(); };
+      img.src = im.dataUrl;
+    });
+
+    function finish() {
+      if (typeof padRenderGrid === 'function') padRenderGrid();
+      if (typeof padSetCurrentPhoto === 'function') padSetCurrentPhoto(Math.max(0, _padPhotos.length - use.length));
+      if (typeof padRefreshEditor === 'function') padRefreshEditor();
+      resolve(use.length);
+    }
+  });
+}
+
+async function aisSendToPhotoAd() {
+  var picks = aisSelected();
+  if (!picks.length) { if (typeof showToast === 'function') showToast('Select at least one picture first', 'error'); return; }
+  var n = await aisLoadIntoPad(picks);
+  showPage('photoad');
+  if (typeof showToast === 'function') {
+    showToast(n ? n + ' picture' + (n === 1 ? '' : 's') + ' added — add your text now ✨'
+                : 'Photo Ad Maker is full — remove a photo first', n ? 'success' : 'error');
+  }
+}
+
+async function aisSendToVideo() {
+  var picks = aisSelected();
+  if (picks.length < 2) {
+    if (typeof showToast === 'function') showToast('Select at least 2 pictures — a video needs something to move between', 'error');
+    return;
+  }
+  var n = await aisLoadIntoPad(picks);
+  showPage('photoad');
+  if (!n) { if (typeof showToast === 'function') showToast('Photo Ad Maker is full — remove a photo first', 'error'); return; }
+  if (typeof showToast === 'function') showToast('Ready — press Create slideshow video 🎬', 'success');
+  // Scroll the export button into view rather than firing it: the customer
+  // should see the order and the labels before a video gets made.
+  setTimeout(function () {
+    var btn = document.querySelector('[onclick="padExportSlideshow()"]');
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+}
+
 function padAddPhotos(input) {
   var files = Array.from(input.files).slice(0, 10 - _padPhotos.length);
   var loaded = 0;
@@ -15435,7 +15737,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.10';
+var AP_BUILD = '2026-09-15.11';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
