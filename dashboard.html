@@ -6309,18 +6309,70 @@ async function saveBusinessProfile() {
   //
   // This used to be a single upsert with onConflict:'user_id', which only
   // works if the table has a UNIQUE constraint on user_id. Without one,
-  // Postgres refuses the whole statement (42P10 "no unique or exclusion
-  // constraint matching the ON CONFLICT specification") and every save after
-  // the first one fails — the profile loads fine but will not update, which
-  // is exactly the symptom. This path needs no constraint at all.
+  // Postgres refuses the whole statement (42P10) and every save after the
+  // first one fails. This path needs no constraint at all.
+  //
+  // It also survives a column the table does not have. PostgREST rejects the
+  // WHOLE write if one field is unknown — "Could not find the 'language'
+  // column ... in the schema cache" — so a single missing column threw away
+  // the customer's business description, website and everything else. Now the
+  // unknown field is dropped and the rest is saved, with a note naming what
+  // could not be stored.
+  var T = 'autopostleey_businesses';
+  var dropped = [];
+
+  // PostgREST names the offending column in the message; pull it out.
+  function missingColumnFrom(err) {
+    if (!err) return '';
+    var m = String(err.message || '').match(/Could not find the '([^']+)' column/i);
+    return m ? m[1] : '';
+  }
+
+  async function writeWithRetry(kind) {
+    var payload = Object.assign({}, profile);
+    for (var attempt = 0; attempt < 8; attempt++) {
+      var res = kind === 'update'
+        ? await _db.from(T).update(payload).eq('user_id', _user.id).select('user_id')
+        : await _db.from(T).insert([payload]).select('user_id');
+
+      if (!res.error) return { ok: true, data: res.data };
+
+      var col = missingColumnFrom(res.error);
+      if (col && Object.prototype.hasOwnProperty.call(payload, col) && col !== 'user_id') {
+        delete payload[col];
+        dropped.push(col);
+        continue;               // try again without it
+      }
+      return { ok: false, error: res.error };
+    }
+    return { ok: false, error: { message: 'too many unknown columns' } };
+  }
+
+  function finish(data) {
+    if (dropped.length) {
+      // Keep the in-memory profile honest: what was not stored is not saved.
+      dropped.forEach(function (c) { delete profile[c]; });
+      _bizProfile = profile;
+      var ob2 = document.getElementById('ob1-icon');
+      if (ob2) ob2.textContent = '✅';
+      if (btn) { btn.textContent = oldLabel || '💾 Save Business Profile'; btn.disabled = false; }
+      console.warn('[biz] saved, but these columns do not exist in the table:', dropped.join(', '));
+      showToast('Saved — but your database has no "' + dropped.join('", "') + '" '
+        + (dropped.length > 1 ? 'columns' : 'column') + ', so that part was not stored. '
+        + 'Run business-profile-fix.sql in Supabase to add '
+        + (dropped.length > 1 ? 'them' : 'it') + '.', 'error');
+      return;
+    }
+    done(true);
+  }
+
   try {
-    var T = 'autopostleey_businesses';
     var found = await _db.from(T).select('user_id').eq('user_id', _user.id).limit(1);
     if (found.error) { done(false, 'Could not read your profile: ' + found.error.message); return; }
 
     if (found.data && found.data.length) {
-      var upd = await _db.from(T).update(profile).eq('user_id', _user.id).select('user_id');
-      if (upd.error) {
+      var upd = await writeWithRetry('update');
+      if (!upd.ok) {
         done(false, upd.error.code === '42501'
           ? 'The database is blocking updates to your profile (row level security). '
             + 'Add an UPDATE policy on autopostleey_businesses.'
@@ -6334,19 +6386,19 @@ async function saveBusinessProfile() {
           + 'This is usually a missing UPDATE policy on autopostleey_businesses.');
         return;
       }
-      done(true);
+      finish(upd.data);
       return;
     }
 
-    var ins = await _db.from(T).insert([profile]).select('user_id');
-    if (ins.error) {
+    var ins = await writeWithRetry('insert');
+    if (!ins.ok) {
       done(false, ins.error.code === '42501'
         ? 'The database is blocking new profiles (row level security). '
           + 'Add an INSERT policy on autopostleey_businesses.'
         : 'Could not save: ' + ins.error.message);
       return;
     }
-    done(true);
+    finish(ins.data);
   } catch (e) {
     done(false, 'Could not save: ' + (e && e.message ? e.message : 'unknown error'));
   }
@@ -15277,7 +15329,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-14.1';
+var AP_BUILD = '2026-09-15.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
