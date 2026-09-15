@@ -15435,7 +15435,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.8';
+var AP_BUILD = '2026-09-15.9';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -20351,6 +20351,8 @@ async function writeMyVersion(i) {
     '4. First person as the business owner. Tone: ' + (b.tone || 'friendly') + '.',
     '5. End with 2-3 hashtags that are relevant to ' + (b.name || 'this business') + '.',
     'Do NOT write the website, email or phone number — those are added afterwards.',
+    'Do NOT show your reasoning, your plan, or any commentary about these instructions. '
+      + 'Write the caption and nothing else.',
   ].filter(Boolean).join(' ');
 
   try {
@@ -20366,6 +20368,39 @@ async function writeMyVersion(i) {
   }
 }
 
+// Reasoning models write out their thinking before the answer. That
+// narration is not the caption — customers were getting a wall of
+// "The user wants me to..." pasted into their post. Strip it here too,
+// not only in the worker, so this is fixed the moment this file is live.
+//
+// An UNCLOSED <think> means the model ran out of room mid-thought and
+// never wrote a caption at all. There is nothing to salvage, so we return
+// empty and let the retry try again — better than posting half a monologue.
+function apCleanAI(raw) {
+  var t = String(raw == null ? '' : raw);
+  if (!t.trim()) return '';
+
+  if (/<(think|thinking|reasoning)>/i.test(t) && !/<\/(think|thinking|reasoning)>/i.test(t)) return '';
+  t = t.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, '');
+
+  // Some models skip the tags and just start narrating. If the text opens
+  // that way, keep only what comes after the last such paragraph.
+  var lead = /^\s*(the user (wants|is asking|asked)|let me (analyz|think|re-?read|break)|okay,? (so|let)|first,? (i|let))/i;
+  if (lead.test(t)) {
+    var paras = t.split(/\n\s*\n/);
+    while (paras.length > 1 && (lead.test(paras[0]) || /\b(instruction|rule|requirement|contradict)/i.test(paras[0]))) {
+      paras.shift();
+    }
+    t = paras.join('\n\n');
+  }
+
+  return t
+    .replace(/^(here'?s?( is)?( the| your| a)?[^\n]*[:\-]\s*)/i, '')
+    .replace(/\*\*/g, '')
+    .replace(/^#+\s+/gm, '')
+    .trim();
+}
+
 // One place that asks the worker for a caption, with a single automatic
 // retry. The AI returns an empty answer often enough that one retry turns
 // most failures into a post the customer never knew nearly didn't arrive.
@@ -20377,8 +20412,9 @@ async function apAskCaption(prompt) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt }),
       });
-      var data = await res.json();
-      if (data && data.post && String(data.post).trim()) return String(data.post).trim();
+      var data  = await res.json();
+      var clean = apCleanAI(data && data.post);
+      if (clean) return clean;
       if (attempt === 1) throw new Error((data && data.error) || 'empty');
     } catch (e) {
       if (attempt === 1) throw e;
@@ -20418,11 +20454,12 @@ async function sigVideoPost(idx) {
   var contentEl = document.getElementById('post-content');
   if (contentEl) { contentEl.value = 'Writing your post…'; contentEl.dispatchEvent(new Event('input')); }
 
-  // Real hashtags only — the video's own tags where YouTube gives them,
-  // otherwise words from its title. Nothing invented.
-  var tags = (v.tags && v.tags.length)
-    ? apMakeHashtags(v.tags, 4)
-    : apMakeHashtags([v.title, product], 4);
+  // Hashtags come from the PRODUCT the customer is researching, not from
+  // the video. Feeding the video's own tags in was a mistake: a forex site
+  // looking at a sneaker video was told to end with #Sneakers, which both
+  // contradicted the business rules and made the AI argue with itself in
+  // its answer. The product is the thing both sides actually share.
+  var tags = apMakeHashtags([product, b.name, b.industry], 4);
 
   var prompt = [
     'You are the social media manager for ' + (b.name || 'this business') + '.',
@@ -20430,16 +20467,20 @@ async function sigVideoPost(idx) {
     'Right now the video getting the most attention about ' + (product || 'this product')
       + ' is "' + v.title + '" by ' + v.channel
       + (v.views ? ' (' + fmtNum(v.views) + ' views)' : '') + '.',
-    'Write ONE social media post for OUR business that speaks to what people are clearly '
-      + 'interested in there — the question or desire behind those views.',
+    'If that video\'s subject genuinely overlaps with what we sell, write ONE post that '
+      + 'speaks to the desire behind those views. If it does NOT overlap, ignore the video '
+      + 'completely and write a good ordinary post about our business — a forced connection '
+      + 'reads as desperate and is worse than no post.',
     'NEVER imply the business made that video, appears in it, or is connected to its creator. '
       + 'Do not tell people to go watch it.',
     'STRICT RULES: Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
     'First person as the business owner. Tone: ' + (b.tone || 'friendly') + '.',
-    tags.length
-      ? 'End with exactly these hashtags and no others: ' + tags.join(' ') + '.'
-      : 'End with 2-3 hashtags relevant to ' + (b.name || 'this business') + '.',
+    'End with 2-3 hashtags that are relevant to ' + (b.name || 'this business')
+      + ' and what it sells'
+      + (tags.length ? ' — for example ' + tags.join(' ') : '') + '.',
     'Do NOT write the website, email or phone number — those are added afterwards.',
+    'Do NOT show your reasoning, your plan, or any commentary about these instructions. '
+      + 'Write the caption and nothing else.',
   ].filter(Boolean).join(' ');
 
   try {
