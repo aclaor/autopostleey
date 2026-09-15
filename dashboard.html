@@ -4628,22 +4628,10 @@ async function analyzeImageAndGenerate() {
   if (btn) { btn.innerHTML = '⏳ Analyzing...'; btn.disabled = true; }
   if (status) status.style.display = 'block';
 
-  // Get business info
-  var bizname = '';
-  var description = '';
-  try {
-    var saved = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
-    if (saved) {
-      var cfg = JSON.parse(saved);
-      bizname     = cfg.bizname     || '';
-      description = cfg.description || '';
-    }
-  } catch(e) {}
-
-  if (!bizname && typeof _bizProfile !== 'undefined' && _bizProfile) {
-    bizname     = _bizProfile.name        || '';
-    description = _bizProfile.description || '';
-  }
+  // Business Profile first — see apBiz().
+  var _b = await apBizEnsure();
+  var bizname = _b.name;
+  var description = _b.description;
 
   try {
     // Convert image to base64 for Claude vision
@@ -4897,12 +4885,9 @@ function removeBulkRow(rowIndex) {
 }
 
 async function generateBulkRowAI(rowIndex) {
-  var bizname = '';
-  var description = '';
-  try {
-    var saved = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
-    if (saved) { var cfg = JSON.parse(saved); bizname = cfg.bizname||''; description = cfg.description||''; }
-  } catch(e) {}
+  var _b = apBiz();
+  var bizname = _b.name;
+  var description = _b.description;
 
   var row = _bulkRows[rowIndex];
   var mediaItem = row && row.mediaId ? _bulkMedia.find(function(m){ return m.id === row.mediaId; }) : null;
@@ -4914,7 +4899,10 @@ async function generateBulkRowAI(rowIndex) {
     var payload = mediaItem
       ? { image_base64: mediaItem.dataUrl.split(',')[1], media_type: mediaItem.type, business_name: bizname, description: description }
       : { business_name: bizname, description: description, topic: 'general promotion',
-          tone: 'friendly and engaging', audience: 'general public', location: apMarket() };
+          tone: _b.tone || 'friendly and engaging',
+          audience: _b.audience || 'general public',
+          location: _b.location || apMarket(),
+          rules: apBizRules(_b) };
 
     var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev' + endpoint, {
       method: 'POST',
@@ -4994,6 +4982,101 @@ async function getPublicImageUrl(dataUrl) {
 
 
 // ── CONTACT FOOTER HELPER ──────────────────────────────────
+// ── Who is this post for? ─────────────────────────────────────────────
+// ONE answer, used everywhere.
+//
+// Several features used to read the AI AutoPoster's localStorage config
+// FIRST and only fall back to the Business Profile. Anyone who had once set
+// the AutoPoster up for a different site — say, Autopostleey itself — got
+// every generated post written about that instead of their own business,
+// no matter what the Business Profile said.
+//
+// The Business Profile is the customer's stated identity, so it wins. The
+// AutoPoster config only fills in blanks.
+function apBiz() {
+  var out = { name:'', description:'', industry:'', tone:'', audience:'',
+              location:'', language:'', website:'', email:'', phone:'' };
+
+  function take(src, map) {
+    if (!src) return;
+    Object.keys(map).forEach(function (k) {
+      if (!out[k]) out[k] = String(src[map[k]] == null ? '' : src[map[k]]).trim();
+    });
+  }
+
+  // 1. The Business Profile — the authoritative source.
+  take(typeof _bizProfile !== 'undefined' ? _bizProfile : null, {
+    name:'name', description:'description', industry:'industry', tone:'tone',
+    audience:'audience', location:'location', language:'language',
+    website:'website', email:'email', phone:'phone',
+  });
+
+  // 2. The AutoPoster config, for anything still blank.
+  take(typeof _autoConfig !== 'undefined' ? _autoConfig : null, {
+    name:'bizname', description:'description', audience:'audience', website:'website',
+  });
+
+  // 3. Its localStorage copy, same role.
+  try {
+    var raw = localStorage.getItem('ap_cfg_' + ((typeof _user !== 'undefined' && _user) ? _user.id : ''));
+    if (raw) take(JSON.parse(raw), {
+      name:'bizname', description:'description', audience:'audience', website:'website',
+    });
+  } catch (e) {}
+
+  return out;
+}
+
+// apBiz() is synchronous, so it can only see what is already in memory. If
+// the Business Profile has not been loaded yet it would fall through to the
+// AutoPoster config — the very mix-up this is meant to prevent. This loads
+// the profile first, then answers.
+async function apBizEnsure() {
+  var b = apBiz();
+  var haveProfile = (typeof _bizProfile !== 'undefined' && _bizProfile
+                     && (_bizProfile.name || _bizProfile.description));
+  if (haveProfile) return b;
+  try {
+    var r = await _db.from('autopostleey_businesses')
+      .select('*').eq('user_id', _user.id)
+      .order('updated_at', { ascending: false }).limit(1);
+    if (r.data && r.data[0]) { _bizProfile = r.data[0]; return apBiz(); }
+  } catch (e) {
+    // Older rows may have no updated_at; and .maybeSingle() used elsewhere
+    // fails outright on duplicates, so never use it here.
+    try {
+      var r2 = await _db.from('autopostleey_businesses')
+        .select('*').eq('user_id', _user.id).limit(1);
+      if (r2.data && r2.data[0]) { _bizProfile = r2.data[0]; return apBiz(); }
+    } catch (e2) {}
+  }
+  return apBiz();
+}
+
+function apBizReady() {
+  var b = apBiz();
+  return !!(b.name || b.description);
+}
+
+// The rules every prompt should carry, so a caption is about the customer's
+// business and nothing else.
+function apBizRules(b) {
+  b = b || apBiz();
+  var who = b.name || 'this business';
+  return [
+    'Write ONLY about ' + who + (b.description ? ' — ' + b.description : '') + '.',
+    b.industry ? 'Industry: ' + b.industry + '.' : '',
+    b.audience ? 'Audience: ' + b.audience + '.' : '',
+    b.location ? 'Location: ' + b.location + '.' : '',
+    'NEVER mention, promote or name any other company, brand, app or tool — '
+      + 'especially not the software used to publish this post.',
+    'Every hashtag must be relevant to ' + who + ' and what it sells. '
+      + 'No hashtags about marketing software, automation, social media tools, '
+      + 'finance or investing unless that IS this business.',
+    (typeof apLangRule === 'function' ? apLangRule() : ''),
+  ].filter(Boolean).join(' ');
+}
+
 function buildContactFooter() {
   var profile = _bizProfile || {};
   var parts = [];
@@ -6094,39 +6177,13 @@ async function generateComposePost() {
   var btn = document.getElementById('compose-ai-btn');
   if (btn) { btn.innerHTML = '⏳ Generating...'; btn.disabled = true; }
 
-  var bizname = '';
-  var description = '';
-  var website = '';
-
-  // 1. Try AI AutoPoster localStorage config
-  try {
-    var _sc = localStorage.getItem('ap_cfg_' + (_user ? _user.id : ''));
-    if (_sc) {
-      var _sc2 = JSON.parse(_sc);
-      bizname     = _sc2.bizname     || '';
-      description = _sc2.description || '';
-      website     = _sc2.website     || '';
-    }
-  } catch(e) {}
-
-  // 2. Try _bizProfile
-  if (!bizname && typeof _bizProfile !== 'undefined' && _bizProfile && _bizProfile.name) {
-    bizname     = _bizProfile.name        || '';
-    description = _bizProfile.description || '';
-    website     = _bizProfile.website     || '';
-  }
-
-  // 3. Try Supabase
-  if (!bizname) {
-    try {
-      var bres = await _db.from('autopostleey_businesses').select('*').eq('user_id', _user.id).limit(1);
-      if (bres.data && bres.data[0]) {
-        bizname     = bres.data[0].name        || '';
-        description = bres.data[0].description || '';
-        website     = bres.data[0].website     || '';
-      }
-    } catch(e) {}
-  }
+  // The Business Profile decides who this post is about. This used to read
+  // the AutoPoster's localStorage config FIRST, which is why posts came out
+  // about whatever that was configured for instead of the customer.
+  var _b = await apBizEnsure();
+  var bizname = _b.name;
+  var description = _b.description;
+  var website = _b.website;
 
   if (!bizname && !description) {
     showToast('Please set up Business Profile or AI AutoPoster first!', 'error');
@@ -6154,10 +6211,13 @@ async function generateComposePost() {
       body: JSON.stringify({
         business_name: bizname,
         description:   description,
-        audience:      'general public',
-        location:      apMarket(),
+        // These used to be hardcoded, so the profile's audience and tone
+        // were collected and then ignored.
+        audience:      _b.audience || 'general public',
+        location:      _b.location || apMarket(),
         topic:         TOPIC_MAP[typeVal] || TOPIC_MAP['random'],
-        tone:          'friendly and engaging'
+        tone:          _b.tone || 'friendly and engaging',
+        rules:         apBizRules(_b)
       })
     });
     var data = await resp.json();
@@ -6685,7 +6745,8 @@ async function generateAIPost() {
         tone:          _bizProfile.tone        || 'friendly',
         audience:      _bizProfile.audience    || '',
         location:      _bizProfile.location    || '',
-        topic:         topic                   || ''
+        topic:         topic                   || '',
+        rules:         apBizRules()
       })
     });
     var data = await res.json();
@@ -8722,7 +8783,8 @@ async function generateBulkAI() {
           description:   _bizProfile.description || '',
           tone:          _bizProfile.tone || 'friendly',
           audience:      _bizProfile.audience || '',
-          topic:         prompts[i]
+          topic:         prompts[i],
+          rules:         apBizRules()
         })
       });
       var data = await res.json();
@@ -9465,7 +9527,8 @@ async function generatePreview() {
           audience:      audience || 'general public',
           location:      apMarket(),
           topic:         picked.emoji + ' ' + picked.label + ' — ' + (picked.topic || 'general promotion'),
-          tone:          'friendly and engaging'
+          tone:          (apBiz().tone || 'friendly and engaging'),
+          rules:         apBizRules()
         })
       });
       data = await resp.json();
@@ -9730,31 +9793,44 @@ function getConnectedPlatforms() {
   return [];
 }
 
+// Describes the CUSTOMER'S business for a prompt.
+//
+// This used to default to a hardcoded description of Autopostleey itself and
+// only replace it if a database read succeeded. That read used .maybeSingle(),
+// which FAILS when a user has more than one profile row — and duplicate rows
+// are exactly what the old broken save produced. So the read errored, the
+// default stood, and every caption was written about Autopostleey instead of
+// the customer. There is now no such default: if we do not know the business,
+// we say so and let the caller stop.
 async function getBizContext() {
-  var biz = 'Autopostleey - AI-powered social media scheduling and automation platform for businesses. NOT a finance app.';
-  try {
-    var r = await _db.from('autopostleey_businesses').select('name,industry,description').eq('user_id',_user.id).maybeSingle();
-    if (r.data && r.data.name) {
-      biz = r.data.name;
-      if (r.data.industry) biz += ' (' + r.data.industry + ')';
-      if (r.data.description) biz += ': ' + r.data.description.slice(0,120);
-    }
-  } catch(e) {}
+  var b = await apBizEnsure();
+  if (!b.name && !b.description) return '';   // caller decides what to do
+
+  var biz = b.name || 'this business';
+  if (b.industry) biz += ' (' + b.industry + ')';
+  if (b.description) biz += ': ' + b.description.slice(0, 200);
   return biz;
 }
 
 async function generateCaption(topic, platforms, withImage) {
   var biz = await getBizContext();
+  if (!biz) {
+    showToast('Set up your Business Profile first so posts are about YOUR business.', 'error');
+    if (typeof showPage === 'function') showPage('business');
+    return '';
+  }
+  var _bz = apBiz();
   var prompt = 'You are a social media copywriter. Write a READY-TO-POST social media caption.'
     + ' Business: ' + biz + '.'
+    + ' ' + apBizRules(_bz)
     + ' Topic: ' + topic + '.'
     + ' STRICT RULES:'
     + ' (1) Output ONLY the caption — no intro, no explanation, no "here is", no "feel free to adjust".'
     + ' (2) Max 100 words. Short and punchy.'
     + ' (3) No bullet points or numbered lists.'
-    + ' (4) End with 2-3 hashtags on the last line.'
+    + ' (4) End with 2-3 hashtags on the last line, all relevant to ' + (_bz.name || 'this business') + '.'
     + ' (5) Write in first person as the business owner.'
-    + ' (6) No finance content.'
+    + ' (6) Never name or promote any other company, brand, app or tool.'
     + (withImage ? ' (7) The post includes an image.' : '')
     + ' Output ONLY the caption text, nothing else.';
 
@@ -10293,6 +10369,7 @@ async function analyzeAndCaptionImage(imageDataUrl, userText) {
   addAPAIMsg('Analyzing your image... 🔍', 'bot');
 
   var biz = await getBizContext();
+  if (!biz) { addAPAIMsg('Set up your Business Profile first so posts are about YOUR business.', 'bot'); return; }
   var platforms = getConnectedPlatforms();
 
   try {
@@ -10424,6 +10501,11 @@ async function sendAPAI() {
 
   var platforms = getConnectedPlatforms();
   var biz = await getBizContext();
+  if (!biz) {
+    addAPAIMsg('I need your Business Profile first — otherwise I would be writing about the wrong business. '
+      + 'Open Business Profile, fill in the name and what you do, then ask me again.', 'bot');
+    return;
+  }
 
   var lower = text.toLowerCase();
   var imageWords = ['image', 'picture', 'photo', 'pic', 'generate', 'create image', 'make image', 'show me', 'draw', 'ilustr', 'visual'];
@@ -15329,7 +15411,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.1';
+var AP_BUILD = '2026-09-15.6';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
