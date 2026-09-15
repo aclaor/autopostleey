@@ -15435,7 +15435,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.7';
+var AP_BUILD = '2026-09-15.8';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -19831,14 +19831,23 @@ function renderSignals(d) {
     }).join('') + '</tbody></table>';
 
   // ── top videos ──
-  document.getElementById('sig-videos').innerHTML = (yt.videos || []).map(function (v) {
-    return '<a href="https://www.youtube.com/watch?v=' + encodeURIComponent(v.id) + '" target="_blank" rel="noopener noreferrer" ' +
-      'style="text-decoration:none;color:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:block;">' +
-      (v.thumb ? '<img src="' + escapeHtml(v.thumb) + '" alt="" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block;">' : '') +
-      '<div style="padding:10px 12px;">' +
-        '<div style="font-size:12.5px;font-weight:700;line-height:1.35;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(v.title) + '</div>' +
-        '<div style="color:var(--text3);font-size:11.5px;">' + escapeHtml(v.channel) + ' · ' + fmtNum(v.views) + ' views</div>' +
-      '</div></a>';
+  document.getElementById('sig-videos').innerHTML = (yt.videos || []).map(function (v, vi) {
+    var watch = 'https://www.youtube.com/watch?v=' + encodeURIComponent(v.id);
+    return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;">' +
+      '<a href="' + watch + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block;">' +
+        (v.thumb ? '<img src="' + escapeHtml(v.thumb) + '" alt="" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block;">' : '') +
+        '<div style="padding:10px 12px 8px;">' +
+          '<div style="font-size:12.5px;font-weight:700;line-height:1.35;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(v.title) + '</div>' +
+          '<div style="color:var(--text3);font-size:11.5px;">' + escapeHtml(v.channel) + ' · ' + fmtNum(v.views) + ' views</div>' +
+        '</div>' +
+      '</a>' +
+      '<div style="padding:0 12px 12px;margin-top:auto;display:flex;gap:8px;align-items:center;">' +
+        '<button onclick="sigVideoPost(' + vi + ')" ' +
+          'style="flex:1;padding:9px;background:linear-gradient(135deg,#6D5EF8,#EC4899);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">' +
+          '✨ Make a post about this</button>' +
+        '<a href="' + watch + '" target="_blank" rel="noopener noreferrer" style="color:var(--text3);font-size:11px;text-decoration:none;flex-shrink:0;">watch ↗</a>' +
+      '</div>' +
+    '</div>';
   }).join('') || '<div style="color:var(--text3);font-size:13px;">No videos found for that term.</div>';
 
   // ── Google Trends links + keyword chips ──
@@ -20277,50 +20286,169 @@ function renderAds(ads) {
 }
 
 async function writeMyVersion(i) {
-  var ad = _adsData && _adsData.ads[i];
+  var ad = _adsData && _adsData.ads && _adsData.ads[i];
   if (!ad) return;
 
-  if (!_bizProfile || !_bizProfile.name) {
-    if (typeof showToast === 'function') showToast('Set up your business profile first, so posts sound like you', 'error');
+  // Load the Business Profile before writing a word. Reading _bizProfile
+  // directly was the bug: if the profile had not been fetched yet the
+  // prompt went out with no business in it, and the AI wrote something
+  // generic that matched neither the ad nor the customer.
+  var b = await apBizEnsure();
+  if (!b.name && !b.description) {
+    if (typeof showToast === 'function') {
+      showToast('Set up your business profile first, so posts sound like you', 'error');
+    }
     showPage('business');
     return;
+  }
+
+  // What we actually know about this ad. Meta often publishes an ad with
+  // no body text at all, and the old prompt then quoted an empty string —
+  // which is why the result felt unrelated to the ad. Say plainly what we
+  // have and what we don't.
+  var adText = String(ad.ad_text || '').trim().slice(0, 500);
+  var term   = (document.getElementById('as-q') || {}).value || '';
+  var facts  = [];
+  if (ad.advertiser)   facts.push('Advertiser: ' + ad.advertiser + '.');
+  if (term)            facts.push('They are advertising in the "' + term + '" market — the same market as us.');
+  if (ad.days_running != null) facts.push('This ad has been running ' + ad.days_running + ' days, so it is probably working.');
+  if (ad.platforms)    facts.push('Running on: ' + ad.platforms + '.');
+
+  // Seed the topic box so the customer can see what the post is based on,
+  // and so Generate again reuses it.
+  var topicEl = document.getElementById('post-topic');
+  if (topicEl) {
+    topicEl.value = 'My own version of a competitor ad'
+      + (term ? ' in ' + term : '')
+      + (adText ? ': "' + adText.slice(0, 120) + (adText.length > 120 ? '…' : '') + '"' : '');
+    topicEl.dispatchEvent(new Event('input'));
   }
 
   showPage('compose');
   var contentEl = document.getElementById('post-content');
   if (contentEl) { contentEl.value = 'Writing your version…'; contentEl.dispatchEvent(new Event('input')); }
 
-
-  // Deliberately asks for the ANGLE, not the words. Copying a
-  // competitor's ad copy is both plagiarism and a legal risk for the
-  // customer, so the prompt forbids reusing their phrasing.
+  // Deliberately asks for the ANGLE, not the words. Copying a competitor's
+  // ad copy is both plagiarism and a legal risk for the customer, so the
+  // prompt forbids reusing their phrasing.
   var prompt = [
-    'You are the social media manager for ' + (_bizProfile.name || 'this business')
-      + (_bizProfile.description ? ' — ' + _bizProfile.description : '') + '.',
-    'A competitor is running this ad: "' + String(ad.ad_text || '').slice(0, 400) + '"',
-    'Identify the ANGLE it uses (the benefit, offer, emotion or objection it targets).',
-    'Then write a COMPLETELY ORIGINAL post for our business using that same angle.',
+    'You are the social media manager for ' + (b.name || 'this business') + '.',
+    apBizRules(b),
+    'A competitor in the same market is running an ad right now.',
+    facts.join(' '),
+    adText
+      ? 'Their ad says: "' + adText + '" '
+        + 'Work out the ANGLE it uses — the benefit, offer, emotion or objection it targets — '
+        + 'and name that angle to yourself before writing.'
+      : 'Their ad text is not published, so you only know the market and that the ad keeps running. '
+        + 'Pick the strongest angle for this kind of product and use that.',
+    'Now write a COMPLETELY ORIGINAL post for OUR business using that angle, '
+      + 'about what WE sell — not about them.',
     'STRICT RULES:',
-    '1. Do NOT reuse their sentences, slogans, or distinctive phrases. Write fresh copy.',
-    '2. Never mention the competitor or their brand name.',
+    '1. Do NOT reuse their sentences, slogans or distinctive phrases. Write fresh copy.',
+    '2. Never mention the competitor, their brand name, or that a competitor exists.',
     '3. Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
-    '4. First person as the business owner. Tone: ' + (_bizProfile.tone || 'friendly') + '.',
-    '5. End with 2-3 relevant hashtags.',
-  ].join(' ');
+    '4. First person as the business owner. Tone: ' + (b.tone || 'friendly') + '.',
+    '5. End with 2-3 hashtags that are relevant to ' + (b.name || 'this business') + '.',
+    'Do NOT write the website, email or phone number — those are added afterwards.',
+  ].filter(Boolean).join(' ');
 
   try {
-    var res = await fetch(AP_WORKER + '/generate-caption', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt }),
-    });
-    var data = await res.json();
+    var text = await apAskCaption(prompt);
     if (contentEl) {
-      contentEl.value = data.post || '';
+      contentEl.value = apAppendContact(text);
       contentEl.dispatchEvent(new Event('input'));
     }
-    if (!data.post) throw new Error('empty');
     if (typeof showToast === 'function') showToast('Your own version is ready — review it before posting ✨', 'success');
+  } catch (e) {
+    if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
+    if (typeof showToast === 'function') showToast('Couldn\'t write that one — try again', 'error');
+  }
+}
+
+// One place that asks the worker for a caption, with a single automatic
+// retry. The AI returns an empty answer often enough that one retry turns
+// most failures into a post the customer never knew nearly didn't arrive.
+async function apAskCaption(prompt) {
+  for (var attempt = 0; attempt < 2; attempt++) {
+    try {
+      var res  = await fetch(AP_WORKER + '/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt }),
+      });
+      var data = await res.json();
+      if (data && data.post && String(data.post).trim()) return String(data.post).trim();
+      if (attempt === 1) throw new Error((data && data.error) || 'empty');
+    } catch (e) {
+      if (attempt === 1) throw e;
+    }
+  }
+  throw new Error('empty');
+}
+
+// ── Market Signals → compose ──────────────────────────────────────
+// "What's getting watched right now" lists the videos actually winning
+// attention for this product. This turns any of them into a post without
+// pretending the business made the video.
+async function sigVideoPost(idx) {
+  var v = _sigData && _sigData.youtube && _sigData.youtube.videos
+    ? _sigData.youtube.videos[idx] : null;
+  if (!v) return;
+
+  var b = await apBizEnsure();
+  if (!b.name && !b.description) {
+    if (typeof showToast === 'function') {
+      showToast('Set up your business profile first, so posts sound like you', 'error');
+    }
+    showPage('business');
+    return;
+  }
+
+  var product = (_sigData && _sigData.product) || '';
+
+  var topicEl = document.getElementById('post-topic');
+  if (topicEl) {
+    topicEl.value = 'Getting watched right now: "' + v.title + '" by ' + v.channel
+      + (v.views ? ' (' + fmtNum(v.views) + ' views)' : '');
+    topicEl.dispatchEvent(new Event('input'));
+  }
+
+  showPage('compose');
+  var contentEl = document.getElementById('post-content');
+  if (contentEl) { contentEl.value = 'Writing your post…'; contentEl.dispatchEvent(new Event('input')); }
+
+  // Real hashtags only — the video's own tags where YouTube gives them,
+  // otherwise words from its title. Nothing invented.
+  var tags = (v.tags && v.tags.length)
+    ? apMakeHashtags(v.tags, 4)
+    : apMakeHashtags([v.title, product], 4);
+
+  var prompt = [
+    'You are the social media manager for ' + (b.name || 'this business') + '.',
+    apBizRules(b),
+    'Right now the video getting the most attention about ' + (product || 'this product')
+      + ' is "' + v.title + '" by ' + v.channel
+      + (v.views ? ' (' + fmtNum(v.views) + ' views)' : '') + '.',
+    'Write ONE social media post for OUR business that speaks to what people are clearly '
+      + 'interested in there — the question or desire behind those views.',
+    'NEVER imply the business made that video, appears in it, or is connected to its creator. '
+      + 'Do not tell people to go watch it.',
+    'STRICT RULES: Output ONLY the caption. No markdown, no "Here is". Under 80 words.',
+    'First person as the business owner. Tone: ' + (b.tone || 'friendly') + '.',
+    tags.length
+      ? 'End with exactly these hashtags and no others: ' + tags.join(' ') + '.'
+      : 'End with 2-3 hashtags relevant to ' + (b.name || 'this business') + '.',
+    'Do NOT write the website, email or phone number — those are added afterwards.',
+  ].filter(Boolean).join(' ');
+
+  try {
+    var text = await apAskCaption(prompt);
+    if (contentEl) {
+      contentEl.value = apAppendContact(text);
+      contentEl.dispatchEvent(new Event('input'));
+    }
+    if (typeof showToast === 'function') showToast('Post written — review and schedule it! ✨', 'success');
   } catch (e) {
     if (contentEl) { contentEl.value = ''; contentEl.dispatchEvent(new Event('input')); }
     if (typeof showToast === 'function') showToast('Couldn\'t write that one — try again', 'error');
