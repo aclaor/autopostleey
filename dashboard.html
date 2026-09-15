@@ -6204,11 +6204,28 @@ async function generateComposePost() {
     'random':         'create the most engaging post type for this business right now'
   };
 
+  // One automatic retry. An AI that answers with nothing is usually a
+  // one-off — making the customer click again for it is poor manners.
+  async function askWorker(payload) {
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      var r = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      var d = await r.json().catch(function () { return {}; });
+      var t = (d.post || '').trim();
+      if (t) return { ok: true, post: t };
+      if (attempt === 1) {
+        console.warn('[compose] empty answer, retrying once:', d.error || ('HTTP ' + r.status));
+        continue;
+      }
+      return { ok: false, error: d.error || ('The AI service returned ' + r.status) };
+    }
+  }
+
   try {
-    var resp = await fetch('https://autopostleey-ai.alexclaor.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    var _payload = {
         business_name: bizname,
         description:   description,
         // These used to be hardcoded, so the profile's audience and tone
@@ -6218,13 +6235,11 @@ async function generateComposePost() {
         topic:         TOPIC_MAP[typeVal] || TOPIC_MAP['random'],
         tone:          _b.tone || 'friendly and engaging',
         rules:         apBizRules(_b)
-      })
-    });
-    var data = await resp.json();
-    console.log('Compose worker response:', data);
-    var text = (data.post || '').trim();
-    // Strip and validate — reject if only contact/hashtags/dashes
-    if (!text) throw new Error(data.error || 'No post generated');
+    };
+    var res = await askWorker(_payload);
+    console.log('Compose worker response:', res);
+    if (!res.ok) throw new Error(res.error || 'No post generated');
+    var text = res.post;
     var stripped = text.replace(/[\-—#🌐📧\s]/g,'').replace(/autopostleey\.com/gi,'').replace(/hello@[\w.]+/gi,'').trim();
     if (stripped.length < 20) throw new Error('Caption too short — try again');
 
@@ -6238,7 +6253,16 @@ async function generateComposePost() {
     showToast('✨ AI post generated!', 'success');
   } catch(e) {
     console.error('generateComposePost error:', e.message);
-    showToast('AI generation failed: ' + e.message, 'error');
+    var msg = String(e.message || '');
+    // "All AI providers failed — groq/...: ..." is useful to you and noise to
+    // a customer. Keep the detail in the console, show something they can act on.
+    if (/All AI providers failed/i.test(msg)) {
+      showToast('The AI service is not responding right now. Try again in a moment.', 'error');
+    } else if (/empty/i.test(msg)) {
+      showToast('The AI returned nothing twice. Try a different content type, or try again shortly.', 'error');
+    } else {
+      showToast('Could not write the post: ' + msg, 'error');
+    }
   }
 
   if (btn) { btn.innerHTML = '<span>✨</span> Generate Post'; btn.disabled = false; }
@@ -15411,7 +15435,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.6';
+var AP_BUILD = '2026-09-15.7';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
