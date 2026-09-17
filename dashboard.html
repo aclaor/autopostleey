@@ -3634,7 +3634,10 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
         <div class="page-header">
           <div>
             <div class="page-title">🎬 Video Ad Enhancer</div>
-            <div class="page-sub">Upload your product video · AI writes the script · Animated text overlays make it pop</div>
+            <div class="page-sub">Upload your product video · AI writes the script · Animated text overlays make it pop
+              <span id="veh-build" style="margin-left:8px;font-size:10.5px;color:var(--text3);
+                    background:var(--bg3);border-radius:20px;padding:2px 8px;"></span>
+            </div>
           </div>
           <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;">PRO</span>
         </div>
@@ -3887,6 +3890,8 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
               <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;font-weight:700;color:var(--text);">🎬 Preview</div>
                 <div id="veh-status" style="font-size:11px;color:var(--text3);">Upload a video to start</div>
+                <div id="veh-report" style="font-size:10.5px;color:var(--text3);margin-top:6px;
+                     line-height:1.5;word-break:break-word;"></div>
               </div>
 
             <!-- Auto-Post Schedule -->
@@ -6365,6 +6370,10 @@ function showPage(name) {
       }
     } catch (e) {}
     if (typeof loadTrendingVideos === 'function') loadTrendingVideos();
+  }
+  if (name === 'videoenhancer') {
+    var _vb = document.getElementById('veh-build');
+    if (_vb) _vb.textContent = 'build ' + AP_BUILD;
   }
   if (name === 'aistudio' && typeof aisRenderStyles === 'function') aisRenderStyles();
   if (name === 'adscout') { var _aq = document.getElementById('as-q'); if (_aq && !_aq.value && _bizProfile && _bizProfile.name) _aq.placeholder = 'e.g. what ' + _bizProfile.name + ' sells'; }
@@ -15737,7 +15746,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-17.2';
+var AP_BUILD = '2026-09-17.3';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17394,6 +17403,13 @@ ${s}`;He.lastIndex=0,pe=pe.replace(He,bi=>{let yi=h(this,gt,Nt).call(this,bi.sli
 //   3. Refuse to upload a recording whose picture is short. Failing out loud
 //      is always better than posting something broken.
 
+// Writes one line the customer can read to me off their phone screen.
+function vehReport(msg) {
+  var el = document.getElementById('veh-report');
+  if (el) el.textContent = msg;
+  try { console.log('[VEH] ' + msg); } catch (e) {}
+}
+
 async function vehKeepAwake() {
   try {
     if (navigator.wakeLock && navigator.wakeLock.request) return await navigator.wakeLock.request('screen');
@@ -17644,6 +17660,8 @@ async function vehFastEncode(opts) {
 
   var pick = await vehPickCodec(W, H, bitrate);
   if (!pick) throw new Error('This browser cannot encode video directly');
+  vehReport('Fast encoder \u00b7 ' + pick.codec + ' \u00b7 ' + vehFmtDuration(duration)
+    + ' \u00b7 build ' + AP_BUILD);
 
   var Muxer  = pick.muxer === 'mp4' ? window.Mp4Muxer.Muxer  : window.WebMMuxer.Muxer;
   var Target = pick.muxer === 'mp4' ? window.Mp4Muxer.ArrayBufferTarget
@@ -17844,9 +17862,12 @@ async function vehFastEncode(opts) {
       throw new Error('The picture came through with a ' + maxGap.toFixed(1)
         + ' second gap — this device cannot decode fast enough.');
     }
-    console.log('[VEH] encoded ' + encoded + ' frames, ' + vehFmtDuration(lastMedia)
-      + ' of ' + vehFmtDuration(duration) + ', largest gap ' + maxGap.toFixed(2) + 's'
-      + (slowdowns ? ', slowed down ' + slowdowns + 'x' : '') + ', codec ' + pick.codec);
+    // On screen, not only in the console — this is diagnosed on a phone,
+    // where there is no console to read.
+    vehReport('Encoded ' + encoded + ' frames \u00b7 ' + vehFmtDuration(lastMedia)
+      + ' of ' + vehFmtDuration(duration) + ' \u00b7 biggest gap ' + maxGap.toFixed(2) + 's'
+      + (slowdowns ? ' \u00b7 slowed ' + slowdowns + 'x' : '')
+      + ' \u00b7 ' + pick.codec + ' \u00b7 build ' + AP_BUILD);
 
     if (wantAudio) {
       onProgress({ frame: totalFrames, totalFrames: totalFrames, pct: 99, secondsLeft: 0, stage: 'audio' });
@@ -19497,6 +19518,7 @@ async function vehPostToSocialImpl() {
   // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
   mimeType = apPickVideoMime(true).mime || mimeType;
 
+  vehReport('Slow recorder (real time) \u00b7 keep this tab in front \u00b7 build ' + AP_BUILD);
   var stream = canvas.captureStream(30);
   try {
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
