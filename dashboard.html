@@ -15737,7 +15737,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-17.1';
+var AP_BUILD = '2026-09-17.2';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17732,6 +17732,14 @@ async function vehFastEncode(opts) {
   var encoded = 0, lastMedia = -1, lastCallback = Date.now(), lastReport = 0;
   var minGap = 1 / fps;
 
+  // How far apart two encoded frames ever were. This is the number that
+  // matters on a phone: playing at 4x asks the decoder for four seconds of
+  // video every second, and a phone that cannot keep up delivers frames in
+  // bursts with long holes between them. Media time still advances, so the
+  // finished file still claims the full length — while the picture freezes
+  // through every hole. That is "it says 1:45 but stops at 33 seconds".
+  var maxGap = 0, slowdowns = 0;
+
   try {
     await readFrom.play();
   } catch (e) {
@@ -17762,6 +17770,18 @@ async function vehFastEncode(opts) {
         var mt = meta && isFinite(meta.mediaTime) ? meta.mediaTime : readFrom.currentTime;
 
         if (mt - lastMedia >= minGap - 0.001) {
+          if (lastMedia >= 0) {
+            var gap = mt - lastMedia;
+            if (gap > maxGap) maxGap = gap;
+            // The decoder is falling behind. Slow down rather than press on
+            // and produce a video full of frozen stretches. Encoding takes
+            // longer; a video that actually plays is worth the wait.
+            if ((gap > 0.9 || encoder.encodeQueueSize > 24) && readFrom.playbackRate > 1) {
+              readFrom.playbackRate = Math.max(1, readFrom.playbackRate / 2);
+              slowdowns++;
+              maxGap = 0;   // judge the result by what happens at the new speed
+            }
+          }
           lastMedia = mt;
           drawFrame(ctx, mt, W, H, readFrom);
           try {
@@ -17815,6 +17835,18 @@ async function vehFastEncode(opts) {
       throw new Error('Only ' + vehFmtDuration(Math.max(0, lastMedia)) + ' of this '
         + vehFmtDuration(duration) + ' video could be encoded.');
     }
+
+    // Reaching the end is not enough — the picture has to be continuous.
+    // A hole longer than a couple of seconds is a frozen stretch the
+    // customer would see as a blank video, so hand over to the slower
+    // recorder instead of shipping it.
+    if (maxGap > 2.5) {
+      throw new Error('The picture came through with a ' + maxGap.toFixed(1)
+        + ' second gap — this device cannot decode fast enough.');
+    }
+    console.log('[VEH] encoded ' + encoded + ' frames, ' + vehFmtDuration(lastMedia)
+      + ' of ' + vehFmtDuration(duration) + ', largest gap ' + maxGap.toFixed(2) + 's'
+      + (slowdowns ? ', slowed down ' + slowdowns + 'x' : '') + ', codec ' + pick.codec);
 
     if (wantAudio) {
       onProgress({ frame: totalFrames, totalFrames: totalFrames, pct: 99, secondsLeft: 0, stage: 'audio' });
@@ -18529,6 +18561,7 @@ function vehStartPreview() {
   if (_vehAnimFrame) cancelAnimationFrame(_vehAnimFrame);
   var canvas = document.getElementById('veh-canvas');
   if (!canvas) return;
+  vehWireOverlayDrag();
   var ctx = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
   _vehVideo.play().catch(function(){});
@@ -18544,13 +18577,8 @@ function vehStartPreview() {
       if (t < o.startSec || t > o.endSec) return;
       var prog = Math.min(1, (t - o.startSec) / 0.4);
       var slideY = (1 - prog) * 25;
-      // Use custom y% or position preset
-      var y;
-      if (o.y !== null && o.y !== undefined) {
-        y = o.y * H;
-      } else {
-        y = o.position === 'top' ? H * 0.1 : o.position === 'center' ? H * 0.5 : H * 0.85;
-      }
+      var _pp = vehOverlayPos(o, W, H);
+      var y = _pp.y;
       // Override global style with per-overlay settings
       var savedStyle = _vehStyle;
       _vehStyle = o.style || _vehStyle;
@@ -18559,7 +18587,7 @@ function vehStartPreview() {
       if (o.textColor   && document.getElementById('veh-text-color'))   document.getElementById('veh-text-color').value   = o.textColor;
       if (o.accentColor && document.getElementById('veh-accent-color')) document.getElementById('veh-accent-color').value = o.accentColor;
 
-      vehDrawOverlay(ctx, o.text, W/2, y + slideY, prog, W, o.fontSize || 1);
+      vehDrawOverlay(ctx, o.text, _pp.x, y + slideY, prog, W, o.fontSize || 1);
 
       _vehStyle = savedStyle;
       if (savedTextColor   && document.getElementById('veh-text-color'))   document.getElementById('veh-text-color').value   = savedTextColor;
@@ -18613,11 +18641,90 @@ function vehDrawFrameAt(ctx, t, W, H, srcEl) {
     var p = Math.min(1, (t - o.startSec) / 0.4);
     var savedStyle = _vehStyle;
     _vehStyle = o.style || _vehStyle;
-    var y = o.position === 'top' ? H * 0.1 : o.position === 'center' ? H * 0.5 : H * 0.85;
-    vehDrawOverlay(ctx, o.text, W / 2, y, p, W, o.fontSize || 1);
+    var pp = vehOverlayPos(o, W, H);
+    vehDrawOverlay(ctx, o.text, pp.x, pp.y, p, W, o.fontSize || 1);
     _vehStyle = savedStyle;
   });
   vehDrawCaptions(ctx, t, W, H);
+}
+
+// ── Overlay text: wrapped, shrunk to fit, and draggable ──────────────
+// It used to be one fillText with no wrapping, so anything longer than a
+// few words ran off both edges of the video. It also could not be moved:
+// three preset positions and nothing in between.
+
+// Where an overlay sits. A dragged overlay stores x and y as fractions of
+// the frame, so it lands in the same place whatever the video's size. An
+// untouched one still uses the top/centre/bottom preset.
+function vehOverlayPos(o, W, H) {
+  var x = (o && o.x !== null && o.x !== undefined) ? o.x * W : W * 0.5;
+  var y;
+  if (o && o.y !== null && o.y !== undefined) y = o.y * H;
+  else y = (o && o.position === 'top') ? H * 0.1
+         : (o && o.position === 'center') ? H * 0.5
+         : H * 0.85;
+  return { x: x, y: y };
+}
+
+// Greedy wrap, with a hard break for a single word too long to fit.
+function vehWrapText(ctx, text, maxWidth) {
+  var words = String(text == null ? '' : text).split(/\s+/).filter(Boolean);
+  if (!words.length) return [''];
+  var lines = [], line = '';
+  for (var i = 0; i < words.length; i++) {
+    var test = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(test).width <= maxWidth || !line) {
+      if (ctx.measureText(test).width > maxWidth && !line) {
+        // One word wider than the frame — break it rather than overflow.
+        var chunk = '';
+        for (var c = 0; c < words[i].length; c++) {
+          if (ctx.measureText(chunk + words[i][c]).width > maxWidth && chunk) {
+            lines.push(chunk); chunk = '';
+          }
+          chunk += words[i][c];
+        }
+        line = chunk;
+      } else line = test;
+    } else { lines.push(line); line = words[i]; }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// Picks the biggest font that fits the text inside the frame in at most
+// 4 lines, then returns the laid-out lines. The caller just draws them.
+function vehLayoutOverlay(ctx, text, W, fontScale, fontSpec) {
+  var maxWidth = W * 0.86;
+  var size = Math.round((W / 14) * (fontScale || 1));
+  var lines = [''];
+  for (var guard = 0; guard < 40; guard++) {
+    ctx.font = fontSpec(size);
+    lines = vehWrapText(ctx, text, maxWidth);
+    if (lines.length <= 4 || size <= 10) break;
+    size = Math.round(size * 0.92);
+  }
+  if (lines.length > 4) { lines = lines.slice(0, 4); lines[3] = lines[3].replace(/\s*\S*$/, '') + '…'; }
+  ctx.font = fontSpec(size);
+  var widest = 0;
+  lines.forEach(function (l) { widest = Math.max(widest, ctx.measureText(l).width); });
+  return { lines: lines, size: size, lineHeight: Math.round(size * 1.18), width: widest };
+}
+
+// The box an overlay occupies, used for hit-testing a drag.
+function vehOverlayBox(ctx, o, W, H) {
+  var pos  = vehOverlayPos(o, W, H);
+  var spec = vehFontSpecFor(o.style || _vehStyle);
+  var lay  = vehLayoutOverlay(ctx, o.text || '', W, o.fontSize || 1, spec);
+  var h    = lay.lines.length * lay.lineHeight;
+  return { x: pos.x - lay.width / 2 - 14, y: pos.y - h / 2 - 12,
+           w: lay.width + 28, h: h + 24, cx: pos.x, cy: pos.y };
+}
+
+function vehFontSpecFor(style) {
+  if (style === 'bold')     return function (px) { return 'bold ' + px + 'px Impact, Arial Black, sans-serif'; };
+  if (style === 'glass')    return function (px) { return 'bold ' + Math.round(px * 0.8) + 'px Inter, sans-serif'; };
+  if (style === 'subtitle') return function (px) { return 'bold ' + Math.round(px * 0.85) + 'px Inter, sans-serif'; };
+  return function (px) { return 'bold ' + px + 'px Inter, sans-serif'; };
 }
 
 function vehDrawOverlay(ctx, text, x, y, alpha, W, fontScale) {
@@ -18625,24 +18732,27 @@ function vehDrawOverlay(ctx, text, x, y, alpha, W, fontScale) {
   var style = _vehStyle;
   var textColor   = document.getElementById('veh-text-color')   ? document.getElementById('veh-text-color').value   : '#ffffff';
   var accentColor = document.getElementById('veh-accent-color') ? document.getElementById('veh-accent-color').value : '#a855f7';
-  var fontSize = Math.round((W / 14) * fontScale);
+
+  var spec = vehFontSpecFor(style);
+  var lay  = vehLayoutOverlay(ctx, style === 'bold' ? String(text || '').toUpperCase() : text,
+                              W, fontScale, spec);
+  var lines = lay.lines, lh = lay.lineHeight;
+  var top   = y - ((lines.length - 1) * lh) / 2;
 
   ctx.globalAlpha = alpha;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.font = spec(lay.size);
 
   if (style === 'bold') {
-    ctx.font = 'bold ' + fontSize + 'px Impact, Arial Black, sans-serif';
     ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 12;
     ctx.fillStyle = textColor;
-    ctx.fillText(text.toUpperCase(), x, y);
+    lines.forEach(function (l, i) { ctx.fillText(l, x, top + i * lh); });
     ctx.shadowBlur = 0;
 
   } else if (style === 'glass') {
-    ctx.font = 'bold ' + Math.round(fontSize * 0.8) + 'px Inter, sans-serif';
-    var tw = ctx.measureText(text).width;
-    var padH = fontSize * 0.5, padW = fontSize * 0.7;
-    var bw = tw + padW*2, bh = fontSize + padH*2;
+    var padH = lay.size * 0.5, padW = lay.size * 0.7;
+    var bw = lay.width + padW * 2, bh = lines.length * lh + padH * 2;
     ctx.fillStyle = 'rgba(0,0,0,0.52)';
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(x - bw/2, y - bh/2, bw, bh, 12);
@@ -18651,30 +18761,119 @@ function vehDrawOverlay(ctx, text, x, y, alpha, W, fontScale) {
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
     ctx.stroke();
     ctx.fillStyle = textColor;
-    ctx.fillText(text, x, y);
+    lines.forEach(function (l, i) { ctx.fillText(l, x, top + i * lh); });
 
   } else if (style === 'neon') {
-    ctx.font = 'bold ' + fontSize + 'px Inter, sans-serif';
     ctx.shadowColor = accentColor; ctx.shadowBlur = 20;
     ctx.fillStyle = accentColor;
-    ctx.fillText(text, x, y);
-    ctx.shadowColor = accentColor; ctx.shadowBlur = 40;
-    ctx.fillText(text, x, y);
+    lines.forEach(function (l, i) { ctx.fillText(l, x, top + i * lh); });
+    ctx.shadowBlur = 40;
+    lines.forEach(function (l, i) { ctx.fillText(l, x, top + i * lh); });
     ctx.shadowBlur = 0;
 
   } else if (style === 'subtitle') {
-    ctx.font = 'bold ' + Math.round(fontSize * 0.85) + 'px Inter, sans-serif';
-    var tw2 = ctx.measureText(text).width;
-    var ph = fontSize * 0.45, pw = fontSize * 0.6;
-    var bw2 = tw2 + pw*2, bh2 = fontSize + ph*2;
+    var ph = lay.size * 0.45, pw = lay.size * 0.6;
+    var bw2 = lay.width + pw * 2, bh2 = lines.length * lh + ph * 2;
     ctx.fillStyle = 'rgba(0,0,0,0.78)';
     ctx.fillRect(x - bw2/2, y - bh2/2, bw2, bh2);
     ctx.fillStyle = textColor;
-    ctx.fillText(text, x, y);
+    lines.forEach(function (l, i) { ctx.fillText(l, x, top + i * lh); });
   }
 
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
+}
+
+// ── Dragging an overlay on the preview ───────────────────────────────
+// One pointer handler for mouse and finger alike. A 4px threshold keeps a
+// tap from becoming a drag, and touch-action:none stops the phone
+// scrolling the page instead of moving the label.
+var _vehDrag = null;
+
+function vehWireOverlayDrag() {
+  var canvas = document.getElementById('veh-canvas');
+  if (!canvas || canvas.__apDragWired) return;
+  canvas.__apDragWired = true;
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', vehOverlayPointerDown);
+}
+
+function vehCanvasPoint(canvas, ev) {
+  var r = canvas.getBoundingClientRect();
+  return {
+    x: (ev.clientX - r.left) * (canvas.width  / Math.max(1, r.width)),
+    y: (ev.clientY - r.top)  * (canvas.height / Math.max(1, r.height)),
+  };
+}
+
+function vehOverlayPointerDown(ev) {
+  var canvas = ev.currentTarget;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var p = vehCanvasPoint(canvas, ev);
+  var t = _vehVideo ? _vehVideo.currentTime : 0;
+
+  // Topmost visible overlay under the finger wins.
+  var hit = null;
+  for (var i = _vehOverlays.length - 1; i >= 0; i--) {
+    var o = _vehOverlays[i];
+    if (t < o.startSec || t > o.endSec) continue;
+    var savedStyle = _vehStyle; _vehStyle = o.style || _vehStyle;
+    var box = vehOverlayBox(ctx, o, W, H);
+    _vehStyle = savedStyle;
+    if (p.x >= box.x && p.x <= box.x + box.w && p.y >= box.y && p.y <= box.y + box.h) { hit = o; break; }
+  }
+  if (!hit) return;
+
+  ev.preventDefault();
+  var startPos = vehOverlayPos(hit, W, H);
+  _vehDrag = { o: hit, moved: false, dx: p.x - startPos.x, dy: p.y - startPos.y, W: W, H: H, canvas: canvas };
+
+  // Pause so the label stays where the finger is instead of sliding away
+  // under a playing video.
+  try { if (_vehVideo && !_vehVideo.paused) { _vehVideo.pause(); _vehDrag.wasPlaying = true; } } catch (e) {}
+
+  window.addEventListener('pointermove', vehOverlayPointerMove);
+  window.addEventListener('pointerup', vehOverlayPointerUp);
+  window.addEventListener('pointercancel', vehOverlayPointerUp);
+}
+
+function vehOverlayPointerMove(ev) {
+  if (!_vehDrag) return;
+  ev.preventDefault();
+  var p = vehCanvasPoint(_vehDrag.canvas, ev);
+  var nx = p.x - _vehDrag.dx, ny = p.y - _vehDrag.dy;
+  if (!_vehDrag.moved) {
+    var pos = vehOverlayPos(_vehDrag.o, _vehDrag.W, _vehDrag.H);
+    if (Math.abs(nx - pos.x) < 4 && Math.abs(ny - pos.y) < 4) return;
+    _vehDrag.moved = true;
+  }
+  // Keep it on screen.
+  _vehDrag.o.x = Math.min(0.97, Math.max(0.03, nx / _vehDrag.W));
+  _vehDrag.o.y = Math.min(0.97, Math.max(0.03, ny / _vehDrag.H));
+  vehDrawPreviewOnce();
+}
+
+function vehOverlayPointerUp() {
+  window.removeEventListener('pointermove', vehOverlayPointerMove);
+  window.removeEventListener('pointerup', vehOverlayPointerUp);
+  window.removeEventListener('pointercancel', vehOverlayPointerUp);
+  if (!_vehDrag) return;
+  var d = _vehDrag;
+  _vehDrag = null;
+  if (d.moved && typeof showToast === 'function') showToast('Moved — the video will use this spot', 'success');
+  if (d.wasPlaying) { try { _vehVideo.play().catch(function(){}); } catch (e) {} }
+  if (typeof vehRenderOverlayEditor === 'function') vehRenderOverlayEditor();
+}
+
+// Paints a single frame with the overlays where they are now. Used while
+// dragging, when the video is paused and the preview loop is not running.
+function vehDrawPreviewOnce() {
+  var canvas = document.getElementById('veh-canvas');
+  if (!canvas || !_vehVideo) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  vehDrawFrameAt(ctx, _vehVideo.currentTime, W, H, _vehVideo);
 }
 
 async function vehExportVideo() {
@@ -18794,8 +18993,8 @@ async function vehExportVideoImpl(skipFast) {
     _vehOverlays.forEach(function(o) {
       if (t < o.startSec || t > o.endSec) return;
       var prog = Math.min(1, (t - o.startSec) / 0.4);
-      var y = o.position === 'top' ? H * 0.12 : o.position === 'center' ? H * 0.5 : H * 0.82;
-      vehDrawOverlay(ctx, o.text, W/2, y, prog, W);
+      var pp4 = vehOverlayPos(o, W, H);
+      vehDrawOverlay(ctx, o.text, pp4.x, pp4.y, prog, W, o.fontSize || 1);
     });
     vehDrawCaptions(ctx, t, W, H);
   }, function () {
@@ -19382,8 +19581,8 @@ async function vehPostToSocialImpl() {
       if (t < o.startSec || t > o.endSec) return;
       var p = Math.min(1,(t-o.startSec)/0.4);
       var savedStyle = _vehStyle; _vehStyle = o.style || _vehStyle;
-      var y = o.position==='top' ? H*0.1 : o.position==='center' ? H*0.5 : H*0.85;
-      vehDrawOverlay(ctx, o.text, W/2, y, p, W, o.fontSize||1);
+      var pp5 = vehOverlayPos(o, W, H);
+      vehDrawOverlay(ctx, o.text, pp5.x, pp5.y, p, W, o.fontSize||1);
       _vehStyle = savedStyle;
     });
     vehDrawCaptions(ctx, t, W, H);
