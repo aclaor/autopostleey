@@ -15737,7 +15737,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-15.11';
+var AP_BUILD = '2026-09-17.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17371,6 +17371,106 @@ ${s}`;He.lastIndex=0,pe=pe.replace(He,bi=>{let yi=h(this,gt,Nt).call(this,bi.sli
 //
 // Falls back to the old MediaRecorder path if anything here is unsupported.
 
+// ── Keeping a REAL-TIME recording honest ──────────────────────────────
+//
+// Three export paths still fall back to MediaRecorder + canvas.captureStream
+// when WebCodecs is missing (iOS Safari, older Android browsers). That path
+// records in real time, and it had a hole big enough to post a broken video
+// through:
+//
+//   requestAnimationFrame STOPS when the tab goes to the background or the
+//   phone screen dims. The <video> keeps playing and MediaRecorder keeps
+//   recording, but nothing new is ever drawn on the canvas — so captureStream
+//   emits no fresh frames. MediaRecorder timestamps by the wall clock, so the
+//   finished file still claims the full length while the picture stops at the
+//   moment the screen dimmed. That is exactly "it shows 2 minutes but only the
+//   first 20 seconds play, the rest is blank".
+//
+// Three defences, in order of preference:
+//   1. Ask for a wake lock so the screen does not dim in the first place.
+//   2. Keep drawing from a timer when rAF stops. Timers are throttled in the
+//      background too, but to about 1/second rather than to nothing — a
+//      choppy video beats a blank one.
+//   3. Refuse to upload a recording whose picture is short. Failing out loud
+//      is always better than posting something broken.
+
+async function vehKeepAwake() {
+  try {
+    if (navigator.wakeLock && navigator.wakeLock.request) return await navigator.wakeLock.request('screen');
+  } catch (e) {}
+  return null;
+}
+function vehReleaseAwake(lock) { if (lock) { try { lock.release(); } catch (e) {} } }
+
+// Drives a real-time render loop that cannot silently die.
+//   draw(t)   — paint one frame at the video's current time
+//   onDone()  — the video finished normally
+//   onStall(msg) — frames stopped arriving; nothing should be uploaded
+// Returns a handle with .stop().
+function vehDriveRealtime(video, draw, onDone, onStall) {
+  var finished = false;
+  var lastDraw = 0;
+  var lastTime = -1;
+  var lastMoved = Date.now();
+  var raf = null, timer = null, watch = null;
+  var lock = null;
+  vehKeepAwake().then(function (l) { lock = finished ? (vehReleaseAwake(l), null) : l; });
+
+  function cleanup() {
+    finished = true;
+    if (raf) cancelAnimationFrame(raf);
+    clearInterval(timer); clearInterval(watch);
+    vehReleaseAwake(lock);
+  }
+
+  function paint() {
+    if (finished) return;
+    var d = video.duration;
+    if (video.ended || (isFinite(d) && d > 0 && video.currentTime >= d - 0.05)) {
+      cleanup(); onDone(); return;
+    }
+    lastDraw = Date.now();
+    if (video.currentTime !== lastTime) { lastTime = video.currentTime; lastMoved = Date.now(); }
+    try { draw(video.currentTime); } catch (e) {}
+  }
+
+  function tick() { paint(); if (!finished) raf = requestAnimationFrame(tick); }
+
+  // The backup. Only draws when rAF has gone quiet, so in the foreground it
+  // costs nothing.
+  timer = setInterval(function () {
+    if (!finished && Date.now() - lastDraw > 400) paint();
+  }, 250);
+
+  // The video's own clock has not moved for 20 seconds: playback is dead,
+  // not merely throttled.
+  watch = setInterval(function () {
+    if (finished) return;
+    if (Date.now() - lastMoved > 20000) {
+      cleanup();
+      onStall('The video stopped playing part-way through — this usually means the screen '
+            + 'went to sleep or the tab went to the background. Keep this tab in front with '
+            + 'the screen on, then try again.');
+    }
+  }, 2000);
+
+  raf = requestAnimationFrame(tick);
+  return { stop: cleanup, coveredTo: function () { return lastTime; } };
+}
+
+// How much of the video actually made it into the picture. Anything under
+// 97% means the recording is short and must not be posted.
+function vehCoverageShortfall(video, reachedSec) {
+  var d = video && video.duration;
+  if (!isFinite(d) || d <= 0) return null;
+  var got = Math.max(0, reachedSec || 0);
+  if (got >= d - Math.max(0.6, d * 0.03)) return null;
+  return 'Only ' + vehFmtDuration(got) + ' of this ' + vehFmtDuration(d)
+       + ' video was recorded, so it was not posted — a video that stops part-way '
+       + 'through is worse than no video. This happens when the screen sleeps or the '
+       + 'tab goes to the background. Keep this tab in front and try again.';
+}
+
 function vehFastEncodeSupported() {
   return typeof window.VideoEncoder === 'function'
       && typeof window.VideoFrame === 'function'
@@ -17428,7 +17528,7 @@ function vehSeekFrameTo(video, t, timeoutMs) {
 
 // Decodes the source audio and encodes it into the same file. Returns false
 // if there is no usable audio — the video still gets made, just silent.
-async function vehAddAudioTrack(file, muxer, codecKind, onNote) {
+async function vehAddAudioTrack(file, muxer, codecKind, onNote, maxSeconds) {
   if (typeof window.AudioEncoder !== 'function') return false;
   var audioCodec = codecKind === 'mp4' ? 'mp4a.40.2' : 'opus';
   var decoded;
@@ -17463,6 +17563,9 @@ async function vehAddAudioTrack(file, muxer, codecKind, onNote) {
     // enormous buffer.
     var SLICE = rate;
     var total = decoded.length;
+    if (isFinite(maxSeconds) && maxSeconds > 0) {
+      total = Math.min(total, Math.ceil(maxSeconds * rate));
+    }
     var pos = 0;
     var chanData = [];
     for (var ci = 0; ci < chans; ci++) chanData.push(decoded.getChannelData(ci));
@@ -17703,9 +17806,23 @@ async function vehFastEncode(opts) {
     if (encErr) throw new Error('Encoder failed: ' + (encErr.message || encErr));
     if (!encoded) throw new Error('No frames were captured from the video.');
 
+    // The picture must reach the end of the video. If the decoder gave up
+    // part-way we would otherwise ship a file whose length is right and
+    // whose picture stops early — the worst kind of bug, because it looks
+    // fine until somebody plays it. Throwing here sends the caller to the
+    // slower recorder instead.
+    if (lastMedia < duration - Math.max(0.6, duration * 0.03)) {
+      throw new Error('Only ' + vehFmtDuration(Math.max(0, lastMedia)) + ' of this '
+        + vehFmtDuration(duration) + ' video could be encoded.');
+    }
+
     if (wantAudio) {
       onProgress({ frame: totalFrames, totalFrames: totalFrames, pct: 99, secondsLeft: 0, stage: 'audio' });
-      var gotAudio = await vehAddAudioTrack(audioFile, muxer, pick.muxer, onProgress);
+      // Cap the audio at the length of the picture. An audio track longer
+      // than the video track is precisely what makes a player show a full
+      // duration with a blank second half.
+      var gotAudio = await vehAddAudioTrack(audioFile, muxer, pick.muxer, onProgress,
+                                            Math.min(duration, lastMedia + minGap));
       if (!gotAudio) console.warn('[VEH] no audio track in output');
     }
 
@@ -18632,6 +18749,16 @@ async function vehExportVideoImpl(skipFast) {
   });
   _vehRecorder.ondataavailable = function(e) { if (e.data.size) _vehChunks.push(e.data); };
   _vehRecorder.onstop = function() {
+    var shortDl = _vehRtAborted
+      || vehCoverageShortfall(_vehVideo, _vehRtDrive ? _vehRtDrive.coveredTo() : 0);
+    if (shortDl) {
+      if (btn) { btn.textContent = '⬇️ Download Enhanced Video'; btn.disabled = false; }
+      var sd = document.getElementById('veh-status');
+      if (sd) sd.textContent = shortDl;
+      showToast(shortDl, 'error');
+      try { vehStartPreview(); } catch (e) {}
+      return;
+    }
     var blob = new Blob(_vehChunks, { type: 'video/webm' });
     var link = document.createElement('a');
     link.download = 'enhanced-ad-' + Date.now() + '.webm';
@@ -18651,23 +18778,19 @@ async function vehExportVideoImpl(skipFast) {
   _vehVideo.play();
 
   var _expLastNote = 0;
-  function renderExportFrame() {
-    if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) {
-      _vehRecorder.stop();
-      return;
-    }
-    // A long video used to render with no sign of progress at all.
+  _vehRtAborted = '';
+  _vehRtDrive = vehDriveRealtime(_vehVideo, function (t) {
     if (performance.now() - _expLastNote > 500) {
       _expLastNote = performance.now();
-      var _pct = Math.round((_vehVideo.currentTime / (_vehVideo.duration || 1)) * 100);
-      var _left = Math.max(0, (_vehVideo.duration || 0) - _vehVideo.currentTime);
+      var _pct = Math.round((t / (_vehVideo.duration || 1)) * 100);
+      var _left = Math.max(0, (_vehVideo.duration || 0) - t);
       var _se = document.getElementById('veh-status');
-      if (_se) _se.textContent = 'Rendering ' + _pct + '% \u00b7 ' + vehFmtDuration(_left) + ' left';
+      if (_se) _se.textContent = 'Rendering ' + _pct + '% \u00b7 ' + vehFmtDuration(_left)
+        + ' left \u00b7 keep this tab in front';
       if (btn) btn.textContent = '\u23f3 Rendering ' + _pct + '%';
     }
     ctx.clearRect(0, 0, W, H);
-    ctx.drawImage(_vehVideo, 0, 0, W, H);
-    var t = _vehVideo.currentTime;
+    try { ctx.drawImage(_vehVideo, 0, 0, W, H); } catch (e) {}
     _vehOverlays.forEach(function(o) {
       if (t < o.startSec || t > o.endSec) return;
       var prog = Math.min(1, (t - o.startSec) / 0.4);
@@ -18675,9 +18798,12 @@ async function vehExportVideoImpl(skipFast) {
       vehDrawOverlay(ctx, o.text, W/2, y, prog, W);
     });
     vehDrawCaptions(ctx, t, W, H);
-    _vehAnimFrame = requestAnimationFrame(renderExportFrame);
-  }
-  renderExportFrame();
+  }, function () {
+    try { if (_vehRecorder.state === 'recording') _vehRecorder.stop(); } catch (e) {}
+  }, function (msg) {
+    _vehRtAborted = msg;
+    try { if (_vehRecorder.state === 'recording') _vehRecorder.stop(); } catch (e) {}
+  });
   showToast('🔴 Rendering... Do not close this tab.', 'success');
 }
 
@@ -18954,6 +19080,11 @@ function vehExportAndSaveImpl(skipFast) {
     clearTimeout(watchdog); clearTimeout(hardStop);
     if (stopped) return;
     if (!chunks3.length) { fail('Nothing was recorded — reload and try again.'); return; }
+    // A short picture must never be auto-posted. This path runs unattended,
+    // so nobody would have watched it go out broken.
+    var short3 = _vehRtAborted
+      || vehCoverageShortfall(_vehVideo, _vehRtDrive ? _vehRtDrive.coveredTo() : 0);
+    if (short3) { fail(short3); return; }
     var ext3 = mime3.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
     var blob3 = new Blob(chunks3, { type: mime3 });
     progress('Uploading your video (' + (blob3.size / 1048576).toFixed(1) + ' MB)\u2026');
@@ -18981,20 +19112,20 @@ function vehExportAndSaveImpl(skipFast) {
       }
     }, 15000);
 
-    function rf3() {
+    _vehRtAborted = '';
+    _vehRtDrive = vehDriveRealtime(_vehVideo, function (t3) {
       if (stopped) return;
       var d = _vehVideo.duration;
-      var done = _vehVideo.ended || (isFinite(d) && d > 0 && _vehVideo.currentTime >= d - 0.05);
-      if (done) { if (rec3.state === 'recording') rec3.stop(); return; }
-
-      var t3 = _vehVideo.currentTime;
       vehDrawFrameAt(ctx3, t3, W3, H3);
       if (isFinite(d) && d > 0) {
-        progress('Preparing your video — ' + Math.round((t3 / d) * 100) + '% (keep this tab open)');
+        progress('Preparing your video — ' + Math.round((t3 / d) * 100) + '% (keep this tab in front)');
       }
-      requestAnimationFrame(rf3);
-    }
-    rf3();
+    }, function () {
+      try { if (rec3.state === 'recording') rec3.stop(); } catch (e) {}
+    }, function (msg) {
+      _vehRtAborted = msg;
+      try { if (rec3.state === 'recording') rec3.stop(); } catch (e) {}
+    });
   }
 
   try { _vehVideo.currentTime = 0; } catch (e) {}
@@ -19192,6 +19323,19 @@ async function vehPostToSocialImpl() {
   var recorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: _postRate });
   recorder.ondataavailable = function(e) { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = async function() {
+    // Never upload a recording whose picture is short. Before this check a
+    // backgrounded tab produced a full-length file with a frozen picture,
+    // and it went out to every connected account looking fine until played.
+    var _short = _vehRtAborted
+      || vehCoverageShortfall(_vehVideo, _vehRtDrive ? _vehRtDrive.coveredTo() : 0);
+    if (_short) {
+      var _nS = document.getElementById('veh-platform-note');
+      if (_nS) _nS.textContent = _short;
+      showToast(_short, 'error');
+      if (btn) { btn.textContent = '\ud83d\ude80 Post to Social Media'; btn.disabled = false; }
+      try { vehStartPreview(); } catch (e) {}
+      return;
+    }
     var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
     var blob = new Blob(chunks, { type: mimeType });
     var file = new File([blob], 'enhanced-ad-' + Date.now() + '.' + ext, { type: mimeType });
@@ -19229,11 +19373,11 @@ async function vehPostToSocialImpl() {
   _vehVideo.currentTime = 0;
   _vehVideo.play();
 
-  function renderFr() {
-    if (_vehVideo.ended || _vehVideo.currentTime >= _vehVideo.duration) { recorder.stop(); return; }
+  var _rfNote = 0;
+  _vehRtAborted = '';
+  _vehRtDrive = vehDriveRealtime(_vehVideo, function (t) {
     ctx.clearRect(0,0,W,H);
     try { ctx.drawImage(_vehVideo,0,0,W,H); } catch(e) {}
-    var t = _vehVideo.currentTime;
     _vehOverlays.forEach(function(o) {
       if (t < o.startSec || t > o.endSec) return;
       var p = Math.min(1,(t-o.startSec)/0.4);
@@ -19250,17 +19394,23 @@ async function vehPostToSocialImpl() {
         var _p2 = Math.round((t / _d2) * 100);
         var _n4 = document.getElementById('veh-platform-note');
         if (_n4) _n4.textContent = 'Step 1 of 2 \u00b7 Preparing your video \u2014 ' + _p2 + '% \u00b7 '
-          + vehFmtDuration(Math.max(0, _d2 - t)) + ' left \u00b7 pick the accounts while you wait';
+          + vehFmtDuration(Math.max(0, _d2 - t)) + ' left \u00b7 keep this tab in front';
         if (btn) btn.textContent = '\u23f3 Step 1 of 2 \u00b7 Preparing ' + _p2 + '%';
       }
     }
-    requestAnimationFrame(renderFr);
-  }
-  var _rfNote = 0;
-  renderFr();
+  }, function () {
+    try { if (recorder.state === 'recording') recorder.stop(); } catch (e) {}
+  }, function (msg) {
+    _vehRtAborted = msg;
+    try { if (recorder.state === 'recording') recorder.stop(); } catch (e) {}
+  });
 }
 
 var _vehPublicUrl = '';
+// Set when a real-time recording was cut short, so onstop can refuse to upload it.
+var _vehRtAborted = '';
+var _vehRtDrive = null;
+
 
 // Reads the connections, and FETCHES them if they are not loaded yet rather
 // than reporting an empty account. Same fix as Video Ad Maker — this was
