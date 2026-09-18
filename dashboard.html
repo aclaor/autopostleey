@@ -3642,6 +3642,19 @@ Post 5: Here is a tip that changed everything 💡"></textarea>
           <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;">PRO</span>
         </div>
 
+        <div id="veh-log-box" style="background:#111827;border:2px solid #6D5EF8;border-radius:12px;
+             padding:12px 14px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <strong style="font-size:12.5px;color:#A5B4FC;">What the video maker is doing</strong>
+            <button onclick="vehCopyLog()"
+              style="margin-left:auto;background:#6D5EF8;color:#fff;border:none;border-radius:7px;
+                     padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">Copy</button>
+          </div>
+          <div id="veh-log" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;
+               color:#E5E7EB;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+               max-height:190px;overflow:auto;"></div>
+        </div>
+
         <div style="display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:24px;align-items:start;">
 
           <!-- LEFT: Controls -->
@@ -6374,6 +6387,10 @@ function showPage(name) {
   if (name === 'videoenhancer') {
     var _vb = document.getElementById('veh-build');
     if (_vb) _vb.textContent = 'build ' + AP_BUILD;
+    if (!window.__vehDeviceLogged) {
+      window.__vehDeviceLogged = true;
+      vehReport(vehDeviceLine());
+    }
   }
   if (name === 'aistudio' && typeof aisRenderStyles === 'function') aisRenderStyles();
   if (name === 'adscout') { var _aq = document.getElementById('as-q'); if (_aq && !_aq.value && _bizProfile && _bizProfile.name) _aq.placeholder = 'e.g. what ' + _bizProfile.name + ' sells'; }
@@ -15926,7 +15943,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-18.5';
+var AP_BUILD = '2026-09-18.6';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17584,10 +17601,60 @@ ${s}`;He.lastIndex=0,pe=pe.replace(He,bi=>{let yi=h(this,gt,Nt).call(this,bi.sli
 //      is always better than posting something broken.
 
 // Writes one line the customer can read to me off their phone screen.
+var _vehLog = [];
 function vehReport(msg) {
   var el = document.getElementById('veh-report');
   if (el) el.textContent = msg;
+  var stamp = new Date().toTimeString().slice(0, 8);
+  _vehLog.push(stamp + '  ' + msg);
+  if (_vehLog.length > 40) _vehLog.shift();
+  var box = document.getElementById('veh-log');
+  if (box) { box.textContent = _vehLog.join('\n'); box.scrollTop = box.scrollHeight; }
   try { console.log('[VEH] ' + msg); } catch (e) {}
+}
+
+function vehCopyLog() {
+  var txt = vehDeviceLine() + '\n' + _vehLog.join('\n');
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    showToast('Copied — paste it to Claude', 'success');
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function () {
+      showToast('Copied — paste it to Claude', 'success');
+    }, fallback);
+  } else fallback();
+}
+
+// Everything about this device that decides which encoder runs.
+function vehDeviceLine() {
+  var bits = [];
+  bits.push('build ' + AP_BUILD);
+  bits.push(typeof window.VideoEncoder === 'function' ? 'VideoEncoder=yes' : 'VideoEncoder=NO');
+  bits.push(typeof window.VideoFrame === 'function' ? 'VideoFrame=yes' : 'VideoFrame=NO');
+  bits.push(typeof window.AudioEncoder === 'function' ? 'AudioEncoder=yes' : 'AudioEncoder=NO');
+  bits.push('Mp4Muxer=' + (typeof window.Mp4Muxer !== 'undefined' ? 'yes' : 'NO'));
+  bits.push('WebMMuxer=' + (typeof window.WebMMuxer !== 'undefined' ? 'yes' : 'NO'));
+  try {
+    var cv = document.createElement('canvas');
+    bits.push('captureStream=' + (typeof cv.captureStream === 'function' ? 'yes' : 'NO'));
+    if (typeof cv.captureStream === 'function') {
+      var tr = cv.captureStream(0).getVideoTracks()[0];
+      bits.push('requestFrame=' + (tr && typeof tr.requestFrame === 'function' ? 'yes' : 'NO'));
+    }
+  } catch (e) { bits.push('captureStream=threw'); }
+  bits.push('MediaRecorder=' + (typeof window.MediaRecorder === 'function' ? 'yes' : 'NO'));
+  bits.push('rVFC=' + (typeof HTMLVideoElement !== 'undefined'
+    && HTMLVideoElement.prototype.requestVideoFrameCallback ? 'yes' : 'NO'));
+  bits.push('wakeLock=' + (navigator.wakeLock ? 'yes' : 'NO'));
+  bits.push(navigator.userAgent);
+  return bits.join(' | ');
 }
 
 // iPhone needs the canvas pushed, not watched.
