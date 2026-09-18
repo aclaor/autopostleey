@@ -15926,7 +15926,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-18.4';
+var AP_BUILD = '2026-09-18.5';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17691,6 +17691,20 @@ function vehCoverageShortfall(video, reachedSec) {
        + 'tab goes to the background. Keep this tab in front and try again.';
 }
 
+// What this device can actually do, said plainly and early.
+async function vehDescribeCapability(W, H) {
+  var bits = [];
+  bits.push(typeof window.VideoEncoder === 'function' ? 'WebCodecs yes' : 'WebCodecs NO');
+  if (typeof window.VideoEncoder === 'function') {
+    try {
+      var pick = await vehPickCodec(W || 720, H || 1280, 1500000);
+      bits.push(pick ? pick.codec : 'no usable codec');
+    } catch (e) { bits.push('codec check failed'); }
+  }
+  bits.push('build ' + AP_BUILD);
+  vehReport(bits.join(' \u00b7 '));
+}
+
 function vehFastEncodeSupported() {
   return typeof window.VideoEncoder === 'function'
       && typeof window.VideoFrame === 'function'
@@ -17822,11 +17836,36 @@ async function vehAddAudioTrack(file, muxer, codecKind, onNote, maxSeconds) {
 async function vehMakeScratchVideo(file, srcEl) {
   var v = document.createElement('video');
   v.muted = true;
+  v.defaultMuted = true;
   v.playsInline = true;
   v.preload = 'auto';
   v.crossOrigin = 'anonymous';
+
+  // iPhone checks the ATTRIBUTES, not just the properties, before it will
+  // allow a video to play without a tap.
+  v.setAttribute('muted', '');
+  v.setAttribute('playsinline', '');
+  v.setAttribute('webkit-playsinline', '');
+  v.setAttribute('autoplay', '');
+
+  // And it will not play a video that is not in the page at all.
+  //
+  // This element was only ever created in memory, so on an iPhone play()
+  // was rejected, the fast encoder gave up, and every export silently fell
+  // back to the real-time recorder — the one that freezes. That single
+  // missing line is why iPhones never got the good encoder.
+  //
+  // display:none would fail the same way, so it is parked off-screen at
+  // 1x1 instead: present and laid out, invisible and unclickable.
+  v.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;'
+    + 'opacity:0.01;pointer-events:none;z-index:-1;';
+  document.body.appendChild(v);
+  v.__apInDom = true;
+
   var url = file ? URL.createObjectURL(file) : (srcEl && srcEl.src);
   v.src = url;
+  try { v.load(); } catch (e) {}
+
   await new Promise(function (resolve, reject) {
     var t = setTimeout(function () { reject(new Error('The video could not be opened for encoding.')); }, 20000);
     v.onloadedmetadata = function () { clearTimeout(t); resolve(); };
@@ -17840,6 +17879,14 @@ async function vehMakeScratchVideo(file, srcEl) {
   }
   v.__apRevoke = file ? url : null;
   return v;
+}
+
+function vehDropScratch(v) {
+  if (!v) return;
+  try { v.pause(); } catch (e) {}
+  try { v.removeAttribute('src'); v.load(); } catch (e) {}
+  if (v.__apRevoke) { try { URL.revokeObjectURL(v.__apRevoke); } catch (e) {} }
+  if (v.__apInDom && v.parentNode) { try { v.parentNode.removeChild(v); } catch (e) {} }
 }
 
 async function vehFastEncode(opts) {
@@ -17955,7 +18002,12 @@ async function vehFastEncode(opts) {
 
   readFrom.muted = true;              // the real audio is encoded separately
   readFrom.playsInline = true;
-  var rate = duration > 90 ? 4 : 2;
+  // iPhone hardware decoders stumble badly above 2x, and every stumble is a
+  // hole in the picture. Desktops handle 4x fine.
+  var _isApple = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    || /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  var rate = _isApple ? 2 : (duration > 90 ? 4 : 2);
   readFrom.playbackRate = rate;
   try { readFrom.currentTime = 0; } catch (e) {}
 
@@ -17983,10 +18035,33 @@ async function vehFastEncode(opts) {
 
   try {
     await readFrom.play();
-  } catch (e) {
-    try { encoder.close(); } catch (e2) {}
-    throw new Error('The browser would not play the video (' + (e && e.name ? e.name : 'error')
-      + '). Tap the page once, then try again.');
+  } catch (e1) {
+    // The off-screen copy would not start. The element the customer can
+    // actually see is already in the page and has already been played by
+    // their own tap, so it is allowed to play — use that instead of giving
+    // up and handing the job to the recorder that freezes on iPhone.
+    if (scratch) {
+      vehReport('Second copy would not play (' + (e1 && e1.name ? e1.name : 'error')
+        + ') \u2014 using the one on screen \u00b7 build ' + AP_BUILD);
+      vehDropScratch(scratch);
+      scratch = null;
+      readFrom = video;
+      readFrom.muted = true;
+      readFrom.playsInline = true;
+      readFrom.playbackRate = rate;
+      try { readFrom.currentTime = 0; } catch (e2) {}
+      try {
+        await readFrom.play();
+      } catch (e3) {
+        try { encoder.close(); } catch (e4) {}
+        throw new Error('The browser would not play the video (' + (e3 && e3.name ? e3.name : 'error')
+          + '). Tap the video once, then try again.');
+      }
+    } else {
+      try { encoder.close(); } catch (e2) {}
+      throw new Error('The browser would not play the video (' + (e1 && e1.name ? e1.name : 'error')
+        + '). Tap the video once, then try again.');
+    }
   }
 
   try {
@@ -18117,10 +18192,8 @@ async function vehFastEncode(opts) {
     return { blob: blob, ext: pick.ext, mime: pick.mime, fps: fps, codec: pick.codec };
   } finally {
     try { encoder.close(); } catch (e) {}
-    if (scratch) {
-      try { scratch.pause(); scratch.removeAttribute('src'); scratch.load(); } catch (e) {}
-      if (scratch.__apRevoke) { try { URL.revokeObjectURL(scratch.__apRevoke); } catch (e) {} }
-    } else if (!wasPaused) { try { video.play(); } catch (e) {} }
+    if (scratch) { vehDropScratch(scratch); }
+    else if (!wasPaused) { try { video.play(); } catch (e) {} }
   }
 }
 
@@ -19193,6 +19266,8 @@ async function vehExportVideoImpl(skipFast) {
       if (btn) resetDownloadBtn(btn);
       try { vehStartPreview(); } catch (e) {}
     }).catch(function (e) {
+      vehReport('Fast encoder stopped: ' + (e && e.message ? e.message : 'unknown')
+        + ' \u00b7 trying the slow way \u00b7 build ' + AP_BUILD);
       console.warn('[VEH] fast encode failed, using the slower method:', e && e.message);
       if (_dlStatus) _dlStatus.textContent = 'Rendering the slower way\u2026';
       vehExportVideoLegacy();
@@ -19527,6 +19602,8 @@ function vehExportAndSaveImpl(skipFast) {
       return vehUploadAndActivate(res.file, progress, fail, function () { stopped = true; });
     }).catch(function (e) {
       // Only an ENCODE failure gets here, and only that is worth retrying.
+      vehReport('Fast encoder stopped: ' + (e && e.message ? e.message : 'unknown')
+        + ' \u00b7 trying the slow way \u00b7 build ' + AP_BUILD);
       console.warn('[VEH] fast encode failed, using the slower method:', e && e.message);
       if (!stopped) { progress('Preparing your video the slower way\u2026'); vehExportAndSaveLegacy(); }
     });
@@ -19735,6 +19812,11 @@ async function vehPostToSocialImpl() {
     } catch (e) {
       // ENCODE failed — this one is worth retrying the old way.
       fastRes = null;
+      // Say WHY on screen. The fast encoder dropping out silently is how an
+      // iPhone ended up on the recorder that freezes, with nothing to show
+      // for it.
+      vehReport('Fast encoder stopped: ' + (e && e.message ? e.message : 'unknown')
+        + ' \u00b7 trying the slow way \u00b7 build ' + AP_BUILD);
       console.warn('[VEH] fast encode failed, using the slower method:', e && e.message);
       if (_fastNote) _fastNote.textContent = 'Preparing your video the slower way\u2026';
     }
