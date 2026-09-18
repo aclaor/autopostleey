@@ -11080,7 +11080,11 @@ async function uploadFileMultipart(file, folder) {
 
   var doneRes = await fetch(AP_WORKER + '/mpu-complete', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: start.key, upload_id: start.upload_id }),
+    // parts and size let the worker refuse to assemble a half upload.
+    body: JSON.stringify({
+      key: start.key, upload_id: start.upload_id,
+      parts: partCount, size: file.size,
+    }),
   });
   var done = await doneRes.json();
   if (!doneRes.ok || !done.url) throw new Error(done.error || 'Could not finish the upload');
@@ -11090,6 +11094,78 @@ async function uploadFileMultipart(file, folder) {
     + (((file.size * 8) / 1e6) / secs).toFixed(1) + ' Mbps)');
   if (onProg) onProg({ loaded: file.size, total: file.size, pct: 100, mbps: ((file.size*8)/1e6)/secs, secondsLeft: 0 });
   return done.url;
+}
+
+// Checks that the video sitting on R2 is the whole video.
+//
+// Everything before this trusted the upload. On a phone that trust was
+// misplaced: a video that encoded perfectly could arrive incomplete, and
+// because an MP4 written with fastStart puts its header at the front, the
+// broken file still reported the full length. It played for twenty seconds
+// and then went blank — and nothing in the app noticed.
+//
+// Reading the duration back needs no CORS, so this works against the plain
+// public R2 URL.
+function vehVerifyUploaded(url, expectSec) {
+  return new Promise(function (resolve) {
+    if (!url || !isFinite(expectSec) || expectSec <= 0) { resolve({ ok: true, skipped: true }); return; }
+    var v = document.createElement('video');
+    v.preload = 'metadata';
+    v.muted = true;
+    v.playsInline = true;
+    var settled = false;
+    function done(r) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { v.removeAttribute('src'); v.load(); } catch (e) {}
+      resolve(r);
+    }
+    // A check that hangs must never block a post.
+    var timer = setTimeout(function () { done({ ok: true, skipped: true, why: 'timed out' }); }, 20000);
+    v.onloadedmetadata = function () {
+      var d = v.duration;
+      if (!isFinite(d) || d <= 0) { done({ ok: true, skipped: true, why: 'no duration' }); return; }
+      // Allow real slack: re-encoding can shift the length by a little.
+      var shortBy = expectSec - d;
+      if (shortBy > Math.max(1.5, expectSec * 0.08)) {
+        done({ ok: false, got: d, want: expectSec });
+      } else {
+        done({ ok: true, got: d, want: expectSec });
+      }
+    };
+    v.onerror = function () { done({ ok: false, got: 0, want: expectSec, why: 'would not open' }); };
+    v.src = url;
+  });
+}
+
+// Uploads, then proves the result is complete. One automatic retry, because
+// the usual cause is one lost piece on a mobile connection and the second
+// attempt normally lands.
+async function vehUploadVerified(file, folder, expectSec, note) {
+  for (var attempt = 1; attempt <= 2; attempt++) {
+    var url = await uploadFileToR2(file, folder);
+    if (!url) throw new Error('Upload returned no link');
+    if (note) note('Checking the video arrived in one piece…');
+    var v = await vehVerifyUploaded(url, expectSec);
+    if (v.ok) {
+      if (typeof vehReport === 'function') {
+        vehReport('Uploaded ' + (file.size / 1048576).toFixed(1) + 'MB · checked '
+          + (v.skipped ? '(skipped: ' + (v.why || '') + ')'
+                       : vehFmtDuration(v.got) + ' of ' + vehFmtDuration(v.want))
+          + ' · build ' + AP_BUILD);
+      }
+      return url;
+    }
+    if (typeof vehReport === 'function') {
+      vehReport('Upload arrived short: ' + vehFmtDuration(v.got || 0) + ' of '
+        + vehFmtDuration(v.want) + (attempt === 1 ? ' — sending again…' : '')
+        + ' · build ' + AP_BUILD);
+    }
+    if (attempt === 1 && note) note('The video arrived incomplete — sending it again…');
+  }
+  throw new Error('The video kept arriving incomplete. This is almost always a weak '
+    + 'connection — try again on Wi-Fi, and it will not post a half video.');
 }
 
 // -- R2 Upload Helpers --
@@ -15746,7 +15822,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-17.3';
+var AP_BUILD = '2026-09-18.1';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -19420,7 +19496,8 @@ async function vehPostToSocialImpl() {
         + _ptMB + ' MB \u00b7 ' + pr.mbps.toFixed(1) + ' Mbps' + lft;
       if (btn) btn.textContent = '\u23f3 Sending ' + pr.pct + '%';
     };
-    uploadFileToR2(_pt, 'video-ads').then(function (url) {
+    vehUploadVerified(_pt, 'video-ads', _vehVideo ? _vehVideo.duration : 0,
+      function (m) { if (_noteEl) _noteEl.textContent = m; }).then(function (url) {
       window.__apUploadProgress = null;
       if (!url) throw new Error('Upload returned no link');
       _vehPublicUrl = url;
@@ -19487,7 +19564,9 @@ async function vehPostToSocialImpl() {
         if (btn) btn.textContent = '\u23f3 Step 2 of 2 \u00b7 Sending ' + pr.pct + '%';
       };
       try {
-        var fastUrl = await uploadFileToR2(fastRes.file, 'video-ads');
+        var fastUrl = await vehUploadVerified(fastRes.file, 'video-ads',
+          _vehVideo ? _vehVideo.duration : 0,
+          function (m) { if (_fastNote) _fastNote.textContent = m; });
         window.__apUploadProgress = null;
         if (!fastUrl) throw new Error('Upload returned no link');
         _vehPublicUrl = fastUrl;
@@ -19569,7 +19648,9 @@ async function vehPostToSocialImpl() {
           + pr.pct + '% of ' + _upMB + ' MB \u00b7 ' + pr.mbps.toFixed(1) + ' Mbps' + lft;
         if (btn) btn.textContent = '\u23f3 Step 2 of 2 \u00b7 Sending ' + pr.pct + '%';
       };
-      var url = await uploadFileToR2(file, 'video-ads');
+      var url = await vehUploadVerified(file, 'video-ads',
+        _vehVideo ? _vehVideo.duration : 0,
+        function (m) { if (_n3) _n3.textContent = m; });
       window.__apUploadProgress = null;
       if (url) {
         _vehPublicUrl = url;
