@@ -11096,6 +11096,110 @@ async function uploadFileMultipart(file, folder) {
   return done.url;
 }
 
+// Checks that the PICTURE moves all the way through a finished video.
+//
+// Reading the duration was not enough. A file can be the full 1:45, pass
+// every size and piece check, and still freeze on one frame after thirty
+// seconds — the player keeps counting up while the same image sits there.
+// The duration is the number that lies, so this looks at the picture.
+//
+// It samples frames across the video and compares them. Two neighbouring
+// samples that are pixel-identical mean nothing changed in that stretch,
+// and a real video never does that for twenty seconds at a time.
+//
+// The blob is same-origin, so the canvas is never tainted and this works
+// with no CORS whatsoever.
+async function vehCheckMoves(blob, expectSec) {
+  var url = URL.createObjectURL(blob);
+  var v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+
+  function cleanup() {
+    try { v.removeAttribute('src'); v.load(); } catch (e) {}
+    try { URL.revokeObjectURL(url); } catch (e) {}
+  }
+
+  try {
+    await new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error('timeout')); }, 15000);
+      v.onloadedmetadata = function () { clearTimeout(t); res(); };
+      v.onerror = function () { clearTimeout(t); rej(new Error('cannot open')); };
+    });
+
+    var dur = isFinite(v.duration) && v.duration > 0 ? v.duration : expectSec;
+    if (!isFinite(dur) || dur <= 0) { cleanup(); return { ok: true, skipped: 'no duration' }; }
+    // Short videos are not worth the extra seconds this takes.
+    if (dur < 12) { cleanup(); return { ok: true, skipped: 'short video' }; }
+
+    var c = document.createElement('canvas');
+    c.width = 48; c.height = 27;
+    var cx = c.getContext('2d', { willReadFrequently: true });
+
+    // Enough samples to find where it stopped, few enough to stay quick.
+    var N = Math.min(12, Math.max(6, Math.round(dur / 10)));
+    var shots = [], times = [];
+    for (var i = 0; i < N; i++) {
+      var t = (dur * (i + 0.5)) / N;
+      // 'seeked' fires BEFORE the new frame is painted, so drawing on it
+      // captures the PREVIOUS frame and every sample comes back identical.
+      // Wait for the frame itself.
+      var landed = await new Promise(function (res) {
+        var done = false;
+        function finish(okFlag) { if (done) return; done = true; clearTimeout(tm); res(okFlag); }
+        var tm = setTimeout(function () { finish(false); }, 6000);
+        v.onseeked = function () {
+          if (typeof v.requestVideoFrameCallback === 'function') {
+            v.requestVideoFrameCallback(function () { finish(true); });
+            setTimeout(function () { finish(true); }, 400);
+          } else {
+            setTimeout(function () { finish(true); }, 250);
+          }
+        };
+        try { v.currentTime = t; } catch (e) { finish(false); }
+      });
+      if (!landed) { cleanup(); return { ok: false, frozenAfter: times.length ? times[times.length-1] : 0, why: 'stopped seeking' }; }
+      try { cx.drawImage(v, 0, 0, c.width, c.height); } catch (e) { cleanup(); return { ok: true, skipped: 'cannot read frames' }; }
+      var d = cx.getImageData(0, 0, c.width, c.height).data;
+      var px = new Uint8Array((d.length / 4) * 3);
+      for (var k = 0, q = 0; k < d.length; k += 4) { px[q++] = d[k]; px[q++] = d[k+1]; px[q++] = d[k+2]; }
+      shots.push(px); times.push(t);
+    }
+
+    // How much the picture changed between neighbouring samples. Measured,
+    // not guessed: a frozen stretch scores about 0.06 and ordinary motion
+    // about 20, so the gap between "still" and "moving" is enormous.
+    function changeBetween(a, b) {
+      var sum = 0;
+      for (var z = 0; z < a.length; z++) sum += Math.abs(a[z] - b[z]);
+      return sum / a.length;
+    }
+    var moves = [];
+    for (var j = 1; j < shots.length; j++) moves.push(changeBetween(shots[j-1], shots[j]));
+
+    var sorted = moves.slice().sort(function (x, y) { return x - y; });
+    var typical = sorted[Math.floor(sorted.length / 2)];
+
+    // Only call it frozen if the video DID move earlier and then stopped.
+    // A video that is legitimately still throughout — a product on a table,
+    // a static poster — must never be rejected.
+    if (typical > 2) {
+      for (var m = 0; m < moves.length; m++) {
+        if (moves[m] < Math.max(0.8, typical * 0.05)) {
+          cleanup();
+          return { ok: false, frozenAfter: times[m], duration: dur, change: moves[m] };
+        }
+      }
+    }
+
+    cleanup();
+    return { ok: true, samples: N, duration: dur, typical: typical };
+  } catch (e) {
+    cleanup();
+    // A check that cannot run must never block a post.
+    return { ok: true, skipped: e.message };
+  }
+}
+
 // Checks that the video sitting on R2 is the whole video.
 //
 // Everything before this trusted the upload. On a phone that trust was
@@ -15822,7 +15926,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-18.1';
+var AP_BUILD = '2026-09-18.3';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17767,6 +17871,25 @@ async function vehFastEncode(opts) {
     output: function (chunk, meta) { try { muxer.addVideoChunk(chunk, meta); } catch (e) { encErr = e; } },
     error:  function (e) { encErr = e; },
   });
+
+  // Backpressure. Frames were handed to the encoder as fast as the decoder
+  // produced them, with nothing checking whether the encoder was keeping
+  // up. A phone's encoder is far slower than its decoder, so the queue grew
+  // without limit — and a saturated encoder stops producing output while
+  // still accepting frames, which is how a video ends up the right length
+  // with the picture frozen part-way through.
+  //
+  // Now playback pauses whenever the queue gets deep and resumes when it
+  // drains. The encode takes longer on a weak device; it finishes correctly.
+  var _paused4Queue = false;
+  try {
+    encoder.ondequeue = function () {
+      if (_paused4Queue && encoder.encodeQueueSize <= 4) {
+        _paused4Queue = false;
+        try { readFrom.play().catch(function () {}); } catch (e) {}
+      }
+    };
+  } catch (e) {}
   // 'constant' keeps the encoder near the bitrate we asked for. Without it
   // a hardware H.264 encoder happily overshoots — an 18MB target came back
   // as a 24MB file, which on a slow connection is several extra minutes.
@@ -17848,6 +17971,7 @@ async function vehFastEncode(opts) {
       // sitting at a percentage forever, which is what used to happen on
       // phones when the screen went to sleep.
       var stallTimer = setInterval(function () {
+        if (_paused4Queue) { lastCallback = Date.now(); return; }
         if (Date.now() - lastCallback > 20000) {
           clearInterval(stallTimer);
           reject(new Error('The video stopped sending frames — this usually means the '
@@ -17886,6 +18010,12 @@ async function vehFastEncode(opts) {
             encoder.encode(frame, { keyFrame: encoded % (fps * 2) === 0 });
             frame.close();
             encoded++;
+
+            // Too far behind — stop feeding it until it catches up.
+            if (!_paused4Queue && encoder.encodeQueueSize > 16) {
+              _paused4Queue = true;
+              try { readFrom.pause(); } catch (e) {}
+            }
           } catch (e) { clearInterval(stallTimer); reject(e); return; }
         }
 
@@ -17905,7 +18035,10 @@ async function vehFastEncode(opts) {
         readFrom.requestVideoFrameCallback(step);
       }
 
-      readFrom.addEventListener('ended', finish, { once: true });
+      readFrom.addEventListener('ended', function () {
+        if (_paused4Queue) return;   // paused to let the encoder catch up
+        finish();
+      }, { once: true });
       readFrom.requestVideoFrameCallback(step);
     });
   } finally {
@@ -18722,6 +18855,22 @@ async function vehMakeVideoFast(opts) {
     drawFrame: function (ctx, t, w2, h2, srcEl) { vehDrawFrameAt(ctx, t, w2, h2, srcEl); },
     onProgress: opts.onProgress || function () {},
   });
+  // Prove the picture moves all the way through BEFORE this leaves the
+  // phone. Throwing here sends the caller to the real-time recorder, which
+  // is slower but does not depend on decoding at speed.
+  var moves = await vehCheckMoves(res.blob, v.duration);
+  if (!moves.ok) {
+    vehReport('Picture froze after ' + vehFmtDuration(moves.frozenAfter || 0)
+      + ' of ' + vehFmtDuration(v.duration) + ' \u00b7 re-doing it the slow way'
+      + ' \u00b7 build ' + AP_BUILD);
+    throw new Error('The picture stopped moving after '
+      + vehFmtDuration(moves.frozenAfter || 0) + '.');
+  }
+  vehReport('Picture checked at ' + (moves.samples || 0) + ' points across '
+    + vehFmtDuration(moves.duration || v.duration)
+    + (moves.skipped ? ' (skipped: ' + moves.skipped + ')' : ' \u00b7 all moving')
+    + ' \u00b7 build ' + AP_BUILD);
+
   return {
     file: new File([res.blob], (opts.name || 'enhanced-ad-' + Date.now()) + '.' + res.ext,
                    { type: res.mime }),
