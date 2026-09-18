@@ -11174,7 +11174,16 @@ async function vehCheckMoves(blob, expectSec) {
         };
         try { v.currentTime = t; } catch (e) { finish(false); }
       });
-      if (!landed) { cleanup(); return { ok: false, frozenAfter: times.length ? times[times.length-1] : 0, why: 'stopped seeking' }; }
+      if (!landed) {
+        cleanup();
+        // Never got a single sample: this file simply is not seekable here,
+        // which is common for a recorder's own output on iPhone. That is not
+        // evidence of a freeze, and blocking a post on it is a false alarm —
+        // the customer's log showed exactly that, as "froze after  of 2:30"
+        // with no time in it.
+        if (!times.length) return { ok: true, skipped: 'cannot seek this file' };
+        return { ok: false, frozenAfter: times[times.length-1], why: 'stopped seeking' };
+      }
       try { cx.drawImage(v, 0, 0, c.width, c.height); } catch (e) { cleanup(); return { ok: true, skipped: 'cannot read frames' }; }
       var d = cx.getImageData(0, 0, c.width, c.height).data;
       var px = new Uint8Array((d.length / 4) * 3);
@@ -15943,7 +15952,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-18.6';
+var AP_BUILD = '2026-09-18.7';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17781,24 +17790,115 @@ function vehFastEncodeSupported() {
 // Picks the best codec this device can actually encode, preferring MP4/H.264
 // because every social platform accepts it without transcoding.
 async function vehPickCodec(W, H, bitrate) {
-  var tries = [
-    { kind:'mp4',  codec:'avc1.42001f', muxer:'mp4',  ext:'mp4',  mime:'video/mp4' },
-    { kind:'mp4',  codec:'avc1.4d0028', muxer:'mp4',  ext:'mp4',  mime:'video/mp4' },
-    { kind:'webm', codec:'vp09.00.10.08', muxer:'webm', ext:'webm', mime:'video/webm' },
-    { kind:'webm', codec:'vp8',         muxer:'webm', ext:'webm', mime:'video/webm' },
+  // Safari says yes and then fails.
+  //
+  // A customer's iPhone (iOS 18.7) reported avc1.42001f as supported, and one
+  // second after starting the encoder died with "Encoding task failed". Every
+  // export then fell through to the real-time recorder, which freezes. So
+  // isConfigSupported() is treated as a hint, not an answer: each candidate
+  // is now given two real frames to encode, and only a configuration that
+  // actually produces compressed data gets used.
+  //
+  // The whole probe is a handful of tiny frames — well under a second — and
+  // it runs on the customer's own device, which is the only place the truth
+  // lives.
+  var codecs = [
+    { kind:'mp4',  codec:'avc1.42001f',    muxer:'mp4',  ext:'mp4',  mime:'video/mp4' },
+    { kind:'mp4',  codec:'avc1.42E01E',    muxer:'mp4',  ext:'mp4',  mime:'video/mp4' },
+    { kind:'mp4',  codec:'avc1.4d0028',    muxer:'mp4',  ext:'mp4',  mime:'video/mp4' },
+    { kind:'webm', codec:'vp09.00.10.08',  muxer:'webm', ext:'webm', mime:'video/webm' },
+    { kind:'webm', codec:'vp8',            muxer:'webm', ext:'webm', mime:'video/webm' },
   ];
-  for (var i = 0; i < tries.length; i++) {
-    var t = tries[i];
+
+  // Safari's hardware H.264 encoder wants realtime latency and the avcC
+  // format that MP4 uses. Chrome is happy with quality + constant bitrate.
+  // Rather than decide which browser this is, try them in order.
+  var variants = [
+    { latencyMode: 'realtime', avc: { format: 'avc' } },
+    { latencyMode: 'realtime' },
+    { latencyMode: 'quality', bitrateMode: 'constant' },
+    { latencyMode: 'quality' },
+    {},
+    { hardwareAcceleration: 'prefer-software' },
+  ];
+
+  var probe = document.createElement('canvas');
+  probe.width = W; probe.height = H;
+  var pctx = probe.getContext('2d', { alpha: false });
+  var trail = [];
+
+  for (var i = 0; i < codecs.length; i++) {
+    var t = codecs[i];
     if (t.muxer === 'mp4'  && typeof window.Mp4Muxer  === 'undefined') continue;
     if (t.muxer === 'webm' && typeof window.WebMMuxer === 'undefined') continue;
-    try {
-      var r = await VideoEncoder.isConfigSupported({
+
+    for (var vi = 0; vi < variants.length; vi++) {
+      var cfg = Object.assign({
         codec: t.codec, width: W, height: H, bitrate: bitrate, framerate: 30,
-      });
-      if (r && r.supported) return t;
-    } catch (e) {}
+      }, variants[vi]);
+      // vp8/vp9 have no avc member; sending one is an error.
+      if (t.muxer !== 'mp4') delete cfg.avc;
+
+      var tag = t.codec.split('.')[0] + '/' + vi;
+      try {
+        var sup = await VideoEncoder.isConfigSupported(cfg);
+        if (!sup || !sup.supported) { trail.push(tag + ':unsupported'); continue; }
+      } catch (e) { trail.push(tag + ':threw'); continue; }
+
+      var worked = await vehSmokeTest(cfg, probe, pctx);
+      trail.push(tag + (worked ? ':WORKS' : ':died'));
+      if (worked) {
+        vehReport('Encoder probe at ' + W + 'x' + H + ' \u2192 ' + trail.join(' '));
+        return Object.assign({}, t, { config: cfg, variant: vi });
+      }
+    }
   }
+  // Nothing encodes here. Say exactly what was tried — guessing at this from
+  // the outside is what cost six rounds of fixes.
+  vehReport('Encoder probe at ' + W + 'x' + H + ' \u2192 NOTHING WORKED \u00b7 ' + trail.join(' '));
   return null;
+}
+
+// Encodes two real frames with this configuration and reports whether any
+// compressed data came out. Everything is cleaned up either way.
+function vehSmokeTest(cfg, canvas, ctx) {
+  return new Promise(function (resolve) {
+    var chunks = 0, failed = false, enc = null;
+    var settled = false;
+    function finish(okFlag) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { if (enc && enc.state !== 'closed') enc.close(); } catch (e) {}
+      resolve(okFlag);
+    }
+    // A probe that hangs must not hang the export.
+    var timer = setTimeout(function () { finish(false); }, 4000);
+
+    try {
+      enc = new VideoEncoder({
+        output: function () { chunks++; },
+        error:  function () { failed = true; finish(false); },
+      });
+      enc.configure(cfg);
+
+      for (var n = 0; n < 2; n++) {
+        // Two visibly different frames, so an encoder cannot pass by
+        // emitting nothing for an unchanged picture.
+        ctx.fillStyle = n ? '#ffffff' : '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = n ? '#000000' : '#ffffff';
+        ctx.fillRect(0, 0, Math.max(2, canvas.width / 2), Math.max(2, canvas.height / 2));
+        var f = new VideoFrame(canvas, { timestamp: n * 33333, duration: 33333 });
+        enc.encode(f, { keyFrame: n === 0 });
+        f.close();
+      }
+
+      enc.flush().then(function () {
+        finish(!failed && chunks > 0);
+      }, function () { finish(false); });
+    } catch (e) { finish(false); }
+  });
 }
 
 // Seek to a time and resolve once the frame is actually ready to draw.
@@ -17978,8 +18078,12 @@ async function vehFastEncode(opts) {
 
   var pick = await vehPickCodec(W, H, bitrate);
   if (!pick) throw new Error('This browser cannot encode video directly');
-  vehReport('Fast encoder \u00b7 ' + pick.codec + ' \u00b7 ' + vehFmtDuration(duration)
-    + ' \u00b7 build ' + AP_BUILD);
+  vehReport('Fast encoder \u00b7 ' + pick.codec + ' (setting ' + pick.variant + ': '
+    + [pick.config.latencyMode || 'default',
+       pick.config.bitrateMode || '-',
+       pick.config.avc ? 'avc' : '-',
+       pick.config.hardwareAcceleration || '-'].join('/')
+    + ') \u00b7 ' + vehFmtDuration(duration) + ' \u00b7 build ' + AP_BUILD);
 
   var Muxer  = pick.muxer === 'mp4' ? window.Mp4Muxer.Muxer  : window.WebMMuxer.Muxer;
   var Target = pick.muxer === 'mp4' ? window.Mp4Muxer.ArrayBufferTarget
@@ -18031,14 +18135,10 @@ async function vehFastEncode(opts) {
   // 'constant' keeps the encoder near the bitrate we asked for. Without it
   // a hardware H.264 encoder happily overshoots — an 18MB target came back
   // as a 24MB file, which on a slow connection is several extra minutes.
-  var encCfg = {
-    codec: pick.codec, width: W, height: H, bitrate: bitrate, framerate: fps,
-    latencyMode: 'quality', bitrateMode: 'constant',
-  };
-  try {
-    var ok = await VideoEncoder.isConfigSupported(encCfg);
-    if (!ok || !ok.supported) delete encCfg.bitrateMode;
-  } catch (e) { delete encCfg.bitrateMode; }
+  // Exactly the configuration the probe proved on THIS device — only the
+  // frame rate is adjusted for the length of the video. Building a fresh
+  // config here is what let a setting Safari rejects reach the real encode.
+  var encCfg = Object.assign({}, pick.config, { framerate: fps });
   encoder.configure(encCfg);
 
   var canvas = document.createElement('canvas');
