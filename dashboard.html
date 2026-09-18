@@ -15926,7 +15926,7 @@ var PAD_ASPECTS = {
 // every export, so a video can always be traced back to the build that made
 // it — several rounds of this were spent unable to tell whether a file came
 // from the newest code or a cached page.
-var AP_BUILD = '2026-09-18.3';
+var AP_BUILD = '2026-09-18.4';
 
 function padFitMode() {
   var el = document.getElementById('pad-fit');
@@ -17590,6 +17590,30 @@ function vehReport(msg) {
   try { console.log('[VEH] ' + msg); } catch (e) {}
 }
 
+// iPhone needs the canvas pushed, not watched.
+//
+// canvas.captureStream(30) asks the browser to sample the canvas on its own
+// timer. On iOS that sampling quietly stops a few seconds in: the recording
+// keeps running and keeps writing the SAME frame, so the finished video is
+// the full length with the picture frozen near the start. A screen recording
+// from a customer's iPhone showed it stopping at 9.8 seconds of a 1:50 video,
+// with a text overlay frozen on screen long after its time was up — which is
+// what proves the canvas stopped, not the source video.
+//
+// captureStream(0) turns the sampling off and hands us requestFrame(), so a
+// frame is captured only when we say so — right after we have drawn one.
+function vehCaptureStream(canvas) {
+  try {
+    var s0 = canvas.captureStream(0);
+    var tr = s0.getVideoTracks()[0];
+    if (tr && typeof tr.requestFrame === 'function') {
+      return { stream: s0, push: function () { try { tr.requestFrame(); } catch (e) {} }, manual: true };
+    }
+  } catch (e) {}
+  var s1 = canvas.captureStream(30);
+  return { stream: s1, push: function () {}, manual: false };
+}
+
 async function vehKeepAwake() {
   try {
     if (navigator.wakeLock && navigator.wakeLock.request) return await navigator.wakeLock.request('screen');
@@ -19177,7 +19201,8 @@ async function vehExportVideoImpl(skipFast) {
   }
 
   _vehChunks = [];
-  var stream = canvas.captureStream(30);
+  var capD = vehCaptureStream(canvas);
+  var stream = capD.stream;
 
   // Include audio from source video
   try {
@@ -19243,6 +19268,7 @@ async function vehExportVideoImpl(skipFast) {
       vehDrawOverlay(ctx, o.text, pp4.x, pp4.y, prog, W, o.fontSize || 1);
     });
     vehDrawCaptions(ctx, t, W, H);
+    capD.push();
   }, function () {
     try { if (_vehRecorder.state === 'recording') _vehRecorder.stop(); } catch (e) {}
   }, function (msg) {
@@ -19507,9 +19533,10 @@ function vehExportAndSaveImpl(skipFast) {
     return;
   }
 
-  var stream3, rec3, mime3;
+  var stream3, rec3, mime3, cap3;
   try {
-    stream3 = canvas3.captureStream(30);
+    cap3 = vehCaptureStream(canvas3);
+    stream3 = cap3.stream;
     // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
     mime3 = apPickVideoMime(true).mime || 'video/webm;codecs=vp9';
     rec3 = new MediaRecorder(stream3, { mimeType: mime3 });
@@ -19530,11 +19557,21 @@ function vehExportAndSaveImpl(skipFast) {
     var short3 = _vehRtAborted
       || vehCoverageShortfall(_vehVideo, _vehRtDrive ? _vehRtDrive.coveredTo() : 0);
     if (short3) { fail(short3); return; }
-    var ext3 = mime3.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
-    var blob3 = new Blob(chunks3, { type: mime3 });
-    progress('Uploading your video (' + (blob3.size / 1048576).toFixed(1) + ' MB)\u2026');
-    vehUploadAndActivate(new File([blob3], 'veh-auto-' + Date.now() + '.' + ext3, { type: mime3 }),
-                         progress, fail, function () { stopped = true; });
+    var ext3b = mime3.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    var blob3b = new Blob(chunks3, { type: mime3 });
+    vehCheckMoves(blob3b, _vehVideo ? _vehVideo.duration : 0).then(function (mv3) {
+      if (!mv3.ok) {
+        fail('The picture froze after ' + vehFmtDuration(mv3.frozenAfter || 0)
+          + ', so nothing was posted. This phone cannot record a video this long with '
+          + 'text burned in — remove the overlays, use a shorter clip, or set this up '
+          + 'on a computer.');
+        return;
+      }
+      progress('Uploading your video (' + (blob3b.size / 1048576).toFixed(1) + ' MB)\u2026');
+      vehUploadAndActivate(new File([blob3b], 'veh-auto-' + Date.now() + '.' + ext3b, { type: mime3 }),
+                           progress, fail, function () { stopped = true; });
+    });
+    return;
   };
 
   function beginRecording() {
@@ -19562,6 +19599,7 @@ function vehExportAndSaveImpl(skipFast) {
       if (stopped) return;
       var d = _vehVideo.duration;
       vehDrawFrameAt(ctx3, t3, W3, H3);
+      cap3.push();
       if (isFinite(d) && d > 0) {
         progress('Preparing your video — ' + Math.round((t3 / d) * 100) + '% (keep this tab in front)');
       }
@@ -19746,8 +19784,10 @@ async function vehPostToSocialImpl() {
   // Bare 'video/mp4' gives VP9-in-MP4, which most players refuse.
   mimeType = apPickVideoMime(true).mime || mimeType;
 
-  vehReport('Slow recorder (real time) \u00b7 keep this tab in front \u00b7 build ' + AP_BUILD);
-  var stream = canvas.captureStream(30);
+  var cap = vehCaptureStream(canvas);
+  vehReport('Slow recorder (real time) \u00b7 ' + (cap.manual ? 'pushing frames' : 'auto capture')
+    + ' \u00b7 keep this tab in front \u00b7 build ' + AP_BUILD);
+  var stream = cap.stream;
   try {
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     var src = audioCtx.createMediaElementSource(_vehVideo);
@@ -19787,6 +19827,26 @@ async function vehPostToSocialImpl() {
     }
     var ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
     var blob = new Blob(chunks, { type: mimeType });
+
+    // The same picture check the fast path gets. This is the path an iPhone
+    // actually uses, and until now nothing looked at what it produced.
+    var mv = await vehCheckMoves(blob, _vehVideo ? _vehVideo.duration : 0);
+    if (!mv.ok) {
+      var froze = 'The picture froze after ' + vehFmtDuration(mv.frozenAfter || 0)
+        + ', so nothing was posted. This phone cannot record a video this long with '
+        + 'text burned in. Remove the overlays to post your original video as it is, '
+        + 'use a shorter clip, or do this one on a computer.';
+      vehReport('Recording froze after ' + vehFmtDuration(mv.frozenAfter || 0)
+        + ' of ' + vehFmtDuration(_vehVideo ? _vehVideo.duration : 0)
+        + ' \u00b7 not posted \u00b7 build ' + AP_BUILD);
+      var _nf = document.getElementById('veh-platform-note');
+      if (_nf) _nf.textContent = froze;
+      showToast(froze, 'error');
+      if (btn) { btn.textContent = '\ud83d\ude80 Post to Social Media'; btn.disabled = false; }
+      try { vehStartPreview(); } catch (e) {}
+      return;
+    }
+
     var file = new File([blob], 'enhanced-ad-' + Date.now() + '.' + ext, { type: mimeType });
     try {
       var _upMB = (file.size / 1048576).toFixed(1);
@@ -19838,6 +19898,7 @@ async function vehPostToSocialImpl() {
       _vehStyle = savedStyle;
     });
     vehDrawCaptions(ctx, t, W, H);
+    cap.push();   // the frame exists now — capture THIS one
     if (performance.now() - _rfNote > 500) {
       _rfNote = performance.now();
       var _d2 = _vehVideo.duration || 0;
